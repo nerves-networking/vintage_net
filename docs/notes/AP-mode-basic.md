@@ -1,6 +1,5 @@
 # Basic AP Mode configuration
 
-
 ## Required Programs
 
 1. Busybox ip
@@ -74,7 +73,7 @@ iface wlan0 inet static
 ## Guide
 
 Since, in our example we are not using `pre-up`/`post-up` scripts we are going to
-work through setting this up manually. However, kept in mind there are ways
+work through setting this up manually. However, keep in mind there are ways
 to make bringing up the AP more automated.
 
 ### Clean start
