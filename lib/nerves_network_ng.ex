@@ -1,18 +1,34 @@
 defmodule Nerves.NetworkNG do
-  @moduledoc """
-  Documentation for Nerves.NetworkNG.
-  """
+  alias Nerves.NetworkNG.Ethernet
 
   @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Nerves.NetworkNg.hello
-      :world
-
+  Get the path to the nerves network tmp directory
   """
-  def hello do
-    :world
+  def tmp_dir() do
+    Path.join(System.tmp_dir(), "nerves_network")
+  end
+
+  @doc """
+  Ensure the tmp directory is created for
+  nerves network to use
+  """
+  def ensure_tmp_dir() do
+    File.mkdir_p(tmp_dir())
+  end
+
+  @doc """
+  Bring some interface up
+  """
+  def up(%Ethernet{} = ethernet) do
+    Ethernet.write_config_file(ethernet)
+    Ethernet.up()
+  end
+
+  @doc """
+  Bring some interface down
+  """
+  def down(%Ethernet{} = ethernet) do
+    Ethernet.write_config_file(ethernet)
+    Ethernet.down()
   end
 end
