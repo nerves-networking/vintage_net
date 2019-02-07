@@ -1,6 +1,13 @@
 # Nerves.NetworkNG
 
-**TODO: Add description**
+
+## System Requirements
+
+- `ifupdown`
+- `udhcpc`
+- `ifconfig`
+- `run-parts`
+- `mktemp`
 
 ## Installation
 
