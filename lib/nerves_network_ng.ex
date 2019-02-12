@@ -31,4 +31,11 @@ defmodule Nerves.NetworkNG do
     Ethernet.write_config_file(ethernet)
     Ethernet.down()
   end
+
+  def run_cmd(command, args) do
+    case System.cmd(command, args, stderr_to_stdout: true) do
+      {_, 0} -> :ok
+      {error, 1} -> {:error, error}
+    end
+  end
 end
