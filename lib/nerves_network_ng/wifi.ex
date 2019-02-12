@@ -5,6 +5,8 @@ defmodule Nerves.NetworkNG.WiFi do
 
   alias Nerves.NetworkNG
 
+  @type address_method :: :dhcp | :static
+
   @enforce_keys [:ssid, :psk]
   defstruct ctrl_interface: "/var/run/wpa_supplicant",
             ssid: nil,
@@ -12,11 +14,15 @@ defmodule Nerves.NetworkNG.WiFi do
             key_mgmt: "WPA-PSK",
             address_family: :inet,
             address_method: :dhcp,
-            iface: "wlan0"
+            iface: "wlan0",
+            address: nil,
+            netmask: nil,
+            network: nil,
+            broadcast: nil
 
-  def new(ssid, psk, opts \\ []) do
+  def new(interface, ssid, psk, opts \\ []) do
     opts =
-      [ssid: ssid, psk: psk]
+      [ssid: ssid, psk: psk, interface: interface]
       |> Keyword.merge(opts)
 
     struct(__MODULE__, opts)
@@ -49,17 +55,18 @@ defmodule Nerves.NetworkNG.WiFi do
     """
   end
 
-  def to_interfaces_config(%__MODULE__{
-        iface: iface,
-        address_method: address_method,
-        address_family: address_family
-      }) do
+  def to_interfaces_config(
+        %__MODULE__{
+          iface: iface,
+          address_method: address_method,
+          address_family: address_family
+        } = wifi
+      ) do
     """
     auto #{iface}
     iface #{iface} #{address_family} #{address_method}
-        pre-up wpa_supplicant -B -i #{iface} -c #{wpa_file()} -dd
-        post-down killall -q wpa_supplicant
-    """
+    """ <>
+      config_body(wifi)
   end
 
   def write_wpa_file(wifi) do
@@ -99,5 +106,27 @@ defmodule Nerves.NetworkNG.WiFi do
       {_, 0} -> :ok
       {error, 1} -> {:error, error}
     end
+  end
+
+  defp config_body(%__MODULE__{address_method: :dhcp, iface: iface}) do
+    """
+        pre-up wpa_supplicant -B -i #{iface} -c #{wpa_file()} -dd
+        post-down killall -q wpa_supplicant
+    """
+  end
+
+  defp config_body(%__MODULE__{
+         address_method: :static,
+         address: address,
+         netmask: netmask,
+         broadcast: broadcast,
+         network: network
+       }) do
+    """
+      address #{address}
+      netmask #{netmask}
+      network #{network}
+      broadcast #{broadcast}
+    """
   end
 end
