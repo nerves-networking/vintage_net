@@ -15,6 +15,24 @@
 - `hostapd`
 - `dnsmasq`
 
+### Addtional Requirements for LTE
+
+#### Kernel modules (defconfig)
+
+- `CONFIG_PPP=m`
+- `CONFIG_PPP_BSDCOMP=m`
+- `CONFIG_PPP_DEFLATE=m`
+- `CONFIG_PPP_ASYNC=m`
+- `CONFIG_PPP_SYNC_TTY=m`
+- `CONFIG_USB_NET_CDC_NCM=m`
+- `CONFIG_USB_NET_HUAWEI_CDC_NCM=m`
+- `CONFIG_USB_SERIAL_OPTION=m`
+
+#### System deps
+
+- `pppd`
+- `usb_modeswitch`
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
