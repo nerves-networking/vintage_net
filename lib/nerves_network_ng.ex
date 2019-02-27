@@ -1,5 +1,5 @@
 defmodule Nerves.NetworkNG do
-  alias Nerves.NetworkNG.Ethernet
+  alias Nerves.NetworkNG.{Ethernet, IP}
 
   @doc """
   Get the path to the nerves network tmp directory
@@ -36,6 +36,27 @@ defmodule Nerves.NetworkNG do
     case System.cmd(command, args, stderr_to_stdout: true) do
       {_, 0} -> :ok
       {error, 1} -> {:error, error}
+    end
+  end
+
+  @doc """
+  Get a list of current interfaces
+  """
+  @spec interfaces() :: [String.t()]
+  def interfaces() do
+    case IP.link() do
+      {:ok, iplink_output} ->
+        regex = ~r/[a-z]\w+: /
+        ifaces = Regex.scan(regex, iplink_output)
+
+        ifaces
+        |> List.flatten()
+        |> Enum.map(fn iface ->
+          String.replace(iface, ": ", "")
+        end)
+
+      error ->
+        error
     end
   end
 end
