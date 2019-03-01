@@ -1,5 +1,5 @@
 defmodule Nerves.NetworkNG do
-  alias Nerves.NetworkNG.{Ethernet, IP}
+  alias Nerves.NetworkNG.{Ethernet, IP, Interface}
 
   @doc """
   Get the path to the nerves network tmp directory
@@ -56,6 +56,16 @@ defmodule Nerves.NetworkNG do
         end)
 
       error ->
+        error
+    end
+  end
+
+  def get_interface(iface_name) do
+    case IP.address_show(iface_name) do
+      {:ok, output} ->
+        Interface.from_string(iface_name, output)
+
+      {:error, _} = error ->
         error
     end
   end
