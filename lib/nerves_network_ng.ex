@@ -60,10 +60,11 @@ defmodule Nerves.NetworkNG do
     end
   end
 
+  @spec get_interface(Interface.iface_name()) :: {:ok, Interface.t()} | {:error, String.t()}
   def get_interface(iface_name) do
     case IP.address_show(iface_name) do
       {:ok, output} ->
-        Interface.from_string(iface_name, output)
+        {:ok, Interface.from_string(iface_name, output)}
 
       {:error, _} = error ->
         error
