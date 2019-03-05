@@ -76,6 +76,18 @@ defmodule Nerves.NetworkNG.Interface do
     |> new()
   end
 
+  @spec status_change(t(), t()) :: :up | :down | :noop
+  def status_change(%__MODULE__{running?: true}, %__MODULE__{running?: false}), do: :down
+  def status_change(%__MODULE__{running?: false}, %__MODULE__{running?: true}), do: :up
+  def status_change(%__MODULE__{}, %__MODULE__{}), do: :noop
+
+  @spec name(t()) :: iface_name()
+  def name(%__MODULE__{name: name}), do: name
+
+  @spec up?(t()) :: boolean
+  def up?(%__MODULE__{running?: true}), do: true
+  def up?(%__MODULE__{}), do: false
+
   defp parse_iface_flags(iface_info_string) do
     Regex.scan(~r/(?<=\<).*(?=\>)/, iface_info_string)
     |> List.flatten()
@@ -88,7 +100,7 @@ defmodule Nerves.NetworkNG.Interface do
     end)
   end
 
-  def parse_inet4_ip_address(iface_info_string) do
+  defp parse_inet4_ip_address(iface_info_string) do
     Regex.scan(~r/inet \b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/, iface_info_string)
     |> List.flatten()
     |> list_first_with_default("")
@@ -97,7 +109,7 @@ defmodule Nerves.NetworkNG.Interface do
     |> List.first()
   end
 
-  def parse_inet6_ip_address(iface_info_string) do
+  defp parse_inet6_ip_address(iface_info_string) do
     # Probably should use better Regex, but during the "make it work" phase
     # this should be okay
     regex = ~r/inet6 [^\s]+/
