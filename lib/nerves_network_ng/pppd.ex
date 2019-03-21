@@ -3,12 +3,17 @@ defmodule Nerves.NetworkNG.PPPD do
   Example with Twilio provider
 
   iex> {:ok, pppd} = Nerves.NetworkNG.setup_with_provider(Nerves.NetworkNG.Twilio)
-  iex> Nerves.NetworkNG.up(pppd)
+  iex> Nerves.NetworkNG.up(pppd, "/dev/ttyUSB1")
   """
-  alias Nerves.NetworkNG
 
   # probably will want to handle this differently long term
-  @default_pppd_options [noipdefault: true, usepeerdns: true, defaultroute: true, persist: true]
+  @default_pppd_options [
+    noipdefault: true,
+    usepeerdns: true,
+    defaultroute: true,
+    persist: true,
+    noauth: true
+  ]
 
   @opaque t :: %__MODULE__{
             options: keyword(),
@@ -23,22 +28,19 @@ defmodule Nerves.NetworkNG.PPPD do
     struct(__MODULE__, provider: provider_module, options: pppd_options)
   end
 
-  def run_usb_modeswitch() do
-    NetworkNG.run_cmd("usb_modeswitch", ["-v", "12d1", "-p", "14fe", "-J"])
-  end
-
   @doc """
   Takes the pppd provider module (make a behavior for this?) to set
-  up configuration file, runs usb mode switch for the LTE module, and
-  setups up kernel drivers
+  up configuration file and ensures other systems related things set up.
+
+  Might want to remove particular setup logic out to different
+  functions.
 
   We return a new PPPD to use if setup works.
   """
   @spec setup_with_provider(module(), pppd_options :: keyword()) :: {:ok, t()} | any()
   def setup_with_provider(provider_module, pppd_options \\ @default_pppd_options) do
-    with :ok <- run_usb_modeswitch(),
-         :ok <- setup_drivers(),
-         :ok <- apply(provider_module, :write_config, []) do
+    with :ok <- apply(provider_module, :write_config, []),
+         {"", _} <- System.cmd("mknod", ["/dev/ppp", "c", "108", "0"]) do
       {:ok, new(provider_module, pppd_options)}
     else
       error -> error
@@ -48,37 +50,32 @@ defmodule Nerves.NetworkNG.PPPD do
   @doc """
   Start the pppd service.
 
-  Currently will always run the `usb_modeswitch` command, might want to pull that out
-  or make it configurable later.
+  Takes a PPPD config, the ttyname to connect to, and the speed (default 115_200)
   """
-  @spec up(t()) :: integer()
-  def up(pppd) do
-    {_, exit_code} = System.cmd("sh", ["-c", to_cli_command(pppd)])
+  @spec up(t(), String.t(), non_neg_integer()) :: integer()
+  def up(pppd, ttyname, speed \\ 115_200) do
+    pppd_command = to_cli_command(pppd, ttyname, speed)
+    {_, exit_code} = System.cmd("sh", ["-c", pppd_command])
     exit_code
   end
 
-  @spec to_cli_command(t()) :: String.t()
-  def to_cli_command(%__MODULE__{provider: provider_module} = pppd) do
+  @spec to_cli_command(t(), String.t(), non_neg_integer()) :: String.t()
+  def to_cli_command(
+        %__MODULE__{provider: provider_module} = pppd,
+        ttyname,
+        speed
+      ) do
     provider_config_file = apply(provider_module, :config_file_path, [])
 
-    command_str =
-      "pppd connect \"/usr/sbin/chat -v -f #{provider_config_file}\" /dev/ttyUSB0 115200"
+    pppd_opts_string =
+      pppd
+      |> to_option_list()
+      |> Enum.map(&option_to_string/1)
+      |> Enum.join(" ")
 
-    pppd
-    |> to_option_list()
-    |> Enum.map(&option_to_string/1)
-    |> Enum.reduce(command_str, &(&2 <> " #{&1}"))
-  end
-
-  def setup_drivers() do
-    drivers = [
-      "huawei_cdc_ncm",
-      "option",
-      "bsd_comp",
-      "ppp_deflate"
-    ]
-
-    Enum.each(drivers, &System.cmd("modprobe", [&1]))
+    "pppd connect \"/usr/sbin/chat -v -f #{provider_config_file}\" #{ttyname} #{speed} #{
+      pppd_opts_string
+    }"
   end
 
   @spec to_option_list(t()) :: [atom()]
