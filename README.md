@@ -31,7 +31,8 @@
 #### System deps
 
 - `pppd`
-- `usb_modeswitch`
+- `mknod`
+
 
 ## Installation
 
