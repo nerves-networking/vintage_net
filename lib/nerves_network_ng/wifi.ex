@@ -4,6 +4,7 @@ defmodule Nerves.NetworkNG.WiFi do
   """
 
   alias Nerves.NetworkNG
+  alias Nerves.NetworkNG.WiFi.WPA2
 
   @type address_method :: :dhcp | :static
 
@@ -20,7 +21,8 @@ defmodule Nerves.NetworkNG.WiFi do
             network: nil,
             broadcast: nil
 
-  def new(interface, ssid, psk, opts \\ []) do
+  def new(interface, ssid, passphrase, opts \\ []) do
+    {:ok, psk} = WPA2.to_psk(ssid, passphrase)
     opts =
       [ssid: ssid, psk: psk, interface: interface]
       |> Keyword.merge(opts)
@@ -49,7 +51,7 @@ defmodule Nerves.NetworkNG.WiFi do
 
     network={
       ssid="#{ssid}"
-      psk="#{psk}"
+      psk=#{psk}
       key_mgmt=#{key_mgmt}
     }
     """
