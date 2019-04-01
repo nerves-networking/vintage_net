@@ -1,6 +1,5 @@
 # Nerves.NetworkNG
 
-
 ## System Requirements
 
 - `ifupdown`
@@ -15,7 +14,7 @@
 - `hostapd`
 - `dnsmasq`
 
-### Addtional Requirements for LTE
+### Additional Requirements for LTE
 
 #### Kernel modules (defconfig)
 
@@ -33,6 +32,11 @@
 - `pppd`
 - `mknod`
 
+## Examples
+
+Wired Ethernet:
+
+```elixir
 
 ## Installation
 

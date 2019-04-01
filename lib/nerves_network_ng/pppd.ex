@@ -2,8 +2,8 @@ defmodule Nerves.NetworkNG.PPPD do
   @moduledoc """
   Example with Twilio provider
 
-  iex> {:ok, pppd} = Nerves.NetworkNG.setup_with_provider(Nerves.NetworkNG.Twilio)
-  iex> Nerves.NetworkNG.up(pppd, "/dev/ttyUSB1")
+  iex> {:ok, pppd} = Nerves.NetworkNG.PPPD.setup_with_provider(Nerves.NetworkNG.Twilio)
+  iex> Nerves.NetworkNG.PPPD.up(pppd, "/dev/ttyUSB1")
   """
 
   # probably will want to handle this differently long term
