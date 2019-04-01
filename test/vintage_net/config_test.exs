@@ -5,13 +5,15 @@ defmodule VintageNet.ConfigTest do
   doctest Config
 
   test "create a wired ethernet configuration" do
-    locations = %{
-      network_interfaces: "/tmp/network_interfaces",
+    opts = [
+      interfaces_file: "/tmp/network_interfaces",
       ifup: "/sbin/ifup",
       ifdown: "/sbin/ifdown"
-    }
+    ]
 
-    input = [%{ifname: "eth0", ipv4: %{method: :dhcp}, ipv6: %{method: :automatic}}]
+    input = [
+      %{ifname: "eth0", ipv4: %{method: :dhcp}}
+    ]
 
     output = %{
       network_interfaces: "iface eth0 inet dhcp",
@@ -19,17 +21,17 @@ defmodule VintageNet.ConfigTest do
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces eth0"]
     }
 
-    assert output == Config.apply(input, locations: locations)
+    assert output == Config.make(input, opts)
   end
 
   test "create a wireless ethernet configuration" do
-    locations = %{
+    opts = [
       network_interfaces: "/tmp/network_interfaces",
       wpa_supplicant_conf: "/tmp/wpa_supplicant.conf",
       wpa_supplicant_control: "/tmp/foo",
       ifup: "/sbin/ifup",
       ifdown: "/sbin/ifdown"
-    }
+    ]
 
     input = [
       %{
@@ -39,8 +41,7 @@ defmodule VintageNet.ConfigTest do
           psk: "1234567890123456789012345678901234567890123456789012345678901234",
           key_mgmt: :wpa_psk
         },
-        ipv4: %{method: :dhcp},
-        ipv6: %{method: :automatic}
+        ipv4: %{method: :dhcp}
       }
     ]
 
@@ -62,23 +63,32 @@ defmodule VintageNet.ConfigTest do
       down_cmds: ["ifdown -i /tmp/network_interfaces wlan0"]
     }
 
-    assert output == Config.apply(input)
+    assert output == Config.make(input, opts)
   end
 
   test "create an LTE configuration" do
-    input = []
+    input = [
+      %{
+        iface: "",
+        pppd: %{
+          options: ["usepeerdns", "noauth"],
+          provider: "/tmp/chat_script",
+          chat_bin: "/usr/sbin/chat",
+          ttyname: "/dev/ttyUSB1",
+          speed: 115_200
+        }
+      }
+    ]
 
     output = %{
       network_interfaces: "",
       up_cmds: [
         "mknod /dev/ppp c 108 0",
-        "pppd connect \"/usr/sbin/chat -v -f /path/to/provider_chat_script\" ttyUSB1 115200 usepeerdns blabla"
+        "pppd connect \"/usr/sbin/chat -v -f /tmp/chat_script\" /dev/ttyUSB1 115200 usepeerdns noauth"
       ],
       down_cmds: ["killall -q pppd"]
     }
 
-    output = :ok
-
-    assert output == Config.apply(input)
+    assert output == Config.make(input)
   end
 end
