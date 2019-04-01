@@ -23,6 +23,7 @@ defmodule Nerves.NetworkNG.WiFi do
 
   def new(interface, ssid, passphrase, opts \\ []) do
     {:ok, psk} = WPA2.to_psk(ssid, passphrase)
+
     opts =
       [ssid: ssid, psk: psk, interface: interface]
       |> Keyword.merge(opts)

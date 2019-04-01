@@ -23,7 +23,7 @@ defmodule Nerves.NetworkNG.WiFi.WPA2 do
   def to_psk(ssid, psk) when byte_size(psk) == 64 do
     with :ok <- psk_ok(psk),
          :ok <- ssid_ok(ssid) do
-        {:ok, psk}
+      {:ok, psk}
     end
   end
 
@@ -92,9 +92,11 @@ defmodule Nerves.NetworkNG.WiFi.WPA2 do
 
   defp all_ascii(_other), do: {:error, :invalid_characters}
 
-  defp all_hex_digits(<<c, rest::binary>>) when (c >= ?0 and c <= ?9) or (c >= ?a and c <= ?f) or (c >= ?A and c <= ?F) do
+  defp all_hex_digits(<<c, rest::binary>>)
+       when (c >= ?0 and c <= ?9) or (c >= ?a and c <= ?f) or (c >= ?A and c <= ?F) do
     all_hex_digits(rest)
   end
+
   defp all_hex_digits(<<>>), do: :ok
 
   defp all_hex_digits(_other), do: {:error, :invalid_characters}

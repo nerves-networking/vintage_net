@@ -27,12 +27,12 @@ defmodule WiFi.WPA2Test do
     assert WPA2.to_psk("ThisIsASSID", "ThisIsAPassword") ==
              {:ok,
               "0DC0D6EB90555ED6419756B9A15EC3E3" <>
-              "209B63DF707DD508D14581F8982721AF"}
+                "209B63DF707DD508D14581F8982721AF"}
 
     assert WPA2.to_psk("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") ==
              {:ok,
               "BECB93866BB8C3832CB777C2F559807C" <>
-              "8C59AFCB6EAE734885001300A981CC62"}
+                "8C59AFCB6EAE734885001300A981CC62"}
   end
 
   test "PSKs get passed through" do
