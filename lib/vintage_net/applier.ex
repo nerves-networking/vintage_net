@@ -5,7 +5,7 @@ defmodule VintageNet.Applier do
 
   @doc """
   """
-  def apply(input) do
+  def apply(_input) do
     :ok
   end
 end

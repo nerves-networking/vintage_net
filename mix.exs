@@ -1,16 +1,15 @@
-defmodule NervesNetworkNG.MixProject do
+defmodule VintageNet.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :nerves_network_ng,
+      app: :vintage_net,
       version: "0.1.0",
-      elixir: "~> 1.6",
+      elixir: "~> 1.8",
       start_permanent: Mix.env() == :prod,
-      build_embedded: true,
       deps: deps(),
       dialyzer: dialyzer(),
-      docs: [extras: ["README.md"] ++ Path.wildcard("docs/*.md")],
+      docs: [extras: ["README.md"]],
       package: package(),
       description: description()
     ]
@@ -18,7 +17,8 @@ defmodule NervesNetworkNG.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger],
+      mod: {VintageNet.Application, []}
     ]
   end
 
