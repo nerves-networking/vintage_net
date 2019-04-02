@@ -24,11 +24,15 @@ defmodule VintageNet.ConfigEthTest do
       {"eth0", %{type: :ethernet, ipv4: %{method: :dhcp}}}
     ]
 
-    output = %{
+    output_config = %{
       files: [{"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"}],
       up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
     }
+
+    output = [
+      {"eth0", output_config}
+    ]
 
     assert output == Config.make(input, default_opts())
   end
@@ -58,11 +62,15 @@ defmodule VintageNet.ConfigEthTest do
       dns-search test.net
     """
 
-    output = %{
+    output_config = %{
       files: [{"/tmp/network_interfaces.eth0", interfaces_content}],
       up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
     }
+
+    output = [
+      {"eth0", output_config}
+    ]
 
     assert output == Config.make(input, default_opts())
   end
@@ -73,20 +81,22 @@ defmodule VintageNet.ConfigEthTest do
       {"eth1", %{type: :ethernet, ipv4: %{method: :dhcp}}}
     ]
 
-    output = %{
-      files: [
-        {"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"},
-        {"/tmp/network_interfaces.eth1", "iface eth1 inet dhcp"}
-      ],
-      up_cmds: [
-        "/sbin/ifup -i /tmp/network_interfaces.eth0 eth0",
-        "/sbin/ifup -i /tmp/network_interfaces.eth1 eth1"
-      ],
-      down_cmds: [
-        "/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0",
-        "/sbin/ifdown -i /tmp/network_interfaces.eth1 eth1"
-      ]
+    eth0_config = %{
+      files: [{"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"}],
+      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
+      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
     }
+
+    eth1_config = %{
+      files: [{"/tmp/network_interfaces.eth1", "iface eth1 inet dhcp"}],
+      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth1 eth1"],
+      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth1 eth1"]
+    }
+
+    output = [
+      {"eth0", eth0_config},
+      {"eth1", eth1_config}
+    ]
 
     assert output == Config.make(input, default_opts())
   end
