@@ -57,6 +57,6 @@ defmodule VintageNet.ConfigLTETest do
       down_cmds: ["/usr/bin/killall -q pppd"]
     }
 
-    assert output == Config.make(input, default_opts())
+    assert [{"ppp0", output}] == Config.make(input, default_opts())
   end
 end

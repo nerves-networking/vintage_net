@@ -78,6 +78,6 @@ defmodule VintageNet.ConfigAPTest do
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces wlan0"]
     }
 
-    assert output == Config.make(input, default_opts())
+    assert [{"wlan0", output}] == Config.make(input, default_opts())
   end
 end

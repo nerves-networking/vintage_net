@@ -24,17 +24,13 @@ defmodule VintageNet.ConfigEthTest do
       {"eth0", %{type: :ethernet, ipv4: %{method: :dhcp}}}
     ]
 
-    output_config = %{
+    output = %{
       files: [{"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"}],
       up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
     }
 
-    output = [
-      {"eth0", output_config}
-    ]
-
-    assert output == Config.make(input, default_opts())
+    assert [{"eth0", output}] == Config.make(input, default_opts())
   end
 
   test "create a wired ethernet configuration with static IP" do
@@ -62,17 +58,13 @@ defmodule VintageNet.ConfigEthTest do
       dns-search test.net
     """
 
-    output_config = %{
+    output = %{
       files: [{"/tmp/network_interfaces.eth0", interfaces_content}],
       up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
     }
 
-    output = [
-      {"eth0", output_config}
-    ]
-
-    assert output == Config.make(input, default_opts())
+    assert [{"eth0", output}] == Config.make(input, default_opts())
   end
 
   test "create a dual wired ethernet configuration" do
