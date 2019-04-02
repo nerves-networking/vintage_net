@@ -39,7 +39,7 @@ defmodule VintageNet.ConfigEthTest do
        %{
          type: :ethernet,
          ipv4: %{
-           method: :manual,
+           method: :static,
            addresses: [
              %{address: "192.168.0.2", netmask: "255.255.255.0", gateway: "192.168.0.1"}
            ],
@@ -49,8 +49,17 @@ defmodule VintageNet.ConfigEthTest do
        }}
     ]
 
+    interfaces_content = """
+    iface eth0 inet static
+      address 192.168.0.2
+      netmask 255.255.255.0
+      gateway 192.168.0.1
+      dns_nameservers 1.1.1.1 8.8.8.8
+      dns-search test.net
+    """
+
     output = %{
-      files: [{"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"}],
+      files: [{"/tmp/network_interfaces.eth0", interfaces_content}],
       up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
     }
