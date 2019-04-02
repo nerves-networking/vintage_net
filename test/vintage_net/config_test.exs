@@ -40,20 +40,24 @@ defmodule VintageNet.ConfigTest do
     ]
 
     output = %{
-      network_interfaces: """
-      pre-up wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf -dd
-      post-down killall -q wpa_supplicant
-      """,
-      wpa_supplicant_conf: """
-      ctrl_interface=/tmp/foo
-      country=US
+      files: [
+        {"/tmp/network_interfaces",
+         """
+         pre-up wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf -dd
+         post-down killall -q wpa_supplicant
+         """},
+        {"/tmp/wpa_supplicant.conf",
+         """
+         ctrl_interface=/tmp/foo
+         country=US
 
-      network={
-        ssid="testme"
-        psk=1234567890123456789012345678901234567890123456789012345678901234
-        key_mgmt=WPA-PSK
-      }
-      """,
+         network={
+           ssid="testme"
+           psk=1234567890123456789012345678901234567890123456789012345678901234
+           key_mgmt=WPA-PSK
+         }
+         """}
+      ],
       up_cmds: ["/sbin/ifup -i /tmp/network_interfaces wlan0"],
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces wlan0"]
     }
@@ -79,21 +83,25 @@ defmodule VintageNet.ConfigTest do
     ]
 
     output = %{
-      network_interfaces: """
-      pre-up wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf -dd
-      post-down killall -q wpa_supplicant
-      """,
-      wpa_supplicant_conf: """
-      ctrl_interface=/tmp/foo
-      country=US
+      files: [
+        {"/tmp/network_interfaces",
+         """
+         pre-up wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf -dd
+         post-down killall -q wpa_supplicant
+         """},
+        {"/tmp/wpa_supplicant.conf",
+         """
+         ctrl_interface=/tmp/foo
+         country=US
 
-      network={
-        ssid="testme"
-        psk=1234567890123456789012345678901234567890123456789012345678901234
-        key_mgmt=WPA-PSK
-        scan_ssid=1
-      }
-      """,
+         network={
+           ssid="testme"
+           psk=1234567890123456789012345678901234567890123456789012345678901234
+           key_mgmt=WPA-PSK
+           scan_ssid=1
+         }
+         """}
+      ],
       up_cmds: ["/sbin/ifup -i /tmp/network_interfaces wlan0"],
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces wlan0"]
     }
@@ -132,7 +140,7 @@ defmodule VintageNet.ConfigTest do
     ]
 
     output = %{
-      network_interfaces: "",
+      files: [],
       up_cmds: [
         "/bin/mknod /dev/ppp c 108 0",
         "/usr/sbin/pppd connect \"/usr/sbin/chat -v -f /tmp/chat_script\" /dev/ttyUSB1 115200 noipdefault usepeerdns defaultroute noauth persist noauth"

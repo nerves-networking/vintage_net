@@ -48,27 +48,32 @@ defmodule VintageNet.ConfigAPTest do
     ]
 
     output = %{
-      network_interfaces: """
-      pre-up /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf -dd
-      post-down /usr/sbin/killall -q wpa_supplicant; /usr/sbin/killall -q udhcpcd
-      """,
-      wpa_supplicant_conf: """
-      ctrl_interface=/tmp/foo
-      country=US
+      files: [
+        {"/tmp/network_interfaces",
+         """
+         pre-up /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf -dd
+         post-down /usr/sbin/killall -q wpa_supplicant; /usr/sbin/killall -q udhcpcd
+         """},
+        {"/tmp/wpa_supplicant.conf",
+         """
+         ctrl_interface=/tmp/foo
+         country=US
 
-      network={
-        ap_scan=2
-        mode=2
-        ssid="my_accesspoint"
-        psk=1234567890123456789012345678901234567890123456789012345678901234
-        key_mgmt=WPA-PSK
-      }
-      """,
-      udhcpd_conf: """
-      start 192.168.0.10
-      end	192.168.0.100
-      interface	wlan0
-      """,
+         network={
+           ap_scan=2
+           mode=2
+           ssid="my_accesspoint"
+           psk=1234567890123456789012345678901234567890123456789012345678901234
+           key_mgmt=WPA-PSK
+         }
+         """},
+        {"/tmp/udhcpd.conf",
+         """
+         start 192.168.0.10
+         end	192.168.0.100
+         interface	wlan0
+         """}
+      ],
       up_cmds: ["/sbin/ifup -i /tmp/network_interfaces wlan0"],
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces wlan0"]
     }

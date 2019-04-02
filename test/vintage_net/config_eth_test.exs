@@ -27,7 +27,7 @@ defmodule VintageNet.ConfigEthTest do
     ]
 
     output = %{
-      network_interfaces: "iface eth0 inet dhcp",
+      files: [{"/tmp/network_interfaces", "iface eth0 inet dhcp"}],
       up_cmds: ["/sbin/ifup -i /tmp/network_interfaces eth0"],
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces eth0"]
     }
@@ -52,7 +52,7 @@ defmodule VintageNet.ConfigEthTest do
     ]
 
     output = %{
-      network_interfaces: "iface eth0 inet dhcp",
+      files: [{"/tmp/network_interfaces", "iface eth0 inet dhcp"}],
       up_cmds: ["/sbin/ifup -i /tmp/network_interfaces eth0"],
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces eth0"]
     }
@@ -67,10 +67,13 @@ defmodule VintageNet.ConfigEthTest do
     ]
 
     output = %{
-      network_interfaces: """
-      iface eth0 inet dhcp
-      iface eth1 inet dhcp
-      """,
+      files: [
+        {"/tmp/network_interfaces",
+         """
+         iface eth0 inet dhcp
+         iface eth1 inet dhcp
+         """}
+      ],
       up_cmds: ["/sbin/ifup -i /tmp/network_interfaces eth0 eth1"],
       down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces eth0 eth1"]
     }
