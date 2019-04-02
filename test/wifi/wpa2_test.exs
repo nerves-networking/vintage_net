@@ -1,6 +1,6 @@
-defmodule WiFi.WPA2Test do
+defmodule VintageNet.WiFi.WPA2Test do
   use ExUnit.Case
-  alias Nerves.NetworkNG.WiFi.WPA2
+  alias VintageNet.WiFi.WPA2
 
   doctest WPA2
 

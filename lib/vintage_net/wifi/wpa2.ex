@@ -1,4 +1,4 @@
-defmodule Nerves.NetworkNG.WiFi.WPA2 do
+defmodule VintageNet.WiFi.WPA2 do
   @moduledoc """
   WPA2 preshared key calculations
 
