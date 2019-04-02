@@ -15,11 +15,8 @@ defmodule VintageNet.ConfigTest do
       chat_bin: "/usr/sbin/chat",
       pppd: "/usr/sbin/pppd",
       mknod: "/bin/mknod",
-      ifup: "/sbin/ifup",
-      ifdown: "/sbin/ifdown",
       killall: "/usr/bin/killall",
-      ifup: "/sbin/ifup",
-      ifdown: "/sbin/ifdown"
+      wpa_supplicant: "/usr/sbin/wpa_supplicant"
     ]
   end
 
@@ -41,12 +38,12 @@ defmodule VintageNet.ConfigTest do
 
     output = %{
       files: [
-        {"/tmp/network_interfaces",
+        {"/tmp/network_interfaces.wlan0",
          """
-         pre-up wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf -dd
-         post-down killall -q wpa_supplicant
+         pre-up /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd
+         post-down /usr/bin/killall -q wpa_supplicant
          """},
-        {"/tmp/wpa_supplicant.conf",
+        {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/foo
          country=US
@@ -58,8 +55,8 @@ defmodule VintageNet.ConfigTest do
          }
          """}
       ],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces wlan0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces wlan0"]
+      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"],
+      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0"]
     }
 
     assert output == Config.make(input, default_opts())

@@ -6,6 +6,7 @@ defmodule VintageNet.MixProject do
       app: :vintage_net,
       version: "0.1.0",
       elixir: "~> 1.8",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: dialyzer(),
@@ -17,10 +18,26 @@ defmodule VintageNet.MixProject do
 
   def application do
     [
+      env: [
+        network_interfaces: "/tmp/network_interfaces",
+        tmpdir: "/tmp",
+        wpa_supplicant_conf: "/tmp/wpa_supplicant.conf",
+        wpa_supplicant_control: "/tmp/foo",
+        bin_ifup: "/sbin/ifup",
+        bin_ifdown: "/sbin/ifdown",
+        bin_chat: "/usr/sbin/chat",
+        bin_pppd: "/usr/sbin/pppd",
+        bin_mknod: "/bin/mknod",
+        bin_killall: "/usr/bin/killall",
+        bin_wpa_supplicant: "/usr/sbin/wpa_supplicant"
+      ],
       extra_applications: [:logger],
       mod: {VintageNet.Application, []}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp description do
     "Manage network connections the way your parents did"

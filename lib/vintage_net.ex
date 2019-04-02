@@ -47,8 +47,43 @@ defmodule VintageNet do
   Check that the system has the required programs installed
 
   """
-  @spec verify_system([network_type()]) :: :ok | {:error, any()}
-  def verify_system(_types \\ [:ethernet, :wifi]) do
-    :ok
+  @spec verify_system([network_type()] | network_type(), keyword()) :: :ok | {:error, any()}
+  def verify_system(types, opts) when is_list(types) do
+    # TODO...Fix with whatever the right Enum thing is.
+    with :ok <- verify_system(:ethernet, opts) do
+      :ok
+    end
+  end
+
+  def verify_system(:ethernet, opts) do
+    with :ok <- check_program(opts[:bin_ifup]) do
+      :ok
+    end
+  end
+
+  def verify_system(:wifi, opts) do
+    with :ok <- check_program(opts[:bin_ifup]) do
+      :ok
+    end
+  end
+
+  def verify_system(:wifi_ap, opts) do
+    with :ok <- check_program(opts[:bin_ifup]) do
+      :ok
+    end
+  end
+
+  def verify_system(:mobile, opts) do
+    with :ok <- check_program(opts[:bin_ifup]) do
+      :ok
+    end
+  end
+
+  defp check_program(path) do
+    if File.exists?(path) do
+      :ok
+    else
+      {:error, "Can't find #{path}"}
+    end
   end
 end

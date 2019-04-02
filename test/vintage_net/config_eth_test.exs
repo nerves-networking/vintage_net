@@ -15,9 +15,7 @@ defmodule VintageNet.ConfigEthTest do
       mknod: "/bin/mknod",
       ifup: "/sbin/ifup",
       ifdown: "/sbin/ifdown",
-      killall: "/usr/bin/killall",
-      ifup: "/sbin/ifup",
-      ifdown: "/sbin/ifdown"
+      killall: "/usr/bin/killall"
     ]
   end
 
@@ -27,9 +25,9 @@ defmodule VintageNet.ConfigEthTest do
     ]
 
     output = %{
-      files: [{"/tmp/network_interfaces", "iface eth0 inet dhcp"}],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces eth0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces eth0"]
+      files: [{"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"}],
+      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
+      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
     }
 
     assert output == Config.make(input, default_opts())
@@ -52,9 +50,9 @@ defmodule VintageNet.ConfigEthTest do
     ]
 
     output = %{
-      files: [{"/tmp/network_interfaces", "iface eth0 inet dhcp"}],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces eth0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces eth0"]
+      files: [{"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"}],
+      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
+      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
     }
 
     assert output == Config.make(input, default_opts())
@@ -68,14 +66,17 @@ defmodule VintageNet.ConfigEthTest do
 
     output = %{
       files: [
-        {"/tmp/network_interfaces",
-         """
-         iface eth0 inet dhcp
-         iface eth1 inet dhcp
-         """}
+        {"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"},
+        {"/tmp/network_interfaces.eth1", "iface eth1 inet dhcp"}
       ],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces eth0 eth1"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces eth0 eth1"]
+      up_cmds: [
+        "/sbin/ifup -i /tmp/network_interfaces.eth0 eth0",
+        "/sbin/ifup -i /tmp/network_interfaces.eth1 eth1"
+      ],
+      down_cmds: [
+        "/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0",
+        "/sbin/ifdown -i /tmp/network_interfaces.eth1 eth1"
+      ]
     }
 
     assert output == Config.make(input, default_opts())
