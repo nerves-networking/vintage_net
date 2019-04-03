@@ -1,19 +1,15 @@
 defmodule VintageNet.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
   @moduledoc false
 
   use Application
 
+  @spec start(Application.start_type(), any()) ::
+          {:ok, pid()} | {:ok, pid(), Application.state()} | {:error, reason :: any()}
   def start(_type, _args) do
-    # List all child processes to be supervised
     children = [
-      # Starts a worker by calling: VintageNet.Worker.start_link(arg)
-      # {VintageNet.Worker, arg}
+      {VintageNet.Applier, []}
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: VintageNet.Supervisor]
     Supervisor.start_link(children, opts)
   end

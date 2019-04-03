@@ -1,15 +1,27 @@
 defmodule VintageNet.ApplierTest do
-  use ExUnit.Case
+  use VintageNetTest.Case
   alias VintageNet.Applier
 
   doctest Applier
 
-  test "applies wired ethernet configuration" do
+  setup do
+    # Fresh start each time.
+    Application.stop(:vintage_net)
+    Application.start(:vintage_net)
+    :ok
   end
 
-  test "applies wireless ethernet configuration" do
-  end
+  test "applier can create and delete files", context do
+    # create files here at some tmp place
+    in_tmp(context.test, fn ->
+      input = [{:bogonet0, %{files: [{"testing", "Hello, world"}], up_cmds: [], down_cmds: []}}]
 
-  test "applies LTE configuration" do
+      :ok = VintageNet.Applier.update_config(input)
+      assert File.exists?("testing")
+      assert File.read!("testing") == "Hello, world"
+
+      :ok = VintageNet.Applier.update_config([])
+      refute File.exists?("testing")
+    end)
   end
 end
