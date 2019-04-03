@@ -79,11 +79,7 @@ defmodule VintageNet.ConfigWiFiTest do
 
     output = %{
       files: [
-        {"/tmp/network_interfaces.wlan0",
-         """
-         pre-up /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd
-         post-down /usr/bin/killall -q wpa_supplicant
-         """},
+        {"/tmp/network_interfaces.wlan0", "iface wlan0 inet dhcp"},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/foo
@@ -95,8 +91,14 @@ defmodule VintageNet.ConfigWiFiTest do
          }
          """}
       ],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0"]
+      up_cmds: [
+        "/usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd",
+        "/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"
+      ],
+      down_cmds: [
+        "/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0",
+        "/usr/bin/killall -q wpa_supplicant"
+      ]
     }
 
     assert [{"wlan0", output}] == Config.make(input, default_opts())
