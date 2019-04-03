@@ -4,7 +4,7 @@ defmodule Nerves.NetworkNG.WiFi do
   """
 
   alias Nerves.NetworkNG
-  alias Nerves.NetworkNG.WiFi.WPA2
+  alias VintageNet.WiFi.WPA2
 
   @type address_method :: :dhcp | :static
 

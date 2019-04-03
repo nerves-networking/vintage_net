@@ -13,8 +13,6 @@ defmodule VintageNet.ConfigEthTest do
       chat_bin: "/usr/sbin/chat",
       pppd: "/usr/sbin/pppd",
       mknod: "/bin/mknod",
-      ifup: "/sbin/ifup",
-      ifdown: "/sbin/ifdown",
       killall: "/usr/bin/killall"
     ]
   end

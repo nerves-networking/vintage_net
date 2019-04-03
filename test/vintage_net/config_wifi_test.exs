@@ -18,7 +18,7 @@ defmodule VintageNet.ConfigWiFiTest do
     ]
   end
 
-  test "create a WiFi configuration" do
+  test "create a WPA2 WiFi configuration" do
     input = [
       {"wlan0",
        %{
@@ -60,6 +60,89 @@ defmodule VintageNet.ConfigWiFiTest do
     assert [{"wlan0", output}] == Config.make(input, default_opts())
   end
 
+  test "create a password-less WiFi configuration" do
+    input = [
+      {"wlan0",
+       %{
+         type: :wifi,
+         wifi: %{
+           regulatory_domain: "US",
+           ssid: "testme",
+           mode: :client,
+           key_mgmt: :none
+         },
+         ipv4: %{method: :dhcp}
+       }}
+    ]
+
+    output = %{
+      files: [
+        {"/tmp/network_interfaces.wlan0",
+         """
+         pre-up /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd
+         post-down /usr/bin/killall -q wpa_supplicant
+         """},
+        {"/tmp/wpa_supplicant.conf.wlan0",
+         """
+         ctrl_interface=/tmp/foo
+         country=US
+
+         network={
+           ssid="testme"
+           key_mgmt=NONE
+         }
+         """}
+      ],
+      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"],
+      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0"]
+    }
+
+    assert [{"wlan0", output}] == Config.make(input, default_opts())
+  end
+
+  test "create a WEP WiFi configuration" do
+    input = [
+      {"wlan0",
+       %{
+         type: :wifi,
+         wifi: %{
+           regulatory_domain: "US",
+           ssid: "testme",
+           mode: :client,
+           psk: "42FEEDDEAFBABEDEAFBEEFAA55",
+           key_mgmt: :wep
+         },
+         ipv4: %{method: :dhcp}
+       }}
+    ]
+
+    output = %{
+      files: [
+        {"/tmp/network_interfaces.wlan0",
+         """
+         pre-up /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd
+         post-down /usr/bin/killall -q wpa_supplicant
+         """},
+        {"/tmp/wpa_supplicant.conf.wlan0",
+         """
+         ctrl_interface=/tmp/foo
+         country=US
+
+         network={
+           ssid="testme"
+           key_mgmt=NONE
+           wep_tx_keyidx=0
+           wep_key0=42FEEDDEAFBABEDEAFBEEFAA55
+         }
+         """}
+      ],
+      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"],
+      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0"]
+    }
+
+    assert [{"wlan0", output}] == Config.make(input, default_opts())
+  end
+
   test "create a hidden WiFi configuration" do
     input = [
       {"wlan0",
@@ -79,12 +162,12 @@ defmodule VintageNet.ConfigWiFiTest do
 
     output = %{
       files: [
-        {"/tmp/network_interfaces",
+        {"/tmp/network_interfaces.wlan0",
          """
-         pre-up wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf -dd
+         pre-up wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd
          post-down killall -q wpa_supplicant
          """},
-        {"/tmp/wpa_supplicant.conf",
+        {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/foo
          country=US
@@ -97,10 +180,120 @@ defmodule VintageNet.ConfigWiFiTest do
          }
          """}
       ],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces wlan0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces wlan0"]
+      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"],
+      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0"]
     }
 
     assert [{"wlan0", output}] == Config.make(input, default_opts())
+  end
+
+  test "create a multi-network WiFi configuration" do
+    # All of the IPv4 settings need to be the same for this configuration. This is
+    # probably "good enough". `nerves_network` does better, though.
+    input = [
+      {"wlan0",
+       %{
+         type: :wifi,
+         wifi: %{
+           regulatory_domain: "US",
+           mode: :client,
+           networks: [
+             %{
+               ssid: "firstpriority",
+               psk: "1234567890123456789012345678901234567890123456789012345678901234",
+               key_mgmt: :wpa_psk,
+               priority: 100
+             },
+             %{
+               ssid: "secondpriority",
+               psk: "1234567890123456789012345678901234567890123456789012345678901234",
+               key_mgmt: :wpa_psk,
+               priority: 1
+             },
+             %{
+               ssid: "thirdpriority",
+               psk: "1234567890123456789012345678901234567890123456789012345678901234",
+               key_mgmt: :none,
+               priority: 0
+             }
+           ]
+         },
+         ipv4: %{method: :dhcp}
+       }}
+    ]
+
+    output = %{
+      files: [
+        {"/tmp/network_interfaces.wlan0",
+         """
+         pre-up /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd
+         post-down /usr/bin/killall -q wpa_supplicant
+         """},
+        {"/tmp/wpa_supplicant.conf.wlan0",
+         """
+         ctrl_interface=/tmp/foo
+         country=US
+
+         network={
+           ssid="testme"
+           psk=1234567890123456789012345678901234567890123456789012345678901234
+           key_mgmt=WPA-PSK
+         }
+         """}
+      ],
+      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"],
+      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0"]
+    }
+
+    assert [{"wlan0", output}] == Config.make(input, default_opts())
+  end
+
+  test "create a combo wired Ethernet and WPA2 WiFi configuration" do
+    input = [
+      {"eth0", %{type: :ethernet, ipv4: %{method: :dhcp}}},
+      {"wlan0",
+       %{
+         type: :wifi,
+         wifi: %{
+           regulatory_domain: "US",
+           ssid: "testme",
+           mode: :client,
+           psk: "1234567890123456789012345678901234567890123456789012345678901234",
+           key_mgmt: :wpa_psk
+         },
+         ipv4: %{method: :dhcp}
+       }}
+    ]
+
+    output_eth0 = %{
+      files: [{"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"}],
+      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
+      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
+    }
+
+    output_wlan0 = %{
+      files: [
+        {"/tmp/network_interfaces.wlan0",
+         """
+         pre-up /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd
+         post-down /usr/bin/killall -q wpa_supplicant
+         """},
+        {"/tmp/wpa_supplicant.conf.wlan0",
+         """
+         ctrl_interface=/tmp/foo
+         country=US
+
+         network={
+           ssid="testme"
+           psk=1234567890123456789012345678901234567890123456789012345678901234
+           key_mgmt=WPA-PSK
+         }
+         """}
+      ],
+      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"],
+      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0"]
+    }
+
+    assert [{"eth0", output_eth0}, {"wlan0", output_wlan0}] == Config.make(input, default_opts())
   end
 end
