@@ -70,8 +70,8 @@ defmodule VintageNet.ConfigAPTest do
          interface	wlan0
          """}
       ],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0"]
+      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}],
+      down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}]
     }
 
     assert [{"wlan0", output}] == Config.make(input, default_opts())

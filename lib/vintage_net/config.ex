@@ -24,13 +24,14 @@ defmodule VintageNet.Config do
       ]
 
       up_cmds = [
-        "#{wpa_supplicant} -B -i #{ifname} -c /tmp/wpa_supplicant.conf.#{ifname} -dd",
-        "#{ifup} -i /tmp/network_interfaces.#{ifname} #{ifname}"
+        {:run, wpa_supplicant,
+         ["-B", "-i", ifname, "-c", "/tmp/wpa_supplicant.conf.#{ifname}", "-dd"]},
+        {:run, ifup, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}
       ]
 
       down_cmds = [
-        "#{ifdown} -i /tmp/network_interfaces.#{ifname} #{ifname}",
-        "#{killall} -q wpa_supplicant"
+        {:run, ifdown, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]},
+        {:run, killall, ["-q", "wpa_supplicant"]}
       ]
 
       {ifname, %{files: files, up_cmds: up_cmds, down_cmds: down_cmds}}
@@ -42,8 +43,8 @@ defmodule VintageNet.Config do
          {:ok, ifdown} <- get_option(opts, :ifdown) do
       result = %{
         files: [{"/tmp/network_interfaces.#{ifname}", "iface #{ifname} inet dhcp"}],
-        up_cmds: ["#{ifup} -i /tmp/network_interfaces.#{ifname} #{ifname}"],
-        down_cmds: ["#{ifdown} -i /tmp/network_interfaces.#{ifname} #{ifname}"]
+        up_cmds: [{:run, ifup, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}],
+        down_cmds: [{:run, ifdown, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}]
       }
 
       {ifname, result}
@@ -51,7 +52,7 @@ defmodule VintageNet.Config do
   end
 
   defp wifi_to_supplicant_contents(wifi) do
-    wpa_supplicant = """
+    """
     ctrl_interface=/tmp/foo
     country=#{wifi.regulatory_domain}
 

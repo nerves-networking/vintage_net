@@ -50,10 +50,22 @@ defmodule VintageNet.ConfigLTETest do
     %{
       files: [],
       up_cmds: [
-        "/bin/mknod /dev/ppp c 108 0",
-        "/usr/sbin/pppd connect \"/usr/sbin/chat -v -f /tmp/chat_script\" /dev/ttyUSB1 115200 noipdefault usepeerdns defaultroute noauth persist noauth"
+        {:run, "/bin/mknod", ["/dev/ppp", "c", "108", "0"]},
+        {:run, "/usr/sbin/pppd",
+         [
+           "connect",
+           "/usr/sbin/chat -v -f /tmp/chat_script",
+           "/dev/ttyUSB1",
+           "115200",
+           "noipdefault",
+           "usepeerdns",
+           "defaultroute",
+           "noauth",
+           "persist",
+           "noauth"
+         ]}
       ],
-      down_cmds: ["/usr/bin/killall -q pppd"]
+      down_cmds: [{:run, "/usr/bin/killall", ["-q", "pppd"]}]
     }
   end
 
@@ -87,8 +99,8 @@ defmodule VintageNet.ConfigLTETest do
 
     output_eth0 = %{
       files: [{"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"}],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
+      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
+      down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
 
     output_wlan0 = %{

@@ -50,12 +50,13 @@ defmodule VintageNet.ConfigWiFiTest do
          """}
       ],
       up_cmds: [
-        "/usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd",
-        "/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"
+        {:run, "/usr/sbin/wpa_supplicant",
+         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        "/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0",
-        "/usr/bin/killall -q wpa_supplicant"
+        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
       ]
     }
 
@@ -92,12 +93,13 @@ defmodule VintageNet.ConfigWiFiTest do
          """}
       ],
       up_cmds: [
-        "/usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd",
-        "/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"
+        {:run, "/usr/sbin/wpa_supplicant",
+         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        "/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0",
-        "/usr/bin/killall -q wpa_supplicant"
+        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
       ]
     }
 
@@ -124,8 +126,7 @@ defmodule VintageNet.ConfigWiFiTest do
       files: [
         {"/tmp/network_interfaces.wlan0",
          """
-         pre-up /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd
-         post-down /usr/bin/killall -q wpa_supplicant
+         iface wlan0 inet dhcp
          """},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
@@ -140,8 +141,15 @@ defmodule VintageNet.ConfigWiFiTest do
          }
          """}
       ],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0"]
+      up_cmds: [
+        {:run, "/usr/sbin/wpa_supplicant",
+         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
+      ],
+      down_cmds: [
+        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+      ]
     }
 
     assert [{"wlan0", output}] == Config.make(input, default_opts())
@@ -168,8 +176,7 @@ defmodule VintageNet.ConfigWiFiTest do
       files: [
         {"/tmp/network_interfaces.wlan0",
          """
-         pre-up wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd
-         post-down killall -q wpa_supplicant
+         iface wlan0 inet dhcp
          """},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
@@ -184,8 +191,15 @@ defmodule VintageNet.ConfigWiFiTest do
          }
          """}
       ],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0"]
+      up_cmds: [
+        {:run, "/usr/sbin/wpa_supplicant",
+         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
+      ],
+      down_cmds: [
+        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+      ]
     }
 
     assert [{"wlan0", output}] == Config.make(input, default_opts())
@@ -228,11 +242,7 @@ defmodule VintageNet.ConfigWiFiTest do
 
     output = %{
       files: [
-        {"/tmp/network_interfaces.wlan0",
-         """
-         pre-up /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd
-         post-down /usr/bin/killall -q wpa_supplicant
-         """},
+        {"/tmp/network_interfaces.wlan0", "iface wlan0 inet dhcp"},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/foo
@@ -245,8 +255,15 @@ defmodule VintageNet.ConfigWiFiTest do
          }
          """}
       ],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0"]
+      up_cmds: [
+        {:run, "/usr/sbin/wpa_supplicant",
+         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
+      ],
+      down_cmds: [
+        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+      ]
     }
 
     assert [{"wlan0", output}] == Config.make(input, default_opts())
@@ -271,17 +288,13 @@ defmodule VintageNet.ConfigWiFiTest do
 
     output_eth0 = %{
       files: [{"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"}],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
+      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
+      down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
 
     output_wlan0 = %{
       files: [
-        {"/tmp/network_interfaces.wlan0",
-         """
-         pre-up /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd
-         post-down /usr/bin/killall -q wpa_supplicant
-         """},
+        {"/tmp/network_interfaces.wlan0", "iface wlan0 inet dhcp"},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/foo
@@ -294,8 +307,15 @@ defmodule VintageNet.ConfigWiFiTest do
          }
          """}
       ],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.wlan0 wlan0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.wlan0 wlan0"]
+      up_cmds: [
+        {:run, "/usr/sbin/wpa_supplicant",
+         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
+      ],
+      down_cmds: [
+        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+      ]
     }
 
     assert [{"eth0", output_eth0}, {"wlan0", output_wlan0}] == Config.make(input, default_opts())

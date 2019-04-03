@@ -24,8 +24,8 @@ defmodule VintageNet.ConfigEthTest do
 
     output = %{
       files: [{"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"}],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
+      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
+      down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
 
     assert [{"eth0", output}] == Config.make(input, default_opts())
@@ -58,8 +58,8 @@ defmodule VintageNet.ConfigEthTest do
 
     output = %{
       files: [{"/tmp/network_interfaces.eth0", interfaces_content}],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
+      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
+      down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
 
     assert [{"eth0", output}] == Config.make(input, default_opts())
@@ -73,14 +73,14 @@ defmodule VintageNet.ConfigEthTest do
 
     eth0_config = %{
       files: [{"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"}],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth0 eth0"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth0 eth0"]
+      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
+      down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
 
     eth1_config = %{
       files: [{"/tmp/network_interfaces.eth1", "iface eth1 inet dhcp"}],
-      up_cmds: ["/sbin/ifup -i /tmp/network_interfaces.eth1 eth1"],
-      down_cmds: ["/sbin/ifdown -i /tmp/network_interfaces.eth1 eth1"]
+      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth1", "eth1"]}],
+      down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth1", "eth1"]}]
     }
 
     output = [
