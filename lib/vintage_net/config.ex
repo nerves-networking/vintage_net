@@ -13,16 +13,16 @@ defmodule VintageNet.Config do
     end
   end
 
-  defp do_make({ifname, %{type: :ethernet} = config}, opts) do
+  defp do_make({ifname, %{type: :ethernet} = _config}, opts) do
     with {:ok, ifup} <- get_option(opts, :ifup),
          {:ok, ifdown} <- get_option(opts, :ifdown) do
-      config = %{
+      result = %{
         files: [{"/tmp/network_interfaces.#{ifname}", "iface #{ifname} inet dhcp"}],
         up_cmds: ["#{ifup} -i /tmp/network_interfaces.#{ifname} #{ifname}"],
         down_cmds: ["#{ifdown} -i /tmp/network_interfaces.#{ifname} #{ifname}"]
       }
 
-      {ifname, config}
+      {ifname, result}
     end
   end
 end
