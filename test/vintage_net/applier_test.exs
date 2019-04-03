@@ -12,7 +12,6 @@ defmodule VintageNet.ApplierTest do
   end
 
   test "applier can create and delete files", context do
-    # create files here at some tmp place
     in_tmp(context.test, fn ->
       input = [{:bogonet0, %{files: [{"testing", "Hello, world"}], up_cmds: [], down_cmds: []}}]
 
@@ -22,6 +21,25 @@ defmodule VintageNet.ApplierTest do
 
       :ok = VintageNet.Applier.update_config([])
       refute File.exists?("testing")
+    end)
+  end
+
+  test "applier can run commands", context do
+    in_tmp(context.test, fn ->
+      input = [
+        {:bogonet0,
+         %{
+           files: [],
+           up_cmds: [{:run, "touch", ["test_file"]}],
+           down_cmds: [{:run, "rm", ["test_file"]}]
+         }}
+      ]
+
+      :ok = VintageNet.Applier.update_config(input)
+      assert File.exists?("test_file")
+
+      :ok = VintageNet.Applier.update_config([])
+      refute File.exists?("test_file")
     end)
   end
 end
