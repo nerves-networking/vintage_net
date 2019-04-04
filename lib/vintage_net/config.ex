@@ -55,22 +55,33 @@ defmodule VintageNet.Config do
     """
     ctrl_interface=/tmp/foo
     country=#{wifi.regulatory_domain}
+    """ <> into_wifi_network_config(wifi)
+  end
 
+  defp key_mgmt_to_string(key) when key in [:none, :wep], do: "NONE"
+  defp key_mgmt_to_string(:wpa_psk), do: "WPA-PSK"
+
+  defp into_wifi_network_config(%{key_mgmt: :wep} = wifi) do
+    """
     network={
-      #{into_config_string(wifi, :ssid)}
-      #{into_config_string(wifi, :psk)}
-      #{into_config_string(wifi, :key_mgmt)}
+    #{into_config_string(wifi, :ssid)}
+    key_mgmt=NONE
+    wep_tx_keyidx=0
+    wep_key0=#{wifi.psk}
     }
     """
   end
 
-  defp key_mgmt_to_string(:none), do: "NONE"
-  defp key_mgmt_to_string(:wpa_psk), do: "WPA-PSK"
-  defp key_mgmt_to_string(:wep), do: "WEP"
-
-  defp safe_concat(string1, string2), do: string1 <> string2
-  defp safe_concat(string, nil), do: string
-  defp safe_concat(nil, string), do: string
+  defp into_wifi_network_config(wifi) do
+    """
+    network={
+    #{into_config_string(wifi, :ssid)}
+    #{into_config_string(wifi, :psk)}
+    #{into_config_string(wifi, :key_mgmt)}
+    #{into_config_string(wifi, :scan_ssid)}
+    }
+    """
+  end
 
   defp into_config_string(wifi, opt_key) do
     case Map.get(wifi, opt_key) do
@@ -89,5 +100,9 @@ defmodule VintageNet.Config do
 
   defp wifi_opt_to_config_string(:key_mgmt, key_mgmt) do
     "key_mgmt=#{key_mgmt_to_string(key_mgmt)}"
+  end
+
+  defp wifi_opt_to_config_string(:scan_ssid, value) do
+    "scan_ssid=#{value}"
   end
 end

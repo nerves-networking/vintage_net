@@ -41,11 +41,11 @@ defmodule VintageNet.ConfigWiFiTest do
          """
          ctrl_interface=/tmp/foo
          country=US
-
          network={
-           ssid="testme"
-           psk=1234567890123456789012345678901234567890123456789012345678901234
-           key_mgmt=WPA-PSK
+         ssid="testme"
+         psk=1234567890123456789012345678901234567890123456789012345678901234
+         key_mgmt=WPA-PSK
+
          }
          """}
       ],
@@ -85,10 +85,11 @@ defmodule VintageNet.ConfigWiFiTest do
          """
          ctrl_interface=/tmp/foo
          country=US
-
          network={
-           ssid="testme"
-           key_mgmt=NONE
+         ssid="testme"
+
+         key_mgmt=NONE
+
          }
          """}
       ],
@@ -124,20 +125,16 @@ defmodule VintageNet.ConfigWiFiTest do
 
     output = %{
       files: [
-        {"/tmp/network_interfaces.wlan0",
-         """
-         iface wlan0 inet dhcp
-         """},
+        {"/tmp/network_interfaces.wlan0", "iface wlan0 inet dhcp"},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/foo
          country=US
-
          network={
-           ssid="testme"
-           key_mgmt=NONE
-           wep_tx_keyidx=0
-           wep_key0=42FEEDDEAFBABEDEAFBEEFAA55
+         ssid="testme"
+         key_mgmt=NONE
+         wep_tx_keyidx=0
+         wep_key0=42FEEDDEAFBABEDEAFBEEFAA55
          }
          """}
       ],
@@ -174,20 +171,16 @@ defmodule VintageNet.ConfigWiFiTest do
 
     output = %{
       files: [
-        {"/tmp/network_interfaces.wlan0",
-         """
-         iface wlan0 inet dhcp
-         """},
+        {"/tmp/network_interfaces.wlan0", "iface wlan0 inet dhcp"},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/foo
          country=US
-
          network={
-           ssid="testme"
-           psk=1234567890123456789012345678901234567890123456789012345678901234
-           key_mgmt=WPA-PSK
-           scan_ssid=1
+         ssid="testme"
+         psk=1234567890123456789012345678901234567890123456789012345678901234
+         key_mgmt=WPA-PSK
+         scan_ssid=1
          }
          """}
       ],
