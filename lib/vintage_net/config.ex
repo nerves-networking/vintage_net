@@ -61,6 +61,12 @@ defmodule VintageNet.Config do
   defp key_mgmt_to_string(key) when key in [:none, :wep], do: "NONE"
   defp key_mgmt_to_string(:wpa_psk), do: "WPA-PSK"
 
+  defp into_wifi_network_config(%{networks: networks}) do
+    Enum.reduce(networks, "", fn network, config ->
+      config <> into_wifi_network_config(network)
+    end)
+  end
+
   defp into_wifi_network_config(%{key_mgmt: :wep} = wifi) do
     """
     network={
@@ -79,6 +85,7 @@ defmodule VintageNet.Config do
     #{into_config_string(wifi, :psk)}
     #{into_config_string(wifi, :key_mgmt)}
     #{into_config_string(wifi, :scan_ssid)}
+    #{into_config_string(wifi, :priority)}
     }
     """
   end
@@ -104,5 +111,9 @@ defmodule VintageNet.Config do
 
   defp wifi_opt_to_config_string(:scan_ssid, value) do
     "scan_ssid=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(:priority, value) do
+    "priority=#{value}"
   end
 end

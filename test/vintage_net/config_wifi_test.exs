@@ -46,6 +46,7 @@ defmodule VintageNet.ConfigWiFiTest do
          psk=1234567890123456789012345678901234567890123456789012345678901234
          key_mgmt=WPA-PSK
 
+
          }
          """}
       ],
@@ -89,6 +90,7 @@ defmodule VintageNet.ConfigWiFiTest do
          ssid="testme"
 
          key_mgmt=NONE
+
 
          }
          """}
@@ -181,6 +183,7 @@ defmodule VintageNet.ConfigWiFiTest do
          psk=1234567890123456789012345678901234567890123456789012345678901234
          key_mgmt=WPA-PSK
          scan_ssid=1
+
          }
          """}
       ],
@@ -240,11 +243,26 @@ defmodule VintageNet.ConfigWiFiTest do
          """
          ctrl_interface=/tmp/foo
          country=US
-
          network={
-           ssid="testme"
-           psk=1234567890123456789012345678901234567890123456789012345678901234
-           key_mgmt=WPA-PSK
+         ssid="firstpriority"
+         psk=1234567890123456789012345678901234567890123456789012345678901234
+         key_mgmt=WPA-PSK
+
+         priority=100
+         }
+         network={
+         ssid="secondpriority"
+         psk=1234567890123456789012345678901234567890123456789012345678901234
+         key_mgmt=WPA-PSK
+
+         priority=1
+         }
+         network={
+         ssid="thirdpriority"
+         psk=1234567890123456789012345678901234567890123456789012345678901234
+         key_mgmt=NONE
+
+         priority=0
          }
          """}
       ],
