@@ -310,11 +310,12 @@ defmodule VintageNet.ConfigWiFiTest do
          """
          ctrl_interface=/tmp/foo
          country=US
-
          network={
-           ssid="testme"
-           psk=1234567890123456789012345678901234567890123456789012345678901234
-           key_mgmt=WPA-PSK
+         ssid="testme"
+         psk=1234567890123456789012345678901234567890123456789012345678901234
+         key_mgmt=WPA-PSK
+
+
          }
          """}
       ],
