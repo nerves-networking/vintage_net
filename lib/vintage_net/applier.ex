@@ -37,7 +37,7 @@ defmodule VintageNet.Applier do
   defp bringup_interface({ifname, ifconfig}) do
     Logger.info("Bringing up #{ifname}")
     # Create all of the files
-    Enum.each(ifconfig.files, fn {path, content} -> File.write(path, content) end)
+    Enum.each(ifconfig.files, fn {path, content} -> create_and_write_file(path, content) end)
 
     # Run all of the up commands
     Enum.each(ifconfig.up_cmds, &run_command/1)
@@ -52,6 +52,13 @@ defmodule VintageNet.Applier do
     # Erase all of the files
     Enum.each(ifconfig.files, fn {path, _contents} -> File.rm(path) end)
     Logger.info("Done bringing down #{ifname}")
+  end
+
+  defp create_and_write_file(path, content) do
+    dir = Path.dirname(path)
+    File.exists?(dir) || File.mkdir_p!(dir)
+
+    File.write!(path, content)
   end
 
   defp run_command({:run, command, args}) do

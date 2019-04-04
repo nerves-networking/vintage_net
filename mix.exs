@@ -19,10 +19,7 @@ defmodule VintageNet.MixProject do
   def application do
     [
       env: [
-        network_interfaces: "/tmp/network_interfaces",
-        tmpdir: "/tmp",
-        wpa_supplicant_conf: "/tmp/wpa_supplicant.conf",
-        wpa_supplicant_control: "/tmp/foo",
+        tmpdir: "/tmp/vintage_net",
         bin_ifup: "/sbin/ifup",
         bin_ifdown: "/sbin/ifdown",
         bin_chat: "/usr/sbin/chat",
