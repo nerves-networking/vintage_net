@@ -19,7 +19,7 @@ defmodule VintageNet.ConfigLTETest do
     %{
       type: :mobile,
       pppd: %{
-        options: [:noipdefault, :usepeerdns, :defaultroute, :persist, :noauth],
+        options: [:noipdefault, :usepeerdns, :defaultroute, :noauth, :persist],
         chat_script: """
         ABORT 'BUSY'
         ABORT 'NO CARRIER'
@@ -77,8 +77,7 @@ defmodule VintageNet.ConfigLTETest do
            "usepeerdns",
            "defaultroute",
            "noauth",
-           "persist",
-           "noauth"
+           "persist"
          ]}
       ],
       down_cmds: [{:run, "/usr/bin/killall", ["-q", "pppd"]}]
@@ -121,25 +120,29 @@ defmodule VintageNet.ConfigLTETest do
 
     output_wlan0 = %{
       files: [
-        {"/tmp/network_interfaces.wlan0",
-         """
-         pre-up /usr/sbin/wpa_supplicant -B -i wlan0 -c /tmp/wpa_supplicant.conf.wlan0 -dd
-         post-down /usr/bin/killall -q wpa_supplicant
-         """},
+        {"/tmp/network_interfaces.wlan0", "iface wlan0 inet dhcp"},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/foo
          country=US
-
          network={
-           ssid="testme"
-           psk=1234567890123456789012345678901234567890123456789012345678901234
-           key_mgmt=WPA-PSK
+         ssid="testme"
+         psk=1234567890123456789012345678901234567890123456789012345678901234
+         key_mgmt=WPA-PSK
+
+
          }
          """}
       ],
-      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}],
-      down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}]
+      up_cmds: [
+        {:run, "/usr/sbin/wpa_supplicant",
+         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
+      ],
+      down_cmds: [
+        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+      ]
     }
 
     assert [{"eth0", output_eth0}, {"wlan0", output_wlan0}, {"ppp0", ppp_output()}] ==

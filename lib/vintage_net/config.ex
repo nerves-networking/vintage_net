@@ -13,6 +13,26 @@ defmodule VintageNet.Config do
     end
   end
 
+  defp do_make({ifname, %{type: :mobile, pppd: pppd_config}}, opts) do
+    with {:ok, mknod} <- get_option(opts, :mknod),
+         {:ok, killall} <- get_option(opts, :killall),
+         {:ok, chat_bin} <- get_option(opts, :chat_bin),
+         {:ok, pppd} <- get_option(opts, :pppd) do
+      files = [{"/tmp/chat_script", pppd_config.chat_script}]
+
+      up_cmds = [
+        {:run, mknod, ["/dev/ppp", "c", "108", "0"]},
+        {:run, pppd, make_pppd_args(pppd_config, chat_bin)}
+      ]
+
+      down_cmds = [
+        {:run, killall, ["-q", "pppd"]}
+      ]
+
+      {ifname, %{files: files, up_cmds: up_cmds, down_cmds: down_cmds}}
+    end
+  end
+
   defp do_make({ifname, %{type: :wifi, wifi: wifi_config}}, opts) do
     with {:ok, ifup} <- get_option(opts, :ifup),
          {:ok, ifdown} <- get_option(opts, :ifdown),
@@ -50,6 +70,21 @@ defmodule VintageNet.Config do
       {ifname, result}
     end
   end
+
+  defp make_pppd_args(pppd, chat_bin) do
+    [
+      "connect",
+      "#{chat_bin} -v -f /tmp/chat_script",
+      pppd.ttyname,
+      "#{pppd.speed}"
+    ] ++ Enum.map(pppd.options, &pppd_option_to_string/1)
+  end
+
+  defp pppd_option_to_string(:noipdefault), do: "noipdefault"
+  defp pppd_option_to_string(:usepeerdns), do: "usepeerdns"
+  defp pppd_option_to_string(:defaultroute), do: "defaultroute"
+  defp pppd_option_to_string(:persist), do: "persist"
+  defp pppd_option_to_string(:noauth), do: "noauth"
 
   defp wifi_to_supplicant_contents(wifi) do
     """
