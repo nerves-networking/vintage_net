@@ -45,7 +45,26 @@ defmodule VintageNet.ConfigLTETest do
 
   defp ppp_output() do
     %{
-      files: [],
+      files: [
+        {"/tmp/chat_script",
+         """
+         ABORT 'BUSY'
+         ABORT 'NO CARRIER'
+         ABORT 'NO DIALTONE'
+         ABORT 'NO DIAL TONE'
+         ABORT 'NO ANSWER'
+         ABORT 'DELAYED'
+         TIMEOUT 12
+         REPORT CONNECT
+         "" AT
+         OK ATH
+         OK ATZ
+         OK ATQ0
+         OK AT+CGDCONT=1,"IP","hologram"
+         OK ATDT*99***1#
+         CONNECT ''
+         """}
+      ],
       up_cmds: [
         {:run, "/bin/mknod", ["/dev/ppp", "c", "108", "0"]},
         {:run, "/usr/sbin/pppd",

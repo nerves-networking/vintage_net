@@ -18,7 +18,7 @@ defmodule VintageNet.Applier do
   Apply a configuration to the system
   """
   def update_config(input) do
-    GenServer.call(__MODULE__, {:update_config, input})
+    GenServer.call(__MODULE__, {:update_config, input}, 20_000)
   end
 
   @impl true
