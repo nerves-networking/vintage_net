@@ -3,6 +3,12 @@ defmodule VintageNet.Interface do
 
   require Logger
 
+  defmodule State do
+    @moduledoc false
+
+    defstruct iface: nil, command_ref: nil
+  end
+
   def start_link(iface) do
     GenServer.start_link(__MODULE__, iface)
   end
@@ -66,7 +72,7 @@ defmodule VintageNet.Interface do
   end
 
   defp run_command({:run, command, args}) do
-    case MuonTrap.cmd(command, args) do
+    case System.cmd(command, args) do
       {_, 0} ->
         :ok
 
