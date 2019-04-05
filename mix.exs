@@ -19,6 +19,7 @@ defmodule VintageNet.MixProject do
   def application do
     [
       env: [
+        config: [],
         tmpdir: "/tmp/vintage_net",
         bin_ifup: "/sbin/ifup",
         bin_ifdown: "/sbin/ifdown",
