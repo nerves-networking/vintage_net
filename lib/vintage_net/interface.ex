@@ -8,8 +8,11 @@ defmodule VintageNet.Interface do
   end
 
   def up(interface_pid) do
-    # Similar to 
     GenServer.cast(interface_pid, :ifup)
+  end
+
+  def down(interface_pid) do
+    GenServer.cast(interface_pid, :ifdown)
   end
 
   @impl true
@@ -20,6 +23,12 @@ defmodule VintageNet.Interface do
   @impl true
   def handle_cast(:ifup, iface) do
     bringup_interface(iface)
+    {:noreply, iface}
+  end
+
+  @impl true
+  def handle_cast(:ifdown, iface) do
+    cleanup_interface(iface)
     {:noreply, iface}
   end
 
@@ -46,8 +55,18 @@ defmodule VintageNet.Interface do
     File.write!(path, content)
   end
 
+  defp cleanup_interface({ifname, ifconfig}) do
+    Logger.info("Bringing down #{ifname}")
+    # Run all of the down commands
+    Enum.each(ifconfig.down_cmds, &run_command/1)
+
+    # Erase all of the files
+    Enum.each(ifconfig.files, fn {path, _contents} -> File.rm(path) end)
+    Logger.info("Done bringing down #{ifname}")
+  end
+
   defp run_command({:run, command, args}) do
-    case System.cmd(command, args) do
+    case MuonTrap.cmd(command, args) do
       {_, 0} ->
         :ok
 

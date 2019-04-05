@@ -61,7 +61,8 @@ defmodule VintageNet.MixProject do
     [
       {:ex_doc, "~> 0.19", only: [:dev, :test], runtime: false},
       {:mix_test_watch, "~> 0.5", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.4", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.0.0-rc.4", only: [:dev, :test], runtime: false},
+      {:muontrap, "~> 0.4.1"}
     ]
   end
 
