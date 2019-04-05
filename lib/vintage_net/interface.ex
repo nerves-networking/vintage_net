@@ -8,6 +8,7 @@ defmodule VintageNet.Interface do
   end
 
   def up(interface_pid) do
+    # Similar to 
     GenServer.cast(interface_pid, :ifup)
   end
 
