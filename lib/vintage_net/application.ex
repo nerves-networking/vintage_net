@@ -7,7 +7,8 @@ defmodule VintageNet.Application do
           {:ok, pid()} | {:ok, pid(), Application.state()} | {:error, reason :: any()}
   def start(_type, _args) do
     children = [
-      {VintageNet.Applier, []}
+      {VintageNet.Applier, []},
+      {VintageNet.Interface.Supervisor, []}
     ]
 
     opts = [strategy: :one_for_one, name: VintageNet.Supervisor]
