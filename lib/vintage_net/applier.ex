@@ -11,7 +11,11 @@ defmodule VintageNet.Applier do
   """
   @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(args) do
-    GenServer.start_link(__MODULE__, args, name: __MODULE__)
+    merged_args =
+      Application.get_all_env(:vintage_net)
+      |> Keyword.merge(args)
+
+    GenServer.start_link(__MODULE__, merged_args, name: __MODULE__)
   end
 
   @doc """
@@ -22,16 +26,24 @@ defmodule VintageNet.Applier do
   end
 
   @impl true
-  def init(_args) do
-    {:ok, []}
+  def init(args) do
+    # Matt - I'm sure you won't be able to help yourself with this next line.
+    state = Map.new(args)
+    {:ok, state, {:continue, :first_time_config}}
+  end
+
+  @impl true
+  def handle_continue(:first_time_config, state) do
+    Enum.each(state.config, &bringup_interface/1)
+    {:noreply, state}
   end
 
   @impl true
   def handle_call({:update_config, input}, _from, state) do
-    Enum.each(state, &cleanup_interface/1)
+    Enum.each(state.config, &cleanup_interface/1)
     Enum.each(input, &bringup_interface/1)
 
-    {:reply, :ok, input}
+    {:reply, :ok, %{state | config: input}}
   end
 
   defp bringup_interface({ifname, ifconfig}) do
