@@ -6,11 +6,20 @@ defmodule VintageNet.Interface do
   defmodule State do
     @moduledoc false
 
-    defstruct iface: nil, command_ref: nil
+    defstruct iface: nil,
+              command_pid: nil,
+              command_queue: [],
+              command_timer: nil,
+              status: :down,
+              current_command: nil
   end
 
   def start_link(iface) do
     GenServer.start_link(__MODULE__, iface)
+  end
+
+  def status(interface_pid) do
+    GenServer.call(interface_pid, :status)
   end
 
   def up(interface_pid) do
@@ -22,14 +31,16 @@ defmodule VintageNet.Interface do
   end
 
   @impl true
-  def init(iface) do
-    {:ok, iface, {:continue, :ifup}}
+  def init({_iface, ifconfig} = iface) do
+    {:ok, %State{iface: iface, command_queue: ifconfig.up_cmds}, {:continue, :ifup}}
   end
 
   @impl true
-  def handle_cast(:ifup, iface) do
-    bringup_interface(iface)
-    {:noreply, iface}
+  def handle_call(:status, _from, %State{status: status} = state), do: {:reply, status, state}
+
+  @impl true
+  def handle_cast(:ifup, %State{iface: iface}) do
+    {:noreply, %State{iface: iface}}
   end
 
   @impl true
@@ -39,19 +50,70 @@ defmodule VintageNet.Interface do
   end
 
   @impl true
-  def handle_continue(:ifup, iface) do
-    bringup_interface(iface)
-    {:noreply, iface}
+  def handle_continue(:ifup, %State{command_queue: []} = state) do
+    {:noreply, %{state | status: :up}}
   end
 
-  defp bringup_interface({ifname, ifconfig}) do
-    Logger.info("Bringing up #{ifname}")
-    # Create all of the files
-    Enum.each(ifconfig.files, fn {path, content} -> create_and_write_file(path, content) end)
+  def handle_continue(
+        :ifup,
+        %State{iface: iface, command_queue: [command | rest]} = state
+      ) do
+    {:ok, command_pid} = bringup_interface(iface, command)
 
-    # Run all of the up commands
-    Enum.each(ifconfig.up_cmds, &run_command/1)
-    Logger.info("Done bringing up #{ifname}")
+    {:noreply,
+     %{
+       state
+       | command_queue: rest,
+         command_pid: command_pid,
+         command_timer: command_timeout_timer(),
+         current_command: command
+     }}
+  end
+
+  @impl true
+  def handle_info(
+        :command_timeout,
+        %State{command_pid: command_pid, current_command: command_data} = state
+      ) do
+    if Process.alive?(command_pid) do
+      Logger.warn("Command timed out #{inspect(command_data)}")
+      Process.exit(command_pid, :kill)
+      {:stop, :command_timeout}
+    else
+      {:noreply, %{state | command_pid: nil, current_command: nil}}
+    end
+  end
+
+  def handle_info(:command_finished, %State{command_timer: timer, command_queue: []} = state) do
+    Process.cancel_timer(timer)
+
+    {:noreply, %{state | command_pid: nil, command_timer: nil, status: :up, current_command: nil}}
+  end
+
+  def handle_info(
+        :command_finished,
+        %State{
+          iface: iface,
+          command_timer: timer,
+          command_queue: [command | rest]
+        } = state
+      ) do
+    Process.cancel_timer(timer)
+
+    {:ok, command_pid} = bringup_interface(iface, command)
+
+    {:noreply,
+     %{
+       state
+       | command_pid: command_pid,
+         command_timer: command_timeout_timer(),
+         command_queue: rest,
+         current_command: command
+     }}
+  end
+
+  defp write_interface_files(ifconfig) do
+    Enum.each(ifconfig.files, fn {path, content} -> create_and_write_file(path, content) end)
   end
 
   defp create_and_write_file(path, content) do
@@ -59,6 +121,11 @@ defmodule VintageNet.Interface do
     File.exists?(dir) || File.mkdir_p!(dir)
 
     File.write!(path, content)
+  end
+
+  defp bringup_interface({_ifname, ifconfig}, command) do
+    :ok = write_interface_files(ifconfig)
+    run_command(command)
   end
 
   defp cleanup_interface({ifname, ifconfig}) do
@@ -72,13 +139,21 @@ defmodule VintageNet.Interface do
   end
 
   defp run_command({:run, command, args}) do
-    case System.cmd(command, args) do
-      {_, 0} ->
-        :ok
+    interface_pid = self()
 
-      {message, _not_zero} ->
-        Logger.error("Error running #{command} #{inspect(args)}: #{message}")
-        {:error, message}
-    end
+    Task.start_link(fn ->
+      case MuonTrap.cmd(command, args) do
+        {_, 0} ->
+          send(interface_pid, :command_finished)
+
+        {message, _not_zero} ->
+          Logger.error("Error running #{command}, #{inspect(args)}: #{message}")
+          {:error, message}
+      end
+    end)
+  end
+
+  defp command_timeout_timer() do
+    Process.send_after(self(), :command_timeout, 5_000)
   end
 end
