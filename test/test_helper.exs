@@ -1,2 +1,2 @@
 File.rm_rf!("test/tmp")
-ExUnit.start()
+ExUnit.start(exclude: [:interface_timeout])
