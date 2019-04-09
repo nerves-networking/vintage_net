@@ -45,13 +45,35 @@ defmodule VintageNet.Interface.Timeout.Test do
      }}
   end
 
+  defp iface_down_ok1() do
+    {"down",
+     %{
+       files: [],
+       up_cmds: [],
+       down_cmds: [{:run, "sleep", ["4"]}]
+     }}
+  end
+
+  defp iface_down_timeout() do
+    {"down",
+     %{
+       files: [],
+       up_cmds: [],
+       down_cmds: [{:run, "sleep", ["20"]}]
+     }}
+  end
+
   @tag :interface_timeout
   test "when a command is longer than the timeout" do
     {:ok, pid} = Interface.start_link(iface_timeout1())
     :erlang.trace(pid, true, [:receive])
 
-    # timeout + retry back off + 500 ms
-    :timer.sleep(10_500)
+    # timeout + 250ms
+    :timer.sleep(5_250)
+    assert_receive {:trace, ^pid, :receive, :command_timeout}
+
+    # retry back off + 250 ms
+    :timer.sleep(5_250)
 
     assert_receive {:trace, ^pid, :receive, :retry_command}
 
@@ -63,8 +85,14 @@ defmodule VintageNet.Interface.Timeout.Test do
     {:ok, pid} = Interface.start_link(iface_timeout2())
     :erlang.trace(pid, true, [:receive])
 
-    # successful cmd + timeout + retry back off + 1000 ms
-    :timer.sleep(13_000)
+    :timer.sleep(2_100)
+    assert_receive {:trace, ^pid, :receive, :command_finished}
+
+    :timer.sleep(5_100)
+
+    assert_receive {:trace, ^pid, :receive, :command_timeout}
+
+    :timer.sleep(5_100)
 
     assert_receive {:trace, ^pid, :receive, :retry_command}
 
@@ -87,5 +115,40 @@ defmodule VintageNet.Interface.Timeout.Test do
     :timer.sleep(9_000)
 
     assert :up == Interface.status(pid)
+  end
+
+  @tag :interface_timeout
+  test "run down commands okay" do
+    {:ok, pid} = Interface.start_link(iface_down_ok1())
+    :timer.sleep(1000)
+
+    :up = Interface.status(pid)
+
+    Interface.down(pid)
+
+    :timer.sleep(5_000)
+
+    assert :down == Interface.status(pid)
+  end
+
+  @tag :interface_timeout
+  test "run down commands handles timeout" do
+    {:ok, pid} = Interface.start_link(iface_down_timeout())
+    :timer.sleep(500)
+    :up = Interface.status(pid)
+    Interface.down(pid)
+
+    :erlang.trace(pid, true, [:receive])
+
+    # timeout + 250ms
+    :timer.sleep(5_250)
+    assert_receive {:trace, ^pid, :receive, :command_timeout}
+
+    # retry back off + 250 ms
+    :timer.sleep(5_250)
+
+    assert_receive {:trace, ^pid, :receive, :retry_command}
+
+    GenServer.stop(pid)
   end
 end

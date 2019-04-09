@@ -44,9 +44,23 @@ defmodule VintageNet.Interface do
   end
 
   @impl true
-  def handle_cast(:ifdown, iface) do
-    cleanup_interface(iface)
-    {:noreply, iface}
+  def handle_cast(:ifdown, %State{iface: {_, ifconfig}} = state) do
+    case ifconfig.down_cmds do
+      [] ->
+        {:noreply, state}
+
+      [command | rest] ->
+        {:ok, command_pid} = run_command(command)
+
+        {:noreply,
+         %{
+           state
+           | command_queue: rest,
+             command_pid: command_pid,
+             current_command: command,
+             command_timer: command_timeout_timer()
+         }}
+    end
   end
 
   @impl true
@@ -96,10 +110,24 @@ defmodule VintageNet.Interface do
     end
   end
 
-  def handle_info(:command_finished, %State{command_timer: timer, command_queue: []} = state) do
+  def handle_info(
+        :command_finished,
+        %State{command_timer: timer, command_queue: [], status: :down} = state
+      ) do
     Process.cancel_timer(timer)
 
     {:noreply, %{state | command_pid: nil, command_timer: nil, status: :up, current_command: nil}}
+  end
+
+  def handle_info(
+        :command_finished,
+        %State{command_timer: timer, command_queue: [], status: :up, iface: {_, ifconfig}} = state
+      ) do
+    Process.cancel_timer(timer)
+    Enum.each(ifconfig.files, fn {path, _contents} -> File.rm(path) end)
+
+    {:noreply,
+     %{state | command_pid: nil, command_timer: nil, status: :down, current_command: nil}}
   end
 
   def handle_info(
