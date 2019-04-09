@@ -8,6 +8,10 @@ defmodule VintageNet.MixProject do
       elixir: "~> 1.8",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
+      build_embedded: true,
+      compilers: [:elixir_make | Mix.compilers()],
+      make_targets: ["all"],
+      make_clean: ["clean"],
       deps: deps(),
       dialyzer: dialyzer(),
       docs: [extras: ["README.md"]],
@@ -21,6 +25,7 @@ defmodule VintageNet.MixProject do
       env: [
         config: [],
         tmpdir: "/tmp/vintage_net",
+        to_elixir_socket: "comms",
         bin_ifup: "/sbin/ifup",
         bin_ifdown: "/sbin/ifdown",
         bin_chat: "/usr/sbin/chat",
@@ -48,6 +53,7 @@ defmodule VintageNet.MixProject do
         "test",
         "mix.exs",
         "README.md",
+        "src/*.[ch]",
         "LICENSE",
         "CHANGELOG.md",
         "docs/*.md"
@@ -59,6 +65,7 @@ defmodule VintageNet.MixProject do
 
   defp deps do
     [
+      {:elixir_make, "~> 0.5", runtime: false},
       {:ex_doc, "~> 0.19", only: [:dev, :test], runtime: false},
       {:mix_test_watch, "~> 0.5", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0.0-rc.4", only: [:dev, :test], runtime: false},

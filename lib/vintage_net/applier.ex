@@ -11,11 +11,7 @@ defmodule VintageNet.Applier do
   """
   @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(args) do
-    merged_args =
-      Application.get_all_env(:vintage_net)
-      |> Keyword.merge(args)
-
-    GenServer.start_link(__MODULE__, merged_args, name: __MODULE__)
+    GenServer.start_link(__MODULE__, args, name: __MODULE__)
   end
 
   @doc """
