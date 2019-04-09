@@ -71,14 +71,26 @@ defmodule VintageNet.Interface do
   end
 
   @impl true
+  def handle_info(:retry_command, %State{current_command: command} = state) do
+    {:ok, command_pid} = run_command(command)
+
+    {:noreply,
+     %{
+       state
+       | command_timer: command_timeout_timer(),
+         command_pid: command_pid
+     }}
+  end
+
   def handle_info(
         :command_timeout,
-        %State{command_pid: command_pid, current_command: command_data} = state
+        %State{command_pid: command_pid, current_command: command} = state
       ) do
     if Process.alive?(command_pid) do
-      Logger.warn("Command timed out #{inspect(command_data)}")
-      Process.exit(command_pid, :kill)
-      {:stop, :command_timeout}
+      Logger.warn("Command timed out #{inspect(command)}")
+      Process.exit(command_pid, :normal)
+      retry_command()
+      {:noreply, %{state | command_pid: nil, command_timer: nil}}
     else
       {:noreply, %{state | command_pid: nil, current_command: nil}}
     end
@@ -155,5 +167,9 @@ defmodule VintageNet.Interface do
 
   defp command_timeout_timer() do
     Process.send_after(self(), :command_timeout, 5_000)
+  end
+
+  defp retry_command() do
+    Process.send_after(self(), :retry_command, 5_000)
   end
 end

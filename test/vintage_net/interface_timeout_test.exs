@@ -18,7 +18,7 @@ defmodule VintageNet.Interface.Timeout.Test do
      %{
        files: [],
        up_cmds: [
-         {:run, "sleep", ["4"]},
+         {:run, "sleep", ["2"]},
          {:run, "sleep", ["20"]}
        ]
      }}
@@ -45,18 +45,33 @@ defmodule VintageNet.Interface.Timeout.Test do
      }}
   end
 
+  @tag :interface_timeout
   test "when a command is longer than the timeout" do
-    Process.flag(:trap_exit, true)
     {:ok, pid} = Interface.start_link(iface_timeout1())
-    assert_receive {:EXIT, ^pid, :killed}, 6_000
+    :erlang.trace(pid, true, [:receive])
+
+    # timeout + retry back off + 500 ms
+    :timer.sleep(10_500)
+
+    assert_receive {:trace, ^pid, :receive, :retry_command}
+
+    GenServer.stop(pid)
   end
 
+  @tag :interface_timeout
   test "when a command later in the command queue timesout" do
-    Process.flag(:trap_exit, true)
     {:ok, pid} = Interface.start_link(iface_timeout2())
-    assert_receive {:EXIT, ^pid, :killed}, 10_000
+    :erlang.trace(pid, true, [:receive])
+
+    # successful cmd + timeout + retry back off + 1000 ms
+    :timer.sleep(13_000)
+
+    assert_receive {:trace, ^pid, :receive, :retry_command}
+
+    GenServer.stop(pid)
   end
 
+  @tag :interface_timeout
   test "when a command runs within the timeout" do
     {:ok, pid} = Interface.start_link(iface_ok1())
 
@@ -65,6 +80,7 @@ defmodule VintageNet.Interface.Timeout.Test do
     assert :up == Interface.status(pid)
   end
 
+  @tag :interface_timeout
   test "when a many commands run within the timeout" do
     {:ok, pid} = Interface.start_link(iface_ok2())
 
