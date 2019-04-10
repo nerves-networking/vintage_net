@@ -3,6 +3,8 @@ defmodule VintageNet.Interface do
 
   require Logger
 
+  alias VintageNet.IP
+
   defmodule State do
     @moduledoc false
 
@@ -72,6 +74,7 @@ defmodule VintageNet.Interface do
         :ifup,
         %State{iface: iface, command_queue: [command | rest]} = state
       ) do
+    status_check_timer()
     {:ok, command_pid} = bringup_interface(iface, command)
 
     {:noreply,
@@ -152,6 +155,26 @@ defmodule VintageNet.Interface do
      }}
   end
 
+  def handle_info(:check_status, %State{iface: iface} = state) do
+    check_iface_status(iface)
+    {:noreply, state}
+  end
+
+  def handle_info({:iface_status, status}, %State{status: status} = state) do
+    status_check_timer()
+    {:noreply, state}
+  end
+
+  def handle_info({:iface_status, _}, %State{status: :down} = state) do
+    status_check_timer()
+    {:noreply, %{state | status: :up}}
+  end
+
+  def handle_info({:iface_status, _}, %State{status: :up} = state) do
+    status_check_timer()
+    {:noreply, %{state | status: :down}}
+  end
+
   defp write_interface_files(ifconfig) do
     Enum.each(ifconfig.files, fn {path, content} -> create_and_write_file(path, content) end)
   end
@@ -166,16 +189,6 @@ defmodule VintageNet.Interface do
   defp bringup_interface({_ifname, ifconfig}, command) do
     :ok = write_interface_files(ifconfig)
     run_command(command)
-  end
-
-  defp cleanup_interface({ifname, ifconfig}) do
-    Logger.info("Bringing down #{ifname}")
-    # Run all of the down commands
-    Enum.each(ifconfig.down_cmds, &run_command/1)
-
-    # Erase all of the files
-    Enum.each(ifconfig.files, fn {path, _contents} -> File.rm(path) end)
-    Logger.info("Done bringing down #{ifname}")
   end
 
   defp run_command({:run, command, args}) do
@@ -193,11 +206,29 @@ defmodule VintageNet.Interface do
     end)
   end
 
+  defp check_iface_status({iface, _}) do
+    interface_pid = self()
+
+    Task.start_link(fn ->
+      flags = IP.iface_flags(iface)
+
+      if Enum.member?(flags, :up) do
+        send(interface_pid, {:iface_status, :up})
+      else
+        send(interface_pid, {:iface_status, :down})
+      end
+    end)
+  end
+
   defp command_timeout_timer() do
     Process.send_after(self(), :command_timeout, 5_000)
   end
 
   defp retry_command() do
     Process.send_after(self(), :retry_command, 5_000)
+  end
+
+  defp status_check_timer() do
+    Process.send_after(self(), :check_status, 2_500)
   end
 end
