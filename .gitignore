@@ -24,3 +24,6 @@ vintage_net-*.tar
 
 # Test fixture temporaries
 /test/tmp
+
+# Don't put anything in the /priv directory. The Makefile "owns" it.
+/priv
