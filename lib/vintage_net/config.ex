@@ -84,7 +84,7 @@ defmodule VintageNet.Config do
 
   defp wifi_to_supplicant_contents(wifi) do
     """
-    ctrl_interface=/tmp/foo
+    ctrl_interface=/tmp/wpa_supplicant
     country=#{wifi.regulatory_domain}
     """ <> into_wifi_network_config(wifi)
   end
