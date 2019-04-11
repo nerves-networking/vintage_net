@@ -59,6 +59,7 @@ calling_from_make:
 all: install
 
 install: $(BUILD) $(DEFAULT_TARGETS)
+	cp src/default.script $(PREFIX)
 
 $(BUILD)/%.o: src/%.c
 	$(CC) -c $(ERL_CFLAGS) $(CFLAGS) -o $@ $<

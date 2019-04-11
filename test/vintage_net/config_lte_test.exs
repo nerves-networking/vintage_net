@@ -1,19 +1,7 @@
 defmodule VintageNet.ConfigLTETest do
   use ExUnit.Case
   alias VintageNet.Config
-
-  defp default_opts() do
-    [
-      tmpdir: "/tmp",
-      ifup: "/sbin/ifup",
-      ifdown: "/sbin/ifdown",
-      chat_bin: "/usr/sbin/chat",
-      pppd: "/usr/sbin/pppd",
-      mknod: "/bin/mknod",
-      killall: "/usr/bin/killall",
-      wpa_supplicant: "/usr/sbin/wpa_supplicant"
-    ]
-  end
+  import VintageNetTest.Utils
 
   defp ppp_config() do
     %{
@@ -113,14 +101,14 @@ defmodule VintageNet.ConfigLTETest do
     ]
 
     output_eth0 = %{
-      files: [{"/tmp/network_interfaces.eth0", "iface eth0 inet dhcp"}],
+      files: [{"/tmp/network_interfaces.eth0", dhcp_interface("eth0")}],
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
 
     output_wlan0 = %{
       files: [
-        {"/tmp/network_interfaces.wlan0", "iface wlan0 inet dhcp"},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/foo

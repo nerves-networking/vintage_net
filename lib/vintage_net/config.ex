@@ -3,72 +3,68 @@ defmodule VintageNet.Config do
   Builds a vintage network configuration
   """
   def make(networks, opts \\ []) do
-    Enum.map(networks, &do_make(&1, opts))
-  end
-
-  def get_option(opts, option) do
-    case Keyword.fetch(opts, option) do
-      :error -> {:error, :option_not_found, option}
-      {:ok, _} = result -> result
-    end
+    merged_opts = Application.get_all_env(:vintage_net) |> Keyword.merge(opts)
+    Enum.map(networks, &do_make(&1, merged_opts))
   end
 
   defp do_make({ifname, %{type: :mobile, pppd: pppd_config}}, opts) do
-    with {:ok, mknod} <- get_option(opts, :mknod),
-         {:ok, killall} <- get_option(opts, :killall),
-         {:ok, chat_bin} <- get_option(opts, :chat_bin),
-         {:ok, pppd} <- get_option(opts, :pppd) do
-      files = [{"/tmp/chat_script", pppd_config.chat_script}]
+    mknod = Keyword.fetch!(opts, :bin_mknod)
+    killall = Keyword.fetch!(opts, :bin_killall)
+    chat_bin = Keyword.fetch!(opts, :bin_chat)
+    pppd = Keyword.fetch!(opts, :bin_pppd)
 
-      up_cmds = [
-        {:run, mknod, ["/dev/ppp", "c", "108", "0"]},
-        {:run, pppd, make_pppd_args(pppd_config, chat_bin)}
-      ]
+    files = [{"/tmp/chat_script", pppd_config.chat_script}]
 
-      down_cmds = [
-        {:run, killall, ["-q", "pppd"]}
-      ]
+    up_cmds = [
+      {:run, mknod, ["/dev/ppp", "c", "108", "0"]},
+      {:run, pppd, make_pppd_args(pppd_config, chat_bin)}
+    ]
 
-      {ifname, %{files: files, up_cmds: up_cmds, down_cmds: down_cmds}}
-    end
+    down_cmds = [
+      {:run, killall, ["-q", "pppd"]}
+    ]
+
+    {ifname, %{files: files, up_cmds: up_cmds, down_cmds: down_cmds}}
   end
 
   defp do_make({ifname, %{type: :wifi, wifi: wifi_config}}, opts) do
-    with {:ok, ifup} <- get_option(opts, :ifup),
-         {:ok, ifdown} <- get_option(opts, :ifdown),
-         {:ok, wpa_supplicant} <- get_option(opts, :wpa_supplicant),
-         {:ok, killall} <- get_option(opts, :killall) do
-      files = [
-        {"/tmp/network_interfaces.#{ifname}", "iface #{ifname} inet dhcp"},
-        {"/tmp/wpa_supplicant.conf.#{ifname}", wifi_to_supplicant_contents(wifi_config)}
-      ]
+    ifup = Keyword.fetch!(opts, :bin_ifup)
+    ifdown = Keyword.fetch!(opts, :bin_ifdown)
+    wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
+    killall = Keyword.fetch!(opts, :bin_killall)
 
-      up_cmds = [
-        {:run, wpa_supplicant,
-         ["-B", "-i", ifname, "-c", "/tmp/wpa_supplicant.conf.#{ifname}", "-dd"]},
-        {:run, ifup, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}
-      ]
+    files = [
+      {"/tmp/network_interfaces.#{ifname}", "iface #{ifname} inet dhcp" <> dhcp_options()},
+      {"/tmp/wpa_supplicant.conf.#{ifname}", wifi_to_supplicant_contents(wifi_config)}
+    ]
 
-      down_cmds = [
-        {:run, ifdown, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]},
-        {:run, killall, ["-q", "wpa_supplicant"]}
-      ]
+    up_cmds = [
+      {:run, wpa_supplicant,
+       ["-B", "-i", ifname, "-c", "/tmp/wpa_supplicant.conf.#{ifname}", "-dd"]},
+      {:run, ifup, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}
+    ]
 
-      {ifname, %{files: files, up_cmds: up_cmds, down_cmds: down_cmds}}
-    end
+    down_cmds = [
+      {:run, ifdown, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]},
+      {:run, killall, ["-q", "wpa_supplicant"]}
+    ]
+
+    {ifname, %{files: files, up_cmds: up_cmds, down_cmds: down_cmds}}
   end
 
   defp do_make({ifname, %{type: :ethernet} = _config}, opts) do
-    with {:ok, ifup} <- get_option(opts, :ifup),
-         {:ok, ifdown} <- get_option(opts, :ifdown) do
-      result = %{
-        files: [{"/tmp/network_interfaces.#{ifname}", "iface #{ifname} inet dhcp"}],
-        up_cmds: [{:run, ifup, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}],
-        down_cmds: [{:run, ifdown, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}]
-      }
+    ifup = Keyword.fetch!(opts, :bin_ifup)
+    ifdown = Keyword.fetch!(opts, :bin_ifdown)
 
-      {ifname, result}
-    end
+    result = %{
+      files: [
+        {"/tmp/network_interfaces.#{ifname}", "iface #{ifname} inet dhcp" <> dhcp_options()}
+      ],
+      up_cmds: [{:run, ifup, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}],
+      down_cmds: [{:run, ifdown, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}]
+    }
+
+    {ifname, result}
   end
 
   defp make_pppd_args(pppd, chat_bin) do
@@ -150,5 +146,12 @@ defmodule VintageNet.Config do
 
   defp wifi_opt_to_config_string(:priority, value) do
     "priority=#{value}"
+  end
+
+  defp dhcp_options() do
+    """
+
+      script #{Application.app_dir(:vintage_net, ["priv", "default.script"])}
+    """
   end
 end
