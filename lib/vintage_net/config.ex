@@ -52,6 +52,26 @@ defmodule VintageNet.Config do
     {ifname, %{files: files, up_cmds: up_cmds, down_cmds: down_cmds}}
   end
 
+  defp do_make({ifname, %{type: :wifi}}, opts) do
+    wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
+    killall = Keyword.fetch!(opts, :bin_killall)
+
+    files = [
+      {"/tmp/wpa_supplicant.conf.#{ifname}", "ctrl_interface=/tmp/wpa_supplicant"}
+    ]
+
+    up_cmds = [
+      {:run, wpa_supplicant,
+       ["-B", "-i", ifname, "-c", "/tmp/wpa_supplicant.conf.#{ifname}", "-dd"]}
+    ]
+
+    down_cmds = [
+      {:run, killall, ["-q", "wpa_supplicant"]}
+    ]
+
+    {ifname, %{files: files, up_cmds: up_cmds, down_cmds: down_cmds}}
+  end
+
   defp do_make({ifname, %{type: :ethernet} = _config}, opts) do
     ifup = Keyword.fetch!(opts, :bin_ifup)
     ifdown = Keyword.fetch!(opts, :bin_ifdown)

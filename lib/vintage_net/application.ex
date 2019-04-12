@@ -11,8 +11,9 @@ defmodule VintageNet.Application do
 
     children = [
       {VintageNet.ToElixir.Server, socket_path},
-      {VintageNet.Applier, args},
-      {VintageNet.Interface.Supervisor, []}
+      {VintageNet.Interface.Supervisor, []},
+      {VintageNet.Init, args}
+      # {VintageNet.Applier, args}
     ]
 
     opts = [strategy: :one_for_one, name: VintageNet.Supervisor]
