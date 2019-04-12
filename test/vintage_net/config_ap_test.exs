@@ -36,7 +36,7 @@ defmodule VintageNet.ConfigAPTest do
          """},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/foo
+         ctrl_interface=/tmp/wpa_supplicant
          country=US
 
          network={

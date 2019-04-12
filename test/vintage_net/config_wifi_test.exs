@@ -24,7 +24,7 @@ defmodule VintageNet.ConfigWiFiTest do
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/foo
+         ctrl_interface=/tmp/wpa_supplicant
          country=US
          network={
          ssid="testme"
@@ -69,7 +69,7 @@ defmodule VintageNet.ConfigWiFiTest do
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/foo
+         ctrl_interface=/tmp/wpa_supplicant
          country=US
          network={
          ssid="testme"
@@ -115,7 +115,7 @@ defmodule VintageNet.ConfigWiFiTest do
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/foo
+         ctrl_interface=/tmp/wpa_supplicant
          country=US
          network={
          ssid="testme"
@@ -161,7 +161,7 @@ defmodule VintageNet.ConfigWiFiTest do
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/foo
+         ctrl_interface=/tmp/wpa_supplicant
          country=US
          network={
          ssid="testme"
@@ -226,7 +226,7 @@ defmodule VintageNet.ConfigWiFiTest do
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/foo
+         ctrl_interface=/tmp/wpa_supplicant
          country=US
          network={
          ssid="firstpriority"
@@ -293,7 +293,7 @@ defmodule VintageNet.ConfigWiFiTest do
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/foo
+         ctrl_interface=/tmp/wpa_supplicant
          country=US
          network={
          ssid="testme"
