@@ -32,7 +32,8 @@ defmodule VintageNet.MixProject do
         bin_pppd: "/usr/sbin/pppd",
         bin_mknod: "/bin/mknod",
         bin_killall: "/usr/bin/killall",
-        bin_wpa_supplicant: "/usr/sbin/wpa_supplicant"
+        bin_wpa_supplicant: "/usr/sbin/wpa_supplicant",
+        udhcpc_handler: VintageNetTest.Interface.Udhcpc
       ],
       extra_applications: [:logger],
       mod: {VintageNet.Application, []}

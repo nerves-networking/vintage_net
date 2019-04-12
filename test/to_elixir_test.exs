@@ -6,6 +6,7 @@ defmodule ToElixirTest do
     assert capture_log(fn ->
              to_elixir = Application.app_dir(:vintage_net, ["priv", "to_elixir"])
              System.cmd(to_elixir, ["hello"])
+             Process.sleep(250)
            end) =~ "[debug] Got a generic message: hello"
   end
 
@@ -13,9 +14,9 @@ defmodule ToElixirTest do
     assert capture_log(fn ->
              udhcpc_handler = Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])
 
-             System.cmd(udhcpc_handler, ["command"],
+             System.cmd(udhcpc_handler, ["deconfig"],
                env: [
-                 {"interface", "interface"},
+                 {"interface", "eth0"},
                  {"ip", "ip"},
                  {"broadcast", "broadcast"},
                  {"subnet", "subnet"},
@@ -28,16 +29,16 @@ defmodule ToElixirTest do
 
              Process.sleep(250)
            end) =~
-             "[debug] Got a report from udhcpc: %{broadcast: \"broadcast\", command: \"command\", dns: \"dns\", domain: \"domain\", interface: \"interface\", ip: \"ip\", message: \"message\", router: \"router\", subnet: \"subnet\"}"
+             "[debug] udhcpc.deconfig(eth0): %{broadcast: \"broadcast\", command: :deconfig, dns: \"dns\", domain: \"domain\", interface: \"eth0\", ip: \"ip\", message: \"message\", router: \"router\", subnet: \"subnet\"}"
   end
 
   test "udhcpc handler handles unset fields" do
     assert capture_log(fn ->
              udhcpc_handler = Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])
 
-             System.cmd(udhcpc_handler, ["command"],
+             System.cmd(udhcpc_handler, ["deconfig"],
                env: [
-                 {"interface", "interface"},
+                 {"interface", "eth0"},
                  {"broadcast", "broadcast"},
                  {"subnet", "subnet"},
                  {"router", "router"},
@@ -48,6 +49,6 @@ defmodule ToElixirTest do
 
              Process.sleep(250)
            end) =~
-             "[debug] Got a report from udhcpc: %{broadcast: \"broadcast\", command: \"command\", dns: \"dns\", domain: \"domain\", interface: \"interface\", ip: \"\", message: \"\", router: \"router\", subnet: \"subnet\"}"
+             "[debug] udhcpc.deconfig(eth0): %{broadcast: \"broadcast\", command: :deconfig, dns: \"dns\", domain: \"domain\", interface: \"eth0\", ip: \"\", message: \"\", router: \"router\", subnet: \"subnet\"}"
   end
 end

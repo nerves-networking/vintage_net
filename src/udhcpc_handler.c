@@ -57,7 +57,8 @@ int main(int argc, char *argv[])
     ei_x_encode_tuple_header(&buff, 2);
     ei_x_encode_atom(&buff, "udhcpc");
     ei_x_encode_map_header(&buff, 9);
-    encode_kv_string(&buff, "command", argv[1]);
+    ei_x_encode_atom(&buff, "command");
+    ei_x_encode_atom(&buff, argv[1]);
     encode_kv_env(&buff, "interface");
     encode_kv_env(&buff, "ip");
     encode_kv_env(&buff, "broadcast");
