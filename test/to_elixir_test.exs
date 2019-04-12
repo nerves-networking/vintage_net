@@ -45,6 +45,7 @@ defmodule ToElixirTest do
                  {"dns", "dns"}
                ]
              )
+
              Process.sleep(250)
            end) =~
              "[debug] Got a report from udhcpc: %{broadcast: \"broadcast\", command: \"command\", dns: \"dns\", domain: \"domain\", interface: \"interface\", ip: \"\", message: \"\", router: \"router\", subnet: \"subnet\"}"
