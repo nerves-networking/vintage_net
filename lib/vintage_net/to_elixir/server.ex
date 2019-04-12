@@ -28,8 +28,10 @@ defmodule VintageNet.ToElixir.Server do
   end
 
   @impl true
-  def handle_info({:udp, socket, _, 0, message}, %{socket: socket} = state) do
-    dispatch(message)
+  def handle_info({:udp, socket, _, 0, data}, %{socket: socket} = state) do
+    data
+    |> :erlang.binary_to_term()
+    |> dispatch()
 
     {:noreply, state}
   end
@@ -40,13 +42,18 @@ defmodule VintageNet.ToElixir.Server do
     _ = File.rm(state.path)
   end
 
-  defp dispatch("udhcpc:" <> message) do
-    _ = Logger.debug("Got a message from udhcpc: #{message}")
+  defp dispatch({:udhcpc, report}) do
+    _ = Logger.debug("Got a report from udhcpc: #{inspect(report)}")
+    :ok
+  end
+
+  defp dispatch({:to_elixir, message}) do
+    _ = Logger.debug("Got a generic message: #{message}")
     :ok
   end
 
   defp dispatch(unknown) do
-    _ = Logger.error("to_elixir: dropping unknown message '#{unknown}''")
+    _ = Logger.error("to_elixir: dropping unknown message '#{inspect(unknown)}''")
     :ok
   end
 end

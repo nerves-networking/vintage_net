@@ -1,4 +1,5 @@
 #include <err.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -17,10 +18,23 @@ static void encode_string(ei_x_buff *buff, const char *str)
     ei_x_encode_binary(buff, str, strlen(str));
 }
 
+static void encode_kv_string(ei_x_buff *buff, const char *key, const char *str)
+{
+    ei_x_encode_atom(buff, key);
+    encode_string(buff, str);
+}
+
+static void encode_kv_env(ei_x_buff *buff, const char *key)
+{
+    const char *result = getenv(key);
+    const char *non_null_result = result != NULL ? result : "";
+    encode_kv_string(buff, key, non_null_result);
+}
+
 int main(int argc, char *argv[])
 {
     if (argc != 2)
-        errx(EXIT_FAILURE, "Expecting a message");
+        errx(EXIT_FAILURE, "Expecting a command from udhcpc");
 
     ei_init();
 
@@ -41,8 +55,17 @@ int main(int argc, char *argv[])
         err(EXIT_FAILURE, "ei_x_new_with_version");
 
     ei_x_encode_tuple_header(&buff, 2);
-    ei_x_encode_atom(&buff, "to_elixir");
-    encode_string(&buff, argv[1]);
+    ei_x_encode_atom(&buff, "udhcpc");
+    ei_x_encode_map_header(&buff, 9);
+    encode_kv_string(&buff, "command", argv[1]);
+    encode_kv_env(&buff, "interface");
+    encode_kv_env(&buff, "ip");
+    encode_kv_env(&buff, "broadcast");
+    encode_kv_env(&buff, "subnet");
+    encode_kv_env(&buff, "router");
+    encode_kv_env(&buff, "domain");
+    encode_kv_env(&buff, "dns");
+    encode_kv_env(&buff, "message");
 
     ssize_t rc = write(fd, buff.buff, buff.index);
     if (rc < 0)

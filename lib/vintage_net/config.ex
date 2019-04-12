@@ -171,7 +171,11 @@ defmodule VintageNet.Config do
   defp dhcp_options() do
     """
 
-      script #{Application.app_dir(:vintage_net, ["priv", "default.script"])}
+      script #{udhcpc_handler_path()}
     """
+  end
+
+  defp udhcpc_handler_path() do
+    Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])
   end
 end

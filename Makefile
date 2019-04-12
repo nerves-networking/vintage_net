@@ -39,11 +39,11 @@ ifeq ($(CROSSCOMPILE),)
 	#DEFAULT_TARGETS = $(PREFIX)
     endif
 endif
-DEFAULT_TARGETS ?= $(PREFIX) $(PREFIX)/to_elixir
+DEFAULT_TARGETS ?= $(PREFIX) $(PREFIX)/to_elixir $(PREFIX)/udhcpc_handler
 
 # Set Erlang-specific compile and linker flags
 ERL_CFLAGS ?= -I$(ERL_EI_INCLUDE_DIR)
-ERL_LDFLAGS ?= -L$(ERL_EI_LIBDIR) -lei
+ERL_LDFLAGS ?= -L$(ERL_EI_LIBDIR) -lei_st
 
 CFLAGS ?= -O2 -Wall -Wextra -Wno-unused-parameter -pedantic
 CC ?= $(CROSSCOMPILE)-gcc
@@ -67,10 +67,13 @@ $(BUILD)/%.o: src/%.c
 $(PREFIX)/to_elixir: $(BUILD)/to_elixir.o
 	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -o $@
 
+$(PREFIX)/udhcpc_handler: $(BUILD)/udhcpc_handler.o
+	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -o $@
+
 $(PREFIX) $(BUILD):
 	mkdir -p $@
 
 clean:
-	$(RM) $(PREFIX)/to_elixir $(BUILD)/*.o
+	$(RM) $(PREFIX)/to_elixir $(PREFIX)/udhcpc_handler $(BUILD)/*.o
 
 .PHONY: all clean calling_from_make install
