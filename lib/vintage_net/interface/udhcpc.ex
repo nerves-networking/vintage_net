@@ -1,5 +1,7 @@
-defmodule VintageNetTest.Interface.Udhcpc do
+defmodule VintageNet.Interface.Udhcpc do
   @behaviour VintageNet.ToElixir.UdhcpcHandler
+
+  alias VintageNet.Interface.Resolvconf
 
   require Logger
 
@@ -16,6 +18,7 @@ defmodule VintageNetTest.Interface.Udhcpc do
     # grep -vE "# $interface\$" $RESOLV_CONF > $TMPFILE
     # cat $TMPFILE > $RESOLV_CONF
     # rm -f $TMPFILE
+    Resolvconf.clear(ifname)
 
     # if [ -x /usr/sbin/avahi-autoipd ]; then
     # 	/usr/sbin/avahi-autoipd -k $interface
@@ -83,6 +86,8 @@ defmodule VintageNetTest.Interface.Udhcpc do
     # 	echo adding dns $i
     # 	echo "nameserver $i # $interface" >> $RESOLV_CONF
     # done
+
+    Resolvconf.setup(ifname, info.domain, info.dns)
     :ok
   end
 
