@@ -10,6 +10,7 @@ defmodule VintageNet.Application do
     socket_path = Path.join(Keyword.get(args, :tmpdir), Keyword.get(args, :to_elixir_socket))
 
     children = [
+      {Registry, [keys: :unique, name: VintageNet.Interface.Registry]},
       {VintageNet.ToElixir.Server, socket_path},
       {VintageNet.Interface.Supervisor, []},
       {VintageNet.Init, args}

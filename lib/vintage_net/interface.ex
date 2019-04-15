@@ -16,20 +16,27 @@ defmodule VintageNet.Interface do
               current_command: nil
   end
 
-  def start_link(iface) do
-    GenServer.start_link(__MODULE__, iface)
+  def start_link({name, _} = iface) do
+    GenServer.start_link(__MODULE__, iface, name: via_name(name))
   end
 
-  def status(interface_pid) do
-    GenServer.call(interface_pid, :status)
+  def via_name(iface_name) do
+    VintageNet.Interface.Registry.via_name(__MODULE__, iface_name)
   end
 
-  def up(interface_pid) do
-    GenServer.cast(interface_pid, :ifup)
+  def status(interface) do
+    name = via_name(interface)
+    GenServer.call(name, :status)
   end
 
-  def down(interface_pid) do
-    GenServer.cast(interface_pid, :ifdown)
+  def up(interface) do
+    name = via_name(interface)
+    GenServer.cast(name, :ifup)
+  end
+
+  def down(interface) do
+    name = via_name(interface)
+    GenServer.cast(name, :ifdown)
   end
 
   @impl true
@@ -210,12 +217,16 @@ defmodule VintageNet.Interface do
     interface_pid = self()
 
     Task.start_link(fn ->
-      flags = IP.iface_flags(iface)
+      case IP.iface_flags(iface) do
+        {:error, reason} ->
+          Logger.error("#{reason}")
 
-      if Enum.member?(flags, :up) do
-        send(interface_pid, {:iface_status, :up})
-      else
-        send(interface_pid, {:iface_status, :down})
+        flags ->
+          if Enum.member?(flags, :up) do
+            send(interface_pid, {:iface_status, :up})
+          else
+            send(interface_pid, {:iface_status, :down})
+          end
       end
     end)
   end
