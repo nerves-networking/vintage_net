@@ -6,6 +6,6 @@ defmodule VintageNet.Interface.Registry do
   end
 
   def reg_name(module, interface_name) do
-    {__MODULE__, {module, interface_name}}
+    {__MODULE__, module, interface_name}
   end
 end
