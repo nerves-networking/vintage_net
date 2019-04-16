@@ -11,6 +11,8 @@ defmodule VintageNet.Interface.Udhcpc do
   def deconfig(ifname, info) do
     # /sbin/ifconfig $interface up
     # /sbin/ifconfig $interface 0.0.0.0
+    System.cmd("/sbin/ifconfig", [ifname, "up"])
+    System.cmd("/sbin/ifconfig", [ifname, "0.0.0.0"])
 
     # # drop info from this interface
     # # resolv.conf may be a symlink to /tmp/, so take care
@@ -52,7 +54,8 @@ defmodule VintageNet.Interface.Udhcpc do
     # if [ -x /usr/sbin/avahi-autoipd ]; then
     # 	/usr/sbin/avahi-autoipd -k $interface
     # fi
-    # /sbin/ifconfig $interface $ip $BROADCAST $NETMASK
+    # /sbin/ifconfig $interface $ip $broadcast $netmask
+    System.cmd("/sbin/ifconfig", [ifname, info["ip"], info["broadcast"], info["netmask"]])
 
     # if [ -n "$router" ] ; then
     # 	echo "deleting routers"
@@ -87,7 +90,7 @@ defmodule VintageNet.Interface.Udhcpc do
     # 	echo "nameserver $i # $interface" >> $RESOLV_CONF
     # done
 
-    Resolvconf.setup(ifname, info.domain, info.dns)
+    Resolvconf.setup(ifname, info["domain"], info["dns"])
     :ok
   end
 

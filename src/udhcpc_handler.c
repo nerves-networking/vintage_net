@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +8,8 @@
 #include <unistd.h>
 
 #include <ei.h>
+
+extern char **environ;
 
 #define SOCKET_PATH "/tmp/vintage_net/comms"
 
@@ -24,13 +27,6 @@ static void encode_kv_string(ei_x_buff *buff, const char *key, const char *str)
     encode_string(buff, str);
 }
 
-static void encode_kv_env(ei_x_buff *buff, const char *key)
-{
-    const char *result = getenv(key);
-    const char *non_null_result = result != NULL ? result : "";
-    encode_kv_string(buff, key, non_null_result);
-}
-
 static int count_elements(const char *str)
 {
     if (*str == '\0')
@@ -38,7 +34,8 @@ static int count_elements(const char *str)
 
     int n = 1;
     const char *p = str;
-    while (*p != '\0') {
+    while (*p != '\0')
+    {
         if (*p == ' ')
             n++;
         p++;
@@ -46,19 +43,18 @@ static int count_elements(const char *str)
     return n;
 }
 
-static void encode_kv_env_list(ei_x_buff *buff, const char *key)
+static void encode_kv_list(ei_x_buff *buff, const char *key, const char *str)
 {
-    const char *result = getenv(key);
-    const char *non_null_result = result != NULL ? result : "";
-
     ei_x_encode_atom(buff, key);
 
-    int n = count_elements(non_null_result);
-    if (n > 0) {
+    int n = count_elements(str);
+    if (n > 0)
+    {
         ei_x_encode_list_header(buff, n);
 
-        const char *p = non_null_result;
-        while (n > 1) {
+        const char *p = str;
+        while (n > 1)
+        {
             const char *end = strchr(p, ' ');
             ei_x_encode_binary(buff, p, end - p);
             p = end + 1;
@@ -68,6 +64,91 @@ static void encode_kv_env_list(ei_x_buff *buff, const char *key)
     }
 
     ei_x_encode_empty_list(buff);
+}
+
+/*
+ * Example udhcpc variables:
+ *
+ *  subnet=255.255.255.0
+ *  router=192.168.9.1
+ *  opt58=0000a8c0
+ *  opt59=00012750
+ *  domain=example.net
+ *  interface=eth0
+ *  siaddr=192.168.9.1
+ *  dns=192.168.9.1
+ *  serverid=192.168.9.1
+ *  broadcast=192.168.9.255
+ *  ip=192.168.9.131
+ *  mask=24
+ *  lease=86400
+ *  opt53=05
+ *
+ * See https://git.busybox.net/busybox/tree/networking/udhcp/common.c for more.
+ */
+
+static int should_encode(const char *kv)
+{
+    // We want to encode all lower case environment variables. Those are the ones from udhcpc.
+    // Just check the first character.
+    return islower(kv[0]);
+}
+
+static int count_environ_to_encode()
+{
+    char **p = environ;
+    int n = 0;
+
+    while (*p != NULL)
+    {
+        if (should_encode(*p))
+            n++;
+
+        p++;
+    }
+
+    return n;
+}
+
+static void encode_env_kv(ei_x_buff *buff, const char *kv)
+{
+    char key[32];
+
+    const char *equal = strchr(kv, '=');
+    if (equal == NULL)
+        return;
+
+    int keylen = equal - kv;
+    if (keylen >= sizeof(key))
+        keylen = sizeof(key) - 1;
+    memcpy(key, kv, keylen);
+    key[keylen] = '\0';
+
+    const char *value = equal + 1;
+
+    // Some parameters are lists, so encode those as lists so that Elixir
+    // doesn't have to figure it out.
+    if (strcmp(key, "dns") == 0 ||
+        strcmp(key, "router") == 0)
+        encode_kv_list(buff, key, value);
+    else
+        encode_kv_string(buff, key, value);
+}
+
+static void encode_environ(ei_x_buff *buff)
+{
+    char **p = environ;
+
+    // We want to encode all lower case environment variables. Those are the ones from udhcpc.
+    while (*p != NULL)
+    {
+        const char *kv = *p;
+
+        if (should_encode(kv))
+            encode_env_kv(buff, kv);
+
+        p++;
+    }
 }
 
 int main(int argc, char *argv[])
@@ -93,19 +174,15 @@ int main(int argc, char *argv[])
     if (ei_x_new_with_version(&buff) < 0)
         err(EXIT_FAILURE, "ei_x_new_with_version");
 
+    int kv_to_encode = count_environ_to_encode();
+
     ei_x_encode_tuple_header(&buff, 2);
     ei_x_encode_atom(&buff, "udhcpc");
-    ei_x_encode_map_header(&buff, 9);
+    ei_x_encode_map_header(&buff, kv_to_encode + 1);
     ei_x_encode_atom(&buff, "command");
     ei_x_encode_atom(&buff, argv[1]);
-    encode_kv_env(&buff, "interface");
-    encode_kv_env(&buff, "ip");
-    encode_kv_env(&buff, "broadcast");
-    encode_kv_env(&buff, "subnet");
-    encode_kv_env(&buff, "router");
-    encode_kv_env(&buff, "domain");
-    encode_kv_env_list(&buff, "dns");
-    encode_kv_env(&buff, "message");
+
+    encode_environ(&buff);
 
     ssize_t rc = write(fd, buff.buff, buff.index);
     if (rc < 0)

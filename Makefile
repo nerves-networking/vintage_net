@@ -43,7 +43,7 @@ DEFAULT_TARGETS ?= $(PREFIX) $(PREFIX)/to_elixir $(PREFIX)/udhcpc_handler
 
 # Set Erlang-specific compile and linker flags
 ERL_CFLAGS ?= -I$(ERL_EI_INCLUDE_DIR)
-ERL_LDFLAGS ?= -L$(ERL_EI_LIBDIR) -lei_st
+ERL_LDFLAGS = -L$(ERL_EI_LIBDIR) -lei_st
 
 CFLAGS ?= -O2 -Wall -Wextra -Wno-unused-parameter -pedantic
 CC ?= $(CROSSCOMPILE)-gcc
