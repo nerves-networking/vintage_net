@@ -16,27 +16,26 @@ defmodule VintageNet.Interface do
               current_command: nil
   end
 
-  def start_link({name, _} = iface) do
-    GenServer.start_link(__MODULE__, iface, name: via_name(name))
-  end
-
-  def via_name(iface_name) do
-    VintageNet.Interface.Registry.via_name(__MODULE__, iface_name)
+  def start_link(iface) do
+    GenServer.start_link(__MODULE__, iface, name: to_named(iface))
   end
 
   def status(interface) do
-    name = via_name(interface)
-    GenServer.call(name, :status)
+    interface
+    |> to_named()
+    |> GenServer.call(:status)
   end
 
   def up(interface) do
-    name = via_name(interface)
-    GenServer.cast(name, :ifup)
+    interface
+    |> to_named()
+    |> GenServer.cast(:ifup)
   end
 
   def down(interface) do
-    name = via_name(interface)
-    GenServer.cast(name, :ifdown)
+    interface
+    |> to_named()
+    |> GenServer.cast(:ifdown)
   end
 
   @impl true
@@ -242,4 +241,8 @@ defmodule VintageNet.Interface do
   defp status_check_timer() do
     Process.send_after(self(), :check_status, 2_500)
   end
+
+  defp to_named(iface_pid) when is_pid(iface_pid), do: iface_pid
+  defp to_named(iface_name) when is_binary(iface_name), do: String.to_atom(iface_name)
+  defp to_named({name, _}), do: String.to_atom(name)
 end
