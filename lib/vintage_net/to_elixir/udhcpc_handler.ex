@@ -26,8 +26,6 @@ defmodule VintageNet.ToElixir.UdhcpcHandler do
   @type ifname :: String.t()
   @type update_data :: map()
 
-  @handler Application.get_env(:vintage_net, :udhcpc_handler)
-
   @doc """
   """
   @callback deconfig(ifname(), update_data()) :: :ok
@@ -53,6 +51,7 @@ defmodule VintageNet.ToElixir.UdhcpcHandler do
   """
   @spec dispatch(atom(), ifname(), update_data()) :: :ok
   def dispatch(function, ifname, update_data) do
-    apply(@handler, function, [ifname, update_data])
+    handler = Application.get_env(:vintage_net, :udhcpc_handler)
+    apply(handler, function, [ifname, update_data])
   end
 end
