@@ -29,7 +29,7 @@ defmodule ToElixirTest do
 
              Process.sleep(250)
            end) =~
-             "[debug] udhcpc.deconfig(eth0): %{broadcast: \"broadcast\", command: :deconfig, dns: \"dns\", domain: \"domain\", interface: \"eth0\", ip: \"ip\", message: \"message\", router: \"router\", subnet: \"subnet\"}"
+             "[debug] udhcpc.deconfig(eth0): %{broadcast: \"broadcast\", command: :deconfig, dns: [\"dns\"], domain: \"domain\", interface: \"eth0\", ip: \"ip\", message: \"message\", router: \"router\", subnet: \"subnet\"}"
   end
 
   test "udhcpc handler handles unset fields" do
@@ -42,13 +42,35 @@ defmodule ToElixirTest do
                  {"broadcast", "broadcast"},
                  {"subnet", "subnet"},
                  {"router", "router"},
-                 {"domain", "domain"},
-                 {"dns", "dns"}
+                 {"domain", "domain"}
                ]
              )
 
              Process.sleep(250)
            end) =~
-             "[debug] udhcpc.deconfig(eth0): %{broadcast: \"broadcast\", command: :deconfig, dns: \"dns\", domain: \"domain\", interface: \"eth0\", ip: \"\", message: \"\", router: \"router\", subnet: \"subnet\"}"
+             "[debug] udhcpc.deconfig(eth0): %{broadcast: \"broadcast\", command: :deconfig, dns: [], domain: \"domain\", interface: \"eth0\", ip: \"\", message: \"\", router: \"router\", subnet: \"subnet\"}"
   end
+
+  test "udhcpc handler handles multiple dns" do
+    assert capture_log(fn ->
+             udhcpc_handler = Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])
+
+             System.cmd(udhcpc_handler, ["deconfig"],
+               env: [
+                 {"interface", "eth0"},
+                 {"ip", "ip"},
+                 {"broadcast", "broadcast"},
+                 {"subnet", "subnet"},
+                 {"router", "router"},
+                 {"domain", "domain"},
+                 {"dns", "1.1.1.1 2.2.2.2 3.3.3.3 4.4.4.4"},
+                 {"message", "message"}
+               ]
+             )
+
+             Process.sleep(250)
+           end) =~
+             "[debug] udhcpc.deconfig(eth0): %{broadcast: \"broadcast\", command: :deconfig, dns: [\"1.1.1.1\", \"2.2.2.2\", \"3.3.3.3\", \"4.4.4.4\"], domain: \"domain\", interface: \"eth0\", ip: \"ip\", message: \"message\", router: \"router\", subnet: \"subnet\"}"
+  end
+
 end

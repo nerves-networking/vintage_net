@@ -31,6 +31,45 @@ static void encode_kv_env(ei_x_buff *buff, const char *key)
     encode_kv_string(buff, key, non_null_result);
 }
 
+static int count_elements(const char *str)
+{
+    if (*str == '\0')
+        return 0;
+
+    int n = 1;
+    const char *p = str;
+    while (*p != '\0') {
+        if (*p == ' ')
+            n++;
+        p++;
+    }
+    return n;
+}
+
+static void encode_kv_env_list(ei_x_buff *buff, const char *key)
+{
+    const char *result = getenv(key);
+    const char *non_null_result = result != NULL ? result : "";
+
+    ei_x_encode_atom(buff, key);
+
+    int n = count_elements(non_null_result);
+    if (n > 0) {
+        ei_x_encode_list_header(buff, n);
+
+        const char *p = non_null_result;
+        while (n > 1) {
+            const char *end = strchr(p, ' ');
+            ei_x_encode_binary(buff, p, end - p);
+            p = end + 1;
+            n--;
+        }
+        ei_x_encode_binary(buff, p, strlen(p));
+    }
+
+    ei_x_encode_empty_list(buff);
+}
+
 int main(int argc, char *argv[])
 {
     if (argc != 2)
@@ -65,7 +104,7 @@ int main(int argc, char *argv[])
     encode_kv_env(&buff, "subnet");
     encode_kv_env(&buff, "router");
     encode_kv_env(&buff, "domain");
-    encode_kv_env(&buff, "dns");
+    encode_kv_env_list(&buff, "dns");
     encode_kv_env(&buff, "message");
 
     ssize_t rc = write(fd, buff.buff, buff.index);
