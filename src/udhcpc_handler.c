@@ -118,7 +118,7 @@ static void encode_env_kv(ei_x_buff *buff, const char *kv)
     if (equal == NULL)
         return;
 
-    int keylen = equal - kv;
+    size_t keylen = equal - kv;
     if (keylen >= sizeof(key))
         keylen = sizeof(key) - 1;
     memcpy(key, kv, keylen);
@@ -129,7 +129,7 @@ static void encode_env_kv(ei_x_buff *buff, const char *kv)
     // Some parameters are lists, so encode those as lists so that Elixir
     // doesn't have to figure it out.
     if (strcmp(key, "dns") == 0 ||
-        strcmp(key, "router") == 0)
+            strcmp(key, "router") == 0)
         encode_kv_list(buff, key, value);
     else
         encode_kv_string(buff, key, value);
@@ -155,8 +155,6 @@ int main(int argc, char *argv[])
 {
     if (argc != 2)
         errx(EXIT_FAILURE, "Expecting a command from udhcpc");
-
-    ei_init();
 
     int fd = socket(AF_UNIX, SOCK_DGRAM, 0);
     if (fd < 0)

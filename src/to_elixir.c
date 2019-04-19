@@ -22,8 +22,6 @@ int main(int argc, char *argv[])
     if (argc != 2)
         errx(EXIT_FAILURE, "Expecting a message");
 
-    ei_init();
-
     int fd = socket(AF_UNIX, SOCK_DGRAM, 0);
     if (fd < 0)
         err(EXIT_FAILURE, "socket");
