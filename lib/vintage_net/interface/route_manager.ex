@@ -1,5 +1,6 @@
 defmodule VintageNet.Interface.RouteManager do
   use GenServer
+  require Logger
 
   alias VintageNet.Interface.Classification
 
@@ -46,9 +47,9 @@ defmodule VintageNet.Interface.RouteManager do
 
   This replaces any existing routes on that interface
   """
-  @spec set_route(String.t(), String.t()) :: :ok
-  def set_route(ifname, route) do
-    GenServer.call(__MODULE__, {:set_route, ifname, route})
+  @spec set_route(String.t(), :inet.ip_address(), Classification.connection_status()) :: :ok
+  def set_route(ifname, route, status \\ :lan) do
+    GenServer.call(__MODULE__, {:set_route, ifname, route, status})
   end
 
   @doc """
@@ -89,22 +90,107 @@ defmodule VintageNet.Interface.RouteManager do
   end
 
   @impl true
-  def handle_call({:set_route, ifname, route}, _from, state) do
-    # ifentry = %{domain: domain, nameservers: nameservers}
-    # state = %{state | ifmap: Map.put(state.ifmap, ifname, ifentry)}
-    {:reply, :ok, state}
+  def handle_call({:set_route, ifname, route, status}, _from, state) do
+    ifentry = %{route: route, status: status}
+    new_state = %{state | ifmap: Map.put(state.ifmap, ifname, ifentry)}
+    refresh_all_routes(new_state)
+
+    {:reply, :ok, new_state}
   end
 
   @impl true
   def handle_call({:set_connection_status, ifname, status}, _from, state) do
-    # ifentry = %{domain: domain, nameservers: nameservers}
-    # state = %{state | ifmap: Map.put(state.ifmap, ifname, ifentry)}
-    {:reply, :ok, state}
+    new_ifmap = update_connection_status(state.ifmap, ifname, status)
+    new_state = %{state | ifmap: new_ifmap}
+    refresh_all_routes(new_state)
+
+    {:reply, :ok, new_state}
   end
 
   @impl true
   def handle_call({:clear_route, ifname}, _from, state) do
-    # state = %{state | ifmap: Map.delete(state.ifmap, ifname)}
-    {:reply, :ok, state}
+    # Always try to clear routes even if we think they're cleared.
+    clear_routes(ifname)
+
+    new_state = %{state | ifmap: Map.delete(state.ifmap, ifname)}
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call({:set_prioritization, priorities}, _from, state) do
+    new_state = %{state | prioritization: priorities}
+
+    refresh_all_routes(new_state)
+
+    {:reply, :ok, new_state}
+  end
+
+  defp create_route(ifname, route, status, prioritization) do
+    case Classification.compute_metric(ifname, status, prioritization) do
+      :disabled ->
+        :ok
+
+      metric ->
+        Logger.info("ip route add default metric #{metric} via #{inspect(route)} dev #{ifname}")
+
+        System.cmd("ip", [
+          "route",
+          "add",
+          "default",
+          "metric",
+          "#{metric}",
+          "via",
+          ip_to_string(route),
+          "dev",
+          ifname
+        ])
+    end
+  end
+
+  defp ip_to_string(ipa) do
+    :inet.ntoa(ipa) |> to_string()
+  end
+
+  defp clear_routes(ifname) do
+    Logger.info("ip route del default dev #{ifname}")
+
+    case System.cmd("ip", ["route", "del", "default", "dev", ifname]) do
+      {_, 0} ->
+        # Success. There could be more, though.
+        clear_routes(ifname)
+
+      _ ->
+        # Error, so we either cleared them all or there weren't any to begin with
+        :ok
+    end
+  end
+
+  defp clear_all_routes() do
+    case System.cmd("ip", ["route", "del", "default"]) do
+      {_, 0} ->
+        # Success. There could be more, though.
+        clear_all_routes()
+
+      _ ->
+        # Error, so we either cleared them all or there weren't any to begin with
+        :ok
+    end
+  end
+
+  defp update_connection_status(ifmap, ifname, status) do
+    if Map.has_key?(ifmap, ifname) do
+      new_ifmap = put_in(ifmap[ifname].status, status)
+      refresh_all_routes(new_ifmap)
+    else
+      ifmap
+    end
+  end
+
+  defp refresh_all_routes(state) do
+    clear_all_routes()
+
+    Enum.each(state.ifmap, fn {ifname, ifentry} ->
+      create_route(ifname, ifentry.route, ifentry.status, state.prioritization)
+    end)
   end
 end

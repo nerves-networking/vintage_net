@@ -1,7 +1,7 @@
 defmodule VintageNet.Interface.Udhcpc do
   @behaviour VintageNet.ToElixir.UdhcpcHandler
 
-  alias VintageNet.Interface.Resolvconf
+  alias VintageNet.Interface.{Resolvconf, RouteManager}
 
   require Logger
 
@@ -9,6 +9,8 @@ defmodule VintageNet.Interface.Udhcpc do
   """
   @impl true
   def deconfig(ifname, _info) do
+    RouteManager.clear_route(ifname)
+
     # /sbin/ifconfig $interface up
     # /sbin/ifconfig $interface 0.0.0.0
     System.cmd("/sbin/ifconfig", [ifname, "up"])
@@ -32,7 +34,8 @@ defmodule VintageNet.Interface.Udhcpc do
   @doc """
   """
   @impl true
-  def leasefail(_ifname, _info) do
+  def leasefail(ifname, _info) do
+    RouteManager.clear_route(ifname)
     # if [ -x /usr/sbin/avahi-autoipd ]; then
     # 	/usr/sbin/avahi-autoipd -wD $interface --no-chroot
     # fi
@@ -85,9 +88,10 @@ defmodule VintageNet.Interface.Udhcpc do
     # fi
     case info[:router] do
       routers when is_list(routers) ->
-        System.cmd("/sbin/route", ["del", "default", "gw", "0.0.0.0", "dev", ifname])
         first_router = hd(routers)
-        System.cmd("/sbin/route", ["add", "default", "gw", first_router, "dev", ifname])
+        {:ok, addr} = :inet.parse_address(to_charlist(first_router))
+
+        RouteManager.set_route(ifname, addr, :lan)
 
       nil ->
         :ok
