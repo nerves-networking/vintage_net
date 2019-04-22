@@ -11,8 +11,8 @@ defmodule VintageNet.Application do
 
     children = [
       {VintageNet.ToElixir.Server, socket_path},
-      {VintageNet.Interface.Resolvconf, args},
-      VintageNet.Interface.RouteManager,
+      {VintageNet.NameResolver, args},
+      VintageNet.RouteManager,
       VintageNet.Interface.Supervisor,
       {VintageNet.Init, args}
     ]

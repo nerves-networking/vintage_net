@@ -1,7 +1,7 @@
 defmodule VintageNet.Interface.Udhcpc do
   @behaviour VintageNet.ToElixir.UdhcpcHandler
 
-  alias VintageNet.Interface.{Resolvconf, RouteManager}
+  alias VintageNet.{NameResolver, RouteManager}
 
   require Logger
 
@@ -22,7 +22,7 @@ defmodule VintageNet.Interface.Udhcpc do
     # grep -vE "# $interface\$" $RESOLV_CONF > $TMPFILE
     # cat $TMPFILE > $RESOLV_CONF
     # rm -f $TMPFILE
-    Resolvconf.clear(ifname)
+    NameResolver.clear(ifname)
 
     # if [ -x /usr/sbin/avahi-autoipd ]; then
     # 	/usr/sbin/avahi-autoipd -k $interface
@@ -132,7 +132,7 @@ defmodule VintageNet.Interface.Udhcpc do
     # done
     dns = Map.get(info, :dns, [])
 
-    Resolvconf.setup(ifname, domain, dns)
+    NameResolver.setup(ifname, domain, dns)
     :ok
   end
 

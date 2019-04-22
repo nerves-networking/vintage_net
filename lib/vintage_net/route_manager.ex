@@ -1,4 +1,4 @@
-defmodule VintageNet.Interface.RouteManager do
+defmodule VintageNet.RouteManager do
   use GenServer
   require Logger
 

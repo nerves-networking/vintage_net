@@ -1,4 +1,4 @@
-defmodule VintageNet.Interface.Resolvconf do
+defmodule VintageNet.NameResolver do
   use GenServer
 
   @moduledoc """
