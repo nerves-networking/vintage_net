@@ -4,7 +4,7 @@ defmodule PropertyTable.Supervisor do
   @doc """
   Start
   """
-  @spec start_link(PropertyTable.table()) :: Supervisor.on_start()
+  @spec start_link(PropertyTable.table_id()) :: Supervisor.on_start()
   def start_link(name) do
     Supervisor.start_link(__MODULE__, name)
   end
@@ -21,7 +21,7 @@ defmodule PropertyTable.Supervisor do
     Supervisor.init(children, strategy: :one_for_one)
   end
 
-  @spec registry_name(PropertyTable.table()) :: Registry.registry()
+  @spec registry_name(PropertyTable.table_id()) :: Registry.registry()
   def registry_name(name) do
     Module.concat(PropertyTable.Registry, name)
   end

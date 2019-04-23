@@ -1,77 +1,85 @@
 defmodule PropertyTableTest do
-  use ExUnit.Case
-
-  @table PropertyTableTestTable
+  use ExUnit.Case, async: true
 
   doctest PropertyTable
 
-  setup do
-    {:ok, _pid} = PropertyTable.start_link(name: @table)
-    :ok
+  setup config do
+    {:ok, _pid} = start_supervised({PropertyTable, name: config.test})
+    {:ok, %{table: config.test}}
   end
 
-  test "sending events" do
+  test "sending events", %{table: table} do
     name = ["test"]
-    PropertyTable.subscribe(@table, name)
+    PropertyTable.subscribe(table, name)
 
-    PropertyTable.put(@table, name, 99)
-    assert_receive {@table, ^name, nil, 99}
+    PropertyTable.put(table, name, 99)
+    assert_receive {table, ^name, nil, 99, _}
 
-    PropertyTable.put(@table, name, 100)
-    assert_receive {@table, ^name, 99, 100}
+    PropertyTable.put(table, name, 100)
+    assert_receive {table, ^name, 99, 100, _}
 
-    PropertyTable.clear(@table, name)
-    assert_receive {@table, ^name, 100, nil}
+    PropertyTable.clear(table, name)
+    assert_receive {table, ^name, 100, nil, _}
 
-    PropertyTable.unsubscribe(@table, name)
+    PropertyTable.unsubscribe(table, name)
   end
 
-  test "sending specific event is received by generic subscriber" do
+  test "setting properties to nil clears them", %{table: table} do
+    name = ["test"]
+
+    PropertyTable.put(table, name, 124)
+    assert PropertyTable.get_by_prefix(table, []) == [{name, 124}]
+
+    PropertyTable.put(table, name, nil)
+    assert PropertyTable.get_by_prefix(table, []) == []
+  end
+
+  test "generic subscribers receive events", %{table: table} do
     name = ["test", "a", "b"]
 
-    PropertyTable.subscribe(@table, [])
-    PropertyTable.put(@table, name, 101)
-    assert_receive {@table, ^name, nil, 101}
-    PropertyTable.unsubscribe(@table, [])
+    PropertyTable.subscribe(table, [])
+    PropertyTable.put(table, name, 101)
+    assert_receive {table, ^name, nil, 101, _}
+    PropertyTable.unsubscribe(table, [])
   end
 
-  test "duplicate events are dropped" do
+  test "duplicate events are dropped", %{table: table} do
     name = ["test", "a", "b"]
 
-    PropertyTable.subscribe(@table, name)
-    PropertyTable.put(@table, name, 102)
-    PropertyTable.put(@table, name, 102)
-    assert_receive {@table, ^name, nil, 102}
-    refute_receive {@table, ^name, _, 102}
+    PropertyTable.subscribe(table, name)
+    PropertyTable.put(table, name, 102)
+    PropertyTable.put(table, name, 102)
+    assert_receive {^table, ^name, nil, 102, _}
+    refute_receive {^table, ^name, _, 102, _}
 
-    PropertyTable.unsubscribe(@table, name)
+    PropertyTable.unsubscribe(table, name)
   end
 
-  test "getting the latest" do
+  test "getting the latest", %{table: table} do
     name = ["test", "a", "b"]
-    assert PropertyTable.get(@table, name) == nil
+    assert PropertyTable.get(table, name) == nil
 
-    PropertyTable.put(@table, name, 105)
-    assert PropertyTable.get(@table, name) == 105
+    PropertyTable.put(table, name, 105)
+    assert PropertyTable.get(table, name) == 105
 
-    PropertyTable.put(@table, name, 106)
-    assert PropertyTable.get(@table, name) == 106
+    PropertyTable.put(table, name, 106)
+    assert PropertyTable.get(table, name) == 106
   end
 
-  test "getting a subtree" do
+  test "getting a subtree", %{table: table} do
     name = ["test", "a", "b"]
     name2 = ["test", "a", "c"]
 
-    assert PropertyTable.get_by_prefix(@table, []) == []
+    assert PropertyTable.get_by_prefix(table, []) == []
 
-    PropertyTable.put(@table, name, 105)
-    assert PropertyTable.get_by_prefix(@table, []) == [{name, 105}]
+    PropertyTable.put(table, name, 105)
+    assert PropertyTable.get_by_prefix(table, []) == [{name, 105}]
 
-    PropertyTable.put(@table, name2, 106)
-    assert PropertyTable.get_by_prefix(@table, []) == [{name, 105}, {name2, 106}]
-    assert PropertyTable.get_by_prefix(@table, ["test"]) == [{name, 105}, {name2, 106}]
-    assert PropertyTable.get_by_prefix(@table, ["test", "a"]) == [{name, 105}, {name2, 106}]
-    assert PropertyTable.get_by_prefix(@table, name) == [{name, 105}]
-    assert PropertyTable.get_by_prefix(@table, name2) == [{name2, 106}]
+    PropertyTable.put(table, name2, 106)
+    assert PropertyTable.get_by_prefix(table, []) == [{name, 105}, {name2, 106}]
+    assert PropertyTable.get_by_prefix(table, ["test"]) == [{name, 105}, {name2, 106}]
+    assert PropertyTable.get_by_prefix(table, ["test", "a"]) == [{name, 105}, {name2, 106}]
+    assert PropertyTable.get_by_prefix(table, name) == [{name, 105}]
+    assert PropertyTable.get_by_prefix(table, name2) == [{name2, 106}]
   end
 end

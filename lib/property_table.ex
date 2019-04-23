@@ -1,15 +1,46 @@
 defmodule PropertyTable do
   @moduledoc """
-  Documentation for PropertyTable.
+  PropertyTables are in-memory key-value stores
+
+  Users can subscribe to keys or groups of keys to be notified of changes.
+
+  Keys are hierarchically layed out with each key being represented as a list
+  for the path to the key. For example, to get the current state of the network
+  interface `eth0`, you would get the value of the key, `["net", "ethernet",
+  "eth0"]`.
+
+  Values can be any Elixir data structure except for `nil`. `nil` is used to
+  identify non-existent keys. Therefore, setting a property to `nil` deletes
+  the property.
+
+  Users can get and listen for changes in multiple keys by specifying prefix
+  paths. For example, if you wants to get every network property, run:
+
+      PropertyTable.get_by_prefix(table, ["net"])
+
+  Likewise, you can subscribe to changes in the network status by running:
+
+      PropertyTable.subscribe(table, ["net"])
+
+  Properties can include metadata. `PropertyTable` only specifies that metadata
+  is a map.
   """
+
   alias PropertyTable.Table
 
-  @type table() :: atom()
+  @typedoc """
+  A table_id identifies a group of properties
+  """
+  @type table_id() :: atom()
 
-  @type property_name :: [String.t()]
-  @type property_value :: any()
+  @typedoc """
+  Properties
+  """
+  @type property :: [String.t()]
+  @type value :: any()
+  @type metadata :: map()
 
-  @spec start_link(name: table()) :: {:ok, pid} | {:error, term}
+  @spec start_link(name: table_id()) :: {:ok, pid} | {:error, term}
   def start_link(options) do
     name = Keyword.get(options, :name)
 
@@ -35,7 +66,7 @@ defmodule PropertyTable do
   @doc """
   Subscribe to receive events
   """
-  @spec subscribe(table(), property_name()) :: :ok
+  @spec subscribe(table_id(), property()) :: :ok
   def subscribe(table, name) when is_list(name) do
     assert_name(name)
 
@@ -45,7 +76,10 @@ defmodule PropertyTable do
     :ok
   end
 
-  @spec unsubscribe(table(), property_name()) :: :ok
+  @doc """
+  Stop subscribing to a property
+  """
+  @spec unsubscribe(table_id(), property()) :: :ok
   def unsubscribe(table, name) when is_list(name) do
     registry = PropertyTable.Supervisor.registry_name(table)
     Registry.unregister(registry, name)
@@ -54,7 +88,7 @@ defmodule PropertyTable do
   @doc """
   Get the current value of a property
   """
-  @spec get(table(), property_name(), property_value()) :: property_value()
+  @spec get(table_id(), property(), value()) :: value()
   def get(table, name, default \\ nil) when is_list(name) do
     Table.get(table, name, default)
   end
@@ -62,7 +96,7 @@ defmodule PropertyTable do
   @doc """
   Get a list of all properties matching the specified prefix
   """
-  @spec get_by_prefix(table(), property_name()) :: [{property_name(), property_value()}]
+  @spec get_by_prefix(table_id(), property()) :: [{property(), value()}]
   def get_by_prefix(table, prefix) when is_list(prefix) do
     assert_name(prefix)
 
@@ -72,9 +106,9 @@ defmodule PropertyTable do
   @doc """
   Update a property and notify listeners
   """
-  @spec put(table, property_name(), property_value()) :: :ok
-  def put(table, name, value) when is_list(name) do
-    Table.put(table, name, value)
+  @spec put(table_id(), property(), value(), metadata()) :: :ok
+  def put(table, name, value, metadata \\ %{}) when is_list(name) do
+    Table.put(table, name, value, metadata)
   end
 
   @doc """
@@ -84,6 +118,6 @@ defmodule PropertyTable do
 
   defp assert_name(name) do
     Enum.all?(name, &is_binary/1) ||
-      raise ArgumentError, "Expected name or prefix to be a list of atoms"
+      raise ArgumentError, "Expected name or prefix to be a list of strings"
   end
 end
