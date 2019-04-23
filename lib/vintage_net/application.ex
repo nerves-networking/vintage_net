@@ -13,8 +13,7 @@ defmodule VintageNet.Application do
       {VintageNet.ToElixir.Server, socket_path},
       {VintageNet.NameResolver, args},
       VintageNet.RouteManager,
-      VintageNet.Interface.Supervisor,
-      {VintageNet.Init, args}
+      VintageNet.InterfacesSupervisor
     ]
 
     opts = [strategy: :one_for_one, name: VintageNet.Supervisor]

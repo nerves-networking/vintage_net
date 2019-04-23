@@ -1,19 +1,18 @@
 defmodule VintageNet.Interface.Supervisor do
-  use DynamicSupervisor
+  use Supervisor
 
-  def start_link(_) do
-    DynamicSupervisor.start_link(__MODULE__, :arg, name: __MODULE__)
-  end
-
-  def start_interface(iface) do
-    DynamicSupervisor.start_child(
-      __MODULE__,
-      {VintageNet.Interface, iface}
-    )
+  def start_link(iface) do
+    Supervisor.start_link(__MODULE__, iface)
   end
 
   @impl true
-  def init(_) do
-    DynamicSupervisor.init(strategy: :one_for_one)
+  def init({ifname, _} = iface) do
+    children = [
+      {VintageNet.Interface.ConnectivityChecker, ifname},
+      VintageNet.Interface.CommandRunner,
+      {VintageNet.Interface, iface}
+    ]
+
+    Supervisor.init(children, strategy: :one_for_all)
   end
 end

@@ -1,4 +1,4 @@
-defmodule VintageNet.Interface.Ping do
+defmodule VintageNet.Interface.ConnectivityChecker do
   use GenServer
 
   require Logger
@@ -28,11 +28,11 @@ defmodule VintageNet.Interface.Ping do
     case :gen_tcp.connect(ip, 80, opts) do
       {:ok, pid} ->
         :gen_tcp.close(pid)
-        IO.inspect("Ping")
+        Logger.debug("PING #{ifname}")
         ping_wait(interval)
 
       {:error, :econnrefused} ->
-        IO.inspect("Ping")
+        Logger.debug("PING #{ifname}")
         ping_wait(interval)
 
       error ->
