@@ -1,6 +1,6 @@
-defmodule VintageNet.Interface.ResolvconfTest do
+defmodule VintageNet.Interface.NameResolverTest do
   use VintageNetTest.Case
-  alias VintageNet.Interface.Resolvconf
+  alias VintageNet.NameResolver
 
   @resolvconf_path "resolv.conf"
 
@@ -14,17 +14,17 @@ defmodule VintageNet.Interface.ResolvconfTest do
 
   test "empty resolvconf is empty", context do
     in_tmp(context.test, fn ->
-      Resolvconf.start_link(resolvconf: @resolvconf_path)
+      NameResolver.start_link(resolvconf: @resolvconf_path)
       assert File.exists?(@resolvconf_path)
       assert File.read!(@resolvconf_path) == ""
-      Resolvconf.stop()
+      NameResolver.stop()
     end)
   end
 
   test "adding one interface", context do
     in_tmp(context.test, fn ->
-      Resolvconf.start_link(resolvconf: @resolvconf_path)
-      Resolvconf.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
+      NameResolver.start_link(resolvconf: @resolvconf_path)
+      NameResolver.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
 
       contents = File.read!(@resolvconf_path)
 
@@ -34,19 +34,19 @@ defmodule VintageNet.Interface.ResolvconfTest do
              nameserver 8.8.8.8
              """
 
-      Resolvconf.clear("eth0")
+      NameResolver.clear("eth0")
       contents = File.read!(@resolvconf_path)
       assert contents == ""
 
-      Resolvconf.stop()
+      NameResolver.stop()
     end)
   end
 
   test "adding two interfaces", context do
     in_tmp(context.test, fn ->
-      Resolvconf.start_link(resolvconf: @resolvconf_path)
-      Resolvconf.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
-      Resolvconf.setup("wlan0", "example2.com", ["1.1.1.2", "8.8.8.9"])
+      NameResolver.start_link(resolvconf: @resolvconf_path)
+      NameResolver.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
+      NameResolver.setup("wlan0", "example2.com", ["1.1.1.2", "8.8.8.9"])
 
       contents = File.read!(@resolvconf_path)
 
@@ -59,7 +59,7 @@ defmodule VintageNet.Interface.ResolvconfTest do
              nameserver 8.8.8.9
              """
 
-      Resolvconf.clear("eth0")
+      NameResolver.clear("eth0")
       contents = File.read!(@resolvconf_path)
 
       assert contents == """
@@ -68,18 +68,18 @@ defmodule VintageNet.Interface.ResolvconfTest do
              nameserver 8.8.8.9
              """
 
-      Resolvconf.stop()
+      NameResolver.stop()
     end)
   end
 
   test "clearing all interfaces", context do
     in_tmp(context.test, fn ->
-      Resolvconf.start_link(resolvconf: @resolvconf_path)
-      Resolvconf.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
-      Resolvconf.setup("wlan0", "example2.com", ["1.1.1.2", "8.8.8.9"])
-      Resolvconf.clear_all()
+      NameResolver.start_link(resolvconf: @resolvconf_path)
+      NameResolver.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
+      NameResolver.setup("wlan0", "example2.com", ["1.1.1.2", "8.8.8.9"])
+      NameResolver.clear_all()
       assert File.read!(@resolvconf_path) == ""
-      Resolvconf.stop()
+      NameResolver.stop()
     end)
   end
 end

@@ -9,7 +9,7 @@ defmodule VintageNet.NameResolver do
   file, their changes will be lost on the next update.
   """
 
-  @typedoc "Settings for Resolvconf"
+  @typedoc "Settings for NameResolver"
   @type ifmap :: %{
           domain: String.t(),
           nameservers: [String.t()]
