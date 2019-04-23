@@ -4,6 +4,11 @@ defmodule VintageNet.Interface.ConnectivityChecker do
   require Logger
   require Record
 
+  @internet_address "nerves-project.org"
+
+  @delay_to_first_check 100
+  @interval 5_000
+
   @doc false
   Record.defrecord(:hostent, Record.extract(:hostent, from_lib: "kernel/include/inet.hrl"))
 
@@ -11,53 +16,49 @@ defmodule VintageNet.Interface.ConnectivityChecker do
     GenServer.start_link(__MODULE__, ifname)
   end
 
+  @impl true
   def init(ifname) do
-    case resolve_addr("nerves-project.org") do
-      {:ok, ip} ->
-        ping_wait(5_000)
-        {:ok, %{ifname: ifname, interval: 5_000, host_ip: ip}}
-
-      {:error, error} ->
-        {:stop, error}
-    end
+    ping_wait(@delay_to_first_check)
+    {:ok, %{ifname: ifname, interval: @interval}}
   end
 
-  def handle_info(:ping, %{ifname: ifname, interval: interval, host_ip: ip} = state) do
-    opts = get_tcp_options(ifname)
+  @impl true
+  def handle_info(:ping, %{ifname: ifname, interval: interval} = state) do
+    case ping(ifname) do
+      :ok ->
+        _ = Logger.debug("PING #{ifname}")
 
-    case :gen_tcp.connect(ip, 80, opts) do
-      {:ok, pid} ->
-        :gen_tcp.close(pid)
-        Logger.debug("PING #{ifname}")
-        ping_wait(interval)
-
-      {:error, :econnrefused} ->
-        Logger.debug("PING #{ifname}")
-        ping_wait(interval)
-
-      error ->
-        Logger.error("#{inspect(error)}")
+      {:error, reason} ->
+        _ = Logger.debug("PANG #{ifname}: #{inspect(reason)}")
     end
 
+    ping_wait(interval)
     {:noreply, state}
   end
 
-  def get_tcp_options(ifname) do
+  defp ping(ifname) do
+    with {:ok, ip} <- resolve_addr(@internet_address),
+         {:ok, opts} <- get_tcp_options(ifname),
+         {:ok, tcp} <- :gen_tcp.connect(ip, 80, opts) do
+      _ = :gen_tcp.close(tcp)
+      :ok
+    end
+  end
+
+  defp get_tcp_options(ifname) do
     ifname_cl = to_charlist(ifname)
 
     with {:ok, ifaddrs} <- :inet.getifaddrs(),
          {_, params} <- Enum.find(ifaddrs, fn {k, _v} -> k == ifname_cl end),
          addr when is_tuple(addr) <- Keyword.get(params, :addr) do
-      [{:ip, addr}]
+      {:ok, [{:ip, addr}]}
     else
       _ ->
-        # HACK: Give an IP address that will give an address error so
-        # that if the interface appears that it will work.
-        [{:ip, {1, 2, 3, 4}}]
+        {:error, "No IP address on interface"}
     end
   end
 
-  def resolve_addr(address) do
+  defp resolve_addr(address) do
     with {:ok, hostent} <- :inet.gethostbyname(to_charlist(address)),
          hostent(h_addr_list: ip_list) = hostent,
          first_ip = hd(ip_list) do
