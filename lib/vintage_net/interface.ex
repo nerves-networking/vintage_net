@@ -5,6 +5,8 @@ defmodule VintageNet.Interface do
 
   alias VintageNet.IP
 
+  @type status :: :up | :down
+
   defmodule State do
     @moduledoc false
 
@@ -16,22 +18,26 @@ defmodule VintageNet.Interface do
               current_command: nil
   end
 
+  @spec start_link(String.t()) :: GenServer.on_start()
   def start_link(iface) do
     GenServer.start_link(__MODULE__, iface, name: to_named(iface))
   end
 
+  @spec status(String.t()) :: status()
   def status(interface) do
     interface
     |> to_named()
     |> GenServer.call(:status)
   end
 
+  @spec up(String.t()) :: :ok
   def up(interface) do
     interface
     |> to_named()
     |> GenServer.cast(:ifup)
   end
 
+  @spec down(String.t()) :: :ok
   def down(interface) do
     interface
     |> to_named()

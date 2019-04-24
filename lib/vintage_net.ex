@@ -48,7 +48,7 @@ defmodule VintageNet do
   """
   @spec scan(String.t()) :: {:ok, [String.t()]} | {:error, String.t()}
   def scan(iface_name \\ "wlan0") do
-    # might want to be smarter here about bringin up `wpa_supplicant` for an interface
+    # might want to be smarter here about bringing up `wpa_supplicant` for an interface
     # to be able to use wpa_cli, however this is dumb for now, and if wpa_supplicant is
     # not running this will just return {:error, ""}
     ctrl_interface = "/tmp/wpa_supplicant/" <> iface_name

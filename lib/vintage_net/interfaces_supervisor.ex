@@ -4,7 +4,7 @@ defmodule VintageNet.InterfacesSupervisor do
   def start_link(_) do
     {:ok, pid} = DynamicSupervisor.start_link(__MODULE__, nil, name: __MODULE__)
 
-    start_configed_interfaces()
+    start_configured_interfaces()
 
     {:ok, pid}
   end
@@ -17,7 +17,7 @@ defmodule VintageNet.InterfacesSupervisor do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
-  defp start_configed_interfaces() do
+  defp start_configured_interfaces() do
     args = Application.get_all_env(:vintage_net)
 
     Enum.map(args, fn
