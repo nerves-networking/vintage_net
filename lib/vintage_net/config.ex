@@ -1,7 +1,10 @@
 defmodule VintageNet.Config do
+  alias VintageNet.Interface.RawConfig
+
   @doc """
   Builds a vintage network configuration
   """
+  @spec make([String.t()], keyword()) :: [RawConfig.t()]
   def make(networks, opts \\ []) do
     merged_opts = Application.get_all_env(:vintage_net) |> Keyword.merge(opts)
     Enum.map(networks, &do_make(&1, merged_opts))
@@ -24,7 +27,7 @@ defmodule VintageNet.Config do
       {:run, killall, ["-q", "pppd"]}
     ]
 
-    {ifname, %{files: files, up_cmds: up_cmds, down_cmds: down_cmds}}
+    %RawConfig{ifname: ifname, files: files, up_cmds: up_cmds, down_cmds: down_cmds}
   end
 
   defp do_make({ifname, %{type: :wifi, wifi: wifi_config}}, opts) do
@@ -49,7 +52,7 @@ defmodule VintageNet.Config do
       {:run, killall, ["-q", "wpa_supplicant"]}
     ]
 
-    {ifname, %{files: files, up_cmds: up_cmds, down_cmds: down_cmds}}
+    %RawConfig{ifname: ifname, files: files, up_cmds: up_cmds, down_cmds: down_cmds}
   end
 
   defp do_make({ifname, %{type: :wifi}}, opts) do
@@ -69,22 +72,21 @@ defmodule VintageNet.Config do
       {:run, killall, ["-q", "wpa_supplicant"]}
     ]
 
-    {ifname, %{files: files, up_cmds: up_cmds, down_cmds: down_cmds}}
+    %RawConfig{ifname: ifname, files: files, up_cmds: up_cmds, down_cmds: down_cmds}
   end
 
   defp do_make({ifname, %{type: :ethernet} = _config}, opts) do
     ifup = Keyword.fetch!(opts, :bin_ifup)
     ifdown = Keyword.fetch!(opts, :bin_ifdown)
 
-    result = %{
+    %RawConfig{
+      ifname: ifname,
       files: [
         {"/tmp/network_interfaces.#{ifname}", "iface #{ifname} inet dhcp" <> dhcp_options()}
       ],
       up_cmds: [{:run, ifup, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}],
       down_cmds: [{:run, ifdown, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}]
     }
-
-    {ifname, result}
   end
 
   defp make_pppd_args(pppd, chat_bin) do

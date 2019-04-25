@@ -1,27 +1,30 @@
 defmodule VintageNet.ApplierTest do
   use VintageNetTest.Case
-  # alias VintageNet.Applier
+  alias VintageNet.Interface2
+  alias VintageNet.Interface.RawConfig
 
-  #  doctest Applier
+  @ifname "test0"
 
-  setup do
-    # Fresh start each time.
-    Application.stop(:vintage_net)
-    Application.start(:vintage_net)
-    :ok
-  end
+  test "creates and deletes files", context do
+    in_tmp(context.test, fn ->
+      raw_config = %RawConfig{
+        ifname: @ifname,
+        files: [{"testing", "Hello, world"}],
+        up_cmds: [],
+        down_cmds: []
+      }
 
-  test "applier can create and delete files", context do
-    # in_tmp(context.test, fn ->
-    #   input = [{:bogonet0, %{files: [{"testing", "Hello, world"}], up_cmds: [], down_cmds: []}}]
+      {:ok, _pid} = Interface2.start_link(ifname: @ifname, config: raw_config)
+      assert :ok == Interface2.wait_until_configured(@ifname)
 
-    #   :ok = VintageNet.Applier.update_config(input)
-    #   assert File.exists?("testing")
-    #   assert File.read!("testing") == "Hello, world"
+      assert File.exists?("testing")
+      assert File.read!("testing") == "Hello, world"
 
-    #   :ok = VintageNet.Applier.update_config([])
-    #   refute File.exists?("testing")
-    # end)
+      Interface2.unconfigure(@ifname)
+      assert :ok == Interface2.wait_until_configured(@ifname)
+
+      refute File.exists?("testing")
+    end)
   end
 
   test "applier can create needed subdirectories", context do
