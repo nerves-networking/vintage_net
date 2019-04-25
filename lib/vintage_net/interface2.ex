@@ -4,7 +4,7 @@ defmodule VintageNet.Interface2 do
   require Logger
 
   alias VintageNet.IP
-  alias VintageNet.Interface.RawConfig
+  alias VintageNet.Interface.{CommandRunner, RawConfig}
 
   defmodule State do
     @moduledoc false
@@ -12,7 +12,7 @@ defmodule VintageNet.Interface2 do
     defstruct ifname: nil,
               config: nil,
               command_runner: nil,
-              waiting_froms: []
+              waiters: []
   end
 
   @doc """
@@ -97,52 +97,142 @@ defmodule VintageNet.Interface2 do
   end
 
   def handle_event({:call, from}, :wait, :configured, %State{} = data) do
+    Logger.debug(":configured -> wait")
     {:keep_state, data, {:reply, from, :ok}}
   end
 
   def handle_event({:call, from}, :wait, :unconfigured, %State{} = data) do
+    Logger.debug(":unconfigured -> wait")
     {:keep_state, data, {:reply, from, :ok}}
   end
 
   def handle_event(
         {:call, from},
         :wait,
-        _other_state,
-        %State{waiting_froms: waiting_froms} = data
+        other_state,
+        %State{waiters: waiters} = data
       ) do
-    {:keep_state, %{data | waiting_froms: [from | waiting_froms]}}
+    Logger.debug("#{inspect(other_state)} -> wait")
+    {:keep_state, %{data | waiters: [from | waiters]}}
   end
 
   @impl true
   def handle_event(:internal, {:configure, config}, :unconfigured, %State{} = data) do
     # TODO
-    {:next_state, :configuring, data}
+    Logger.debug(":unconfigured -> internal configure")
+    CommandRunner.create_files(config.files)
+    new_data = run_commands(data, config.up_cmds)
+    {:next_state, :configuring, %{new_data | config: config}}
   end
 
   @impl true
   def handle_event({:call, from}, {:configure, config}, :unconfigured, %State{} = data) do
     # TODO
+    Logger.debug(":unconfigured -> configure")
+    CommandRunner.create_files(config.files)
+    new_data = run_commands(data, config.up_cmds)
     action = {:reply, from, :ok}
-    {:next_state, :configuring, data, action}
+    {:next_state, :configuring, %{new_data | config: config}, action}
   end
 
   @impl true
-  def handle_event({:call, from}, :unconfigure, :unconfigured, %State{} = data) do
+  def handle_event({:call, from}, :unconfigure, :retrying, %State{config: config} = data) do
     # TODO
+    Logger.debug(":retrying -> unconfigure")
+    CommandRunner.remove_files(config.files)
     action = {:reply, from, :ok}
-    {:next_state, :unconfiguring, data, action}
+    {:next_state, :unconfigured, %{data | config: nil}, action}
   end
 
   @impl true
-  def handle_event(:info, {:commands_done, :ok}, :unconfigured, %State{} = data) do
+  def handle_event({:call, from}, :unconfigure, :configured, %State{config: config} = data) do
     # TODO
-    {:next_state, :unconfiguring, data}
+    Logger.debug(":configured -> unconfigure")
+    new_data = run_commands(data, config.down_cmds)
+    action = {:reply, from, :ok}
+    {:next_state, :unconfiguring, new_data, action}
   end
 
   @impl true
-  def handle_event(:info, {:commands_done, {:error, _reason}}, :unconfigured, %State{} = data) do
+  def handle_event(:info, {:commands_done, :ok}, :configuring, %State{} = data) do
     # TODO
-    {:next_state, :unconfiguring, data}
+    Logger.debug(":configuring -> done success")
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil}
+    {:next_state, :configured, new_data, actions}
+  end
+
+  @impl true
+  def handle_event(:info, {:commands_done, {:error, _reason}}, :configuring, %State{} = data) do
+    # TODO
+    Logger.debug(":configuring -> done error")
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil}
+    {:next_state, :retrying, new_data, actions}
+  end
+
+  @impl true
+  def handle_event(:info, {:EXIT, pid, reason}, :configuring, %State{command_runner: pid} = data) do
+    # TODO
+    Logger.debug(":configuring -> done crash (#{inspect(reason)})")
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil}
+    {:next_state, :retrying, new_data, actions}
+  end
+
+  @impl true
+  def handle_event(:info, {:commands_done, :ok}, :unconfiguring, %State{config: config} = data) do
+    # TODO
+    Logger.debug(":unconfiguring -> done success")
+    CommandRunner.remove_files(config.files)
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil, config: nil}
+    {:next_state, :unconfigured, new_data, actions}
+  end
+
+  @impl true
+  def handle_event(
+        :info,
+        {:commands_done, {:error, _reason}},
+        :unconfiguring,
+        %State{config: config} = data
+      ) do
+    # TODO
+    Logger.debug(":unconfiguring -> done error")
+    CommandRunner.remove_files(config.files)
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil, config: nil}
+    {:next_state, :unconfigured, new_data, actions}
+  end
+
+  @impl true
+  def handle_event(
+        :info,
+        {:EXIT, pid, reason},
+        :unconfiguring,
+        %State{config: config, command_runner: pid} = data
+      ) do
+    # TODO
+    Logger.debug(":unconfiguring -> done crash (#{inspect(reason)})")
+    CommandRunner.remove_files(config.files)
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil, config: nil}
+    {:next_state, :unconfigured, new_data, actions}
+  end
+
+  @impl true
+  def handle_event(:info, {:EXIT, _pid, :normal}, state, %State{command_runner: nil} = data) do
+    # Ignore command runner exits
+    Logger.debug("#{inspect(state)} -> process exit (ignoring)")
+    {:keep_state, data}
+  end
+
+  def handle_event(event_type, event_data, state, data) do
+    Logger.debug(
+      "Ignoring #{inspect(event_type)} : #{inspect(event_data)} in state #{inspect(state)}"
+    )
+
+    {:keep_state, data}
   end
 
   @impl true
@@ -150,13 +240,21 @@ defmodule VintageNet.Interface2 do
     {:next_state, :unconfiguring, data}
   end
 
+  defp reply_to_waiters(data) do
+    actions = for from <- data.waiters, do: {:reply, from, :ok}
+    {%{data | waiters: []}, actions}
+  end
+
   defp run_commands(%{command_runner: nil} = data, commands) do
-    {:ok, pid} = Task.start_link(fn -> run_commands_and_report(commands, self()) end)
+    interface_pid = self()
+    {:ok, pid} = Task.start_link(fn -> run_commands_and_report(commands, interface_pid) end)
     %{data | command_runner: pid}
   end
 
   defp run_commands_and_report(commands, interface_pid) do
+    Logger.debug("Running commands: #{inspect(commands)}")
     result = CommandRunner.run(commands)
+    Logger.debug("Done. Sending response")
     send(interface_pid, {:commands_done, result})
   end
 
