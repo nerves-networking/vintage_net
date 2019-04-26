@@ -47,13 +47,15 @@ defmodule VintageNet.Interface do
   @doc """
   Set a configuration on an interface
   """
-  @spec configure(String.t(), map()) :: :ok
+  @spec configure(String.t(), RawConfig.t()) :: :ok
   def configure(ifname, config) do
     GenStateMachine.call(server_name(ifname), {:configure, config})
   end
 
   @doc """
   Unconfigure the interface
+
+  TODO: Implement this function by calling configure with an empty config!!!
 
   This doesn't exit this GenServer, but the interface
   won't be usable in any real way until it's configured
