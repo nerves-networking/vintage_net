@@ -106,6 +106,7 @@ defmodule VintageNet.ConfigLTETest do
     output_eth0 = %RawConfig{
       ifname: "eth0",
       files: [{"/tmp/network_interfaces.eth0", dhcp_interface("eth0")}],
+      up_cmd_millis: 60_000,
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }

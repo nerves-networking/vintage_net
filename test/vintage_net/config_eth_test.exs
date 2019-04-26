@@ -14,6 +14,7 @@ defmodule VintageNet.ConfigEthTest do
       files: [
         {"/tmp/network_interfaces.eth0", dhcp_interface("eth0")}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
@@ -49,6 +50,7 @@ defmodule VintageNet.ConfigEthTest do
     output = %RawConfig{
       ifname: "eth0",
       files: [{"/tmp/network_interfaces.eth0", interfaces_content}],
+      up_cmd_millis: 60_000,
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
@@ -68,6 +70,7 @@ defmodule VintageNet.ConfigEthTest do
       files: [
         {"/tmp/network_interfaces.eth0", dhcp_interface("eth0")}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
@@ -77,6 +80,7 @@ defmodule VintageNet.ConfigEthTest do
       files: [
         {"/tmp/network_interfaces.eth1", dhcp_interface("eth1")}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth1", "eth1"]}],
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth1", "eth1"]}]
     }

@@ -44,7 +44,10 @@ defmodule VintageNet.Config do
       files: [
         {"/tmp/network_interfaces.#{ifname}", "iface #{ifname} inet dhcp" <> dhcp_options()}
       ],
+      # ifup hangs forever until Ethernet is plugged in
+      up_cmd_millis: 60_000,
       up_cmds: [{:run, ifup, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}],
+      down_cmd_millis: 5_000,
       down_cmds: [{:run, ifdown, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}]
     }
   end

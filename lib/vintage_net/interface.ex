@@ -3,7 +3,6 @@ defmodule VintageNet.Interface do
 
   require Logger
 
-  alias VintageNet.IP
   alias VintageNet.Interface.{CommandRunner, RawConfig}
 
   defmodule State do
@@ -21,14 +20,11 @@ defmodule VintageNet.Interface do
 
   Parameters:
 
-  * `ifname`: the name of the interface (like `eth0`)
   * `config`: an initial configuration for the interface
   """
-  @spec start_link(ifname: String.t(), config: map()) :: GenServer.on_start()
-  def start_link(args) do
-    ifname = Keyword.fetch!(args, :ifname)
-
-    GenStateMachine.start_link(__MODULE__, args, name: server_name(ifname))
+  @spec start_link(RawConfig.t()) :: GenServer.on_start()
+  def start_link(config) do
+    GenStateMachine.start_link(__MODULE__, config, name: server_name(config.ifname))
   end
 
   defp server_name(ifname) do
@@ -47,15 +43,13 @@ defmodule VintageNet.Interface do
   @doc """
   Set a configuration on an interface
   """
-  @spec configure(String.t(), RawConfig.t()) :: :ok
-  def configure(ifname, config) do
-    GenStateMachine.call(server_name(ifname), {:configure, config})
+  @spec configure(RawConfig.t()) :: :ok
+  def configure(config) do
+    GenStateMachine.call(server_name(config.ifname), {:configure, config})
   end
 
   @doc """
   Unconfigure the interface
-
-  TODO: Implement this function by calling configure with an empty config!!!
 
   This doesn't exit this GenServer, but the interface
   won't be usable in any real way until it's configured
@@ -65,7 +59,7 @@ defmodule VintageNet.Interface do
   """
   @spec unconfigure(String.t()) :: :ok
   def unconfigure(ifname) do
-    GenStateMachine.call(server_name(ifname), :unconfigure)
+    configure(%RawConfig{ifname: ifname})
   end
 
   @doc """
@@ -84,20 +78,14 @@ defmodule VintageNet.Interface do
   # end
 
   @impl true
-  def init(args) do
+  def init(config) do
     Process.flag(:trap_exit, true)
 
-    Logger.debug("interface2 starting")
-    ifname = Keyword.get(args, :ifname)
-    config = Keyword.get(args, :config)
+    cleanup_interface(config.ifname)
 
-    cleanup_interface(ifname)
+    initial_data = %State{ifname: config.ifname}
 
-    initial_data = %State{ifname: ifname}
-
-    next_actions = if config, do: [{:next_event, :internal, {:configure, config}}], else: []
-
-    {:ok, :unconfigured, initial_data, next_actions}
+    {:ok, :unconfigured, initial_data, {:next_event, :internal, {:configure, config}}}
   end
 
   # :unconfigured
@@ -186,20 +174,6 @@ defmodule VintageNet.Interface do
   def handle_event({:call, from}, :wait, :configured, %State{} = data) do
     Logger.debug(":configured -> wait")
     {:keep_state, data, {:reply, from, :ok}}
-  end
-
-  @impl true
-  def handle_event({:call, from}, :unconfigure, :configured, %State{config: config} = data) do
-    # TODO
-    Logger.debug(":configured -> unconfigure")
-    new_data = run_commands(data, config.down_cmds)
-
-    action = [
-      {:reply, from, :ok},
-      {:state_timeout, config.down_cmd_millis, :unconfiguring_timeout}
-    ]
-
-    {:next_state, :unconfiguring, new_data, action}
   end
 
   @impl true
@@ -361,15 +335,6 @@ defmodule VintageNet.Interface do
   end
 
   # :retrying
-
-  @impl true
-  def handle_event({:call, from}, :unconfigure, :retrying, %State{config: config} = data) do
-    # TODO
-    Logger.debug(":retrying -> unconfigure")
-    CommandRunner.remove_files(config.files)
-    action = {:reply, from, :ok}
-    {:next_state, :unconfigured, %{data | config: nil}, action}
-  end
 
   @impl true
   def handle_event(:state_timeout, _event, :retrying, %State{config: config} = data) do

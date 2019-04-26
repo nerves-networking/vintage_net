@@ -1,4 +1,4 @@
-defmodule VintageNet.ApplierTest do
+defmodule VintageNet.InterfaceTest do
   use VintageNetTest.Case
   alias VintageNet.Interface
   alias VintageNet.Interface.RawConfig
@@ -14,7 +14,7 @@ defmodule VintageNet.ApplierTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
+      {:ok, _pid} = Interface.start_link(raw_config)
       assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("testing")
@@ -36,7 +36,7 @@ defmodule VintageNet.ApplierTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
+      {:ok, _pid} = Interface.start_link(raw_config)
       assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("one/two/three/testing")
@@ -58,7 +58,7 @@ defmodule VintageNet.ApplierTest do
         down_cmds: [{:run, "rm", ["i_am_configured"]}]
       }
 
-      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
+      {:ok, _pid} = Interface.start_link(raw_config)
       assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("i_am_configured")
@@ -91,7 +91,7 @@ defmodule VintageNet.ApplierTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
+      {:ok, _pid} = Interface.start_link(raw_config)
       Process.sleep(250)
       assert :ok == Interface.wait_until_configured(@ifname)
 
@@ -122,7 +122,7 @@ defmodule VintageNet.ApplierTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
+      {:ok, _pid} = Interface.start_link(raw_config)
       Process.sleep(250)
       assert :ok == Interface.wait_until_configured(@ifname)
 
@@ -151,7 +151,7 @@ defmodule VintageNet.ApplierTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
+      {:ok, _pid} = Interface.start_link(raw_config)
       Process.sleep(250)
       assert :ok == Interface.wait_until_configured(@ifname)
 
@@ -172,7 +172,7 @@ defmodule VintageNet.ApplierTest do
         down_cmds: [{:run, "sleep", ["100000"]}]
       }
 
-      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
+      {:ok, _pid} = Interface.start_link(raw_config)
       assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("hello")
@@ -200,12 +200,12 @@ defmodule VintageNet.ApplierTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config1)
+      {:ok, _pid} = Interface.start_link(raw_config1)
       assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("first")
 
-      assert :ok == Interface.configure(@ifname, raw_config2)
+      assert :ok == Interface.configure(raw_config2)
       assert :ok == Interface.wait_until_configured(@ifname)
 
       refute File.exists?("first")
