@@ -1,6 +1,8 @@
 defmodule VintageNet.ConfigLTETest do
   use ExUnit.Case
   alias VintageNet.Config
+  alias VintageNet.Interface.RawConfig
+
   import VintageNetTest.Utils
 
   defp ppp_config() do
@@ -32,7 +34,8 @@ defmodule VintageNet.ConfigLTETest do
   end
 
   defp ppp_output() do
-    %{
+    %RawConfig{
+      ifname: "ppp0",
       files: [
         {"/tmp/chat_script",
          """
@@ -79,7 +82,7 @@ defmodule VintageNet.ConfigLTETest do
 
     output = ppp_output()
 
-    assert [{"ppp0", output}] == Config.make(input, default_opts())
+    assert [output] == Config.make(input, default_opts())
   end
 
   test "create a combo wired Ethernet, WPA2 WiFi, LTE configuration" do
@@ -100,13 +103,15 @@ defmodule VintageNet.ConfigLTETest do
       {"ppp0", ppp_config()}
     ]
 
-    output_eth0 = %{
+    output_eth0 = %RawConfig{
+      ifname: "eth0",
       files: [{"/tmp/network_interfaces.eth0", dhcp_interface("eth0")}],
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
 
-    output_wlan0 = %{
+    output_wlan0 = %RawConfig{
+      ifname: "wlan0",
       files: [
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
@@ -133,7 +138,7 @@ defmodule VintageNet.ConfigLTETest do
       ]
     }
 
-    assert [{"eth0", output_eth0}, {"wlan0", output_wlan0}, {"ppp0", ppp_output()}] ==
+    assert [output_eth0, output_wlan0, ppp_output()] ==
              Config.make(input, default_opts())
   end
 end

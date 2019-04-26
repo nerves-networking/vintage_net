@@ -1,6 +1,8 @@
 defmodule VintageNet.ConfigWiFiTest do
   use ExUnit.Case
   alias VintageNet.Config
+  alias VintageNet.Interface.RawConfig
+
   import VintageNetTest.Utils
 
   test "create a WPA2 WiFi configuration" do
@@ -19,7 +21,8 @@ defmodule VintageNet.ConfigWiFiTest do
        }}
     ]
 
-    output = %{
+    output = %RawConfig{
+      ifname: "wlan0",
       files: [
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
@@ -46,7 +49,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ]
     }
 
-    assert [{"wlan0", output}] == Config.make(input, default_opts())
+    assert [output] == Config.make(input, default_opts())
   end
 
   test "create a password-less WiFi configuration" do
@@ -64,7 +67,8 @@ defmodule VintageNet.ConfigWiFiTest do
        }}
     ]
 
-    output = %{
+    output = %RawConfig{
+      ifname: "wlan0",
       files: [
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
@@ -91,7 +95,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ]
     }
 
-    assert [{"wlan0", output}] == Config.make(input, default_opts())
+    assert [output] == Config.make(input, default_opts())
   end
 
   test "create a WEP WiFi configuration" do
@@ -110,7 +114,8 @@ defmodule VintageNet.ConfigWiFiTest do
        }}
     ]
 
-    output = %{
+    output = %RawConfig{
+      ifname: "wlan0",
       files: [
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
@@ -136,7 +141,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ]
     }
 
-    assert [{"wlan0", output}] == Config.make(input, default_opts())
+    assert [output] == Config.make(input, default_opts())
   end
 
   test "create a hidden WiFi configuration" do
@@ -156,7 +161,8 @@ defmodule VintageNet.ConfigWiFiTest do
        }}
     ]
 
-    output = %{
+    output = %RawConfig{
+      ifname: "wlan0",
       files: [
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
@@ -183,7 +189,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ]
     }
 
-    assert [{"wlan0", output}] == Config.make(input, default_opts())
+    assert [output] == Config.make(input, default_opts())
   end
 
   test "create a multi-network WiFi configuration" do
@@ -221,7 +227,8 @@ defmodule VintageNet.ConfigWiFiTest do
        }}
     ]
 
-    output = %{
+    output = %RawConfig{
+      ifname: "wlan0",
       files: [
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
@@ -262,7 +269,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ]
     }
 
-    assert [{"wlan0", output}] == Config.make(input, default_opts())
+    assert [output] == Config.make(input, default_opts())
   end
 
   test "create a combo wired Ethernet and WPA2 WiFi configuration" do
@@ -282,13 +289,15 @@ defmodule VintageNet.ConfigWiFiTest do
        }}
     ]
 
-    output_eth0 = %{
+    output_eth0 = %RawConfig{
+      ifname: "eth0",
       files: [{"/tmp/network_interfaces.eth0", dhcp_interface("eth0")}],
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
 
-    output_wlan0 = %{
+    output_wlan0 = %RawConfig{
+      ifname: "wlan0",
       files: [
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
         {"/tmp/wpa_supplicant.conf.wlan0",
@@ -315,6 +324,6 @@ defmodule VintageNet.ConfigWiFiTest do
       ]
     }
 
-    assert [{"eth0", output_eth0}, {"wlan0", output_wlan0}] == Config.make(input, default_opts())
+    assert [output_eth0, output_wlan0] == Config.make(input, default_opts())
   end
 end

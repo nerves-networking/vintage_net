@@ -1,6 +1,7 @@
 defmodule VintageNet.ConfigEthTest do
   use ExUnit.Case
   alias VintageNet.Config
+  alias VintageNet.Interface.RawConfig
   import VintageNetTest.Utils
 
   test "create a wired ethernet configuration" do
@@ -8,7 +9,8 @@ defmodule VintageNet.ConfigEthTest do
       {"eth0", %{type: :ethernet, ipv4: %{method: :dhcp}}}
     ]
 
-    output = %{
+    output = %RawConfig{
+      ifname: "eth0",
       files: [
         {"/tmp/network_interfaces.eth0", dhcp_interface("eth0")}
       ],
@@ -16,7 +18,7 @@ defmodule VintageNet.ConfigEthTest do
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
 
-    assert [{"eth0", output}] == Config.make(input, default_opts())
+    assert [output] == Config.make(input, default_opts())
   end
 
   test "create a wired ethernet configuration with static IP" do
@@ -44,7 +46,8 @@ defmodule VintageNet.ConfigEthTest do
       dns-search test.net
     """
 
-    output = %{
+    output = %RawConfig{
+      ifname: "eth0",
       files: [{"/tmp/network_interfaces.eth0", interfaces_content}],
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
@@ -60,7 +63,8 @@ defmodule VintageNet.ConfigEthTest do
       {"eth1", %{type: :ethernet, ipv4: %{method: :dhcp}}}
     ]
 
-    eth0_config = %{
+    eth0_config = %RawConfig{
+      ifname: "eth0",
       files: [
         {"/tmp/network_interfaces.eth0", dhcp_interface("eth0")}
       ],
@@ -68,7 +72,8 @@ defmodule VintageNet.ConfigEthTest do
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
 
-    eth1_config = %{
+    eth1_config = %RawConfig{
+      ifname: "eth1",
       files: [
         {"/tmp/network_interfaces.eth1", dhcp_interface("eth1")}
       ],
@@ -76,10 +81,7 @@ defmodule VintageNet.ConfigEthTest do
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth1", "eth1"]}]
     }
 
-    output = [
-      {"eth0", eth0_config},
-      {"eth1", eth1_config}
-    ]
+    output = [eth0_config, eth1_config]
 
     assert output == Config.make(input, default_opts())
   end
