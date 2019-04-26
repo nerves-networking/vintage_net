@@ -1,6 +1,6 @@
 defmodule VintageNet.ApplierTest do
   use VintageNetTest.Case
-  alias VintageNet.Interface2
+  alias VintageNet.Interface
   alias VintageNet.Interface.RawConfig
 
   @ifname "test0"
@@ -14,14 +14,14 @@ defmodule VintageNet.ApplierTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface2.start_link(ifname: @ifname, config: raw_config)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
+      assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("testing")
       assert File.read!("testing") == "Hello, world"
 
-      Interface2.unconfigure(@ifname)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      Interface.unconfigure(@ifname)
+      assert :ok == Interface.wait_until_configured(@ifname)
 
       refute File.exists?("testing")
     end)
@@ -36,15 +36,15 @@ defmodule VintageNet.ApplierTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface2.start_link(ifname: @ifname, config: raw_config)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
+      assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("one/two/three/testing")
       assert File.read!("one/two/three/testing") == "Hello, world"
 
       # Created directories don't need to be removed.
-      Interface2.unconfigure(@ifname)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      Interface.unconfigure(@ifname)
+      assert :ok == Interface.wait_until_configured(@ifname)
       refute File.exists?("one/two/three/testing")
     end)
   end
@@ -58,13 +58,13 @@ defmodule VintageNet.ApplierTest do
         down_cmds: [{:run, "rm", ["i_am_configured"]}]
       }
 
-      {:ok, _pid} = Interface2.start_link(ifname: @ifname, config: raw_config)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
+      assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("i_am_configured")
 
-      Interface2.unconfigure(@ifname)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      Interface.unconfigure(@ifname)
+      assert :ok == Interface.wait_until_configured(@ifname)
       refute File.exists?("i_am_configured")
     end)
   end
@@ -91,9 +91,9 @@ defmodule VintageNet.ApplierTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface2.start_link(ifname: @ifname, config: raw_config)
+      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
       Process.sleep(250)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("i_am_configured")
     end)
@@ -122,9 +122,9 @@ defmodule VintageNet.ApplierTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface2.start_link(ifname: @ifname, config: raw_config)
+      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
       Process.sleep(250)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("i_am_configured")
     end)
@@ -151,9 +151,9 @@ defmodule VintageNet.ApplierTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface2.start_link(ifname: @ifname, config: raw_config)
+      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
       Process.sleep(250)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("i_crashed")
       assert File.exists?("i_am_configured")
@@ -172,13 +172,13 @@ defmodule VintageNet.ApplierTest do
         down_cmds: [{:run, "sleep", ["100000"]}]
       }
 
-      {:ok, _pid} = Interface2.start_link(ifname: @ifname, config: raw_config)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config)
+      assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("hello")
 
-      assert :ok == Interface2.unconfigure(@ifname)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      assert :ok == Interface.unconfigure(@ifname)
+      assert :ok == Interface.wait_until_configured(@ifname)
 
       refute File.exists?("hello")
     end)
@@ -200,13 +200,13 @@ defmodule VintageNet.ApplierTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface2.start_link(ifname: @ifname, config: raw_config1)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      {:ok, _pid} = Interface.start_link(ifname: @ifname, config: raw_config1)
+      assert :ok == Interface.wait_until_configured(@ifname)
 
       assert File.exists?("first")
 
-      assert :ok == Interface2.configure(@ifname, raw_config2)
-      assert :ok == Interface2.wait_until_configured(@ifname)
+      assert :ok == Interface.configure(@ifname, raw_config2)
+      assert :ok == Interface.wait_until_configured(@ifname)
 
       refute File.exists?("first")
       assert File.exists?("ran_first_down")

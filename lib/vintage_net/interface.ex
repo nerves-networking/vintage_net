@@ -1,254 +1,423 @@
 defmodule VintageNet.Interface do
-  use GenServer
+  use GenStateMachine
 
   require Logger
 
   alias VintageNet.IP
-
-  @type status :: :up | :down
+  alias VintageNet.Interface.{CommandRunner, RawConfig}
 
   defmodule State do
     @moduledoc false
 
-    defstruct iface: nil,
-              command_pid: nil,
-              command_queue: [],
-              command_timer: nil,
-              status: :down,
-              current_command: nil
+    defstruct ifname: nil,
+              config: nil,
+              next_config: nil,
+              command_runner: nil,
+              waiters: []
   end
 
-  @spec start_link(String.t()) :: GenServer.on_start()
-  def start_link(iface) do
-    GenServer.start_link(__MODULE__, iface, name: to_named(iface))
+  @doc """
+  Start up an interface with an initial configuration
+
+  Parameters:
+
+  * `ifname`: the name of the interface (like `eth0`)
+  * `config`: an initial configuration for the interface
+  """
+  @spec start_link(ifname: String.t(), config: map()) :: GenServer.on_start()
+  def start_link(args) do
+    ifname = Keyword.fetch!(args, :ifname)
+
+    GenStateMachine.start_link(__MODULE__, args, name: server_name(ifname))
   end
 
-  @spec status(String.t()) :: status()
-  def status(interface) do
-    interface
-    |> to_named()
-    |> GenServer.call(:status)
+  defp server_name(ifname) do
+    Module.concat(VintageNet.Interfaces, ifname)
   end
 
-  @spec up(String.t()) :: :ok
-  def up(interface) do
-    interface
-    |> to_named()
-    |> GenServer.cast(:ifup)
+  @doc """
+  Stop the interface
+
+  Note that this doesn't unconfigure it.
+  """
+  def stop(ifname) do
+    GenStateMachine.stop(server_name(ifname))
   end
 
-  @spec down(String.t()) :: :ok
-  def down(interface) do
-    interface
-    |> to_named()
-    |> GenServer.cast(:ifdown)
+  @doc """
+  Set a configuration on an interface
+  """
+  @spec configure(String.t(), map()) :: :ok
+  def configure(ifname, config) do
+    GenStateMachine.call(server_name(ifname), {:configure, config})
+  end
+
+  @doc """
+  Unconfigure the interface
+
+  This doesn't exit this GenServer, but the interface
+  won't be usable in any real way until it's configured
+  again.
+
+  This function is not normally called.
+  """
+  @spec unconfigure(String.t()) :: :ok
+  def unconfigure(ifname) do
+    GenStateMachine.call(server_name(ifname), :unconfigure)
+  end
+
+  @doc """
+  Wait for the interface to be configured or unconfigured
+  """
+  @spec wait_until_configured(String.t()) :: :ok
+  def wait_until_configured(ifname) do
+    GenStateMachine.call(server_name(ifname), :wait)
+  end
+
+  # @spec status(String.t()) :: status()
+  # def status(interface) do
+  #   interface
+  #   |> server_name()
+  #   |> GenServer.call(:status)
+  # end
+
+  @impl true
+  def init(args) do
+    Process.flag(:trap_exit, true)
+
+    Logger.debug("interface2 starting")
+    ifname = Keyword.get(args, :ifname)
+    config = Keyword.get(args, :config)
+
+    cleanup_interface(ifname)
+
+    initial_data = %State{ifname: ifname}
+
+    next_actions = if config, do: [{:next_event, :internal, {:configure, config}}], else: []
+
+    {:ok, :unconfigured, initial_data, next_actions}
+  end
+
+  # :unconfigured
+
+  def handle_event({:call, from}, :wait, :unconfigured, %State{} = data) do
+    Logger.debug(":unconfigured -> wait")
+
+    {:keep_state, data, {:reply, from, :ok}}
   end
 
   @impl true
-  def init({_iface, ifconfig} = iface) do
-    {:ok, %State{iface: iface, command_queue: ifconfig.up_cmds}, {:continue, :ifup}}
+  def handle_event(:internal, {:configure, config}, :unconfigured, %State{} = data) do
+    Logger.debug(":unconfigured -> internal configure")
+    CommandRunner.create_files(config.files)
+    new_data = run_commands(data, config.up_cmds)
+
+    {:next_state, :configuring, %{new_data | config: config},
+     {:state_timeout, config.up_cmd_millis, :configuring_timeout}}
   end
 
   @impl true
-  def handle_call(:status, _from, %State{status: status} = state), do: {:reply, status, state}
+  def handle_event({:call, from}, {:configure, config}, :unconfigured, %State{} = data) do
+    Logger.debug(":unconfigured -> configure")
+    CommandRunner.create_files(config.files)
+    new_data = run_commands(data, config.up_cmds)
+    action = [{:reply, from, :ok}, {:state_timeout, config.up_cmd_millis, :configuring_timeout}]
+    {:next_state, :configuring, %{new_data | config: config}, action}
+  end
+
+  # :configuring
 
   @impl true
-  def handle_cast(:ifup, %State{iface: iface}) do
-    {:noreply, %State{iface: iface}}
+  def handle_event(:info, {:commands_done, :ok}, :configuring, %State{} = data) do
+    # TODO
+    Logger.debug(":configuring -> done success")
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil}
+    {:next_state, :configured, new_data, actions}
   end
 
   @impl true
-  def handle_cast(:ifdown, %State{iface: {_, ifconfig}} = state) do
-    case ifconfig.down_cmds do
-      [] ->
-        {:noreply, state}
-
-      [command | rest] ->
-        {:ok, command_pid} = run_command(command)
-
-        {:noreply,
-         %{
-           state
-           | command_queue: rest,
-             command_pid: command_pid,
-             current_command: command,
-             command_timer: command_timeout_timer()
-         }}
-    end
-  end
-
-  @impl true
-  def handle_continue(:ifup, %State{command_queue: []} = state) do
-    {:noreply, %{state | status: :up}}
-  end
-
-  def handle_continue(
-        :ifup,
-        %State{iface: iface, command_queue: [command | rest]} = state
+  def handle_event(
+        :info,
+        {:commands_done, {:error, _reason}},
+        :configuring,
+        %State{config: config} = data
       ) do
-    status_check_timer()
-    {:ok, command_pid} = bringup_interface(iface, command)
-
-    {:noreply,
-     %{
-       state
-       | command_queue: rest,
-         command_pid: command_pid,
-         command_timer: command_timeout_timer(),
-         current_command: command
-     }}
+    Logger.debug(":configuring -> done error")
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil}
+    actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
+    {:next_state, :retrying, new_data, actions}
   end
 
   @impl true
-  def handle_info(:retry_command, %State{current_command: command} = state) do
-    {:ok, command_pid} = run_command(command)
-
-    {:noreply,
-     %{
-       state
-       | command_timer: command_timeout_timer(),
-         command_pid: command_pid
-     }}
-  end
-
-  def handle_info(
-        :command_timeout,
-        %State{command_pid: command_pid, current_command: command} = state
+  def handle_event(
+        :info,
+        {:EXIT, pid, reason},
+        :configuring,
+        %State{command_runner: pid, config: config} = data
       ) do
-    if Process.alive?(command_pid) do
-      Logger.warn("Command timed out #{inspect(command)}")
-      Process.exit(command_pid, :normal)
-      retry_command()
-      {:noreply, %{state | command_pid: nil, command_timer: nil}}
-    else
-      {:noreply, %{state | command_pid: nil, current_command: nil}}
-    end
+    Logger.debug(":configuring -> done crash (#{inspect(reason)})")
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil}
+    actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
+    {:next_state, :retrying, new_data, actions}
   end
 
-  def handle_info(
-        :command_finished,
-        %State{command_timer: timer, command_queue: [], status: :down} = state
+  @impl true
+  def handle_event(
+        :state_timeout,
+        _event,
+        :configuring,
+        %State{command_runner: pid, config: config} = data
       ) do
-    Process.cancel_timer(timer)
-
-    {:noreply, %{state | command_pid: nil, command_timer: nil, status: :up, current_command: nil}}
+    Logger.debug(":configuring -> recovering from hang")
+    Process.exit(pid, :kill)
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil}
+    actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
+    {:next_state, :retrying, new_data, actions}
   end
 
-  def handle_info(
-        :command_finished,
-        %State{command_timer: timer, command_queue: [], status: :up, iface: {_, ifconfig}} = state
+  # :configured
+
+  def handle_event({:call, from}, :wait, :configured, %State{} = data) do
+    Logger.debug(":configured -> wait")
+    {:keep_state, data, {:reply, from, :ok}}
+  end
+
+  @impl true
+  def handle_event({:call, from}, :unconfigure, :configured, %State{config: config} = data) do
+    # TODO
+    Logger.debug(":configured -> unconfigure")
+    new_data = run_commands(data, config.down_cmds)
+
+    action = [
+      {:reply, from, :ok},
+      {:state_timeout, config.down_cmd_millis, :unconfiguring_timeout}
+    ]
+
+    {:next_state, :unconfiguring, new_data, action}
+  end
+
+  @impl true
+  def handle_event(
+        {:call, from},
+        {:configure, new_config},
+        :configured,
+        %State{config: old_config} = data
       ) do
-    Process.cancel_timer(timer)
-    Enum.each(ifconfig.files, fn {path, _contents} -> File.rm(path) end)
+    # TODO
+    Logger.debug(":configured -> configure")
+    new_data = run_commands(data, old_config.down_cmds)
 
-    {:noreply,
-     %{state | command_pid: nil, command_timer: nil, status: :down, current_command: nil}}
+    action = [
+      {:reply, from, :ok},
+      {:state_timeout, old_config.down_cmd_millis, :unconfiguring_timeout}
+    ]
+
+    {:next_state, :reconfiguring, %{new_data | next_config: new_config}, action}
   end
 
-  def handle_info(
-        :command_finished,
-        %State{
-          iface: iface,
-          command_timer: timer,
-          command_queue: [command | rest]
-        } = state
+  # :unconfiguring
+
+  @impl true
+  def handle_event(:info, {:commands_done, :ok}, :unconfiguring, %State{config: config} = data) do
+    # TODO
+    Logger.debug(":unconfiguring -> done success")
+    CommandRunner.remove_files(config.files)
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil, config: nil}
+    {:next_state, :unconfigured, new_data, actions}
+  end
+
+  @impl true
+  def handle_event(
+        :info,
+        {:commands_done, {:error, _reason}},
+        :unconfiguring,
+        %State{config: config} = data
       ) do
-    Process.cancel_timer(timer)
-
-    {:ok, command_pid} = bringup_interface(iface, command)
-
-    {:noreply,
-     %{
-       state
-       | command_pid: command_pid,
-         command_timer: command_timeout_timer(),
-         command_queue: rest,
-         current_command: command
-     }}
+    # TODO
+    Logger.debug(":unconfiguring -> done error")
+    CommandRunner.remove_files(config.files)
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil, config: nil}
+    {:next_state, :unconfigured, new_data, actions}
   end
 
-  def handle_info(:check_status, %State{iface: iface} = state) do
-    check_iface_status(iface)
-    {:noreply, state}
+  @impl true
+  def handle_event(
+        :info,
+        {:EXIT, pid, reason},
+        :unconfiguring,
+        %State{config: config, command_runner: pid} = data
+      ) do
+    # TODO
+    Logger.debug(":unconfiguring -> done crash (#{inspect(reason)})")
+    CommandRunner.remove_files(config.files)
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil, config: nil}
+    {:next_state, :unconfigured, new_data, actions}
   end
 
-  def handle_info({:iface_status, status}, %State{status: status} = state) do
-    status_check_timer()
-    {:noreply, state}
+  @impl true
+  def handle_event(
+        :state_timeout,
+        _event,
+        :unconfiguring,
+        %State{command_runner: pid, config: config} = data
+      ) do
+    Logger.debug(":unconfiguring -> recovering from hang")
+    Process.exit(pid, :kill)
+    CommandRunner.remove_files(config.files)
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil, config: nil}
+    {:next_state, :unconfigured, new_data, actions}
   end
 
-  def handle_info({:iface_status, _}, %State{status: :down} = state) do
-    status_check_timer()
-    {:noreply, %{state | status: :up}}
+  # :reconfiguring
+
+  @impl true
+  def handle_event(
+        :info,
+        {:commands_done, :ok},
+        :reconfiguring,
+        %State{config: config, next_config: new_config} = data
+      ) do
+    # TODO
+    Logger.debug(":reconfiguring -> done success")
+    CommandRunner.remove_files(config.files)
+    CommandRunner.create_files(new_config.files)
+    new_data = run_commands(data, new_config.up_cmds)
+
+    action = [
+      {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
+    ]
+
+    {:next_state, :configuring, %{new_data | config: new_config, next_config: nil}, action}
   end
 
-  def handle_info({:iface_status, _}, %State{status: :up} = state) do
-    status_check_timer()
-    {:noreply, %{state | status: :down}}
+  @impl true
+  def handle_event(
+        :info,
+        {:commands_done, {:error, _reason}},
+        :reconfiguring,
+        %State{config: config, next_config: new_config} = data
+      ) do
+    # TODO
+    Logger.debug(":reconfiguring -> done error")
+    CommandRunner.remove_files(config.files)
+    CommandRunner.create_files(new_config.files)
+    new_data = run_commands(data, new_config.up_cmds)
+
+    action = [
+      {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
+    ]
+
+    {:next_state, :configuring, %{new_data | config: new_config, next_config: nil}, action}
   end
 
-  defp write_interface_files(ifconfig) do
-    Enum.each(ifconfig.files, fn {path, content} -> create_and_write_file(path, content) end)
+  @impl true
+  def handle_event(
+        :info,
+        {:EXIT, pid, reason},
+        :reconfiguring,
+        %State{config: config, command_runner: pid, next_config: new_config} = data
+      ) do
+    # TODO
+    Logger.debug(":reconfiguring -> done crash (#{inspect(reason)})")
+    CommandRunner.remove_files(config.files)
+    CommandRunner.create_files(new_config.files)
+    new_data = run_commands(data, new_config.up_cmds)
+
+    action = [
+      {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
+    ]
+
+    {:next_state, :configuring, %{new_data | config: new_config, next_config: nil}, action}
   end
 
-  defp create_and_write_file(path, content) do
-    dir = Path.dirname(path)
-    File.exists?(dir) || File.mkdir_p!(dir)
+  @impl true
+  def handle_event(
+        :state_timeout,
+        _event,
+        :reconfiguring,
+        %State{command_runner: pid, config: config, next_config: new_config} = data
+      ) do
+    Logger.debug(":reconfiguring -> recovering from hang")
+    Process.exit(pid, :kill)
+    CommandRunner.remove_files(config.files)
+    CommandRunner.create_files(new_config.files)
+    new_data = run_commands(data, new_config.up_cmds)
 
-    File.write!(path, content)
+    action = [
+      {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
+    ]
+
+    {:next_state, :configuring, %{new_data | config: new_config, next_config: nil}, action}
   end
 
-  defp bringup_interface({_ifname, ifconfig}, command) do
-    :ok = write_interface_files(ifconfig)
-    run_command(command)
+  # :retrying
+
+  @impl true
+  def handle_event({:call, from}, :unconfigure, :retrying, %State{config: config} = data) do
+    # TODO
+    Logger.debug(":retrying -> unconfigure")
+    CommandRunner.remove_files(config.files)
+    action = {:reply, from, :ok}
+    {:next_state, :unconfigured, %{data | config: nil}, action}
   end
 
-  defp run_command({:run, command, args}) do
+  @impl true
+  def handle_event(:state_timeout, _event, :retrying, %State{config: config} = data) do
+    CommandRunner.create_files(config.files)
+    new_data = run_commands(data, config.up_cmds)
+    {:next_state, :configuring, new_data}
+  end
+
+  # Catch all event handlers
+  @impl true
+  def handle_event(:info, {:EXIT, _pid, _reason}, state, data) do
+    # Ignore normal command runner exits
+    Logger.debug("#{inspect(state)} -> process exit (ignoring)")
+    {:keep_state, data}
+  end
+
+  @impl true
+  def handle_event(
+        {:call, from},
+        :wait,
+        other_state,
+        %State{waiters: waiters} = data
+      ) do
+    Logger.debug("#{inspect(other_state)} -> wait")
+    {:keep_state, %{data | waiters: [from | waiters]}}
+  end
+
+  defp reply_to_waiters(data) do
+    actions = for from <- data.waiters, do: {:reply, from, :ok}
+    {%{data | waiters: []}, actions}
+  end
+
+  defp run_commands(data, commands) do
     interface_pid = self()
-
-    Task.start_link(fn ->
-      case MuonTrap.cmd(command, args) do
-        {_, 0} ->
-          send(interface_pid, :command_finished)
-
-        {message, _not_zero} ->
-          Logger.error("Error running #{command}, #{inspect(args)}: #{message}")
-          {:error, message}
-      end
-    end)
+    {:ok, pid} = Task.start_link(fn -> run_commands_and_report(commands, interface_pid) end)
+    %{data | command_runner: pid}
   end
 
-  defp check_iface_status({iface, _}) do
-    interface_pid = self()
-
-    Task.start_link(fn ->
-      case IP.iface_flags(iface) do
-        {:error, reason} ->
-          Logger.error("#{reason}")
-
-        flags ->
-          if Enum.member?(flags, :up) do
-            send(interface_pid, {:iface_status, :up})
-          else
-            send(interface_pid, {:iface_status, :down})
-          end
-      end
-    end)
+  defp run_commands_and_report(commands, interface_pid) do
+    Logger.debug("Running commands: #{inspect(commands)}")
+    result = CommandRunner.run(commands)
+    Logger.debug("Done. Sending response")
+    send(interface_pid, {:commands_done, result})
   end
 
-  defp command_timeout_timer() do
-    Process.send_after(self(), :command_timeout, 5_000)
-  end
+  defp cleanup_interface(_ifname) do
+    # This function is called to restore the filesystem to a pristine
+    # state or as close as possible to one. It is called from `init/1`
+    # so it can't fail.
 
-  defp retry_command() do
-    Process.send_after(self(), :retry_command, 5_000)
+    # TODO!!!
   end
-
-  defp status_check_timer() do
-    Process.send_after(self(), :check_status, 2_500)
-  end
-
-  defp to_named(iface_pid) when is_pid(iface_pid), do: iface_pid
-  defp to_named(iface_name) when is_binary(iface_name), do: String.to_atom(iface_name)
-  defp to_named({name, _}), do: String.to_atom(name)
 end
