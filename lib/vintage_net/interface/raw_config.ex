@@ -8,6 +8,7 @@ defmodule VintageNet.Interface.RawConfig do
   Fields:
 
   * `ifname` - the name of the interface (e.g., `"eth0"`)
+  * `retry_millis` - if bringing the interface up fails, wait this amount of time before retrying
   * `files` - a list of file path, content tuples
   * `up_cmd_millis` - the maximum amount of time to allow the up command list to take
   * `up_cmds` - a list of commands to run to configure the interface
@@ -21,6 +22,7 @@ defmodule VintageNet.Interface.RawConfig do
 
   @enforce_keys [:ifname]
   defstruct ifname: nil,
+            retry_millis: 1_000,
             files: [],
             up_cmd_millis: 5_000,
             up_cmds: [],

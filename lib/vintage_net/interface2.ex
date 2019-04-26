@@ -84,6 +84,7 @@ defmodule VintageNet.Interface2 do
   def init(args) do
     Process.flag(:trap_exit, true)
 
+    Logger.debug("interface2 starting")
     ifname = Keyword.get(args, :ifname)
     config = Keyword.get(args, :config)
 
@@ -96,33 +97,22 @@ defmodule VintageNet.Interface2 do
     {:ok, :unconfigured, initial_data, next_actions}
   end
 
-  def handle_event({:call, from}, :wait, :configured, %State{} = data) do
-    Logger.debug(":configured -> wait")
-    {:keep_state, data, {:reply, from, :ok}}
-  end
+  # :unconfigured
 
   def handle_event({:call, from}, :wait, :unconfigured, %State{} = data) do
     Logger.debug(":unconfigured -> wait")
-    {:keep_state, data, {:reply, from, :ok}}
-  end
 
-  def handle_event(
-        {:call, from},
-        :wait,
-        other_state,
-        %State{waiters: waiters} = data
-      ) do
-    Logger.debug("#{inspect(other_state)} -> wait")
-    {:keep_state, %{data | waiters: [from | waiters]}}
+    {:keep_state, data, {:reply, from, :ok}}
   end
 
   @impl true
   def handle_event(:internal, {:configure, config}, :unconfigured, %State{} = data) do
-    # TODO
     Logger.debug(":unconfigured -> internal configure")
     CommandRunner.create_files(config.files)
     new_data = run_commands(data, config.up_cmds)
-    {:next_state, :configuring, %{new_data | config: config}}
+
+    {:next_state, :configuring, %{new_data | config: config},
+     {:state_timeout, config.up_cmd_millis, :configuring_timeout}}
   end
 
   @impl true
@@ -131,27 +121,11 @@ defmodule VintageNet.Interface2 do
     Logger.debug(":unconfigured -> configure")
     CommandRunner.create_files(config.files)
     new_data = run_commands(data, config.up_cmds)
-    action = {:reply, from, :ok}
+    action = [{:reply, from, :ok}, {:state_timeout, config.up_cmd_millis, :configuring_timeout}]
     {:next_state, :configuring, %{new_data | config: config}, action}
   end
 
-  @impl true
-  def handle_event({:call, from}, :unconfigure, :retrying, %State{config: config} = data) do
-    # TODO
-    Logger.debug(":retrying -> unconfigure")
-    CommandRunner.remove_files(config.files)
-    action = {:reply, from, :ok}
-    {:next_state, :unconfigured, %{data | config: nil}, action}
-  end
-
-  @impl true
-  def handle_event({:call, from}, :unconfigure, :configured, %State{config: config} = data) do
-    # TODO
-    Logger.debug(":configured -> unconfigure")
-    new_data = run_commands(data, config.down_cmds)
-    action = {:reply, from, :ok}
-    {:next_state, :unconfiguring, new_data, action}
-  end
+  # :configuring
 
   @impl true
   def handle_event(:info, {:commands_done, :ok}, :configuring, %State{} = data) do
@@ -163,22 +137,70 @@ defmodule VintageNet.Interface2 do
   end
 
   @impl true
-  def handle_event(:info, {:commands_done, {:error, _reason}}, :configuring, %State{} = data) do
-    # TODO
+  def handle_event(
+        :info,
+        {:commands_done, {:error, _reason}},
+        :configuring,
+        %State{config: config} = data
+      ) do
     Logger.debug(":configuring -> done error")
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
+    actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
     {:next_state, :retrying, new_data, actions}
   end
 
   @impl true
-  def handle_event(:info, {:EXIT, pid, reason}, :configuring, %State{command_runner: pid} = data) do
-    # TODO
+  def handle_event(
+        :info,
+        {:EXIT, pid, reason},
+        :configuring,
+        %State{command_runner: pid, config: config} = data
+      ) do
     Logger.debug(":configuring -> done crash (#{inspect(reason)})")
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
+    actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
     {:next_state, :retrying, new_data, actions}
   end
+
+  @impl true
+  def handle_event(
+        :state_timeout,
+        _event,
+        :configuring,
+        %State{command_runner: pid, config: config} = data
+      ) do
+    Logger.debug(":configuring -> recovering from hang")
+    Process.exit(pid, :kill)
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil}
+    actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
+    {:next_state, :retrying, new_data, actions}
+  end
+
+  # :configured
+
+  def handle_event({:call, from}, :wait, :configured, %State{} = data) do
+    Logger.debug(":configured -> wait")
+    {:keep_state, data, {:reply, from, :ok}}
+  end
+
+  @impl true
+  def handle_event({:call, from}, :unconfigure, :configured, %State{config: config} = data) do
+    # TODO
+    Logger.debug(":configured -> unconfigure")
+    new_data = run_commands(data, config.down_cmds)
+
+    action = [
+      {:reply, from, :ok},
+      {:state_timeout, config.down_cmd_millis, :unconfiguring_timeout}
+    ]
+
+    {:next_state, :unconfiguring, new_data, action}
+  end
+
+  # :unconfiguring
 
   @impl true
   def handle_event(:info, {:commands_done, :ok}, :unconfiguring, %State{config: config} = data) do
@@ -227,17 +249,42 @@ defmodule VintageNet.Interface2 do
     {:keep_state, data}
   end
 
+  # :retrying
+
+  @impl true
+  def handle_event({:call, from}, :unconfigure, :retrying, %State{config: config} = data) do
+    # TODO
+    Logger.debug(":retrying -> unconfigure")
+    CommandRunner.remove_files(config.files)
+    action = {:reply, from, :ok}
+    {:next_state, :unconfigured, %{data | config: nil}, action}
+  end
+
+  @impl true
+  def handle_event(:state_timeout, _event, :retrying, %State{config: config} = data) do
+    CommandRunner.create_files(config.files)
+    new_data = run_commands(data, config.up_cmds)
+    {:next_state, :configuring, new_data}
+  end
+
+  # Catch all event handlers
+
+  def handle_event(
+        {:call, from},
+        :wait,
+        other_state,
+        %State{waiters: waiters} = data
+      ) do
+    Logger.debug("#{inspect(other_state)} -> wait")
+    {:keep_state, %{data | waiters: [from | waiters]}}
+  end
+
   def handle_event(event_type, event_data, state, data) do
     Logger.debug(
       "Ignoring #{inspect(event_type)} : #{inspect(event_data)} in state #{inspect(state)}"
     )
 
     {:keep_state, data}
-  end
-
-  @impl true
-  def handle_event(:state_timeout, _event, _state, data) do
-    {:next_state, :unconfiguring, data}
   end
 
   defp reply_to_waiters(data) do
