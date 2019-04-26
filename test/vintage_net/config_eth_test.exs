@@ -6,13 +6,13 @@ defmodule VintageNet.ConfigEthTest do
 
   test "create a wired ethernet configuration" do
     input = [
-      {"eth0", %{type: :ethernet, ipv4: %{method: :dhcp}}}
+      {"eth0", %{type: :ethernet, ipv4: %{method: :dhcp}, hostname: "unittest"}}
     ]
 
     output = %RawConfig{
       ifname: "eth0",
       files: [
-        {"/tmp/network_interfaces.eth0", dhcp_interface("eth0")}
+        {"/tmp/network_interfaces.eth0", dhcp_interface("eth0", "unittest")}
       ],
       up_cmd_millis: 60_000,
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
@@ -61,14 +61,14 @@ defmodule VintageNet.ConfigEthTest do
 
   test "create a dual wired ethernet configuration" do
     input = [
-      {"eth0", %{type: :ethernet, ipv4: %{method: :dhcp}}},
-      {"eth1", %{type: :ethernet, ipv4: %{method: :dhcp}}}
+      {"eth0", %{type: :ethernet, ipv4: %{method: :dhcp}, hostname: "unittest0"}},
+      {"eth1", %{type: :ethernet, ipv4: %{method: :dhcp}, hostname: "unittest1"}}
     ]
 
     eth0_config = %RawConfig{
       ifname: "eth0",
       files: [
-        {"/tmp/network_interfaces.eth0", dhcp_interface("eth0")}
+        {"/tmp/network_interfaces.eth0", dhcp_interface("eth0", "unittest0")}
       ],
       up_cmd_millis: 60_000,
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
@@ -78,7 +78,7 @@ defmodule VintageNet.ConfigEthTest do
     eth1_config = %RawConfig{
       ifname: "eth1",
       files: [
-        {"/tmp/network_interfaces.eth1", dhcp_interface("eth1")}
+        {"/tmp/network_interfaces.eth1", dhcp_interface("eth1", "unittest1")}
       ],
       up_cmd_millis: 60_000,
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth1", "eth1"]}],

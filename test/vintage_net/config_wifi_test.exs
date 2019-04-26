@@ -17,14 +17,15 @@ defmodule VintageNet.ConfigWiFiTest do
            psk: "1234567890123456789012345678901234567890123456789012345678901234",
            key_mgmt: :wpa_psk
          },
-         ipv4: %{method: :dhcp}
+         ipv4: %{method: :dhcp},
+         hostname: "unittest"
        }}
     ]
 
     output = %RawConfig{
       ifname: "wlan0",
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant
@@ -63,14 +64,15 @@ defmodule VintageNet.ConfigWiFiTest do
            mode: :client,
            key_mgmt: :none
          },
-         ipv4: %{method: :dhcp}
+         ipv4: %{method: :dhcp},
+         hostname: "unittest"
        }}
     ]
 
     output = %RawConfig{
       ifname: "wlan0",
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant
@@ -110,14 +112,15 @@ defmodule VintageNet.ConfigWiFiTest do
            psk: "42FEEDDEAFBABEDEAFBEEFAA55",
            key_mgmt: :wep
          },
-         ipv4: %{method: :dhcp}
+         ipv4: %{method: :dhcp},
+         hostname: "unittest"
        }}
     ]
 
     output = %RawConfig{
       ifname: "wlan0",
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant
@@ -157,14 +160,15 @@ defmodule VintageNet.ConfigWiFiTest do
            key_mgmt: :wpa_psk,
            scan_ssid: 1
          },
-         ipv4: %{method: :dhcp}
+         ipv4: %{method: :dhcp},
+         hostname: "unittest"
        }}
     ]
 
     output = %RawConfig{
       ifname: "wlan0",
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant
@@ -223,14 +227,15 @@ defmodule VintageNet.ConfigWiFiTest do
              }
            ]
          },
-         ipv4: %{method: :dhcp}
+         ipv4: %{method: :dhcp},
+         hostname: "unittest"
        }}
     ]
 
     output = %RawConfig{
       ifname: "wlan0",
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant
@@ -274,7 +279,7 @@ defmodule VintageNet.ConfigWiFiTest do
 
   test "create a combo wired Ethernet and WPA2 WiFi configuration" do
     input = [
-      {"eth0", %{type: :ethernet, ipv4: %{method: :dhcp}}},
+      {"eth0", %{type: :ethernet, ipv4: %{method: :dhcp}, hostname: "unittest"}},
       {"wlan0",
        %{
          type: :wifi,
@@ -285,13 +290,14 @@ defmodule VintageNet.ConfigWiFiTest do
            psk: "1234567890123456789012345678901234567890123456789012345678901234",
            key_mgmt: :wpa_psk
          },
-         ipv4: %{method: :dhcp}
+         ipv4: %{method: :dhcp},
+         hostname: "unittest"
        }}
     ]
 
     output_eth0 = %RawConfig{
       ifname: "eth0",
-      files: [{"/tmp/network_interfaces.eth0", dhcp_interface("eth0")}],
+      files: [{"/tmp/network_interfaces.eth0", dhcp_interface("eth0", "unittest")}],
       up_cmd_millis: 60_000,
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
@@ -300,7 +306,7 @@ defmodule VintageNet.ConfigWiFiTest do
     output_wlan0 = %RawConfig{
       ifname: "wlan0",
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant

@@ -35,14 +35,17 @@ defmodule VintageNet.Config do
     WiFi.create(config, opts)
   end
 
-  defp do_make({ifname, %{type: :ethernet} = _config}, opts) do
+  defp do_make({ifname, %{type: :ethernet} = config}, opts) do
     ifup = Keyword.fetch!(opts, :bin_ifup)
     ifdown = Keyword.fetch!(opts, :bin_ifdown)
+
+    hostname = config[:hostname] || get_hostname()
 
     %RawConfig{
       ifname: ifname,
       files: [
-        {"/tmp/network_interfaces.#{ifname}", "iface #{ifname} inet dhcp" <> dhcp_options()}
+        {"/tmp/network_interfaces.#{ifname}",
+         "iface #{ifname} inet dhcp" <> dhcp_options(hostname)}
       ],
       # ifup hangs forever until Ethernet is plugged in
       up_cmd_millis: 60_000,
@@ -67,14 +70,20 @@ defmodule VintageNet.Config do
   defp pppd_option_to_string(:persist), do: "persist"
   defp pppd_option_to_string(:noauth), do: "noauth"
 
-  defp dhcp_options() do
+  defp dhcp_options(hostname) do
     """
 
       script #{udhcpc_handler_path()}
+      hostname #{hostname}
     """
   end
 
   defp udhcpc_handler_path() do
     Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])
+  end
+
+  defp get_hostname do
+    {:ok, hostname} = :inet.gethostname()
+    to_string(hostname)
   end
 end

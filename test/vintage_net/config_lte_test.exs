@@ -87,7 +87,7 @@ defmodule VintageNet.ConfigLTETest do
 
   test "create a combo wired Ethernet, WPA2 WiFi, LTE configuration" do
     input = [
-      {"eth0", %{type: :ethernet, ipv4: %{method: :dhcp}}},
+      {"eth0", %{type: :ethernet, ipv4: %{method: :dhcp}, hostname: "unittest"}},
       {"wlan0",
        %{
          type: :wifi,
@@ -98,14 +98,15 @@ defmodule VintageNet.ConfigLTETest do
            psk: "1234567890123456789012345678901234567890123456789012345678901234",
            key_mgmt: :wpa_psk
          },
-         ipv4: %{method: :dhcp}
+         ipv4: %{method: :dhcp},
+         hostname: "unittest"
        }},
       {"ppp0", ppp_config()}
     ]
 
     output_eth0 = %RawConfig{
       ifname: "eth0",
-      files: [{"/tmp/network_interfaces.eth0", dhcp_interface("eth0")}],
+      files: [{"/tmp/network_interfaces.eth0", dhcp_interface("eth0", "unittest")}],
       up_cmd_millis: 60_000,
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
@@ -114,7 +115,7 @@ defmodule VintageNet.ConfigLTETest do
     output_wlan0 = %RawConfig{
       ifname: "wlan0",
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant

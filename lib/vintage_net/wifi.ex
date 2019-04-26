@@ -2,14 +2,17 @@ defmodule VintageNet.WiFi do
   alias VintageNet.WiFi.Scan
   alias VintageNet.Interface.RawConfig
 
-  def create({ifname, %{type: :wifi, wifi: wifi_config}}, opts) do
+  def create({ifname, %{type: :wifi, wifi: wifi_config} = config}, opts) do
     ifup = Keyword.fetch!(opts, :bin_ifup)
     ifdown = Keyword.fetch!(opts, :bin_ifdown)
     wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
     killall = Keyword.fetch!(opts, :bin_killall)
 
+    hostname = config[:hostname] || get_hostname()
+
     files = [
-      {"/tmp/network_interfaces.#{ifname}", "iface #{ifname} inet dhcp" <> dhcp_options()},
+      {"/tmp/network_interfaces.#{ifname}",
+       "iface #{ifname} inet dhcp" <> dhcp_options(hostname)},
       {"/tmp/wpa_supplicant.conf.#{ifname}", wifi_to_supplicant_contents(wifi_config)}
     ]
 
@@ -123,14 +126,21 @@ defmodule VintageNet.WiFi do
     "priority=#{value}"
   end
 
-  defp dhcp_options() do
+  # TODO: Remove duplication with ethernet!!
+  defp dhcp_options(hostname) do
     """
 
       script #{udhcpc_handler_path()}
+      hostname #{hostname}
     """
   end
 
   defp udhcpc_handler_path() do
     Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])
+  end
+
+  defp get_hostname do
+    {:ok, hostname} = :inet.gethostname()
+    to_string(hostname)
   end
 end

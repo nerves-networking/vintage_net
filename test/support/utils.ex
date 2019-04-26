@@ -4,10 +4,11 @@ defmodule VintageNetTest.Utils do
     []
   end
 
-  def dhcp_interface(ifname) do
+  def dhcp_interface(ifname, hostname) do
     """
     iface #{ifname} inet dhcp
       script #{Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])}
+      hostname #{hostname}
     """
   end
 end
