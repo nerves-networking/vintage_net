@@ -347,7 +347,7 @@ defmodule VintageNet.Interface2 do
       ) do
     Logger.debug(":reconfiguring -> recovering from hang")
     Process.exit(pid, :kill)
-    CCommandRunner.remove_files(config.files)
+    CommandRunner.remove_files(config.files)
     CommandRunner.create_files(new_config.files)
     new_data = run_commands(data, new_config.up_cmds)
 

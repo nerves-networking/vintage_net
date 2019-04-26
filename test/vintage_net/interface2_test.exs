@@ -130,6 +130,36 @@ defmodule VintageNet.ApplierTest do
     end)
   end
 
+  test "crash on configure command retries", context do
+    crash_once = fn ->
+      if File.exists?("i_crashed") do
+        File.touch("i_am_configured")
+        :ok
+      else
+        File.touch("i_crashed")
+        raise "intentional oops"
+      end
+    end
+
+    in_tmp(context.test, fn ->
+      raw_config = %RawConfig{
+        ifname: @ifname,
+        retry_millis: 10,
+        files: [],
+        up_cmd_millis: 50,
+        up_cmds: [{:fun, crash_once}],
+        down_cmds: []
+      }
+
+      {:ok, _pid} = Interface2.start_link(ifname: @ifname, config: raw_config)
+      Process.sleep(250)
+      assert :ok == Interface2.wait_until_configured(@ifname)
+
+      assert File.exists?("i_crashed")
+      assert File.exists?("i_am_configured")
+    end)
+  end
+
   test "hanging on unconfigure command recovers", context do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
@@ -162,6 +192,7 @@ defmodule VintageNet.ApplierTest do
         up_cmds: [],
         down_cmds: [{:run, "touch", ["ran_first_down"]}]
       }
+
       raw_config2 = %RawConfig{
         ifname: @ifname,
         files: [{"second", ""}],
@@ -182,5 +213,4 @@ defmodule VintageNet.ApplierTest do
       assert File.exists?("ran_second_up")
     end)
   end
-
 end

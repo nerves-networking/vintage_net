@@ -17,7 +17,8 @@ defmodule VintageNet.Interface.RawConfig do
 
   """
 
-  @type command :: {:run, String.t(), [String.t()]}
+  # Should this just be a function???
+  @type command :: {:run, String.t(), [String.t()]} | {:fun, function()}
   @type file_contents :: {Path.t(), String.t()}
 
   @enforce_keys [:ifname]

@@ -30,6 +30,10 @@ defmodule VintageNet.Interface.CommandRunner do
     end
   end
 
+  def run({:fun, fun}) do
+    fun.()
+  end
+
   @doc """
   """
   @spec create_files([RawConfig.file_contents()]) :: :ok
