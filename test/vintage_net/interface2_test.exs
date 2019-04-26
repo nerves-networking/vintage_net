@@ -99,7 +99,7 @@ defmodule VintageNet.ApplierTest do
     end)
   end
 
-  test "hanging command retries", context do
+  test "hanging on configure command retries", context do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
@@ -129,4 +129,58 @@ defmodule VintageNet.ApplierTest do
       assert File.exists?("i_am_configured")
     end)
   end
+
+  test "hanging on unconfigure command recovers", context do
+    in_tmp(context.test, fn ->
+      raw_config = %RawConfig{
+        ifname: @ifname,
+        retry_millis: 10,
+        files: [{"hello", "world"}],
+        up_cmd_millis: 50,
+        up_cmds: [],
+        down_cmd_millis: 50,
+        down_cmds: [{:run, "sleep", ["100000"]}]
+      }
+
+      {:ok, _pid} = Interface2.start_link(ifname: @ifname, config: raw_config)
+      assert :ok == Interface2.wait_until_configured(@ifname)
+
+      assert File.exists?("hello")
+
+      assert :ok == Interface2.unconfigure(@ifname)
+      assert :ok == Interface2.wait_until_configured(@ifname)
+
+      refute File.exists?("hello")
+    end)
+  end
+
+  test "reconfigure", context do
+    in_tmp(context.test, fn ->
+      raw_config1 = %RawConfig{
+        ifname: @ifname,
+        files: [{"first", ""}],
+        up_cmds: [],
+        down_cmds: [{:run, "touch", ["ran_first_down"]}]
+      }
+      raw_config2 = %RawConfig{
+        ifname: @ifname,
+        files: [{"second", ""}],
+        up_cmds: [{:run, "touch", ["ran_second_up"]}],
+        down_cmds: []
+      }
+
+      {:ok, _pid} = Interface2.start_link(ifname: @ifname, config: raw_config1)
+      assert :ok == Interface2.wait_until_configured(@ifname)
+
+      assert File.exists?("first")
+
+      assert :ok == Interface2.configure(@ifname, raw_config2)
+      assert :ok == Interface2.wait_until_configured(@ifname)
+
+      refute File.exists?("first")
+      assert File.exists?("ran_first_down")
+      assert File.exists?("ran_second_up")
+    end)
+  end
+
 end
