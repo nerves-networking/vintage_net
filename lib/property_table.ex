@@ -116,6 +116,11 @@ defmodule PropertyTable do
   """
   defdelegate clear(table, name), to: Table
 
+  @doc """
+  Clear out all properties under a prefix
+  """
+  defdelegate clear_prefix(table, name), to: Table
+
   defp assert_name(name) do
     Enum.all?(name, &is_binary/1) ||
       raise ArgumentError, "Expected name or prefix to be a list of strings"

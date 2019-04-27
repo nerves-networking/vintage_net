@@ -82,4 +82,14 @@ defmodule PropertyTableTest do
     assert PropertyTable.get_by_prefix(table, name) == [{name, 105}]
     assert PropertyTable.get_by_prefix(table, name2) == [{name2, 106}]
   end
+
+  test "clearing a subtree", %{table: table} do
+    PropertyTable.put(table, ["a", "b", "c"], 1)
+    PropertyTable.put(table, ["a", "b", "d"], 2)
+    PropertyTable.put(table, ["a", "b", "e"], 3)
+    PropertyTable.put(table, ["f", "g"], 4)
+
+    PropertyTable.clear_prefix(table, ["a"])
+    assert PropertyTable.get_by_prefix(table, []) == [{["f", "g"], 4}]
+  end
 end

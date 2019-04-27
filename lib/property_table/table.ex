@@ -66,6 +66,14 @@ defmodule PropertyTable.Table do
     GenServer.call(table, {:clear, name})
   end
 
+  @doc """
+  Clear out all of the properties under a prefix
+  """
+  @spec clear_prefix(PropertyTable.table_id(), PropertyTable.property()) :: :ok
+  def clear_prefix(table, name) when is_list(name) do
+    GenServer.call(table, {:clear_prefix, name})
+  end
+
   @impl true
   def init({table, registry_name}) do
     ^table = :ets.new(table, [:named_table, read_concurrency: true])
@@ -103,6 +111,25 @@ defmodule PropertyTable.Table do
       [] ->
         :ok
     end
+
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:clear_prefix, prefix}, _from, state) do
+    to_delete = get_by_prefix(state.table, prefix)
+    metadata = %{}
+
+    # Delete everything first and then send notifications so
+    # if handlers call "get", they won't see something that
+    # will be deleted shortly.
+    Enum.each(to_delete, fn {name, _value} ->
+      :ets.delete(state.table, name)
+    end)
+
+    Enum.each(to_delete, fn {name, value} ->
+      dispatch(state, name, value, nil, metadata)
+    end)
 
     {:reply, :ok, state}
   end
