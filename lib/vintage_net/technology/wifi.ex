@@ -1,8 +1,10 @@
-defmodule VintageNet.WiFi do
+defmodule VintageNet.Technology.WiFi do
+  @behaviour VintageNet.Technology
+
   alias VintageNet.WiFi.Scan
   alias VintageNet.Interface.RawConfig
 
-  def create({ifname, %{type: :wifi, wifi: wifi_config} = config}, opts) do
+  def to_raw_config(ifname, %{type: __MODULE__, wifi: wifi_config} = config, opts) do
     ifup = Keyword.fetch!(opts, :bin_ifup)
     ifdown = Keyword.fetch!(opts, :bin_ifdown)
     wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
@@ -27,10 +29,17 @@ defmodule VintageNet.WiFi do
       {:run, killall, ["-q", "wpa_supplicant"]}
     ]
 
-    %RawConfig{ifname: ifname, files: files, up_cmds: up_cmds, down_cmds: down_cmds}
+    %RawConfig{
+      ifname: ifname,
+      type: __MODULE__,
+      source_config: config,
+      files: files,
+      up_cmds: up_cmds,
+      down_cmds: down_cmds
+    }
   end
 
-  def create({ifname, %{type: :wifi}}, opts) do
+  def to_raw_config(ifname, %{type: __MODULE__}, opts) do
     wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
     killall = Keyword.fetch!(opts, :bin_killall)
 
@@ -49,14 +58,14 @@ defmodule VintageNet.WiFi do
 
     %RawConfig{
       ifname: ifname,
+      type: __MODULE__,
       files: files,
       up_cmds: up_cmds,
-      down_cmds: down_cmds,
-      ioctl: &ioctl/2
+      down_cmds: down_cmds
     }
   end
 
-  defp ioctl(ifname, :scan) do
+  def handle_ioctl(ifname, :scan) do
     Scan.scan(ifname)
   end
 

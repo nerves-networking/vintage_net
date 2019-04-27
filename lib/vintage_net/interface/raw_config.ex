@@ -8,6 +8,8 @@ defmodule VintageNet.Interface.RawConfig do
   Fields:
 
   * `ifname` - the name of the interface (e.g., `"eth0"`)
+  * `type` - the type of network interface (aka the module that created the config)
+  * `source_config` - the configuration that generated this one
   * `retry_millis` - if bringing the interface up fails, wait this amount of time before retrying
   * `files` - a list of file path, content tuples
   * `up_cmd_millis` - the maximum amount of time to allow the up command list to take
@@ -21,26 +23,26 @@ defmodule VintageNet.Interface.RawConfig do
   # Should this just be a function??? The down side is that it's less testable since functions are opaque.
   @type command :: {:run, String.t(), [String.t()]} | {:fun, function()}
   @type file_contents :: {Path.t(), String.t()}
-  @type ioctl :: (String.t(), tuple() -> :ok | {:ok, any()} | {:error, any()})
 
-  @enforce_keys [:ifname]
+  @enforce_keys [:ifname, :type]
   defstruct ifname: nil,
+            type: nil,
+            source_config: %{},
             retry_millis: 1_000,
             files: [],
             up_cmd_millis: 5_000,
             up_cmds: [],
             down_cmd_millis: 5_000,
-            down_cmds: [],
-            ioctl: &VintageNet.Interface.RawConfig.unimplemented_ioctl/2
+            down_cmds: []
 
   @type t :: %__MODULE__{
           ifname: String.t(),
+          type: atom(),
           files: [file_contents()],
           up_cmd_millis: non_neg_integer(),
           up_cmds: [command()],
           down_cmd_millis: non_neg_integer(),
-          down_cmds: [command()],
-          ioctl: ioctl()
+          down_cmds: [command()]
         }
 
   def unimplemented_ioctl(_, _), do: {:error, :unimplemented}

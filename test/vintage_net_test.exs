@@ -2,6 +2,10 @@ defmodule VintageNetTest do
   use VintageNetTest.Case
   doctest VintageNet
 
+  test "configure fails on bad technologies" do
+    assert {:error, "config requires type field"} == VintageNet.configure("eth0", %{})
+  end
+
   test "verify system works", context do
     # create files here at some tmp place
     in_tmp(context.test, fn ->

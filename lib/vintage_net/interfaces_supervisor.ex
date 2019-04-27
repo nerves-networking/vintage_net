@@ -18,13 +18,13 @@ defmodule VintageNet.InterfacesSupervisor do
   end
 
   defp start_configured_interfaces() do
-    args = Application.get_all_env(:vintage_net)
+    # args = Application.get_all_env(:vintage_net)
 
-    Enum.map(args, fn
-      {:config, configs} -> {:config, VintageNet.Config.make(configs)}
-      other -> other
-    end)
-    |> Keyword.get(:config)
-    |> Enum.each(fn iface -> start_interface(iface) end)
+    # Enum.map(args, fn
+    #   {:config, configs} -> {:config, VintageNet.Config.make(configs)}
+    #   other -> other
+    # end)
+    # |> Keyword.get(:config)
+    # |> Enum.each(fn iface -> start_interface(iface) end)
   end
 end

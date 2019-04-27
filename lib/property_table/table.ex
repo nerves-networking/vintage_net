@@ -9,9 +9,7 @@ defmodule PropertyTable.Table do
   end
 
   @doc """
-  Looks up the bucket pid for `name` stored in `server`.
 
-  Returns `{:ok, pid}` if the bucket exists, `:error` otherwise.
   """
   @spec get(PropertyTable.table_id(), PropertyTable.property(), PropertyTable.value()) ::
           PropertyTable.value()

@@ -10,7 +10,7 @@ defmodule VintageNet.Application do
     socket_path = Path.join(Keyword.get(args, :tmpdir), Keyword.get(args, :to_elixir_socket))
 
     children = [
-      {PropertyTable, name: VintageNet.PropertyTable},
+      {PropertyTable, name: VintageNet},
       {VintageNet.ToElixir.Server, socket_path},
       {VintageNet.NameResolver, args},
       VintageNet.RouteManager,

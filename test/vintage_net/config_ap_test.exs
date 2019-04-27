@@ -1,31 +1,26 @@
 defmodule VintageNet.ConfigAPTest do
   use ExUnit.Case
-  alias VintageNet.Config
-  import VintageNetTest.Utils
 
   # TBD
 
   test "create a wireless AP configuration" do
-    input = [
-      {"wlan0",
-       %{
-         type: :wifi_ap,
-         wifi: %{
-           regulatory_domain: "US",
-           ssid: "my_accesspoint",
-           mode: :ap,
-           psk: "1234567890123456789012345678901234567890123456789012345678901234",
-           key_mgmt: :wpa_psk
-         },
-         ipv4: %{
-           method: :dhcpd,
-           addresses: [
-             %{address: "192.168.0.2", netmask: "255.255.255.0", gateway: "192.168.0.1"}
-           ],
-           dhcpd: %{lease_start: "192.168.0.10", lease_end: "192.168.0.100"}
-         }
-       }}
-    ]
+    input = %{
+      type: :wifi_ap,
+      wifi: %{
+        regulatory_domain: "US",
+        ssid: "my_accesspoint",
+        mode: :ap,
+        psk: "1234567890123456789012345678901234567890123456789012345678901234",
+        key_mgmt: :wpa_psk
+      },
+      ipv4: %{
+        method: :dhcpd,
+        addresses: [
+          %{address: "192.168.0.2", netmask: "255.255.255.0", gateway: "192.168.0.1"}
+        ],
+        dhcpd: %{lease_start: "192.168.0.10", lease_end: "192.168.0.100"}
+      }
+    }
 
     output = %{
       files: [
@@ -59,6 +54,6 @@ defmodule VintageNet.ConfigAPTest do
     }
 
     # TODO!!!!
-    # assert [{"wlan0", output}] == Config.make(input, default_opts())
+    # assert output == WiFiAP.to_raw_config("wlan0", input, default_opts())
   end
 end

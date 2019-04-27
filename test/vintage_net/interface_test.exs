@@ -9,6 +9,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
+        type: __MODULE__,
         files: [{"testing", "Hello, world"}],
         up_cmds: [],
         down_cmds: []
@@ -17,6 +18,7 @@ defmodule VintageNet.InterfaceTest do
       {:ok, _pid} = Interface.start_link(raw_config)
       assert :ok == Interface.wait_until_configured(@ifname)
 
+      # assert PropertyTable.get(VintageNet, ["interface", @ifname, "type"]) == __MODULE__
       assert File.exists?("testing")
       assert File.read!("testing") == "Hello, world"
 
@@ -31,6 +33,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
+        type: __MODULE__,
         files: [{"one/two/three/testing", "Hello, world"}],
         up_cmds: [],
         down_cmds: []
@@ -53,6 +56,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
+        type: __MODULE__,
         files: [],
         up_cmds: [{:run, "touch", ["i_am_configured"]}],
         down_cmds: [{:run, "rm", ["i_am_configured"]}]
@@ -73,6 +77,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
+        type: __MODULE__,
         retry_millis: 10,
         files: [
           {"doit.sh",
@@ -103,6 +108,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
+        type: __MODULE__,
         retry_millis: 10,
         files: [
           {"doit.sh",
@@ -144,6 +150,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
+        type: __MODULE__,
         retry_millis: 10,
         files: [],
         up_cmd_millis: 50,
@@ -164,6 +171,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
+        type: __MODULE__,
         retry_millis: 10,
         files: [{"hello", "world"}],
         up_cmd_millis: 50,
@@ -188,6 +196,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config1 = %RawConfig{
         ifname: @ifname,
+        type: __MODULE__,
         files: [{"first", ""}],
         up_cmds: [],
         down_cmds: [{:run, "touch", ["ran_first_down"]}]
@@ -195,6 +204,7 @@ defmodule VintageNet.InterfaceTest do
 
       raw_config2 = %RawConfig{
         ifname: @ifname,
+        type: __MODULE__,
         files: [{"second", ""}],
         up_cmds: [{:run, "touch", ["ran_second_up"]}],
         down_cmds: []

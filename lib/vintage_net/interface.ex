@@ -49,6 +49,14 @@ defmodule VintageNet.Interface do
   end
 
   @doc """
+  Return the current configuration
+  """
+  @spec get_configuration(String.t()) :: map()
+  def get_configuration(ifname) do
+    GenStateMachine.call(server_name(ifname), :get_configuration)
+  end
+
+  @doc """
   Unconfigure the interface
 
   This doesn't exit this GenServer, but the interface
@@ -59,23 +67,23 @@ defmodule VintageNet.Interface do
   """
   @spec unconfigure(String.t()) :: :ok
   def unconfigure(ifname) do
-    configure(%RawConfig{ifname: ifname})
+    configure(null_raw_config(ifname))
   end
 
   @doc """
-  Wait for the interface to be configured or unconfigured
+  Wait for the interface to be configured
   """
   @spec wait_until_configured(String.t()) :: :ok
   def wait_until_configured(ifname) do
     GenStateMachine.call(server_name(ifname), :wait)
   end
 
-  # @spec status(String.t()) :: status()
-  # def status(interface) do
-  #   interface
-  #   |> server_name()
-  #   |> GenServer.call(:status)
-  # end
+  @doc """
+  Run an I/O command on the specified interface
+  """
+  def ioctl(ifname, command) do
+    GenStateMachine.call(server_name(ifname), {:ioctl, command})
+  end
 
   @impl true
   def init(config) do
@@ -83,36 +91,9 @@ defmodule VintageNet.Interface do
 
     cleanup_interface(config.ifname)
 
-    initial_data = %State{ifname: config.ifname}
+    initial_data = %State{ifname: config.ifname, config: null_raw_config(config.ifname)}
 
-    {:ok, :unconfigured, initial_data, {:next_event, :internal, {:configure, config}}}
-  end
-
-  # :unconfigured
-
-  def handle_event({:call, from}, :wait, :unconfigured, %State{} = data) do
-    Logger.debug(":unconfigured -> wait")
-
-    {:keep_state, data, {:reply, from, :ok}}
-  end
-
-  @impl true
-  def handle_event(:internal, {:configure, config}, :unconfigured, %State{} = data) do
-    Logger.debug(":unconfigured -> internal configure")
-    CommandRunner.create_files(config.files)
-    new_data = run_commands(data, config.up_cmds)
-
-    {:next_state, :configuring, %{new_data | config: config},
-     {:state_timeout, config.up_cmd_millis, :configuring_timeout}}
-  end
-
-  @impl true
-  def handle_event({:call, from}, {:configure, config}, :unconfigured, %State{} = data) do
-    Logger.debug(":unconfigured -> configure")
-    CommandRunner.create_files(config.files)
-    new_data = run_commands(data, config.up_cmds)
-    action = [{:reply, from, :ok}, {:state_timeout, config.up_cmd_millis, :configuring_timeout}]
-    {:next_state, :configuring, %{new_data | config: config}, action}
+    {:ok, :configured, initial_data, {:next_event, :internal, {:configure, config}}}
   end
 
   # :configuring
@@ -178,6 +159,23 @@ defmodule VintageNet.Interface do
 
   @impl true
   def handle_event(
+        :internal,
+        {:configure, new_config},
+        :configured,
+        %State{config: old_config} = data
+      ) do
+    Logger.debug(":configured -> internal configure")
+    new_data = run_commands(data, old_config.down_cmds)
+
+    action = [
+      {:state_timeout, old_config.down_cmd_millis, :unconfiguring_timeout}
+    ]
+
+    {:next_state, :reconfiguring, %{new_data | next_config: new_config}, action}
+  end
+
+  @impl true
+  def handle_event(
         {:call, from},
         {:configure, new_config},
         :configured,
@@ -193,63 +191,6 @@ defmodule VintageNet.Interface do
     ]
 
     {:next_state, :reconfiguring, %{new_data | next_config: new_config}, action}
-  end
-
-  # :unconfiguring
-
-  @impl true
-  def handle_event(:info, {:commands_done, :ok}, :unconfiguring, %State{config: config} = data) do
-    # TODO
-    Logger.debug(":unconfiguring -> done success")
-    CommandRunner.remove_files(config.files)
-    {new_data, actions} = reply_to_waiters(data)
-    new_data = %{new_data | command_runner: nil, config: nil}
-    {:next_state, :unconfigured, new_data, actions}
-  end
-
-  @impl true
-  def handle_event(
-        :info,
-        {:commands_done, {:error, _reason}},
-        :unconfiguring,
-        %State{config: config} = data
-      ) do
-    # TODO
-    Logger.debug(":unconfiguring -> done error")
-    CommandRunner.remove_files(config.files)
-    {new_data, actions} = reply_to_waiters(data)
-    new_data = %{new_data | command_runner: nil, config: nil}
-    {:next_state, :unconfigured, new_data, actions}
-  end
-
-  @impl true
-  def handle_event(
-        :info,
-        {:EXIT, pid, reason},
-        :unconfiguring,
-        %State{config: config, command_runner: pid} = data
-      ) do
-    # TODO
-    Logger.debug(":unconfiguring -> done crash (#{inspect(reason)})")
-    CommandRunner.remove_files(config.files)
-    {new_data, actions} = reply_to_waiters(data)
-    new_data = %{new_data | command_runner: nil, config: nil}
-    {:next_state, :unconfigured, new_data, actions}
-  end
-
-  @impl true
-  def handle_event(
-        :state_timeout,
-        _event,
-        :unconfiguring,
-        %State{command_runner: pid, config: config} = data
-      ) do
-    Logger.debug(":unconfiguring -> recovering from hang")
-    Process.exit(pid, :kill)
-    CommandRunner.remove_files(config.files)
-    {new_data, actions} = reply_to_waiters(data)
-    new_data = %{new_data | command_runner: nil, config: nil}
-    {:next_state, :unconfigured, new_data, actions}
   end
 
   # :reconfiguring
@@ -362,6 +303,10 @@ defmodule VintageNet.Interface do
     {:keep_state, %{data | waiters: [from | waiters]}}
   end
 
+  def handle_event({:call, from}, :get_configuration, _state, data) do
+    {:reply, from, data.config.source_config}
+  end
+
   defp reply_to_waiters(data) do
     actions = for from <- data.waiters, do: {:reply, from, :ok}
     {%{data | waiters: []}, actions}
@@ -378,6 +323,10 @@ defmodule VintageNet.Interface do
     result = CommandRunner.run(commands)
     Logger.debug("Done. Sending response")
     send(interface_pid, {:commands_done, result})
+  end
+
+  defp null_raw_config(ifname) do
+    VintageNet.Technology.Null.to_raw_config(ifname)
   end
 
   defp cleanup_interface(_ifname) do
