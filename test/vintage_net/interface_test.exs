@@ -18,7 +18,7 @@ defmodule VintageNet.InterfaceTest do
       {:ok, _pid} = Interface.start_link(raw_config)
       assert :ok == Interface.wait_until_configured(@ifname)
 
-      # assert PropertyTable.get(VintageNet, ["interface", @ifname, "type"]) == __MODULE__
+      assert PropertyTable.get(VintageNet, ["interface", @ifname, "type"]) == __MODULE__
       assert File.exists?("testing")
       assert File.read!("testing") == "Hello, world"
 
