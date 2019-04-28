@@ -16,15 +16,15 @@ defmodule VintageNet.Interface do
   end
 
   @doc """
-  Start up an interface with an initial configuration
+  Start up an interface
 
   Parameters:
 
-  * `config`: an initial configuration for the interface
+  * `ifname` - which interface
   """
-  @spec start_link(RawConfig.t()) :: GenServer.on_start()
-  def start_link(config) do
-    GenStateMachine.start_link(__MODULE__, config, name: server_name(config.ifname))
+  @spec start_link(String.t()) :: GenServer.on_start()
+  def start_link(ifname) do
+    GenStateMachine.start_link(__MODULE__, ifname, name: server_name(ifname))
   end
 
   defp server_name(ifname) do
@@ -86,14 +86,14 @@ defmodule VintageNet.Interface do
   end
 
   @impl true
-  def init(config) do
+  def init(ifname) do
     Process.flag(:trap_exit, true)
 
-    cleanup_interface(config.ifname)
+    cleanup_interface(ifname)
 
-    initial_data = %State{ifname: config.ifname, config: null_raw_config(config.ifname)}
+    initial_data = %State{ifname: ifname, config: null_raw_config(ifname)}
 
-    {:ok, :configured, initial_data, {:next_event, :internal, {:configure, config}}}
+    {:ok, :configured, initial_data}
   end
 
   # :configuring
@@ -106,6 +106,9 @@ defmodule VintageNet.Interface do
     new_data = %{new_data | command_runner: nil}
 
     update_properties(:configured, new_data)
+
+    VintageNet.Interface.Supervisor.set_technology(data.ifname, data.config.child_specs)
+
     {:next_state, :configured, new_data, actions}
   end
 
@@ -324,6 +327,7 @@ defmodule VintageNet.Interface do
     {:reply, from, data.config.source_config}
   end
 
+  @impl true
   def terminate(_reason, _state, %{ifname: ifname}) do
     PropertyTable.clear(VintageNet, ["interface", ifname, "type"])
     PropertyTable.clear(VintageNet, ["interface", ifname, "state"])

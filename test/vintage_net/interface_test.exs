@@ -5,6 +5,23 @@ defmodule VintageNet.InterfaceTest do
 
   @ifname "test0"
 
+  def setup do
+    # Start clean slate for fresh InterfacesSupervisor each test.
+    Application.stop(:vintage_net)
+    Application.start(:vintage_net)
+  end
+
+  defp start_and_configure(raw_config, sleep_millis \\ 0) do
+    VintageNet.InterfacesSupervisor.start_interface(@ifname)
+    Interface.configure(raw_config)
+
+    if sleep_millis do
+      Process.sleep(sleep_millis)
+    end
+
+    assert :ok == Interface.wait_until_configured(@ifname)
+  end
+
   test "creates and deletes files", context do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
@@ -15,8 +32,7 @@ defmodule VintageNet.InterfaceTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface.start_link(raw_config)
-      assert :ok == Interface.wait_until_configured(@ifname)
+      start_and_configure(raw_config)
 
       assert PropertyTable.get(VintageNet, ["interface", @ifname, "type"]) == __MODULE__
       assert File.exists?("testing")
@@ -39,8 +55,7 @@ defmodule VintageNet.InterfaceTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface.start_link(raw_config)
-      assert :ok == Interface.wait_until_configured(@ifname)
+      start_and_configure(raw_config)
 
       assert File.exists?("one/two/three/testing")
       assert File.read!("one/two/three/testing") == "Hello, world"
@@ -62,8 +77,7 @@ defmodule VintageNet.InterfaceTest do
         down_cmds: [{:run, "rm", ["i_am_configured"]}]
       }
 
-      {:ok, _pid} = Interface.start_link(raw_config)
-      assert :ok == Interface.wait_until_configured(@ifname)
+      start_and_configure(raw_config)
 
       assert File.exists?("i_am_configured")
 
@@ -96,9 +110,7 @@ defmodule VintageNet.InterfaceTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface.start_link(raw_config)
-      Process.sleep(250)
-      assert :ok == Interface.wait_until_configured(@ifname)
+      start_and_configure(raw_config, 250)
 
       assert File.exists?("i_am_configured")
     end)
@@ -128,9 +140,7 @@ defmodule VintageNet.InterfaceTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface.start_link(raw_config)
-      Process.sleep(250)
-      assert :ok == Interface.wait_until_configured(@ifname)
+      start_and_configure(raw_config, 250)
 
       assert File.exists?("i_am_configured")
     end)
@@ -158,9 +168,7 @@ defmodule VintageNet.InterfaceTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface.start_link(raw_config)
-      Process.sleep(250)
-      assert :ok == Interface.wait_until_configured(@ifname)
+      start_and_configure(raw_config, 250)
 
       assert File.exists?("i_crashed")
       assert File.exists?("i_am_configured")
@@ -180,8 +188,7 @@ defmodule VintageNet.InterfaceTest do
         down_cmds: [{:run, "sleep", ["100000"]}]
       }
 
-      {:ok, _pid} = Interface.start_link(raw_config)
-      assert :ok == Interface.wait_until_configured(@ifname)
+      start_and_configure(raw_config)
 
       assert File.exists?("hello")
 
@@ -210,8 +217,7 @@ defmodule VintageNet.InterfaceTest do
         down_cmds: []
       }
 
-      {:ok, _pid} = Interface.start_link(raw_config1)
-      assert :ok == Interface.wait_until_configured(@ifname)
+      start_and_configure(raw_config1)
 
       assert File.exists?("first")
 

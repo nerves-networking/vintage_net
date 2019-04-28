@@ -30,6 +30,7 @@ defmodule VintageNet.Interface.RawConfig do
             source_config: %{},
             retry_millis: 1_000,
             files: [],
+            child_specs: [],
             up_cmd_millis: 5_000,
             up_cmds: [],
             down_cmd_millis: 5_000,
@@ -38,7 +39,10 @@ defmodule VintageNet.Interface.RawConfig do
   @type t :: %__MODULE__{
           ifname: String.t(),
           type: atom(),
+          source_config: map(),
+          retry_millis: non_neg_integer(),
           files: [file_contents()],
+          child_specs: [Supervisor.child_spec()],
           up_cmd_millis: non_neg_integer(),
           up_cmds: [command()],
           down_cmd_millis: non_neg_integer(),

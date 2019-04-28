@@ -1,7 +1,6 @@
 defmodule VintageNet.Interface.ConnectivityChecker do
   use GenServer
 
-  require Logger
   require Record
 
   @internet_address "nerves-project.org"
@@ -24,37 +23,42 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
   @impl true
   def handle_info(:ping, %{ifname: ifname, interval: interval} = state) do
-    case ping(ifname) do
-      :ok ->
-        _ = Logger.debug("PING #{ifname}")
+    connectivity =
+      case ping(ifname) do
+        :ok ->
+          :internet
 
-      {:error, reason} ->
-        _ = Logger.debug("PANG #{ifname}: #{inspect(reason)}")
-    end
+        {:error, :no_ip_address} ->
+          :disabled
 
+        {:error, _reason} ->
+          :lan
+      end
+
+    set_connectivity(ifname, connectivity)
     ping_wait(interval)
     {:noreply, state}
   end
 
   defp ping(ifname) do
-    with {:ok, ip} <- resolve_addr(@internet_address),
-         {:ok, opts} <- get_tcp_options(ifname),
-         {:ok, tcp} <- :gen_tcp.connect(ip, 80, opts) do
+    with {:ok, src_ip} <- get_interface_address(ifname),
+         {:ok, dest_ip} <- resolve_addr(@internet_address),
+         {:ok, tcp} <- :gen_tcp.connect(dest_ip, 80, ip: src_ip) do
       _ = :gen_tcp.close(tcp)
       :ok
     end
   end
 
-  defp get_tcp_options(ifname) do
+  defp get_interface_address(ifname) do
     ifname_cl = to_charlist(ifname)
 
-    with {:ok, ifaddrs} <- :inet.getifaddrs(),
-         {_, params} <- Enum.find(ifaddrs, fn {k, _v} -> k == ifname_cl end),
-         addr when is_tuple(addr) <- Keyword.get(params, :addr) do
-      {:ok, [{:ip, addr}]}
+    with {:ok, addresses} <- :inet.getifaddrs(),
+         {_, params} <- Enum.find(addresses, fn {k, _v} -> k == ifname_cl end),
+         address when is_tuple(address) <- Keyword.get(params, :addr) do
+      {:ok, address}
     else
       _ ->
-        {:error, "No IP address on interface"}
+        {:error, :no_ip_address}
     end
   end
 
@@ -64,11 +68,15 @@ defmodule VintageNet.Interface.ConnectivityChecker do
          first_ip = hd(ip_list) do
       {:ok, first_ip}
     else
-      _ -> {:error, "Error resolving #{address}"}
+      _ -> {:error, :no_dns}
     end
   end
 
   defp ping_wait(interval) do
     Process.send_after(self(), :ping, interval)
+  end
+
+  defp set_connectivity(ifname, connectivity) do
+    PropertyTable.put(VintageNet, ["interface", ifname, "connection"], connectivity)
   end
 end

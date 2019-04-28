@@ -17,6 +17,7 @@ defmodule VintageNet.Technology.Ethernet do
         {"/tmp/network_interfaces.#{ifname}",
          "iface #{ifname} inet dhcp" <> dhcp_options(hostname)}
       ],
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
       # ifup hangs forever until Ethernet is plugged in
       up_cmd_millis: 60_000,
       up_cmds: [{:run, ifup, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}],

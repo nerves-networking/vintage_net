@@ -34,6 +34,7 @@ defmodule VintageNet.Technology.WiFi do
       type: __MODULE__,
       source_config: config,
       files: files,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
       up_cmds: up_cmds,
       down_cmds: down_cmds
     }
@@ -60,6 +61,7 @@ defmodule VintageNet.Technology.WiFi do
       ifname: ifname,
       type: __MODULE__,
       files: files,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
       up_cmds: up_cmds,
       down_cmds: down_cmds
     }

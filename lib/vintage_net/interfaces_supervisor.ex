@@ -9,8 +9,8 @@ defmodule VintageNet.InterfacesSupervisor do
     {:ok, pid}
   end
 
-  def start_interface(iface) do
-    DynamicSupervisor.start_child(__MODULE__, {VintageNet.Interface.Supervisor, iface})
+  def start_interface(ifname) do
+    DynamicSupervisor.start_child(__MODULE__, {VintageNet.Interface.Supervisor, ifname})
   end
 
   def init(_) do

@@ -23,6 +23,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
       source_config: input,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
         {"/tmp/wpa_supplicant.conf.wlan0",
@@ -69,6 +70,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
       source_config: input,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
         {"/tmp/wpa_supplicant.conf.wlan0",
@@ -116,6 +118,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
       source_config: input,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
         {"/tmp/wpa_supplicant.conf.wlan0",
@@ -163,6 +166,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
       source_config: input,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
         {"/tmp/wpa_supplicant.conf.wlan0",
@@ -229,6 +233,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
       source_config: input,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
         {"/tmp/wpa_supplicant.conf.wlan0",

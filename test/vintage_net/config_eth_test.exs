@@ -11,6 +11,7 @@ defmodule VintageNet.ConfigEthTest do
       ifname: "eth0",
       type: VintageNet.Technology.Ethernet,
       source_config: input,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, "eth0"}],
       files: [
         {"/tmp/network_interfaces.eth0", dhcp_interface("eth0", "unittest")}
       ],
@@ -48,6 +49,7 @@ defmodule VintageNet.ConfigEthTest do
       ifname: "eth0",
       type: VintageNet.Technology.Ethernet,
       source_config: input,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, "eth0"}],
       files: [{"/tmp/network_interfaces.eth0", interfaces_content}],
       up_cmd_millis: 60_000,
       up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
