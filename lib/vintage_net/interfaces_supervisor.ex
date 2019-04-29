@@ -25,6 +25,6 @@ defmodule VintageNet.InterfacesSupervisor do
     #   other -> other
     # end)
     # |> Keyword.get(:config)
-    # |> Enum.each(fn iface -> start_interface(iface) end)
+    # |> Enum.each(fn ifname -> start_interface(ifname) end)
   end
 end

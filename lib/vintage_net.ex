@@ -32,7 +32,7 @@ defmodule VintageNet do
   @doc """
   Return the settings for the specified interface
   """
-  @spec get_configuration(String.t()) :: {:ok, map()} | {:error, :unconfigured}
+  @spec get_configuration(String.t()) :: map()
   def get_configuration(ifname) do
     Interface.get_configuration(ifname)
   end

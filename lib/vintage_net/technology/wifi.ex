@@ -4,6 +4,11 @@ defmodule VintageNet.Technology.WiFi do
   alias VintageNet.WiFi.Scan
   alias VintageNet.Interface.RawConfig
 
+  @spec to_raw_config(
+          String.t(),
+          map(),
+          keyword()
+        ) :: VintageNet.Interface.RawConfig.t()
   def to_raw_config(ifname, %{type: __MODULE__, wifi: wifi_config} = config, opts) do
     ifup = Keyword.fetch!(opts, :bin_ifup)
     ifdown = Keyword.fetch!(opts, :bin_ifdown)

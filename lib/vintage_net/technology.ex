@@ -17,7 +17,7 @@ defmodule VintageNet.Technology do
   Convert a technology-specific configuration to one for VintageNet
   """
   @callback to_raw_config(ifname :: String.t(), config :: map(), opts :: keyword()) ::
-              {:ok, RawConfig.t()} | {:error, String.t()}
+              {:ok, RawConfig.t()} | {:error, any()}
 
   @doc """
   Handle an ioctl that has been requested on the network interface
@@ -32,7 +32,7 @@ defmodule VintageNet.Technology do
   * `:statistics` - return a map of network statistics
   """
   @callback handle_ioctl(ifname :: String.t(), ioctl()) ::
-              :ok | {:ok, any()} | {:error, String.t()}
+              :ok | {:ok, any()} | {:error, any()}
 
   def to_raw_config!(implementation, config) do
     case implementation.to_raw_config(config) do
