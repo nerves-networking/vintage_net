@@ -38,4 +38,28 @@ defmodule VintageNet.Persistence.FlatFileTest do
       assert {:error, _} = FlatFile.load("eth0")
     end)
   end
+
+  test "enumerates known interfaces", context do
+    in_tmp(context.test, fn ->
+      config = %{
+        type: VintageNet.Technology.Ethernet,
+        ipv4: %{method: :dhcp},
+        hostname: "unit_test"
+      }
+
+      assert [] == FlatFile.enumerate()
+
+      FlatFile.save("eth0", config)
+
+      assert ["eth0"] == FlatFile.enumerate()
+
+      FlatFile.save("wlan0", config)
+
+      assert ["eth0", "wlan0"] == FlatFile.enumerate()
+
+      FlatFile.clear("eth0")
+
+      assert ["wlan0"] == FlatFile.enumerate()
+    end)
+  end
 end
