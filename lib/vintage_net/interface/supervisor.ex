@@ -13,7 +13,8 @@ defmodule VintageNet.Interface.Supervisor do
   @impl true
   def init(ifname) do
     children = [
-      {VintageNet.Interface, ifname}
+      {VintageNet.Interface, ifname},
+      {VintageNet.Interface.ConnectivityChecker, ifname}
     ]
 
     Supervisor.init(children, strategy: :one_for_all)
