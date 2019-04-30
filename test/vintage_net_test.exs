@@ -3,7 +3,7 @@ defmodule VintageNetTest do
   doctest VintageNet
 
   test "configure fails on bad technologies" do
-    assert {:error, "config requires type field"} == VintageNet.configure("eth0", %{})
+    assert {:error, :type_missing} == VintageNet.configure("eth0", %{})
   end
 
   test "verify system works", context do

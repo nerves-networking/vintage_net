@@ -4,6 +4,7 @@ defmodule VintageNet.Interface do
   require Logger
 
   alias VintageNet.Interface.{CommandRunner, RawConfig}
+  alias VintageNet.Persistence
 
   defmodule State do
     @moduledoc false
@@ -43,9 +44,25 @@ defmodule VintageNet.Interface do
   @doc """
   Set a configuration on an interface
   """
+  @spec configure(String.t(), map()) :: :ok | {:error, any()}
+  def configure(ifname, config) do
+    opts = Application.get_all_env(:vintage_net)
+
+    with {:ok, technology} <- Map.fetch(config, :type),
+         {:ok, raw_config} <- technology.to_raw_config(ifname, config, opts) do
+      configure(raw_config)
+    else
+      :error -> {:error, :type_missing}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Configure an interface the low level way with a "raw_config"
+  """
   @spec configure(RawConfig.t()) :: :ok
-  def configure(config) do
-    GenStateMachine.call(via_name(config.ifname), {:configure, config})
+  def configure(raw_config) do
+    GenStateMachine.call(via_name(raw_config.ifname), {:configure, raw_config})
   end
 
   @doc """
@@ -92,8 +109,57 @@ defmodule VintageNet.Interface do
     cleanup_interface(ifname)
 
     initial_data = %State{ifname: ifname, config: null_raw_config(ifname)}
+    update_properties(:configured, initial_data)
 
-    {:ok, :configured, initial_data}
+    actions =
+      case load_config(ifname) do
+        {:ok, raw_config} ->
+          [{:next_event, :internal, {:configure, raw_config}}]
+
+        other ->
+          Logger.info(
+            "VintageNet: not loading a configuration for #{ifname} due to #{inspect(other)}"
+          )
+
+          []
+      end
+
+    {:ok, :configured, initial_data, actions}
+  end
+
+  defp load_config(ifname) do
+    opts = Application.get_all_env(:vintage_net)
+
+    with {:ok, config} <- Persistence.call(:load, [ifname]),
+         {:ok, raw_config} <- to_raw_config(ifname, config, opts) do
+      {:ok, raw_config}
+    else
+      {:error, reason} ->
+        Enum.find(opts[:config], fn {k, _v} -> k == ifname end)
+        |> case do
+          {_ifname, config} ->
+            Logger.info(
+              "VintageNet: trying app config for #{ifname} since persisted config errored: #{
+                inspect(reason)
+              }"
+            )
+
+            to_raw_config(ifname, config, opts)
+
+          nil ->
+            {:error, :no_config}
+        end
+    end
+  end
+
+  defp to_raw_config(ifname, config, opts) do
+    with {:ok, technology} <- Map.fetch(config, :type),
+         {:ok, raw_config} <- technology.to_raw_config(ifname, config, opts) do
+      {:ok, raw_config}
+    else
+      :error -> {:error, :bad_config}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   # :configuring
@@ -173,6 +239,9 @@ defmodule VintageNet.Interface do
         %State{config: old_config} = data
       ) do
     Logger.debug(":configured -> internal configure")
+
+    # Internal configuration -> don't need to persist
+
     new_data = run_commands(data, old_config.down_cmds)
 
     action = [
@@ -188,10 +257,13 @@ defmodule VintageNet.Interface do
         {:call, from},
         {:configure, new_config},
         :configured,
-        %State{config: old_config} = data
+        %State{ifname: ifname, config: old_config} = data
       ) do
     # TODO
     Logger.debug(":configured -> configure")
+
+    _ = Persistence.call(:save, [ifname, new_config])
+
     new_data = run_commands(data, old_config.down_cmds)
 
     action = [

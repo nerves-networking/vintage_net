@@ -23,15 +23,9 @@ defmodule VintageNet do
   """
   @spec configure(String.t(), map()) :: :ok | {:error, any()}
   def configure(ifname, config) do
-    opts = Application.get_all_env(:vintage_net)
-
-    with {:ok, technology} <- Map.fetch(config, :type),
-         {:ok, raw_config} <- technology.to_raw_config(ifname, config, opts),
-         :ok <- autostart_interface(ifname) do
-      Interface.configure(raw_config)
-    else
-      :error -> {:error, "config requires type field"}
-      {:error, reason} -> {:error, reason}
+    case autostart_interface(ifname) do
+      :ok -> Interface.configure(ifname, config)
+      error -> error
     end
   end
 
@@ -51,8 +45,12 @@ defmodule VintageNet do
   """
   @spec configuration_valid?(String.t(), map()) :: boolean()
   def configuration_valid?(ifname, config) do
-    case ifname.type.to_raw_config(ifname, config, []) do
-      {:ok, _} -> true
+    opts = Application.get_all_env(:vintage_net)
+
+    with {:ok, technology} <- Map.fetch(config, :type),
+         {:ok, _raw_config} <- technology.to_raw_config(ifname, config, opts) do
+      true
+    else
       _ -> false
     end
   end

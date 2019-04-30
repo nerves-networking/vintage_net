@@ -20,6 +20,7 @@ defmodule VintageNet.InterfacesSupervisor do
     )
   end
 
+  @impl true
   def init(_) do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
@@ -30,8 +31,7 @@ defmodule VintageNet.InterfacesSupervisor do
 
   defp enumerate_interfaces() do
     # Merge interfaces from the Application config and persistence
-
-    app_ifnames = for %{ifname: ifname} <- Application.get_env(:vintage_net, :config), do: ifname
+    app_ifnames = for {ifname, _config} <- Application.get_env(:vintage_net, :config), do: ifname
     persisted_ifnames = Persistence.call(:enumerate, [])
 
     Enum.concat(app_ifnames, persisted_ifnames) |> Enum.uniq()
