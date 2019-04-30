@@ -54,6 +54,6 @@ defmodule VintageNet.ConfigAPTest do
     }
 
     # TODO!!!!
-    # assert output == WiFiAP.to_raw_config("wlan0", input, default_opts())
+    # assert {:ok, output} == WiFiAP.to_raw_config("wlan0", input, default_opts())
   end
 end

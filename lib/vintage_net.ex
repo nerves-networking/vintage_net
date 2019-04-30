@@ -22,7 +22,8 @@ defmodule VintageNet do
     opts = Application.get_all_env(:vintage_net)
 
     with {:ok, technology} <- Map.fetch(config, :type),
-         {:ok, raw_config} <- technology.to_raw_config(ifname, config, opts) do
+         {:ok, raw_config} <- technology.to_raw_config(ifname, config, opts),
+         :ok <- autostart_interface(ifname) do
       Interface.configure(raw_config)
     else
       :error -> {:error, "config requires type field"}
@@ -100,6 +101,14 @@ defmodule VintageNet do
       :ok
     else
       {:error, "Can't find #{path}"}
+    end
+  end
+
+  defp autostart_interface(ifname) do
+    case VintageNet.InterfacesSupervisor.start_interface(ifname) do
+      {:ok, _pid} -> :ok
+      {:error, {:already_started, _pi}} -> :ok
+      error -> error
     end
   end
 end

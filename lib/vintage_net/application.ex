@@ -14,6 +14,7 @@ defmodule VintageNet.Application do
       {VintageNet.ToElixir.Server, socket_path},
       {VintageNet.NameResolver, args},
       VintageNet.RouteManager,
+      {Registry, keys: :unique, name: VintageNet.Interface.Registry},
       VintageNet.InterfacesSupervisor
     ]
 

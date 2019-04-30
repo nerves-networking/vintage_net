@@ -3,6 +3,7 @@ defmodule VintageNet.Technology.Mobile do
 
   alias VintageNet.Interface.RawConfig
 
+  @impl true
   def to_raw_config(ifname, %{type: __MODULE__, pppd: pppd_config} = config, opts) do
     mknod = Keyword.fetch!(opts, :bin_mknod)
     killall = Keyword.fetch!(opts, :bin_killall)
@@ -20,16 +21,22 @@ defmodule VintageNet.Technology.Mobile do
       {:run, killall, ["-q", "pppd"]}
     ]
 
-    %RawConfig{
-      ifname: ifname,
-      type: __MODULE__,
-      source_config: config,
-      files: files,
-      up_cmds: up_cmds,
-      down_cmds: down_cmds
-    }
+    {:ok,
+     %RawConfig{
+       ifname: ifname,
+       type: __MODULE__,
+       source_config: config,
+       files: files,
+       up_cmds: up_cmds,
+       down_cmds: down_cmds
+     }}
   end
 
+  def to_raw_config(_ifname, _config, _opts) do
+    {:error, :bad_configuration}
+  end
+
+  @impl true
   def handle_ioctl(_ifname, _ioctl) do
     {:error, :unsupported}
   end

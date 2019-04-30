@@ -24,11 +24,11 @@ defmodule VintageNet.Interface do
   """
   @spec start_link(String.t()) :: GenServer.on_start()
   def start_link(ifname) do
-    GenStateMachine.start_link(__MODULE__, ifname, name: server_name(ifname))
+    GenStateMachine.start_link(__MODULE__, ifname, name: via_name(ifname))
   end
 
-  defp server_name(ifname) do
-    Module.concat(VintageNet.Interfaces, ifname)
+  defp via_name(ifname) do
+    {:via, Registry, {VintageNet.Interface.Registry, ifname}}
   end
 
   @doc """
@@ -37,7 +37,7 @@ defmodule VintageNet.Interface do
   Note that this doesn't unconfigure it.
   """
   def stop(ifname) do
-    GenStateMachine.stop(server_name(ifname))
+    GenStateMachine.stop(via_name(ifname))
   end
 
   @doc """
@@ -45,7 +45,7 @@ defmodule VintageNet.Interface do
   """
   @spec configure(RawConfig.t()) :: :ok
   def configure(config) do
-    GenStateMachine.call(server_name(config.ifname), {:configure, config})
+    GenStateMachine.call(via_name(config.ifname), {:configure, config})
   end
 
   @doc """
@@ -53,7 +53,7 @@ defmodule VintageNet.Interface do
   """
   @spec get_configuration(String.t()) :: map()
   def get_configuration(ifname) do
-    GenStateMachine.call(server_name(ifname), :get_configuration)
+    GenStateMachine.call(via_name(ifname), :get_configuration)
   end
 
   @doc """
@@ -75,14 +75,14 @@ defmodule VintageNet.Interface do
   """
   @spec wait_until_configured(String.t()) :: :ok
   def wait_until_configured(ifname) do
-    GenStateMachine.call(server_name(ifname), :wait)
+    GenStateMachine.call(via_name(ifname), :wait)
   end
 
   @doc """
   Run an I/O command on the specified interface
   """
   def ioctl(ifname, command) do
-    GenStateMachine.call(server_name(ifname), {:ioctl, command})
+    GenStateMachine.call(via_name(ifname), {:ioctl, command})
   end
 
   @impl true
@@ -352,7 +352,8 @@ defmodule VintageNet.Interface do
   end
 
   defp null_raw_config(ifname) do
-    VintageNet.Technology.Null.to_raw_config(ifname)
+    {:ok, config} = VintageNet.Technology.Null.to_raw_config(ifname)
+    config
   end
 
   defp cleanup_interface(_ifname) do

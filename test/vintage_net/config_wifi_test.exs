@@ -50,7 +50,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ]
     }
 
-    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "create a password-less WiFi configuration" do
@@ -97,7 +97,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ]
     }
 
-    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "create a WEP WiFi configuration" do
@@ -144,7 +144,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ]
     }
 
-    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "create a hidden WiFi configuration" do
@@ -193,7 +193,7 @@ defmodule VintageNet.ConfigWiFiTest do
       ]
     }
 
-    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "create a multi-network WiFi configuration" do
@@ -274,6 +274,6 @@ defmodule VintageNet.ConfigWiFiTest do
       ]
     }
 
-    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 end

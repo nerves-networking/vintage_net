@@ -20,7 +20,7 @@ defmodule VintageNet.ConfigEthTest do
       down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
     }
 
-    assert output == Ethernet.to_raw_config("eth0", input, default_opts())
+    assert {:ok, output} == Ethernet.to_raw_config("eth0", input, default_opts())
   end
 
   test "create a wired ethernet configuration with static IP" do
@@ -57,6 +57,6 @@ defmodule VintageNet.ConfigEthTest do
     }
 
     # TODO!!!!!
-    # assert output == Ethernet.to_raw_config("eth0"input, default_opts())
+    # assert {:ok, output} == Ethernet.to_raw_config("eth0"input, default_opts())
   end
 end

@@ -82,6 +82,6 @@ defmodule VintageNet.ConfigLTETest do
 
     output = ppp_output(input)
 
-    assert output == Mobile.to_raw_config("ppp0", input, default_opts())
+    assert {:ok, output} == Mobile.to_raw_config("ppp0", input, default_opts())
   end
 end

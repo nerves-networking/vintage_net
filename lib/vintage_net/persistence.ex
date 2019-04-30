@@ -24,4 +24,9 @@ defmodule VintageNet.Persistence do
   Clear out a previously saved configuration
   """
   @callback clear(ifname :: String.t()) :: :ok
+
+  def call(fun, args) do
+    Application.get_env(:vintage_net, :persistence)
+    |> apply(fun, args)
+  end
 end

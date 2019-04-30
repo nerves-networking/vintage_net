@@ -34,15 +34,16 @@ defmodule VintageNet.Technology.WiFi do
       {:run, killall, ["-q", "wpa_supplicant"]}
     ]
 
-    %RawConfig{
-      ifname: ifname,
-      type: __MODULE__,
-      source_config: config,
-      files: files,
-      child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
-      up_cmds: up_cmds,
-      down_cmds: down_cmds
-    }
+    {:ok,
+     %RawConfig{
+       ifname: ifname,
+       type: __MODULE__,
+       source_config: config,
+       files: files,
+       child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
+       up_cmds: up_cmds,
+       down_cmds: down_cmds
+     }}
   end
 
   def to_raw_config(ifname, %{type: __MODULE__}, opts) do
@@ -62,14 +63,19 @@ defmodule VintageNet.Technology.WiFi do
       {:run, killall, ["-q", "wpa_supplicant"]}
     ]
 
-    %RawConfig{
-      ifname: ifname,
-      type: __MODULE__,
-      files: files,
-      child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
-      up_cmds: up_cmds,
-      down_cmds: down_cmds
-    }
+    {:ok,
+     %RawConfig{
+       ifname: ifname,
+       type: __MODULE__,
+       files: files,
+       child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
+       up_cmds: up_cmds,
+       down_cmds: down_cmds
+     }}
+  end
+
+  def to_raw_config(_ifname, _config, _opts) do
+    {:error, :bad_configuration}
   end
 
   def handle_ioctl(ifname, :scan) do
