@@ -32,8 +32,8 @@ defmodule VintageNet.Persistence.FlatFileTest do
 
       FlatFile.save("eth0", config)
 
-      <<_oops, contents::binary>> = File.read!("eth0")
-      File.write!("eth0", contents)
+      <<_oops, contents::binary>> = File.read!("persistence/eth0")
+      File.write!("persistence/eth0", contents)
 
       assert {:error, _} = FlatFile.load("eth0")
     end)

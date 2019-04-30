@@ -8,4 +8,4 @@ use Mix.Config
 config :vintage_net,
   udhcpc_handler: VintageNetTest.LoggingUdhcpcHandler,
   resolvconf: "/dev/null",
-  persistence_dir: "."
+  persistence_dir: "./persistence"
