@@ -22,6 +22,15 @@ defmodule VintageNet.InterfaceTest do
     assert :ok == Interface.wait_until_configured(@ifname)
   end
 
+  test "starting null interface", context do
+    in_tmp(context.test, fn ->
+      {:ok, raw_config} = VintageNet.Technology.Null.to_raw_config(@ifname)
+      start_and_configure(raw_config)
+
+      assert [@ifname] == VintageNet.get_interfaces()
+    end)
+  end
+
   test "creates and deletes files", context do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{

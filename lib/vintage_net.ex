@@ -11,7 +11,11 @@ defmodule VintageNet do
   """
   @spec get_interfaces() :: [String.t()]
   def get_interfaces() do
-    []
+    for {[_interface, ifname | _rest], _value} <-
+          PropertyTable.get_by_prefix(VintageNet, ["interface"]) do
+      ifname
+    end
+    |> Enum.uniq()
   end
 
   @doc """
@@ -27,6 +31,7 @@ defmodule VintageNet do
       Interface.configure(raw_config)
     else
       :error -> {:error, "config requires type field"}
+      {:error, reason} -> {:error, reason}
     end
   end
 

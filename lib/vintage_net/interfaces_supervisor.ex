@@ -11,15 +11,6 @@ defmodule VintageNet.InterfacesSupervisor do
     end
   end
 
-  @doc """
-  Return the currently known interfaces
-  """
-  @spec interfaces() :: [String.t()]
-  def interfaces() do
-    # TODO!!!!
-    []
-  end
-
   @spec start_interface(String.t()) ::
           :ignore | {:error, any()} | {:ok, pid()} | {:ok, pid(), any()}
   def start_interface(ifname) do
