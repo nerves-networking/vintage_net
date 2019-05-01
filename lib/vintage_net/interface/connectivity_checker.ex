@@ -42,10 +42,18 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
   defp ping(ifname) do
     with {:ok, src_ip} <- get_interface_address(ifname),
-         {:ok, dest_ip} <- resolve_addr(@internet_address),
+         internet_address <- get_internet_address(),
+         {:ok, dest_ip} <- resolve_addr(internet_address),
          {:ok, tcp} <- :gen_tcp.connect(dest_ip, 80, ip: src_ip) do
       _ = :gen_tcp.close(tcp)
       :ok
+    end
+  end
+
+  defp get_internet_address(fallback \\ "localhost") do
+    case Application.get_env(:vinate_net, :remote_host) do
+      nil -> fallback
+      value -> value
     end
   end
 

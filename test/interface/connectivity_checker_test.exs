@@ -16,7 +16,7 @@ defmodule VintageNet.Interface.ConnectivityChecker.Test do
   end
 
   test "internet connected interface" do
-    ifname = Application.get_env(:vintage_net, :test_interface)
+    ifname = get_ifname()
     {:ok, checker} = ConnectivityChecker.start_link(ifname)
     :erlang.trace(checker, true, [:receive])
 
@@ -24,6 +24,20 @@ defmodule VintageNet.Interface.ConnectivityChecker.Test do
 
     assert_receive {:trace, ^checker, :receive, :ping}
 
-    assert :internet == PropertyTable.get(VintageNet, ["interface", ifname, "connection"])
+    assert :lan == PropertyTable.get(VintageNet, ["interface", ifname, "connection"])
   end
+
+  defp get_ifname() do
+    case :inet.getifaddrs() do
+      {:ok, addrs} ->
+        addrs
+        |> Enum.filter(&filter_interfaces/1)
+        |> List.first()
+        |> elem(0)
+        |> to_string()
+    end
+  end
+
+  defp filter_interfaces({'lo', _}), do: false
+  defp filter_interfaces(_), do: true
 end
