@@ -238,4 +238,36 @@ defmodule VintageNet.InterfaceTest do
       assert File.exists?("ran_second_up")
     end)
   end
+
+  test "configure starts GenServers", context do
+    in_tmp(context.test, fn ->
+      us = self()
+
+      raw_config = %RawConfig{
+        ifname: @ifname,
+        type: __MODULE__,
+        files: [],
+        up_cmds: [],
+        down_cmds: [],
+        child_specs: [
+          {Task,
+           fn ->
+             Process.register(self(), ItIsMe)
+             send(us, :i_am_started)
+             Process.sleep(1000)
+           end}
+        ]
+      }
+
+      start_and_configure(raw_config)
+
+      assert_receive :i_am_started
+      assert Process.whereis(ItIsMe) != nil
+
+      assert :ok == Interface.unconfigure(@ifname)
+      assert :ok == Interface.wait_until_configured(@ifname)
+
+      assert Process.whereis(ItIsMe) == nil
+    end)
+  end
 end
