@@ -1,6 +1,9 @@
 defmodule VintageNet.Interface.Supervisor do
   use Supervisor
 
+  @doc """
+  Start the interface supervisor
+  """
   @spec start_link(String.t()) :: :ignore | {:error, any()} | {:ok, pid()}
   def start_link(ifname) do
     Supervisor.start_link(__MODULE__, ifname, name: via_name(ifname))

@@ -2,18 +2,18 @@ defmodule VintageNet.InterfaceTest do
   use VintageNetTest.Case
   alias VintageNet.Interface
   alias VintageNet.Interface.RawConfig
-
+  require Logger
   @ifname "test0"
 
-  def setup do
+  setup do
     # Start clean slate for fresh InterfacesSupervisor each test.
     Application.stop(:vintage_net)
     Application.start(:vintage_net)
   end
 
   defp start_and_configure(raw_config, sleep_millis \\ 0) do
-    VintageNet.InterfacesSupervisor.start_interface(@ifname)
-    Interface.configure(raw_config)
+    {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(@ifname)
+    :ok = Interface.configure(raw_config)
 
     if sleep_millis do
       Process.sleep(sleep_millis)

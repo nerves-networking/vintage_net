@@ -4,7 +4,7 @@ defmodule VintageNet do
 
 
   """
-  alias VintageNet.Interface
+  alias VintageNet.{Interface, Persistence}
 
   @doc """
   Return a list of interface names that have been configured
@@ -23,9 +23,18 @@ defmodule VintageNet do
   """
   @spec configure(String.t(), map()) :: :ok | {:error, any()}
   def configure(ifname, config) do
-    case autostart_interface(ifname) do
-      :ok -> Interface.configure(ifname, config)
-      error -> error
+    # The logic here is to validate the config by converting it to
+    # a raw_config. We'd need to do that anyway, so just get it over with.
+    # The next step is to persist the config. This is important since
+    # if the Interface GenServer ever crashes and restarts, we want it to use this
+    # new config. `maybe_start_interface` might start up an Interface
+    # GenServer. If it does, then it will reach into reach into Persistence for
+    # the config and it would be bad for it to get an old config. If a GenServer
+    # isn't started, configure the running one.
+    with {:ok, raw_config} <- Interface.to_raw_config(ifname, config),
+         :ok <- Persistence.call(:save, [ifname, config]),
+         {:error, :already_started} <- maybe_start_interface(ifname) do
+      Interface.configure(raw_config)
     end
   end
 
@@ -45,12 +54,8 @@ defmodule VintageNet do
   """
   @spec configuration_valid?(String.t(), map()) :: boolean()
   def configuration_valid?(ifname, config) do
-    opts = Application.get_all_env(:vintage_net)
-
-    with {:ok, technology} <- Map.fetch(config, :type),
-         {:ok, _raw_config} <- technology.to_raw_config(ifname, config, opts) do
-      true
-    else
+    case Interface.to_raw_config(ifname, config) do
+      {:ok, _raw_config} -> true
       _ -> false
     end
   end
@@ -107,11 +112,11 @@ defmodule VintageNet do
     end
   end
 
-  defp autostart_interface(ifname) do
+  defp maybe_start_interface(ifname) do
     case VintageNet.InterfacesSupervisor.start_interface(ifname) do
       {:ok, _pid} -> :ok
-      {:error, {:already_started, _pi}} -> :ok
-      error -> error
+      {:error, {:already_started, _pid}} -> {:error, :already_started}
+      {:error, other} -> {:error, other}
     end
   end
 end

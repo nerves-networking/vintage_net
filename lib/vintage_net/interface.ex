@@ -42,6 +42,24 @@ defmodule VintageNet.Interface do
   end
 
   @doc """
+  Convert a configuration to a raw one
+
+  This can be used to validate a configuration without applying it.
+  """
+  @spec to_raw_config(String.t(), map()) :: {:ok, RawConfig.t()} | {:error, any()}
+  def to_raw_config(ifname, config) do
+    opts = Application.get_all_env(:vintage_net)
+
+    with {:ok, technology} <- Map.fetch(config, :type),
+         {:ok, raw_config} <- technology.to_raw_config(ifname, config, opts) do
+      {:ok, raw_config}
+    else
+      :error -> {:error, :type_missing}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
   Set a configuration on an interface
   """
   @spec configure(String.t(), map()) :: :ok | {:error, any()}
@@ -113,13 +131,11 @@ defmodule VintageNet.Interface do
 
     actions =
       case load_config(ifname) do
-        {:ok, raw_config} ->
-          [{:next_event, :internal, {:configure, raw_config}}]
+        {:ok, saved_raw_config} ->
+          [{:next_event, :internal, {:configure, saved_raw_config}}]
 
-        other ->
-          Logger.info(
-            "VintageNet: not loading a configuration for #{ifname} due to #{inspect(other)}"
-          )
+        {:error, reason} ->
+          Logger.info("VintageNet: no starting configuration for #{ifname} (#{inspect(reason)})")
 
           []
       end
@@ -128,14 +144,13 @@ defmodule VintageNet.Interface do
   end
 
   defp load_config(ifname) do
-    opts = Application.get_all_env(:vintage_net)
-
     with {:ok, config} <- Persistence.call(:load, [ifname]),
-         {:ok, raw_config} <- to_raw_config(ifname, config, opts) do
+         {:ok, raw_config} <- to_raw_config(ifname, config) do
       {:ok, raw_config}
     else
       {:error, reason} ->
-        Enum.find(opts[:config], fn {k, _v} -> k == ifname end)
+        Application.get_env(:vintage_net, :config)
+        |> Enum.find(fn {k, _v} -> k == ifname end)
         |> case do
           {_ifname, config} ->
             Logger.info(
@@ -144,21 +159,11 @@ defmodule VintageNet.Interface do
               }"
             )
 
-            to_raw_config(ifname, config, opts)
+            to_raw_config(ifname, config)
 
           nil ->
             {:error, :no_config}
         end
-    end
-  end
-
-  defp to_raw_config(ifname, config, opts) do
-    with {:ok, technology} <- Map.fetch(config, :type),
-         {:ok, raw_config} <- technology.to_raw_config(ifname, config, opts) do
-      {:ok, raw_config}
-    else
-      :error -> {:error, :bad_config}
-      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -227,7 +232,7 @@ defmodule VintageNet.Interface do
   # :configured
 
   def handle_event({:call, from}, :wait, :configured, %State{} = data) do
-    Logger.debug(":configured -> wait")
+    Logger.debug(":configured -> wait (return immediately)")
     {:keep_state, data, {:reply, from, :ok}}
   end
 
@@ -239,8 +244,6 @@ defmodule VintageNet.Interface do
         %State{config: old_config} = data
       ) do
     Logger.debug(":configured -> internal configure")
-
-    # Internal configuration -> don't need to persist
 
     new_data = run_commands(data, old_config.down_cmds)
 
@@ -257,12 +260,9 @@ defmodule VintageNet.Interface do
         {:call, from},
         {:configure, new_config},
         :configured,
-        %State{ifname: ifname, config: old_config} = data
+        %State{config: old_config} = data
       ) do
-    # TODO
     Logger.debug(":configured -> configure")
-
-    _ = Persistence.call(:save, [ifname, new_config])
 
     new_data = run_commands(data, old_config.down_cmds)
 
