@@ -10,13 +10,13 @@ defmodule VintageNet.ConfigWiFiTest do
       type: VintageNet.Technology.WiFi,
       wifi: %{
         regulatory_domain: "US",
-        ssid: "testme",
+        ssid: "testing",
         mode: :client,
         psk: "1234567890123456789012345678901234567890123456789012345678901234",
         key_mgmt: :wpa_psk
       },
       ipv4: %{method: :dhcp},
-      hostname: "unittest"
+      hostname: "unit_test"
     }
 
     output = %RawConfig{
@@ -25,13 +25,13 @@ defmodule VintageNet.ConfigWiFiTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant
          country=US
          network={
-         ssid="testme"
+         ssid="testing"
          psk=1234567890123456789012345678901234567890123456789012345678901234
          key_mgmt=WPA-PSK
 
@@ -58,13 +58,13 @@ defmodule VintageNet.ConfigWiFiTest do
       type: VintageNet.Technology.WiFi,
       wifi: %{
         regulatory_domain: "US",
-        ssid: "testme",
+        ssid: "testing",
         mode: :client,
-        psk: "a_passphrase_and_not_apsk",
+        psk: "a_passphrase_and_not_a_psk",
         key_mgmt: :wpa_psk
       },
       ipv4: %{method: :dhcp},
-      hostname: "unittest"
+      hostname: "unit_test"
     }
 
     output = %RawConfig{
@@ -73,14 +73,14 @@ defmodule VintageNet.ConfigWiFiTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant
          country=US
          network={
-         ssid="testme"
-         psk=A12D2C7AF12E699C790CB5BA32CC840EBE1C6C4A3EF386D8925368335DED11FC
+         ssid="testing"
+         psk=1EE0A473A954F61007E526365D4FDC056FE2A102ED2CE77D64492A9495B83030
          key_mgmt=WPA-PSK
 
 
@@ -106,12 +106,12 @@ defmodule VintageNet.ConfigWiFiTest do
       type: VintageNet.Technology.WiFi,
       wifi: %{
         regulatory_domain: "US",
-        ssid: "testme",
+        ssid: "testing",
         mode: :client,
         key_mgmt: :none
       },
       ipv4: %{method: :dhcp},
-      hostname: "unittest"
+      hostname: "unit_test"
     }
 
     output = %RawConfig{
@@ -120,13 +120,13 @@ defmodule VintageNet.ConfigWiFiTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant
          country=US
          network={
-         ssid="testme"
+         ssid="testing"
 
          key_mgmt=NONE
 
@@ -153,13 +153,13 @@ defmodule VintageNet.ConfigWiFiTest do
       type: VintageNet.Technology.WiFi,
       wifi: %{
         regulatory_domain: "US",
-        ssid: "testme",
+        ssid: "testing",
         mode: :client,
         psk: "42FEEDDEAFBABEDEAFBEEFAA55",
         key_mgmt: :wep
       },
       ipv4: %{method: :dhcp},
-      hostname: "unittest"
+      hostname: "unit_test"
     }
 
     output = %RawConfig{
@@ -168,13 +168,13 @@ defmodule VintageNet.ConfigWiFiTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant
          country=US
          network={
-         ssid="testme"
+         ssid="testing"
          key_mgmt=NONE
          wep_tx_keyidx=0
          wep_key0=42FEEDDEAFBABEDEAFBEEFAA55
@@ -200,14 +200,14 @@ defmodule VintageNet.ConfigWiFiTest do
       type: VintageNet.Technology.WiFi,
       wifi: %{
         regulatory_domain: "US",
-        ssid: "testme",
+        ssid: "testing",
         mode: :client,
         psk: "1234567890123456789012345678901234567890123456789012345678901234",
         key_mgmt: :wpa_psk,
         scan_ssid: 1
       },
       ipv4: %{method: :dhcp},
-      hostname: "unittest"
+      hostname: "unit_test"
     }
 
     output = %RawConfig{
@@ -216,13 +216,13 @@ defmodule VintageNet.ConfigWiFiTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant
          country=US
          network={
-         ssid="testme"
+         ssid="testing"
          psk=1234567890123456789012345678901234567890123456789012345678901234
          key_mgmt=WPA-PSK
          scan_ssid=1
@@ -254,19 +254,19 @@ defmodule VintageNet.ConfigWiFiTest do
         mode: :client,
         networks: [
           %{
-            ssid: "firstpriority",
+            ssid: "first_priority",
             psk: "1234567890123456789012345678901234567890123456789012345678901234",
             key_mgmt: :wpa_psk,
             priority: 100
           },
           %{
-            ssid: "secondpriority",
+            ssid: "second_priority",
             psk: "1234567890123456789012345678901234567890123456789012345678901234",
             key_mgmt: :wpa_psk,
             priority: 1
           },
           %{
-            ssid: "thirdpriority",
+            ssid: "third_priority",
             psk: "1234567890123456789012345678901234567890123456789012345678901234",
             key_mgmt: :none,
             priority: 0
@@ -274,7 +274,7 @@ defmodule VintageNet.ConfigWiFiTest do
         ]
       },
       ipv4: %{method: :dhcp},
-      hostname: "unittest"
+      hostname: "unit_test"
     }
 
     output = %RawConfig{
@@ -283,27 +283,27 @@ defmodule VintageNet.ConfigWiFiTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant
          country=US
          network={
-         ssid="firstpriority"
+         ssid="first_priority"
          psk=1234567890123456789012345678901234567890123456789012345678901234
          key_mgmt=WPA-PSK
 
          priority=100
          }
          network={
-         ssid="secondpriority"
+         ssid="second_priority"
          psk=1234567890123456789012345678901234567890123456789012345678901234
          key_mgmt=WPA-PSK
 
          priority=1
          }
          network={
-         ssid="thirdpriority"
+         ssid="third_priority"
          psk=1234567890123456789012345678901234567890123456789012345678901234
          key_mgmt=NONE
 

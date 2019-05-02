@@ -154,7 +154,7 @@ defmodule VintageNet.Interface do
         |> case do
           {_ifname, config} ->
             Logger.info(
-              "VintageNet: trying app config for #{ifname} since persisted config errored: #{
+              "VintageNet: persisted config for #{ifname} failed so reverting to app config: #{
                 inspect(reason)
               }"
             )

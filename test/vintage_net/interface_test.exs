@@ -103,7 +103,7 @@ defmodule VintageNet.InterfaceTest do
         type: __MODULE__,
         retry_millis: 10,
         files: [
-          {"doit.sh",
+          {"run.sh",
            """
            #!/bin/sh
            if [ -e first_try ]; then
@@ -115,7 +115,7 @@ defmodule VintageNet.InterfaceTest do
            fi
            """}
         ],
-        up_cmds: [{:run, "sh", ["doit.sh"]}],
+        up_cmds: [{:run, "sh", ["run.sh"]}],
         down_cmds: []
       }
 
@@ -132,7 +132,7 @@ defmodule VintageNet.InterfaceTest do
         type: __MODULE__,
         retry_millis: 10,
         files: [
-          {"doit.sh",
+          {"run.sh",
            """
            #!/bin/sh
            if [ -e first_try ]; then
@@ -145,7 +145,7 @@ defmodule VintageNet.InterfaceTest do
            """}
         ],
         up_cmd_millis: 50,
-        up_cmds: [{:run, "sh", ["doit.sh"]}],
+        up_cmds: [{:run, "sh", ["run.sh"]}],
         down_cmds: []
       }
 
