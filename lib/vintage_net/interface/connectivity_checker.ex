@@ -3,8 +3,6 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
   require Record
 
-  @internet_address "nerves-project.org"
-
   @delay_to_first_check 100
   @interval 5_000
 
@@ -41,19 +39,13 @@ defmodule VintageNet.Interface.ConnectivityChecker do
   end
 
   defp ping(ifname) do
+    internet_host = Application.get_env(:vintage_net, :internet_host)
+
     with {:ok, src_ip} <- get_interface_address(ifname),
-         internet_address <- get_internet_address(),
-         {:ok, dest_ip} <- resolve_addr(internet_address),
+         {:ok, dest_ip} <- resolve_addr(internet_host),
          {:ok, tcp} <- :gen_tcp.connect(dest_ip, 80, ip: src_ip) do
       _ = :gen_tcp.close(tcp)
       :ok
-    end
-  end
-
-  defp get_internet_address(fallback \\ "localhost") do
-    case Application.get_env(:vinate_net, :remote_host) do
-      nil -> fallback
-      value -> value
     end
   end
 

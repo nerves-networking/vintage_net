@@ -36,7 +36,8 @@ defmodule VintageNet.MixProject do
         udhcpc_handler: VintageNet.Interface.Udhcpc,
         resolvconf: "/etc/resolv.conf",
         persistence: VintageNet.Persistence.FlatFile,
-        persistence_dir: "/root/vintage_net"
+        persistence_dir: "/root/vintage_net",
+        internet_host: "nerves-project.org"
       ],
       extra_applications: [:logger],
       mod: {VintageNet.Application, []}

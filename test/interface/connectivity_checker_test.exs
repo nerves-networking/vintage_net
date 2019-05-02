@@ -4,27 +4,22 @@ defmodule VintageNet.Interface.ConnectivityChecker.Test do
   alias VintageNet.Interface.ConnectivityChecker
 
   test "disabled interface" do
-    {:ok, checker} = ConnectivityChecker.start_link("disabledinterface")
-    :erlang.trace(checker, true, [:receive])
+    start_supervised!({ConnectivityChecker, "disabled_interface"})
 
-    :timer.sleep(1_000)
+    property = ["interface", "disabled_interface", "connection"]
+    PropertyTable.subscribe(VintageNet, property)
 
-    assert_receive {:trace, ^checker, :receive, :ping}
-
-    assert :disabled ==
-             PropertyTable.get(VintageNet, ["interface", "disabledinterface", "connection"])
+    assert_receive {VintageNet, property, _old_value, :disabled, _meta}, 1_000
   end
 
   test "internet connected interface" do
     ifname = get_ifname()
-    {:ok, checker} = ConnectivityChecker.start_link(ifname)
-    :erlang.trace(checker, true, [:receive])
+    start_supervised!({ConnectivityChecker, ifname})
 
-    :timer.sleep(1_000)
+    property = ["interface", ifname, "connection"]
+    PropertyTable.subscribe(VintageNet, property)
 
-    assert_receive {:trace, ^checker, :receive, :ping}
-
-    assert :lan == PropertyTable.get(VintageNet, ["interface", ifname, "connection"])
+    assert_receive {VintageNet, property, _old_value, :internet, _meta}, 1_000
   end
 
   defp get_ifname() do
@@ -39,5 +34,8 @@ defmodule VintageNet.Interface.ConnectivityChecker.Test do
   end
 
   defp filter_interfaces({'lo', _}), do: false
-  defp filter_interfaces(_), do: true
+
+  defp filter_interfaces({_ifname, fields}) do
+    Enum.member?(fields[:flags], :up) and fields[:addr] != nil
+  end
 end
