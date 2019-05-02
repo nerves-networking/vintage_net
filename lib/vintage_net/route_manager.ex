@@ -26,6 +26,12 @@ defmodule VintageNet.RouteManager do
   a wired route that's not.
   """
 
+  defmodule State do
+    @moduledoc false
+
+    defstruct prioritization: nil, interfaces: %{}
+  end
+
   @doc """
   Start the route manager.
   """
@@ -55,7 +61,7 @@ defmodule VintageNet.RouteManager do
   @doc """
   Set the connection status on an interface.
 
-  Changing the connection status can reprioritize routing. The
+  Changing the connection status can re-prioritize routing. The
   specified interface doesn't need to have a default route.
   """
   @spec set_connection_status(String.t(), Classification.connection_status()) :: :ok
@@ -85,42 +91,47 @@ defmodule VintageNet.RouteManager do
 
   @impl true
   def init(_args) do
-    state = %{prioritization: Classification.default_prioritization(), ifmap: %{}}
+    state = %State{prioritization: Classification.default_prioritization()}
     {:ok, state}
   end
 
   @impl true
   def handle_call({:set_route, ifname, route, status}, _from, state) do
+    Logger.info("RouteManager: set_route #{ifname} -> #{inspect(status)}")
     ifentry = %{route: route, status: status}
-    new_state = %{state | ifmap: Map.put(state.ifmap, ifname, ifentry)}
-    refresh_all_routes(new_state)
+
+    new_state =
+      put_in(state.interfaces[ifname], ifentry)
+      |> refresh_all_routes()
 
     {:reply, :ok, new_state}
   end
 
   @impl true
   def handle_call({:set_connection_status, ifname, status}, _from, state) do
-    new_ifmap = update_connection_status(state.ifmap, ifname, status)
-    new_state = %{state | ifmap: new_ifmap}
-    refresh_all_routes(new_state)
+    new_state =
+      state
+      |> update_connection_status(ifname, status)
 
     {:reply, :ok, new_state}
   end
 
   @impl true
   def handle_call({:clear_route, ifname}, _from, state) do
+    Logger.info("RouteManager: clear_route #{ifname}")
     # Always try to clear routes even if we think they're cleared.
     clear_routes(ifname)
 
-    new_state = %{state | ifmap: Map.delete(state.ifmap, ifname)}
+    new_state = %{state | interfaces: Map.delete(state.interfaces, ifname)}
     {:reply, :ok, new_state}
   end
 
   @impl true
   def handle_call({:set_prioritization, priorities}, _from, state) do
-    new_state = %{state | prioritization: priorities}
-
-    refresh_all_routes(new_state)
+    new_state =
+      state
+      |> Map.put(:prioritization, priorities)
+      |> refresh_all_routes()
 
     {:reply, :ok, new_state}
   end
@@ -166,6 +177,8 @@ defmodule VintageNet.RouteManager do
   end
 
   defp clear_all_routes() do
+    Logger.info("ip route del default")
+
     case System.cmd("ip", ["route", "del", "default"]) do
       {_, 0} ->
         # Success. There could be more, though.
@@ -177,20 +190,36 @@ defmodule VintageNet.RouteManager do
     end
   end
 
-  defp update_connection_status(ifmap, ifname, status) do
-    if Map.has_key?(ifmap, ifname) do
-      new_ifmap = put_in(ifmap[ifname].status, status)
-      refresh_all_routes(new_ifmap)
-    else
-      ifmap
+  defp update_connection_status(
+         %State{interfaces: interfaces} = state,
+         ifname,
+         new_status
+       ) do
+    case interfaces[ifname] do
+      nil ->
+        state
+
+      ifentry ->
+        if ifentry.status != new_status do
+          put_in(state.interfaces[ifname].status, new_status)
+          |> refresh_all_routes()
+        else
+          state
+        end
     end
+  end
+
+  defp update_connection_status(state, _ifname, _new_state) do
+    state
   end
 
   defp refresh_all_routes(state) do
     clear_all_routes()
 
-    Enum.each(state.ifmap, fn {ifname, ifentry} ->
+    Enum.each(state.interfaces, fn {ifname, ifentry} ->
       create_route(ifname, ifentry.route, ifentry.status, state.prioritization)
     end)
+
+    state
   end
 end

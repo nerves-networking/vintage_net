@@ -1,6 +1,8 @@
 defmodule VintageNet.Interface.ConnectivityChecker do
   use GenServer
 
+  alias VintageNet.RouteManager
+
   require Record
 
   @delay_to_first_check 100
@@ -9,6 +11,10 @@ defmodule VintageNet.Interface.ConnectivityChecker do
   @doc false
   Record.defrecord(:hostent, Record.extract(:hostent, from_lib: "kernel/include/inet.hrl"))
 
+  @doc """
+  Start the connectivity checker GenServer
+  """
+  @spec start_link(String.t()) :: GenServer.on_start()
   def start_link(ifname) do
     GenServer.start_link(__MODULE__, ifname)
   end
@@ -77,6 +83,7 @@ defmodule VintageNet.Interface.ConnectivityChecker do
   end
 
   defp set_connectivity(ifname, connectivity) do
+    RouteManager.set_connection_status(ifname, connectivity)
     PropertyTable.put(VintageNet, ["interface", ifname, "connection"], connectivity)
   end
 end

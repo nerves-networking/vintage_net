@@ -28,7 +28,7 @@ defmodule VintageNet.Interface.RawConfig do
   defstruct ifname: nil,
             type: nil,
             source_config: %{},
-            retry_millis: 1_000,
+            retry_millis: 30_000,
             files: [],
             child_specs: [],
             up_cmd_millis: 5_000,

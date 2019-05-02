@@ -4,7 +4,7 @@ defmodule VintageNet.Interface do
   require Logger
 
   alias VintageNet.Interface.{CommandRunner, RawConfig}
-  alias VintageNet.Persistence
+  alias VintageNet.{Persistence, RouteManager}
 
   defmodule State do
     @moduledoc false
@@ -190,7 +190,7 @@ defmodule VintageNet.Interface do
         :configuring,
         %State{config: config} = data
       ) do
-    Logger.debug(":configuring -> done error")
+    Logger.debug(":configuring -> done error: retrying after %{config.retry_millis} ms")
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
     actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
@@ -205,7 +205,10 @@ defmodule VintageNet.Interface do
         :configuring,
         %State{command_runner: pid, config: config} = data
       ) do
-    Logger.debug(":configuring -> done crash (#{inspect(reason)})")
+    Logger.debug(
+      ":configuring -> done crash (#{inspect(reason)}): retrying after %{config.retry_millis} ms"
+    )
+
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
     actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
@@ -220,7 +223,7 @@ defmodule VintageNet.Interface do
         :configuring,
         %State{command_runner: pid, config: config} = data
       ) do
-    Logger.debug(":configuring -> recovering from hang")
+    Logger.debug(":configuring -> recovering from hang: retrying after %{config.retry_millis} ms")
     Process.exit(pid, :kill)
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
@@ -428,10 +431,12 @@ defmodule VintageNet.Interface do
     config
   end
 
-  defp cleanup_interface(_ifname) do
-    # This function is called to restore the filesystem to a pristine
+  defp cleanup_interface(ifname) do
+    # This function is called to restore everything to a pristine
     # state or as close as possible to one. It is called from `init/1`
     # so it can't fail.
+
+    RouteManager.clear_route(ifname)
 
     # TODO!!!
   end
