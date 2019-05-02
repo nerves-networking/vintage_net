@@ -1,7 +1,7 @@
 defmodule VintageNet.Technology.WiFi do
   @behaviour VintageNet.Technology
 
-  alias VintageNet.WiFi.Scan
+  alias VintageNet.WiFi.{Scan, WPA2}
   alias VintageNet.Interface.RawConfig
 
   @spec to_raw_config(
@@ -124,27 +124,28 @@ defmodule VintageNet.Technology.WiFi do
   defp into_config_string(wifi, opt_key) do
     case Map.get(wifi, opt_key) do
       nil -> ""
-      opt -> wifi_opt_to_config_string(opt_key, opt)
+      opt -> wifi_opt_to_config_string(wifi, opt_key, opt)
     end
   end
 
-  defp wifi_opt_to_config_string(:ssid, ssid) do
+  defp wifi_opt_to_config_string(_wifi, :ssid, ssid) do
     "ssid=#{inspect(ssid)}"
   end
 
-  defp wifi_opt_to_config_string(:psk, psk) do
-    "psk=#{psk}"
+  defp wifi_opt_to_config_string(wifi, :psk, psk) do
+    {:ok, real_psk} = WPA2.to_psk(wifi.ssid, psk)
+    "psk=#{real_psk}"
   end
 
-  defp wifi_opt_to_config_string(:key_mgmt, key_mgmt) do
+  defp wifi_opt_to_config_string(_wifi, :key_mgmt, key_mgmt) do
     "key_mgmt=#{key_mgmt_to_string(key_mgmt)}"
   end
 
-  defp wifi_opt_to_config_string(:scan_ssid, value) do
+  defp wifi_opt_to_config_string(_wifi, :scan_ssid, value) do
     "scan_ssid=#{value}"
   end
 
-  defp wifi_opt_to_config_string(:priority, value) do
+  defp wifi_opt_to_config_string(_wifi, :priority, value) do
     "priority=#{value}"
   end
 

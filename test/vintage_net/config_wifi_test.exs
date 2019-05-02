@@ -53,6 +53,54 @@ defmodule VintageNet.ConfigWiFiTest do
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
+  test "create a WPA2 WiFi configuration with passphrase" do
+    input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        regulatory_domain: "US",
+        ssid: "testme",
+        mode: :client,
+        psk: "a_passphrase_and_not_apsk",
+        key_mgmt: :wpa_psk
+      },
+      ipv4: %{method: :dhcp},
+      hostname: "unittest"
+    }
+
+    output = %RawConfig{
+      ifname: "wlan0",
+      type: VintageNet.Technology.WiFi,
+      source_config: input,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
+      files: [
+        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unittest")},
+        {"/tmp/wpa_supplicant.conf.wlan0",
+         """
+         ctrl_interface=/tmp/wpa_supplicant
+         country=US
+         network={
+         ssid="testme"
+         psk=A12D2C7AF12E699C790CB5BA32CC840EBE1C6C4A3EF386D8925368335DED11FC
+         key_mgmt=WPA-PSK
+
+
+         }
+         """}
+      ],
+      up_cmds: [
+        {:run, "/usr/sbin/wpa_supplicant",
+         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
+      ],
+      down_cmds: [
+        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+      ]
+    }
+
+    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+  end
+
   test "create a password-less WiFi configuration" do
     input = %{
       type: VintageNet.Technology.WiFi,
