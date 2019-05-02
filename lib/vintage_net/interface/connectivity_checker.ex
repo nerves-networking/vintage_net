@@ -4,7 +4,7 @@ defmodule VintageNet.Interface.ConnectivityChecker do
   require Record
 
   @delay_to_first_check 100
-  @interval 5_000
+  @interval 30_000
 
   @doc false
   Record.defrecord(:hostent, Record.extract(:hostent, from_lib: "kernel/include/inet.hrl"))
