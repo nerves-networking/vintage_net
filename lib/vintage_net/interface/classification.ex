@@ -64,27 +64,26 @@ defmodule VintageNet.Interface.Classification do
   to indicate that a route shouldn't be added to the Linux routing tables
   at all.
   """
-  @spec compute_metric(String.t(), connection_status(), [prioritization()]) ::
-          non_neg_integer() | :disabled
-  def compute_metric(_ifname, :disabled, _prioritization), do: :disabled
+  @spec compute_metric(interface_type(), connection_status(), [prioritization()]) ::
+          pos_integer() | :disabled
+  def compute_metric(_type, :disabled, _prioritization), do: :disabled
 
-  def compute_metric(ifname, status, prioritization) do
-    iftype = to_type(ifname)
-
-    case Enum.find_index(prioritization, fn option -> matches_option?(option, iftype, status) end) do
+  def compute_metric(type, status, prioritization) when is_atom(type) do
+    case Enum.find_index(prioritization, fn option -> matches_option?(option, type, status) end) do
       nil ->
         :disabled
 
       value ->
         # Don't return 0, since that looks like the metric wasn't set. Also space out the numbers.
+        # (Lower numbers are higher priority)
         (value + 1) * 10
     end
   end
 
-  defp matches_option?({iftype, status}, iftype, status), do: true
-  defp matches_option?({:_, status}, _iftype, status), do: true
-  defp matches_option?({iftype, :_}, iftype, _status), do: true
-  defp matches_option?(_option, _iftype, _status), do: false
+  defp matches_option?({type, status}, type, status), do: true
+  defp matches_option?({:_, status}, _type, status), do: true
+  defp matches_option?({type, :_}, type, _status), do: true
+  defp matches_option?(_option, _type, _status), do: false
 
   @doc """
   Return a reasonable default for prioritizing interfaces

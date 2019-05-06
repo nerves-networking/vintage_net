@@ -88,10 +88,12 @@ defmodule VintageNet.Interface.Udhcpc do
     # fi
     case info[:router] do
       routers when is_list(routers) ->
-        first_router = hd(routers)
-        {:ok, addr} = :inet.parse_address(to_charlist(first_router))
+        {:ok, our_ip} = :inet.parse_address(to_charlist(info[:ip]))
 
-        RouteManager.set_route(ifname, addr, :lan)
+        first_router = hd(routers)
+        {:ok, default_gateway} = :inet.parse_address(to_charlist(first_router))
+
+        RouteManager.set_route(ifname, [our_ip], default_gateway, :lan)
 
       nil ->
         :ok

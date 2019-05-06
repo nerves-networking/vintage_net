@@ -5,15 +5,34 @@ defmodule VintageNet.Route.IPRoute do
 
   require Logger
 
-  @spec do_add_default_route(String.t(), :inet.ip_address(), non_neg_integer()) ::
+  alias VintageNet.Route.Calculator
+
+  @doc """
+  Add a default route
+  """
+  @spec add_default_route(
+          VintageNet.ifname(),
+          :inet.ip_address(),
+          Calculator.metric(),
+          Calculator.table_index()
+        ) ::
           :ok | {:error, any()}
-  def do_add_default_route(ifname, route, metric) do
-    _ = Logger.info("ip route add default metric #{metric} via #{inspect(route)} dev #{ifname}")
+  def add_default_route(ifname, route, metric, table_index) do
+    table_index_string = table_index_to_string(table_index)
+
+    _ =
+      Logger.debug(
+        "ip route add default table #{table_index_string} metric #{metric} via #{inspect(route)} dev #{
+          ifname
+        }"
+      )
 
     ip_cmd([
       "route",
       "add",
       "default",
+      "table",
+      table_index_string,
       "metric",
       "#{metric}",
       "via",
@@ -23,37 +42,80 @@ defmodule VintageNet.Route.IPRoute do
     ])
   end
 
-  @spec do_add_table(:inet.ip_address(), non_neg_integer()) :: :ok | {:error, any()}
-  def do_add_table(ip_address, table) do
-    _ = Logger.info("ip rule add from #{inspect(ip_address)} lookup #{table}")
+  @doc """
+  Add a source IP address -> routing table rule
+  """
+  @spec add_rule(:inet.ip_address(), Calculator.table_index()) :: :ok | {:error, any()}
+  def add_rule(ip_address, table_index) do
+    table_index_string = table_index_to_string(table_index)
+    _ = Logger.debug("ip rule add from #{inspect(ip_address)} lookup #{table_index_string}")
 
-    ip_cmd(["rule", "add", "from", ip_to_string(ip_address), "lookup", to_string(table)])
+    ip_cmd(["rule", "add", "from", ip_to_string(ip_address), "lookup", table_index_string])
   end
 
-  @spec do_clear_table(non_neg_integer()) :: :ok | {:error, any()}
-  def do_clear_table(table) do
-    _ = Logger.info("ip rule del lookup #{table}")
-
-    ip_cmd(["rule", "del", "lookup", to_string(table)])
+  @doc """
+  Clear all routes on all interfaces
+  """
+  @spec clear_all_routes() :: :ok
+  def clear_all_routes() do
+    repeat_til_error(&clear_a_route/0)
   end
 
-  @spec do_clear_routes(String.t()) :: :ok | {:error, any()}
-  def do_clear_routes(ifname) do
-    _ = Logger.info("ip route del default dev #{ifname}")
-    ip_cmd(["route", "del", "default", "dev", ifname])
+  @doc """
+  Clear all rules that select the specified table or tables
+  """
+  @spec clear_all_rules(Calculator.table_index() | Enumerable.t()) :: :ok
+  def clear_all_rules(table_index) when is_integer(table_index) or is_atom(table_index) do
+    repeat_til_error(fn -> clear_a_rule(table_index) end)
   end
 
-  @spec do_clear_all_routes() :: :ok | {:error, any()}
-  def do_clear_all_routes() do
-    _ = Logger.info("ip route del default")
+  def clear_all_rules(table_indices) do
+    Enum.each(table_indices, &clear_all_rules/1)
+  end
+
+  defp repeat_til_error(function) do
+    case function.() do
+      :ok ->
+        # Success. There could be more, though.
+        repeat_til_error(function)
+
+      _ ->
+        # Error, so stop
+        :ok
+    end
+  end
+
+  @spec clear_a_route() :: :ok | {:error, any()}
+  def clear_a_route() do
+    _ = Logger.debug("ip route del default")
 
     ip_cmd(["route", "del", "default"])
   end
 
+  @spec clear_a_route(VintageNet.ifname(), Calculator.table_index()) :: :ok | {:error, any()}
+  def clear_a_route(ifname, table_index \\ :main) do
+    table_index_string = table_index_to_string(table_index)
+    _ = Logger.debug("ip route del default dev #{ifname} table #{table_index_string}")
+    ip_cmd(["route", "del", "default", "dev", ifname, "table", table_index_string])
+  end
+
+  @spec clear_a_rule(Calculator.table_index()) :: :ok | {:error, any()}
+  def clear_a_rule(table_index) do
+    table_index_string = table_index_to_string(table_index)
+    # _ = Logger.debug("ip rule del lookup #{table_index_string}")
+
+    ip_cmd(["rule", "del", "lookup", to_string(table_index_string)])
+  end
+
+  defp table_index_to_string(:main), do: "main"
+
+  defp table_index_to_string(table_index) when table_index >= 0 and table_index <= 255,
+    do: to_string(table_index)
+
   defp ip_cmd(args) do
     bin_ip = Application.get_env(:vintage_net, :bin_ip)
 
-    case System.cmd(bin_ip, args) do
+    case System.cmd(bin_ip, args, stderr_to_stdout: true) do
       {_, 0} -> :ok
       {message, _error} -> {:error, message}
     end

@@ -3,7 +3,7 @@ defmodule VintageNet.RouteManager do
   require Logger
 
   alias VintageNet.Interface.Classification
-  alias VintageNet.Route.IPRoute
+  alias VintageNet.Route.{Calculator, InterfaceInfo, IPRoute}
 
   @moduledoc """
   This module manages the default route.
@@ -38,7 +38,7 @@ defmodule VintageNet.RouteManager do
   defmodule State do
     @moduledoc false
 
-    defstruct prioritization: nil, interfaces: %{}
+    defstruct prioritization: nil, interfaces: nil, route_state: nil, routes: []
   end
 
   @doc """
@@ -62,9 +62,15 @@ defmodule VintageNet.RouteManager do
 
   This replaces any existing routes on that interface
   """
-  @spec set_route(String.t(), :inet.ip_address(), Classification.connection_status()) :: :ok
-  def set_route(ifname, route, status \\ :lan) do
-    GenServer.call(__MODULE__, {:set_route, ifname, route, status})
+  @spec set_route(
+          VintageNet.ifname(),
+          [:inet.ip_address()],
+          :inet.ip_address(),
+          Classification.connection_status()
+        ) ::
+          :ok
+  def set_route(ifname, addresses, route, status \\ :lan) do
+    GenServer.call(__MODULE__, {:set_route, ifname, addresses, route, status})
   end
 
   @doc """
@@ -73,7 +79,7 @@ defmodule VintageNet.RouteManager do
   Changing the connection status can re-prioritize routing. The
   specified interface doesn't need to have a default route.
   """
-  @spec set_connection_status(String.t(), Classification.connection_status()) :: :ok
+  @spec set_connection_status(VintageNet.ifname(), Classification.connection_status()) :: :ok
   def set_connection_status(ifname, status) do
     GenServer.call(__MODULE__, {:set_connection_status, ifname, status})
   end
@@ -81,7 +87,7 @@ defmodule VintageNet.RouteManager do
   @doc """
   Clear out the default gateway for an interface.
   """
-  @spec clear_route(String.t()) :: :ok
+  @spec clear_route(VintageNet.ifname()) :: :ok
   def clear_route(ifname) do
     GenServer.call(__MODULE__, {:clear_route, ifname})
   end
@@ -100,18 +106,33 @@ defmodule VintageNet.RouteManager do
 
   @impl true
   def init(_args) do
-    state = %State{prioritization: Classification.default_prioritization()}
+    state = %State{
+      prioritization: Classification.default_prioritization(),
+      interfaces: %{},
+      route_state: Calculator.init()
+    }
+
+    # Fresh slate
+    IPRoute.clear_all_routes()
+    IPRoute.clear_all_rules(100..200)
+
     {:ok, state}
   end
 
   @impl true
-  def handle_call({:set_route, ifname, route, status}, _from, state) do
+  def handle_call({:set_route, ifname, addresses, default_gateway, status}, _from, state) do
     _ = Logger.info("RouteManager: set_route #{ifname} -> #{inspect(status)}")
-    ifentry = %{route: route, status: status}
+
+    ifentry = %InterfaceInfo{
+      interface_type: Classification.to_type(ifname),
+      addresses: addresses,
+      default_gateway: default_gateway,
+      status: status
+    }
 
     new_state =
       put_in(state.interfaces[ifname], ifentry)
-      |> refresh_all_routes()
+      |> update_route_tables()
 
     {:reply, :ok, new_state}
   end
@@ -128,10 +149,11 @@ defmodule VintageNet.RouteManager do
   @impl true
   def handle_call({:clear_route, ifname}, _from, state) do
     _ = Logger.info("RouteManager: clear_route #{ifname}")
-    # Always try to clear routes even if we think they're cleared.
-    clear_routes(ifname)
 
-    new_state = %{state | interfaces: Map.delete(state.interfaces, ifname)}
+    new_state =
+      %{state | interfaces: Map.delete(state.interfaces, ifname)}
+      |> update_route_tables()
+
     {:reply, :ok, new_state}
   end
 
@@ -140,45 +162,12 @@ defmodule VintageNet.RouteManager do
     new_state =
       state
       |> Map.put(:prioritization, priorities)
-      |> refresh_all_routes()
+      |> update_route_tables()
 
     {:reply, :ok, new_state}
   end
 
-  defp create_route(ifname, route, status, prioritization) do
-    case Classification.compute_metric(ifname, status, prioritization) do
-      :disabled ->
-        :ok
-
-      metric ->
-        IPRoute.do_add_default_route(ifname, route, metric)
-    end
-  end
-
-  defp clear_routes(ifname) do
-    case IPRoute.do_clear_routes(ifname) do
-      :ok ->
-        # Success. There could be more, though.
-        clear_routes(ifname)
-
-      _ ->
-        # Error, so we either cleared them all or there weren't any to begin with
-        :ok
-    end
-  end
-
-  defp clear_all_routes() do
-    case IPRoute.do_clear_all_routes() do
-      :ok ->
-        # Success. There could be more, though.
-        clear_all_routes()
-
-      _ ->
-        # Error, so we either cleared them all or there weren't any to begin with
-        :ok
-    end
-  end
-
+  # Only process routes if the status changes
   defp update_connection_status(
          %State{interfaces: interfaces} = state,
          ifname,
@@ -191,24 +180,49 @@ defmodule VintageNet.RouteManager do
       ifentry ->
         if ifentry.status != new_status do
           put_in(state.interfaces[ifname].status, new_status)
-          |> refresh_all_routes()
+          |> update_route_tables()
         else
           state
         end
     end
   end
 
-  defp update_connection_status(state, _ifname, _new_state) do
-    state
+  defp update_route_tables(state) do
+    # See what changed and then run it.
+    {new_route_state, new_routes} =
+      Calculator.compute(state.route_state, state.interfaces, state.prioritization)
+
+    route_delta = List.myers_difference(state.routes, new_routes)
+
+    IO.puts("route_delta=#{inspect(route_delta)}")
+    Enum.each(route_delta, &handle_delta/1)
+
+    %{state | route_state: new_route_state, routes: new_routes}
   end
 
-  defp refresh_all_routes(state) do
-    clear_all_routes()
+  defp handle_delta({:eq, _anything}), do: :ok
 
-    Enum.each(state.interfaces, fn {ifname, ifentry} ->
-      create_route(ifname, ifentry.route, ifentry.status, state.prioritization)
-    end)
+  defp handle_delta({:del, deletes}) do
+    Enum.each(deletes, &handle_delete/1)
+  end
 
-    state
+  defp handle_delta({:ins, inserts}) do
+    Enum.each(inserts, &handle_insert/1)
+  end
+
+  defp handle_delete({:default_route, ifname, _default_gateway, _metric, table_index}) do
+    IPRoute.clear_a_route(ifname, table_index)
+  end
+
+  defp handle_delete({:rule, table_index, _address}) do
+    IPRoute.clear_a_rule(table_index)
+  end
+
+  defp handle_insert({:default_route, ifname, default_gateway, metric, table_index}) do
+    IPRoute.add_default_route(ifname, default_gateway, metric, table_index)
+  end
+
+  defp handle_insert({:rule, table_index, address}) do
+    IPRoute.add_rule(address, table_index)
   end
 end
