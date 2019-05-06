@@ -38,7 +38,7 @@ defmodule VintageNet.MixProject do
         resolvconf: "/etc/resolv.conf",
         persistence: VintageNet.Persistence.FlatFile,
         persistence_dir: "/root/vintage_net",
-        internet_host: "nerves-project.org"
+        internet_host: "1.1.1.1"
       ],
       extra_applications: [:logger],
       mod: {VintageNet.Application, []}
