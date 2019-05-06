@@ -33,6 +33,7 @@ defmodule VintageNet.MixProject do
         bin_mknod: "/bin/mknod",
         bin_killall: "/usr/bin/killall",
         bin_wpa_supplicant: "/usr/sbin/wpa_supplicant",
+        bin_ip: "/sbin/ip",
         udhcpc_handler: VintageNet.Interface.Udhcpc,
         resolvconf: "/etc/resolv.conf",
         persistence: VintageNet.Persistence.FlatFile,

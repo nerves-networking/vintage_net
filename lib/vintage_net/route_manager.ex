@@ -3,27 +3,36 @@ defmodule VintageNet.RouteManager do
   require Logger
 
   alias VintageNet.Interface.Classification
+  alias VintageNet.Route.IPRoute
 
   @moduledoc """
   This module manages the default route.
 
   Devices with more than one network interface may have more than one
-  way of reaching the Internet. In other words, each interface can
-  have its own default route. Linux has many ways of handling this
-  situation including failing between interfaces and load balancing.
-  Failure detection is limited to what the Linux kernel can see, though,
-  so an Ethernet cable being unplugged is fine, but a router going down
-  needs to be detected elsewhere.
+  way of reaching the Internet. The routing table decides which interface
+  an IP packet should use by looking at the "default route" entries.
+  One interface is chosen.
 
-  This module works by registering default routes with the Linux kernel.
-  Linux will only send packets bound for the Internet using one interface
-  which will be selected based on type. For example, the default ordering
-  is to use wired interfaces in preference to WiFi and WiFi in preference
-  to cellular.
+  Since not all interfaces are equal, we'd like Linux to pick the
+  fastest and lowest latency one. for example, one could
+  prefer wired Ethernet over WiFi and prefer WiFi over a cellular
+  connection. This module lets you specify an ordering for interfaces
+  and sets up the routes based on this ordering.
 
-  It is possible to annotate interfaces with higher level information on
-  them. This lets you prefer a WiFi route that's internet connected over
-  a wired route that's not.
+  This module also handles networking failures. One failure that
+  Linux can't figure out on its own is whether an interface can
+  reach the Internet. Internet reachability is handled elsewhere
+  like in the `ConnectivityChecker` module. This module should be
+  told reachability status so that it can properly order default
+  routes so that the best reachable interface is used.
+
+  IMPORTANT: This module uses priority-based routing. Make sure the
+  following kernel options are enabled:
+
+  ```text
+  CONFIG_IP_ADVANCED_ROUTER=y
+  CONFIG_IP_MULTIPLE_TABLES=y
+  ```
   """
 
   defmodule State do
@@ -97,7 +106,7 @@ defmodule VintageNet.RouteManager do
 
   @impl true
   def handle_call({:set_route, ifname, route, status}, _from, state) do
-    Logger.info("RouteManager: set_route #{ifname} -> #{inspect(status)}")
+    _ = Logger.info("RouteManager: set_route #{ifname} -> #{inspect(status)}")
     ifentry = %{route: route, status: status}
 
     new_state =
@@ -118,7 +127,7 @@ defmodule VintageNet.RouteManager do
 
   @impl true
   def handle_call({:clear_route, ifname}, _from, state) do
-    Logger.info("RouteManager: clear_route #{ifname}")
+    _ = Logger.info("RouteManager: clear_route #{ifname}")
     # Always try to clear routes even if we think they're cleared.
     clear_routes(ifname)
 
@@ -142,31 +151,13 @@ defmodule VintageNet.RouteManager do
         :ok
 
       metric ->
-        Logger.info("ip route add default metric #{metric} via #{inspect(route)} dev #{ifname}")
-
-        System.cmd("ip", [
-          "route",
-          "add",
-          "default",
-          "metric",
-          "#{metric}",
-          "via",
-          ip_to_string(route),
-          "dev",
-          ifname
-        ])
+        IPRoute.do_add_default_route(ifname, route, metric)
     end
   end
 
-  defp ip_to_string(ipa) do
-    :inet.ntoa(ipa) |> to_string()
-  end
-
   defp clear_routes(ifname) do
-    Logger.info("ip route del default dev #{ifname}")
-
-    case System.cmd("ip", ["route", "del", "default", "dev", ifname]) do
-      {_, 0} ->
+    case IPRoute.do_clear_routes(ifname) do
+      :ok ->
         # Success. There could be more, though.
         clear_routes(ifname)
 
@@ -177,10 +168,8 @@ defmodule VintageNet.RouteManager do
   end
 
   defp clear_all_routes() do
-    Logger.info("ip route del default")
-
-    case System.cmd("ip", ["route", "del", "default"]) do
-      {_, 0} ->
+    case IPRoute.do_clear_all_routes() do
+      :ok ->
         # Success. There could be more, though.
         clear_all_routes()
 
