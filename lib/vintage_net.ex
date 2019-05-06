@@ -6,10 +6,12 @@ defmodule VintageNet do
   """
   alias VintageNet.{Interface, Persistence}
 
+  @type ifname :: String.t()
+
   @doc """
   Return a list of interface names that have been configured
   """
-  @spec get_interfaces() :: [String.t()]
+  @spec get_interfaces() :: [ifname()]
   def get_interfaces() do
     for {[_interface, ifname | _rest], _value} <-
           PropertyTable.get_by_prefix(VintageNet, ["interface"]) do
@@ -21,7 +23,7 @@ defmodule VintageNet do
   @doc """
   Update the settings for the specified interface
   """
-  @spec configure(String.t(), map()) :: :ok | {:error, any()}
+  @spec configure(ifname(), map()) :: :ok | {:error, any()}
   def configure(ifname, config) do
     # The logic here is to validate the config by converting it to
     # a raw_config. We'd need to do that anyway, so just get it over with.
@@ -41,7 +43,7 @@ defmodule VintageNet do
   @doc """
   Return the settings for the specified interface
   """
-  @spec get_configuration(String.t()) :: map()
+  @spec get_configuration(ifname()) :: map()
   def get_configuration(ifname) do
     Interface.get_configuration(ifname)
   end
@@ -52,7 +54,7 @@ defmodule VintageNet do
   This runs the validation routines for a settings map, but doesn't try
   to apply them.
   """
-  @spec configuration_valid?(String.t(), map()) :: boolean()
+  @spec configuration_valid?(ifname(), map()) :: boolean()
   def configuration_valid?(ifname, config) do
     case Interface.to_raw_config(ifname, config) do
       {:ok, _raw_config} -> true
@@ -63,7 +65,7 @@ defmodule VintageNet do
   @doc """
   Scan wireless interface for other access points
   """
-  @spec scan(String.t()) :: {:ok, [String.t()]} | {:error, String.t()}
+  @spec scan(ifname()) :: {:ok, [String.t()]} | {:error, String.t()}
   def scan(ifname) do
     Interface.ioctl(ifname, :scan)
   end
