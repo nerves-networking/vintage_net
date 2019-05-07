@@ -25,6 +25,7 @@ defmodule VintageNet.Persistence do
   """
   @callback clear(ifname :: String.t()) :: :ok
 
+  @spec call(atom(), [any()]) :: any()
   def call(fun, args) do
     Application.get_env(:vintage_net, :persistence)
     |> apply(fun, args)
