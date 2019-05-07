@@ -2,13 +2,13 @@ defmodule VintageNet.Route.InterfaceInfo do
   alias VintageNet.Interface.Classification
 
   defstruct default_gateway: nil,
-            addresses: [],
+            ip_subnets: [],
             interface_type: :unknown,
             status: :disabled
 
   @type t :: %__MODULE__{
           default_gateway: :inet.address() | nil,
-          addresses: [:inet.address()],
+          ip_subnets: [{:inet.address(), :inet.address()}],
           interface_type: Classification.interface_type(),
           status: Classification.connection_status()
         }

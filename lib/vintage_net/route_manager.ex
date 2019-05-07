@@ -64,13 +64,13 @@ defmodule VintageNet.RouteManager do
   """
   @spec set_route(
           VintageNet.ifname(),
-          [:inet.ip_address()],
+          [{:inet.ip_address(), :inet.ip_address()}],
           :inet.ip_address(),
           Classification.connection_status()
         ) ::
           :ok
-  def set_route(ifname, addresses, route, status \\ :lan) do
-    GenServer.call(__MODULE__, {:set_route, ifname, addresses, route, status})
+  def set_route(ifname, ip_subnets, route, status \\ :lan) do
+    GenServer.call(__MODULE__, {:set_route, ifname, ip_subnets, route, status})
   end
 
   @doc """
@@ -120,12 +120,12 @@ defmodule VintageNet.RouteManager do
   end
 
   @impl true
-  def handle_call({:set_route, ifname, addresses, default_gateway, status}, _from, state) do
+  def handle_call({:set_route, ifname, ip_subnets, default_gateway, status}, _from, state) do
     _ = Logger.info("RouteManager: set_route #{ifname} -> #{inspect(status)}")
 
     ifentry = %InterfaceInfo{
       interface_type: Classification.to_type(ifname),
-      addresses: addresses,
+      ip_subnets: ip_subnets,
       default_gateway: default_gateway,
       status: status
     }

@@ -55,7 +55,7 @@ defmodule VintageNet.Route.Calculator do
     metric = InterfaceInfo.metric(info, prioritization)
     # Every package with a source IP address of this interface needs to using
     # routing table "table_index"
-    rules = for address <- info.addresses, do: {:rule, table_index, address}
+    rules = for {ip, _subnet} <- info.ip_subnets, do: {:rule, table_index, ip}
 
     # If a default gateway is set, add it to the source-routed table for the
     # interface and to the main routing table. In a multiple interface setup,

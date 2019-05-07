@@ -60,6 +60,12 @@ defmodule VintageNet.Interface.Udhcpc do
     [ifname, info.ip] ++ broadcast_args(info) ++ netmask_args(info)
   end
 
+  defp ip_subnet(%{ip: address, subnet: subnet}) do
+    {:ok, our_ip} = :inet.parse_address(to_charlist(address))
+    {:ok, our_subnet} = :inet.parse_address(to_charlist(subnet))
+    {our_ip, our_subnet}
+  end
+
   @doc """
   """
   @impl true
@@ -76,24 +82,14 @@ defmodule VintageNet.Interface.Udhcpc do
     ifconfig_args = build_ifconfig_args(ifname, info)
     System.cmd("/sbin/ifconfig", ifconfig_args)
 
-    # if [ -n "$router" ] ; then
-    # 	echo "deleting routers"
-    # 	while route del default gw 0.0.0.0 dev $interface 2> /dev/null; do
-    # 		:
-    # 	done
-
-    # 	for i in $router ; do
-    # 		route add default gw $i dev $interface
-    # 	done
-    # fi
     case info[:router] do
       routers when is_list(routers) ->
-        {:ok, our_ip} = :inet.parse_address(to_charlist(info[:ip]))
+        ip_subnet = ip_subnet(info)
 
         first_router = hd(routers)
         {:ok, default_gateway} = :inet.parse_address(to_charlist(first_router))
 
-        RouteManager.set_route(ifname, [our_ip], default_gateway, :lan)
+        RouteManager.set_route(ifname, [ip_subnet], default_gateway, :lan)
 
       nil ->
         :ok
