@@ -14,6 +14,7 @@ defmodule VintageNetTest do
       File.mkdir!("sbin")
       File.touch!("sbin/ifup")
       File.touch!("sbin/ifdown")
+      File.touch!("sbin/ip")
       assert :ok == VintageNet.verify_system(:ethernet, opts)
     end)
   end

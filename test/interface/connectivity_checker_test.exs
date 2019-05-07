@@ -33,7 +33,7 @@ defmodule VintageNet.Interface.ConnectivityChecker.Test do
     end
   end
 
-  defp filter_interfaces({'lo', _}), do: false
+  defp filter_interfaces({[?l, ?o | _anything], _}), do: false
 
   defp filter_interfaces({_ifname, fields}) do
     Enum.member?(fields[:flags], :up) and fields[:addr] != nil

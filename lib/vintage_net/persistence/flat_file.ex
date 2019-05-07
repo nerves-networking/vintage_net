@@ -34,8 +34,13 @@ defmodule VintageNet.Persistence.FlatFile do
   @impl true
   def enumerate() do
     case File.ls(persistence_dir()) do
-      {:ok, files} -> files
-      _other -> []
+      {:ok, files} ->
+        # Sorting the filenames is mostly for the unit tests, but it feels
+        # good making this deterministic.
+        Enum.sort(files)
+
+      _other ->
+        []
     end
   end
 
