@@ -1,5 +1,6 @@
 defmodule VintageNet.WiFi.Scan do
   alias VintageNet.WiFi.AccessPoint
+  require Logger
 
   @moduledoc """
 
@@ -62,13 +63,18 @@ defmodule VintageNet.WiFi.Scan do
 
   defp parse_fields(_other), do: []
 
-  defp parse_flags(""), do: []
-
-  defp parse_flags("[WPA2-PSK-CCMP]" <> rest) do
-    [:wpa2_psk_ccmp | parse_flags(rest)]
+  defp parse_flags(flags) do
+    flags
+    |> String.split(["]", "["], trim: true)
+    |> Enum.flat_map(&parse_flag/1)
   end
 
-  defp parse_flags("[ESS]" <> rest) do
-    [:ess | parse_flags(rest)]
+  defp parse_flag("WPA2-PSK-CCMP"), do: [:wpa2_psk_ccmp]
+  defp parse_flag("ESS"), do: [:ess]
+  defp parse_flag("P2P"), do: [:p2p]
+
+  defp parse_flag(other) do
+    _ = Logger.warn("Ignoring unknown WiFi Access Point flag: #{other}")
+    []
   end
 end
