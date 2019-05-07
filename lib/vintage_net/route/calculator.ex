@@ -14,6 +14,7 @@ defmodule VintageNet.Route.Calculator do
   alias VintageNet.Route.InterfaceInfo
   alias VintageNet.Interface.Classification
 
+  @type subnet_bits :: 8..30
   @type table_index :: 0..255 | :main | :local | :default
   @type metric :: 0..32767
   @type rule :: {:rule, table_index(), :inet.ip_address()}
@@ -50,12 +51,45 @@ defmodule VintageNet.Route.Calculator do
     {new_table_indices, sorted_entries}
   end
 
+  @doc """
+  Utility function to trim IP address to its subnet
+
+  Examples:
+
+      iex> Calculator.to_subnet({192, 168, 1, 50}, 24)
+      {192, 168, 1, 0}
+
+      iex> Calculator.to_subnet({192, 168, 255, 50}, 22)
+      {192, 168, 252, 0}
+  """
+  @spec to_subnet(:inet.address(), subnet_bits()) :: :inet.address()
+  def to_subnet({a, b, c, d}, subnet_bits) when subnet_bits >= 8 and subnet_bits < 32 do
+    not_subnet_bits = 32 - subnet_bits
+    <<subnet::size(subnet_bits), _::binary>> = <<a, b, c, d>>
+    <<new_a, new_b, new_c, new_d>> = <<subnet::size(subnet_bits), 0::size(not_subnet_bits)>>
+    {new_a, new_b, new_c, new_d}
+  end
+
   defp make_entries({ifname, info}, {table_indices, entries}, prioritization) do
     {new_table_indices, table_index} = get_table_index(ifname, table_indices)
     metric = InterfaceInfo.metric(info, prioritization)
     # Every package with a source IP address of this interface needs to using
     # routing table "table_index"
     rules = for {ip, _subnet} <- info.ip_subnets, do: {:rule, table_index, ip}
+
+    # Local routes are needed so that any packets sent to the LAN goes out
+    # the appropriate interface. These need to be ordered by metric so that
+    # if two or more interfaces connect to the same LAN, they're prioritized.
+    local_routes =
+      if info.ip_subnets != [] do
+        {ip, subnet_bits} = hd(info.ip_subnets)
+
+        [
+          {:local_route, ifname, ip, subnet_bits, metric}
+        ]
+      else
+        []
+      end
 
     # If a default gateway is set, add it to the source-routed table for the
     # interface and to the main routing table. In a multiple interface setup,
@@ -71,7 +105,7 @@ defmodule VintageNet.Route.Calculator do
         []
       end
 
-    {new_table_indices, rules ++ tables ++ entries}
+    {new_table_indices, rules ++ local_routes ++ tables ++ entries}
   end
 
   defp get_table_index(ifname, table_indices) do

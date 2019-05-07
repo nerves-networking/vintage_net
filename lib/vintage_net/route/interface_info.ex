@@ -1,5 +1,6 @@
 defmodule VintageNet.Route.InterfaceInfo do
   alias VintageNet.Interface.Classification
+  alias VintageNet.Route.Calculator
 
   defstruct default_gateway: nil,
             ip_subnets: [],
@@ -8,7 +9,7 @@ defmodule VintageNet.Route.InterfaceInfo do
 
   @type t :: %__MODULE__{
           default_gateway: :inet.address() | nil,
-          ip_subnets: [{:inet.address(), :inet.address()}],
+          ip_subnets: [{:inet.address(), Calculator.subnet_bits()}],
           interface_type: Classification.interface_type(),
           status: Classification.connection_status()
         }

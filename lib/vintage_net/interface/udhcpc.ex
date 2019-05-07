@@ -50,7 +50,7 @@ defmodule VintageNet.Interface.Udhcpc do
     :ok
   end
 
-  defp broadcast_args(%{broadcast: bcast}), do: ["broadcast", bcast]
+  defp broadcast_args(%{broadcast: broadcast}), do: ["broadcast", broadcast]
   defp broadcast_args(_), do: []
 
   defp netmask_args(%{subnet: subnet}), do: ["netmask", subnet]
@@ -60,10 +60,9 @@ defmodule VintageNet.Interface.Udhcpc do
     [ifname, info.ip] ++ broadcast_args(info) ++ netmask_args(info)
   end
 
-  defp ip_subnet(%{ip: address, subnet: subnet}) do
+  defp ip_subnet(%{ip: address, mask: mask}) do
     {:ok, our_ip} = :inet.parse_address(to_charlist(address))
-    {:ok, our_subnet} = :inet.parse_address(to_charlist(subnet))
-    {our_ip, our_subnet}
+    {our_ip, String.to_integer(mask)}
   end
 
   @doc """

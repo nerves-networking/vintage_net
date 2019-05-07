@@ -64,7 +64,7 @@ defmodule VintageNet.RouteManager do
   """
   @spec set_route(
           VintageNet.ifname(),
-          [{:inet.ip_address(), :inet.ip_address()}],
+          [{:inet.ip_address(), Calculator.subnet_bits()}],
           :inet.ip_address(),
           Classification.connection_status()
         ) ::
@@ -214,6 +214,10 @@ defmodule VintageNet.RouteManager do
     IPRoute.clear_a_route(ifname, table_index)
   end
 
+  defp handle_delete({:local_route, ifname, address, subnet_bits, metric}) do
+    IPRoute.clear_a_local_route(ifname, address, subnet_bits, metric)
+  end
+
   defp handle_delete({:rule, table_index, _address}) do
     IPRoute.clear_a_rule(table_index)
   end
@@ -224,5 +228,12 @@ defmodule VintageNet.RouteManager do
 
   defp handle_insert({:rule, table_index, address}) do
     IPRoute.add_rule(address, table_index)
+  end
+
+  defp handle_insert({:local_route, ifname, address, subnet_bits, metric}) do
+    # HACK: Delete automatically created local routes that have a 0 metric
+    _ = IPRoute.clear_a_local_route(ifname, address, subnet_bits, 0)
+
+    IPRoute.add_local_route(ifname, address, subnet_bits, metric)
   end
 end
