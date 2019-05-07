@@ -194,7 +194,6 @@ defmodule VintageNet.RouteManager do
 
     route_delta = List.myers_difference(state.routes, new_routes)
 
-    IO.puts("route_delta=#{inspect(route_delta)}")
     Enum.each(route_delta, &handle_delta/1)
 
     %{state | route_state: new_route_state, routes: new_routes}
