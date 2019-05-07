@@ -64,7 +64,7 @@ defmodule VintageNet.Interface.Udhcpc do
   """
   @impl true
   def renew(ifname, info) do
-    Logger.debug("udhcpc.renew(#{ifname}): #{inspect(info)}")
+    _ = Logger.debug("udhcpc.renew(#{ifname}): #{inspect(info)}")
 
     # [ -n "$broadcast" ] && BROADCAST="broadcast $broadcast"
     # [ -n "$subnet" ] && NETMASK="netmask $subnet"

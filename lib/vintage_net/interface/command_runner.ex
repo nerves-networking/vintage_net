@@ -25,7 +25,7 @@ defmodule VintageNet.Interface.CommandRunner do
         :ok
 
       {message, _not_zero} ->
-        Logger.error("Error running #{command}, #{inspect(args)}: #{message}")
+        _ = Logger.error("Error running #{command}, #{inspect(args)}: #{message}")
         {:error, message}
     end
   end

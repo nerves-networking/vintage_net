@@ -135,8 +135,7 @@ defmodule VintageNet.Interface do
           [{:next_event, :internal, {:configure, saved_raw_config}}]
 
         {:error, reason} ->
-          Logger.info("VintageNet: no starting configuration for #{ifname} (#{inspect(reason)})")
-
+          _ = Logger.info("VintageNet: no starting config for #{ifname} (#{inspect(reason)})")
           []
       end
 
@@ -153,11 +152,12 @@ defmodule VintageNet.Interface do
         |> Enum.find(fn {k, _v} -> k == ifname end)
         |> case do
           {_ifname, config} ->
-            Logger.info(
-              "VintageNet: persisted config for #{ifname} failed so reverting to app config: #{
-                inspect(reason)
-              }"
-            )
+            _ =
+              Logger.info(
+                "VintageNet: persisted config for #{ifname} failed so reverting to app config: #{
+                  inspect(reason)
+                }"
+              )
 
             to_raw_config(ifname, config)
 
@@ -172,7 +172,7 @@ defmodule VintageNet.Interface do
   @impl true
   def handle_event(:info, {:commands_done, :ok}, :configuring, %State{} = data) do
     # TODO
-    Logger.debug(":configuring -> done success")
+    _ = Logger.debug(":configuring -> done success")
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
 
@@ -190,7 +190,7 @@ defmodule VintageNet.Interface do
         :configuring,
         %State{config: config} = data
       ) do
-    Logger.debug(":configuring -> done error: retrying after %{config.retry_millis} ms")
+    _ = Logger.debug(":configuring -> done error: retrying after %{config.retry_millis} ms")
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
     actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
@@ -205,9 +205,10 @@ defmodule VintageNet.Interface do
         :configuring,
         %State{command_runner: pid, config: config} = data
       ) do
-    Logger.debug(
-      ":configuring -> done crash (#{inspect(reason)}): retrying after %{config.retry_millis} ms"
-    )
+    _ =
+      Logger.debug(
+        ":configuring -> done crash (#{inspect(reason)}): retrying after %{config.retry_millis} ms"
+      )
 
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
@@ -223,7 +224,11 @@ defmodule VintageNet.Interface do
         :configuring,
         %State{command_runner: pid, config: config} = data
       ) do
-    Logger.debug(":configuring -> recovering from hang: retrying after %{config.retry_millis} ms")
+    _ =
+      Logger.debug(
+        ":configuring -> recovering from hang: retrying after %{config.retry_millis} ms"
+      )
+
     Process.exit(pid, :kill)
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
@@ -235,7 +240,7 @@ defmodule VintageNet.Interface do
   # :configured
 
   def handle_event({:call, from}, :wait, :configured, %State{} = data) do
-    Logger.debug(":configured -> wait (return immediately)")
+    _ = Logger.debug(":configured -> wait (return immediately)")
     {:keep_state, data, {:reply, from, :ok}}
   end
 
@@ -246,7 +251,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{config: old_config} = data
       ) do
-    Logger.debug(":configured -> internal configure")
+    _ = Logger.debug(":configured -> internal configure")
 
     new_data = run_commands(data, old_config.down_cmds)
 
@@ -265,7 +270,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{config: old_config} = data
       ) do
-    Logger.debug(":configured -> configure")
+    _ = Logger.debug(":configured -> configure")
 
     new_data = run_commands(data, old_config.down_cmds)
 
@@ -288,7 +293,7 @@ defmodule VintageNet.Interface do
         %State{config: config, next_config: new_config} = data
       ) do
     # TODO
-    Logger.debug(":reconfiguring -> done success")
+    _ = Logger.debug(":reconfiguring -> done success")
     CommandRunner.remove_files(config.files)
     CommandRunner.create_files(new_config.files)
     new_data = run_commands(data, new_config.up_cmds)
@@ -310,7 +315,7 @@ defmodule VintageNet.Interface do
         %State{config: config, next_config: new_config} = data
       ) do
     # TODO
-    Logger.debug(":reconfiguring -> done error")
+    _ = Logger.debug(":reconfiguring -> done error")
     CommandRunner.remove_files(config.files)
     CommandRunner.create_files(new_config.files)
     new_data = run_commands(data, new_config.up_cmds)
@@ -332,7 +337,7 @@ defmodule VintageNet.Interface do
         %State{config: config, command_runner: pid, next_config: new_config} = data
       ) do
     # TODO
-    Logger.debug(":reconfiguring -> done crash (#{inspect(reason)})")
+    _ = Logger.debug(":reconfiguring -> done crash (#{inspect(reason)})")
     CommandRunner.remove_files(config.files)
     CommandRunner.create_files(new_config.files)
     new_data = run_commands(data, new_config.up_cmds)
@@ -353,7 +358,7 @@ defmodule VintageNet.Interface do
         :reconfiguring,
         %State{command_runner: pid, config: config, next_config: new_config} = data
       ) do
-    Logger.debug(":reconfiguring -> recovering from hang")
+    _ = Logger.debug(":reconfiguring -> recovering from hang")
     Process.exit(pid, :kill)
     CommandRunner.remove_files(config.files)
     CommandRunner.create_files(new_config.files)
@@ -382,7 +387,7 @@ defmodule VintageNet.Interface do
   @impl true
   def handle_event(:info, {:EXIT, _pid, _reason}, state, data) do
     # Ignore normal command runner exits
-    Logger.debug("#{inspect(state)} -> process exit (ignoring)")
+    _ = Logger.debug("#{inspect(state)} -> process exit (ignoring)")
     {:keep_state, data}
   end
 
@@ -393,7 +398,7 @@ defmodule VintageNet.Interface do
         other_state,
         %State{waiters: waiters} = data
       ) do
-    Logger.debug("#{inspect(other_state)} -> wait")
+    _ = Logger.debug("#{inspect(other_state)} -> wait")
     {:keep_state, %{data | waiters: [from | waiters]}}
   end
 
@@ -420,9 +425,9 @@ defmodule VintageNet.Interface do
   end
 
   defp run_commands_and_report(commands, interface_pid) do
-    Logger.debug("Running commands: #{inspect(commands)}")
+    _ = Logger.debug("Running commands: #{inspect(commands)}")
     result = CommandRunner.run(commands)
-    Logger.debug("Done. Sending response")
+    _ = Logger.debug("Done. Sending response")
     send(interface_pid, {:commands_done, result})
   end
 

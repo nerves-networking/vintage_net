@@ -7,7 +7,7 @@ defmodule VintageNetTest.LoggingUdhcpcHandler do
   """
   @impl true
   def deconfig(ifname, info) do
-    Logger.debug("udhcpc.deconfig(#{ifname}): #{inspect(info)}")
+    _ = Logger.debug("udhcpc.deconfig(#{ifname}): #{inspect(info)}")
     :ok
   end
 
@@ -15,7 +15,7 @@ defmodule VintageNetTest.LoggingUdhcpcHandler do
   """
   @impl true
   def leasefail(ifname, info) do
-    Logger.debug("udhcpc.leasefail(#{ifname}): #{inspect(info)}")
+    _ = Logger.debug("udhcpc.leasefail(#{ifname}): #{inspect(info)}")
     :ok
   end
 
@@ -23,7 +23,7 @@ defmodule VintageNetTest.LoggingUdhcpcHandler do
   """
   @impl true
   def nak(ifname, info) do
-    Logger.debug("udhcpc.nak(#{ifname}): #{inspect(info)}")
+    _ = Logger.debug("udhcpc.nak(#{ifname}): #{inspect(info)}")
     :ok
   end
 
@@ -31,7 +31,7 @@ defmodule VintageNetTest.LoggingUdhcpcHandler do
   """
   @impl true
   def renew(ifname, info) do
-    Logger.debug("udhcpc.renew(#{ifname}): #{inspect(info)}")
+    _ = Logger.debug("udhcpc.renew(#{ifname}): #{inspect(info)}")
     :ok
   end
 
@@ -39,7 +39,7 @@ defmodule VintageNetTest.LoggingUdhcpcHandler do
   """
   @impl true
   def bound(ifname, info) do
-    Logger.debug("udhcpc.bound(#{ifname}): #{inspect(info)}")
+    _ = Logger.debug("udhcpc.bound(#{ifname}): #{inspect(info)}")
     :ok
   end
 end
