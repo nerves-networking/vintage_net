@@ -7,6 +7,9 @@ defmodule VintageNet.Technology.Ethernet do
   def to_raw_config(ifname, %{type: __MODULE__} = config, opts) do
     ifup = Keyword.fetch!(opts, :bin_ifup)
     ifdown = Keyword.fetch!(opts, :bin_ifdown)
+    tmpdir = Keyword.fetch!(opts, :tmpdir)
+
+    network_interfaces_path = Path.join(tmpdir, "network_interfaces.#{ifname}")
 
     hostname = config[:hostname] || get_hostname()
 
@@ -16,15 +19,14 @@ defmodule VintageNet.Technology.Ethernet do
        type: __MODULE__,
        source_config: config,
        files: [
-         {"/tmp/network_interfaces.#{ifname}",
-          "iface #{ifname} inet dhcp" <> dhcp_options(hostname)}
+         {network_interfaces_path, "iface #{ifname} inet dhcp" <> dhcp_options(hostname)}
        ],
        child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
        # ifup hangs forever until Ethernet is plugged in
        up_cmd_millis: 60_000,
-       up_cmds: [{:run, ifup, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}],
+       up_cmds: [{:run, ifup, ["-i", network_interfaces_path, ifname]}],
        down_cmd_millis: 5_000,
-       down_cmds: [{:run, ifdown, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}]
+       down_cmds: [{:run, ifdown, ["-i", network_interfaces_path, ifname]}]
      }}
   end
 

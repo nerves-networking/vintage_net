@@ -13,11 +13,13 @@ defmodule VintageNet.ConfigEthTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "eth0"}],
       files: [
-        {"/tmp/network_interfaces.eth0", dhcp_interface("eth0", "unittest")}
+        {"/tmp/vintage_net/network_interfaces.eth0", dhcp_interface("eth0", "unittest")}
       ],
       up_cmd_millis: 60_000,
-      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
-      down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
+      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}],
+      down_cmds: [
+        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
+      ]
     }
 
     assert {:ok, output} == Ethernet.to_raw_config("eth0", input, default_opts())
@@ -50,10 +52,12 @@ defmodule VintageNet.ConfigEthTest do
       type: VintageNet.Technology.Ethernet,
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "eth0"}],
-      files: [{"/tmp/network_interfaces.eth0", interfaces_content}],
+      files: [{"/tmp/vintage_net/network_interfaces.eth0", interfaces_content}],
       up_cmd_millis: 60_000,
-      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}],
-      down_cmds: [{:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.eth0", "eth0"]}]
+      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}],
+      down_cmds: [
+        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
+      ]
     }
 
     # TODO!!!!!

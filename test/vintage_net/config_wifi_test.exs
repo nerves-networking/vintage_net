@@ -25,10 +25,10 @@ defmodule VintageNet.ConfigWiFiTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
-        {"/tmp/wpa_supplicant.conf.wlan0",
+        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/wpa_supplicant
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
          country=US
          network={
          ssid="testing"
@@ -41,11 +41,11 @@ defmodule VintageNet.ConfigWiFiTest do
       ],
       up_cmds: [
         {:run, "/usr/sbin/wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
+         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
       ]
     }
@@ -73,10 +73,10 @@ defmodule VintageNet.ConfigWiFiTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
-        {"/tmp/wpa_supplicant.conf.wlan0",
+        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/wpa_supplicant
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
          country=US
          network={
          ssid="testing"
@@ -89,11 +89,11 @@ defmodule VintageNet.ConfigWiFiTest do
       ],
       up_cmds: [
         {:run, "/usr/sbin/wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
+         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
       ]
     }
@@ -120,10 +120,10 @@ defmodule VintageNet.ConfigWiFiTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
-        {"/tmp/wpa_supplicant.conf.wlan0",
+        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/wpa_supplicant
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
          country=US
          network={
          ssid="testing"
@@ -136,11 +136,11 @@ defmodule VintageNet.ConfigWiFiTest do
       ],
       up_cmds: [
         {:run, "/usr/sbin/wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
+         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
       ]
     }
@@ -168,10 +168,10 @@ defmodule VintageNet.ConfigWiFiTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
-        {"/tmp/wpa_supplicant.conf.wlan0",
+        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/wpa_supplicant
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
          country=US
          network={
          ssid="testing"
@@ -183,11 +183,11 @@ defmodule VintageNet.ConfigWiFiTest do
       ],
       up_cmds: [
         {:run, "/usr/sbin/wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
+         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
       ]
     }
@@ -216,10 +216,10 @@ defmodule VintageNet.ConfigWiFiTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
-        {"/tmp/wpa_supplicant.conf.wlan0",
+        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/wpa_supplicant
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
          country=US
          network={
          ssid="testing"
@@ -232,11 +232,11 @@ defmodule VintageNet.ConfigWiFiTest do
       ],
       up_cmds: [
         {:run, "/usr/sbin/wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
+         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
       ]
     }
@@ -283,10 +283,10 @@ defmodule VintageNet.ConfigWiFiTest do
       source_config: input,
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
-        {"/tmp/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
-        {"/tmp/wpa_supplicant.conf.wlan0",
+        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
-         ctrl_interface=/tmp/wpa_supplicant
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
          country=US
          network={
          ssid="first_priority"
@@ -313,11 +313,11 @@ defmodule VintageNet.ConfigWiFiTest do
       ],
       up_cmds: [
         {:run, "/usr/sbin/wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]}
+         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
       ]
     }

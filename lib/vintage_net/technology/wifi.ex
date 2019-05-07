@@ -14,23 +14,26 @@ defmodule VintageNet.Technology.WiFi do
     ifdown = Keyword.fetch!(opts, :bin_ifdown)
     wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
     killall = Keyword.fetch!(opts, :bin_killall)
+    tmpdir = Keyword.fetch!(opts, :tmpdir)
+
+    network_interfaces_path = Path.join(tmpdir, "network_interfaces.#{ifname}")
+    wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
+    control_interface_path = Path.join(tmpdir, "wpa_supplicant")
 
     hostname = config[:hostname] || get_hostname()
 
     files = [
-      {"/tmp/network_interfaces.#{ifname}",
-       "iface #{ifname} inet dhcp" <> dhcp_options(hostname)},
-      {"/tmp/wpa_supplicant.conf.#{ifname}", wifi_to_supplicant_contents(wifi_config)}
+      {network_interfaces_path, "iface #{ifname} inet dhcp" <> dhcp_options(hostname)},
+      {wpa_supplicant_conf_path, wifi_to_supplicant_contents(wifi_config, control_interface_path)}
     ]
 
     up_cmds = [
-      {:run, wpa_supplicant,
-       ["-B", "-i", ifname, "-c", "/tmp/wpa_supplicant.conf.#{ifname}", "-dd"]},
-      {:run, ifup, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]}
+      {:run, wpa_supplicant, ["-B", "-i", ifname, "-c", wpa_supplicant_conf_path, "-dd"]},
+      {:run, ifup, ["-i", network_interfaces_path, ifname]}
     ]
 
     down_cmds = [
-      {:run, ifdown, ["-i", "/tmp/network_interfaces.#{ifname}", ifname]},
+      {:run, ifdown, ["-i", network_interfaces_path, ifname]},
       {:run, killall, ["-q", "wpa_supplicant"]}
     ]
 
@@ -49,14 +52,16 @@ defmodule VintageNet.Technology.WiFi do
   def to_raw_config(ifname, %{type: __MODULE__}, opts) do
     wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
     killall = Keyword.fetch!(opts, :bin_killall)
+    tmpdir = Keyword.fetch!(opts, :tmpdir)
+    wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
+    control_interface_path = Path.join(tmpdir, "wpa_supplicant")
 
     files = [
-      {"/tmp/wpa_supplicant.conf.#{ifname}", "ctrl_interface=/tmp/wpa_supplicant"}
+      {wpa_supplicant_conf_path, "ctrl_interface=#{control_interface_path}"}
     ]
 
     up_cmds = [
-      {:run, wpa_supplicant,
-       ["-B", "-i", ifname, "-c", "/tmp/wpa_supplicant.conf.#{ifname}", "-dd"]}
+      {:run, wpa_supplicant, ["-B", "-i", ifname, "-c", wpa_supplicant_conf_path, "-dd"]}
     ]
 
     down_cmds = [
@@ -82,9 +87,9 @@ defmodule VintageNet.Technology.WiFi do
     Scan.scan(ifname)
   end
 
-  defp wifi_to_supplicant_contents(wifi) do
+  defp wifi_to_supplicant_contents(wifi, control_interface_path) do
     """
-    ctrl_interface=/tmp/wpa_supplicant
+    ctrl_interface=#{control_interface_path}
     country=#{wifi.regulatory_domain}
     """ <> into_wifi_network_config(wifi)
   end
