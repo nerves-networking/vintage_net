@@ -33,12 +33,6 @@
 - `pppd`
 - `mknod`
 
-## Examples
-
-Wired Ethernet:
-
-```elixir
-
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
