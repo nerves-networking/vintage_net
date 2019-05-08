@@ -556,6 +556,7 @@ defmodule VintageNet.Interface do
   defp rm(files) do
     Enum.each(files, &File.rm(&1))
   end
+
   defp update_properties(state, data) do
     ifname = data.ifname
     config = data.config
