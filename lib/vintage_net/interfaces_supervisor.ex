@@ -11,7 +11,7 @@ defmodule VintageNet.InterfacesSupervisor do
     end
   end
 
-  @spec start_interface(String.t()) ::
+  @spec start_interface(VintageNet.ifname()) ::
           :ignore | {:error, any()} | {:ok, pid()} | {:ok, pid(), any()}
   def start_interface(ifname) do
     DynamicSupervisor.start_child(

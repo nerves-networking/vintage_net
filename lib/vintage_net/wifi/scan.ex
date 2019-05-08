@@ -9,7 +9,7 @@ defmodule VintageNet.WiFi.Scan do
   @doc """
   Scan wireless interface for other access points
   """
-  @spec scan(String.t()) :: {:ok, [String.t()]} | {:error, String.t()}
+  @spec scan(VintageNet.ifname()) :: {:ok, [String.t()]} | {:error, String.t()}
   def scan(ifname, scan_time \\ 5_000) do
     with {:ok, _} <- run_wpa_cli(ifname, "scan"),
          _ <- :timer.sleep(scan_time),

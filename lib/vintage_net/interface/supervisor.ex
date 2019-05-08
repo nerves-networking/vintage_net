@@ -4,7 +4,7 @@ defmodule VintageNet.Interface.Supervisor do
   @doc """
   Start the interface supervisor
   """
-  @spec start_link(String.t()) :: :ignore | {:error, any()} | {:ok, pid()}
+  @spec start_link(VintageNet.ifname()) :: :ignore | {:error, any()} | {:ok, pid()}
   def start_link(ifname) do
     Supervisor.start_link(__MODULE__, ifname, name: via_name(ifname))
   end
@@ -25,7 +25,9 @@ defmodule VintageNet.Interface.Supervisor do
   @doc """
   Add child_specs provided by technologies to supervision
   """
-  @spec set_technology(String.t(), [:supervisor.child_spec() | {module(), term()} | module()]) ::
+  @spec set_technology(VintageNet.ifname(), [
+          :supervisor.child_spec() | {module(), term()} | module()
+        ]) ::
           :ok
   def set_technology(ifname, []) do
     clear_technology(ifname)
@@ -47,7 +49,7 @@ defmodule VintageNet.Interface.Supervisor do
   @doc """
   Clear out children and child_specs from a technology
   """
-  @spec clear_technology(String.t()) :: :ok
+  @spec clear_technology(VintageNet.ifname()) :: :ok
   def clear_technology(ifname) do
     name = via_name(ifname)
 

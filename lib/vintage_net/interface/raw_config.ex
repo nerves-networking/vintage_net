@@ -38,7 +38,7 @@ defmodule VintageNet.Interface.RawConfig do
             cleanup_files: []
 
   @type t :: %__MODULE__{
-          ifname: String.t(),
+          ifname: VintageNet.ifname(),
           type: atom(),
           source_config: map(),
           retry_millis: non_neg_integer(),

@@ -45,7 +45,7 @@ defmodule VintageNet.Interface.Classification do
       :mobile
 
   """
-  @spec to_type(String.t()) :: interface_type()
+  @spec to_type(VintageNet.ifname()) :: interface_type()
   def to_type("eth" <> _rest), do: :ethernet
   def to_type("en" <> _rest), do: :ethernet
   def to_type("wlan" <> _rest), do: :wifi
