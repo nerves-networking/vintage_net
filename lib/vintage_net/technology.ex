@@ -8,15 +8,10 @@ defmodule VintageNet.Technology do
   added or existing ones modified by implementing the `Technology` behaviour.
   """
 
-  @typedoc """
-  An ioctl is a command that can be run on configured network interfaces
-  """
-  @type ioctl :: atom() | {atom(), any()}
-
   @doc """
   Convert a technology-specific configuration to one for VintageNet
   """
-  @callback to_raw_config(ifname :: String.t(), config :: map(), opts :: keyword()) ::
+  @callback to_raw_config(VintageNet.ifname(), config :: map(), opts :: keyword()) ::
               {:ok, RawConfig.t()} | {:error, any()}
 
   @doc """
@@ -31,9 +26,10 @@ defmodule VintageNet.Technology do
   * `:scan` - scan for WiFi networks
   * `:statistics` - return a map of network statistics
   """
-  @callback handle_ioctl(ifname :: String.t(), ioctl()) ::
+  @callback ioctl(VintageNet.ifname(), command :: atom(), args :: list()) ::
               :ok | {:ok, any()} | {:error, any()}
 
+  @spec to_raw_config!(atom(), map()) :: RawConfig.t()
   def to_raw_config!(implementation, config) do
     case implementation.to_raw_config(config) do
       {:ok, data} -> data

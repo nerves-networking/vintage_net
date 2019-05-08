@@ -37,7 +37,7 @@ defmodule VintageNet.Technology.Mobile do
   end
 
   @impl true
-  def handle_ioctl(_ifname, _ioctl) do
+  def ioctl(_ifname, _command, _args) do
     {:error, :unsupported}
   end
 

@@ -3,7 +3,9 @@ defmodule VintageNet.InterfaceTest do
   alias VintageNet.Interface
   alias VintageNet.Interface.RawConfig
   require Logger
+
   @ifname "test0"
+  @interface_type VintageNetTest.TestTechnology
 
   setup do
     # Start clean slate for fresh InterfacesSupervisor each test.
@@ -35,7 +37,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: __MODULE__,
+        type: @interface_type,
         files: [{"testing", "Hello, world"}],
         up_cmds: [],
         down_cmds: []
@@ -43,7 +45,7 @@ defmodule VintageNet.InterfaceTest do
 
       start_and_configure(raw_config)
 
-      assert PropertyTable.get(VintageNet, ["interface", @ifname, "type"]) == __MODULE__
+      assert PropertyTable.get(VintageNet, ["interface", @ifname, "type"]) == @interface_type
       assert File.exists?("testing")
       assert File.read!("testing") == "Hello, world"
 
@@ -58,7 +60,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: __MODULE__,
+        type: @interface_type,
         files: [{"one/two/three/testing", "Hello, world"}],
         up_cmds: [],
         down_cmds: []
@@ -80,7 +82,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: __MODULE__,
+        type: @interface_type,
         files: [],
         up_cmds: [{:run, "touch", ["i_am_configured"]}],
         down_cmds: [{:run, "rm", ["i_am_configured"]}]
@@ -100,7 +102,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: __MODULE__,
+        type: @interface_type,
         retry_millis: 10,
         files: [
           {"run.sh",
@@ -129,7 +131,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: __MODULE__,
+        type: @interface_type,
         retry_millis: 10,
         files: [
           {"run.sh",
@@ -169,7 +171,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: __MODULE__,
+        type: @interface_type,
         retry_millis: 10,
         files: [],
         up_cmd_millis: 50,
@@ -188,7 +190,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: __MODULE__,
+        type: @interface_type,
         retry_millis: 10,
         files: [{"hello", "world"}],
         up_cmd_millis: 50,
@@ -212,7 +214,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config1 = %RawConfig{
         ifname: @ifname,
-        type: __MODULE__,
+        type: @interface_type,
         files: [{"first", ""}],
         up_cmds: [],
         down_cmds: [{:run, "touch", ["ran_first_down"]}]
@@ -220,7 +222,7 @@ defmodule VintageNet.InterfaceTest do
 
       raw_config2 = %RawConfig{
         ifname: @ifname,
-        type: __MODULE__,
+        type: @interface_type,
         files: [{"second", ""}],
         up_cmds: [{:run, "touch", ["ran_second_up"]}],
         down_cmds: []
@@ -245,7 +247,7 @@ defmodule VintageNet.InterfaceTest do
 
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: __MODULE__,
+        type: @interface_type,
         files: [],
         up_cmds: [],
         down_cmds: [],
@@ -268,6 +270,71 @@ defmodule VintageNet.InterfaceTest do
       assert :ok == Interface.wait_until_configured(@ifname)
 
       assert Process.whereis(ItIsMe) == nil
+    end)
+  end
+
+  test "ioctls fail when not configured", context do
+    in_tmp(context.test, fn ->
+      # Make a configuration that hangs in the "configuring" state
+      # so that it's easy to make an ioctl when not "configured".
+      raw_config = %RawConfig{
+        ifname: @ifname,
+        type: @interface_type,
+        up_cmd_millis: 10000,
+        up_cmds: [{:run, "sleep", ["10000"]}]
+      }
+
+      start_and_configure(raw_config, 250)
+
+      assert {:error, :unconfigured} == Interface.ioctl(@ifname, :a_command, [])
+    end)
+  end
+
+  test "ioctls work when configured", context do
+    in_tmp(context.test, fn ->
+      raw_config = %RawConfig{
+        ifname: @ifname,
+        type: @interface_type
+      }
+
+      start_and_configure(raw_config, 250)
+
+      assert {:ok, :hello} == Interface.ioctl(@ifname, :echo, [:hello])
+    end)
+  end
+
+  test "ioctl crashes are handled", context do
+    in_tmp(context.test, fn ->
+      raw_config = %RawConfig{
+        ifname: @ifname,
+        type: @interface_type
+      }
+
+      start_and_configure(raw_config, 250)
+
+      assert {:error, {:exit, _reason}} = Interface.ioctl(@ifname, :oops, [])
+    end)
+  end
+
+  test "ioctls cancelled on reconfigure", context do
+    in_tmp(context.test, fn ->
+      raw_config1 = %RawConfig{
+        ifname: @ifname,
+        type: @interface_type
+      }
+
+      raw_config2 = %RawConfig{
+        ifname: @ifname,
+        type: @interface_type
+      }
+
+      start_and_configure(raw_config1)
+
+      task = Task.async(fn -> Interface.ioctl(@ifname, :sleep, [10_000]) end)
+      assert :ok == Interface.configure(raw_config2)
+      assert :ok == Interface.wait_until_configured(@ifname)
+
+      assert {:error, :cancelled} = Task.await(task)
     end)
   end
 end

@@ -1,6 +1,15 @@
 defmodule VintageNet.Interface do
   use GenStateMachine
 
+  @moduledoc """
+  Manage a network interface at a very high level
+
+  This module handles configuring network interfaces, making sure that configuration failures
+  get retried, and then cleaning up after it's not needed.
+
+  The actual code that supplies the configuration implements the `VintageNet.Technology`
+  behaviour.
+  """
   require Logger
 
   alias VintageNet.Interface.{CommandRunner, RawConfig}
@@ -13,7 +22,8 @@ defmodule VintageNet.Interface do
               config: nil,
               next_config: nil,
               command_runner: nil,
-              waiters: []
+              waiters: [],
+              inflight_ioctls: %{}
   end
 
   @doc """
@@ -23,7 +33,7 @@ defmodule VintageNet.Interface do
 
   * `ifname` - which interface
   """
-  @spec start_link(String.t()) :: GenServer.on_start()
+  @spec start_link(VintageNet.ifname()) :: GenServer.on_start()
   def start_link(ifname) do
     GenStateMachine.start_link(__MODULE__, ifname, name: via_name(ifname))
   end
@@ -46,7 +56,7 @@ defmodule VintageNet.Interface do
 
   This can be used to validate a configuration without applying it.
   """
-  @spec to_raw_config(String.t(), map()) :: {:ok, RawConfig.t()} | {:error, any()}
+  @spec to_raw_config(VintageNet.ifname(), map()) :: {:ok, RawConfig.t()} | {:error, any()}
   def to_raw_config(ifname, config) do
     opts = Application.get_all_env(:vintage_net)
 
@@ -62,7 +72,7 @@ defmodule VintageNet.Interface do
   @doc """
   Set a configuration on an interface
   """
-  @spec configure(String.t(), map()) :: :ok | {:error, any()}
+  @spec configure(VintageNet.ifname(), map()) :: :ok | {:error, any()}
   def configure(ifname, config) do
     opts = Application.get_all_env(:vintage_net)
 
@@ -86,7 +96,7 @@ defmodule VintageNet.Interface do
   @doc """
   Return the current configuration
   """
-  @spec get_configuration(String.t()) :: map()
+  @spec get_configuration(VintageNet.ifname()) :: map()
   def get_configuration(ifname) do
     GenStateMachine.call(via_name(ifname), :get_configuration)
   end
@@ -100,7 +110,7 @@ defmodule VintageNet.Interface do
 
   This function is not normally called.
   """
-  @spec unconfigure(String.t()) :: :ok
+  @spec unconfigure(VintageNet.ifname()) :: :ok
   def unconfigure(ifname) do
     configure(null_raw_config(ifname))
   end
@@ -108,7 +118,7 @@ defmodule VintageNet.Interface do
   @doc """
   Wait for the interface to be configured
   """
-  @spec wait_until_configured(String.t()) :: :ok
+  @spec wait_until_configured(VintageNet.ifname()) :: :ok
   def wait_until_configured(ifname) do
     GenStateMachine.call(via_name(ifname), :wait)
   end
@@ -116,8 +126,9 @@ defmodule VintageNet.Interface do
   @doc """
   Run an I/O command on the specified interface
   """
-  def ioctl(ifname, command) do
-    GenStateMachine.call(via_name(ifname), {:ioctl, command})
+  @spec ioctl(VintageNet.ifname(), atom(), any()) :: :ok | {:ok, any()} | {:error, any()}
+  def ioctl(ifname, command, args) do
+    GenStateMachine.call(via_name(ifname), {:ioctl, command, args})
   end
 
   @impl true
@@ -253,14 +264,16 @@ defmodule VintageNet.Interface do
       ) do
     _ = Logger.debug(":configured -> internal configure")
 
-    new_data = run_commands(data, old_config.down_cmds)
+    {new_data, actions} = cancel_ioctls(data)
 
-    action = [
-      {:state_timeout, old_config.down_cmd_millis, :unconfiguring_timeout}
+    new_data = run_commands(new_data, old_config.down_cmds)
+
+    actions = [
+      {:state_timeout, old_config.down_cmd_millis, :unconfiguring_timeout} | actions
     ]
 
     update_properties(:reconfiguring, new_data)
-    {:next_state, :reconfiguring, %{new_data | next_config: new_config}, action}
+    {:next_state, :reconfiguring, %{new_data | next_config: new_config}, actions}
   end
 
   @impl true
@@ -272,15 +285,75 @@ defmodule VintageNet.Interface do
       ) do
     _ = Logger.debug(":configured -> configure")
 
-    new_data = run_commands(data, old_config.down_cmds)
+    {new_data, actions} = cancel_ioctls(data)
+    new_data = run_commands(new_data, old_config.down_cmds)
 
-    action = [
+    actions = [
       {:reply, from, :ok},
-      {:state_timeout, old_config.down_cmd_millis, :unconfiguring_timeout}
+      {:state_timeout, old_config.down_cmd_millis, :unconfiguring_timeout} | actions
     ]
 
     update_properties(:reconfiguring, new_data)
-    {:next_state, :reconfiguring, %{new_data | next_config: new_config}, action}
+    {:next_state, :reconfiguring, %{new_data | next_config: new_config}, actions}
+  end
+
+  @impl true
+  def handle_event(
+        {:call, from},
+        {:ioctl, command, args},
+        :configured,
+        %State{} = data
+      ) do
+    _ = Logger.debug(":configured -> run ioctl")
+
+    # Delegate the ioctl to the technology
+    mfa = {data.config.type, :ioctl, [data.ifname, command, args]}
+    new_data = run_ioctl(data, from, mfa)
+
+    {:keep_state, new_data}
+  end
+
+  @impl true
+  def handle_event(
+        :info,
+        {:ioctl_done, ioctl_pid, result},
+        :configured,
+        %State{inflight_ioctls: inflight} = data
+      ) do
+    # TODO
+    _ = Logger.debug(":configured -> ioctl done")
+
+    {{from, _mfa}, new_inflight} = Map.pop(inflight, ioctl_pid)
+    action = {:reply, from, result}
+    new_data = %{data | inflight_ioctls: new_inflight}
+
+    {:keep_state, new_data, action}
+  end
+
+  @impl true
+  def handle_event(
+        :info,
+        {:EXIT, pid, reason},
+        :configured,
+        %State{inflight_ioctls: inflight} = data
+      ) do
+    # If an ioctl crashed, then return an error.
+    # Otherwise, it's a latent exit from something that exited normally.
+    case Map.pop(inflight, pid) do
+      {{from, mfa}, new_inflight} ->
+        _ =
+          Logger.debug(
+            ":configured -> unexpected ioctl(#{inspect(mfa)}) exit (#{inspect(reason)})"
+          )
+
+        action = {:reply, from, {:error, {:exit, reason}}}
+        new_data = %{data | inflight_ioctls: new_inflight}
+        {:keep_state, new_data, action}
+
+      {nil, _} ->
+        _ = Logger.debug(":configured -> ignoring process exit")
+        {:keep_state, data}
+    end
   end
 
   # :reconfiguring
@@ -386,7 +459,7 @@ defmodule VintageNet.Interface do
   # Catch all event handlers
   @impl true
   def handle_event(:info, {:EXIT, _pid, _reason}, state, data) do
-    # Ignore normal command runner exits
+    # Ignore latent or expected command runner and ioctl exits
     _ = Logger.debug("#{inspect(state)} -> process exit (ignoring)")
     {:keep_state, data}
   end
@@ -400,6 +473,17 @@ defmodule VintageNet.Interface do
       ) do
     _ = Logger.debug("#{inspect(other_state)} -> wait")
     {:keep_state, %{data | waiters: [from | waiters]}}
+  end
+
+  @impl true
+  def handle_event(
+        {:call, from},
+        {:ioctl, _command, _args},
+        other_state,
+        data
+      ) do
+    _ = Logger.debug("#{inspect(other_state)} -> call ioctl (returning error)")
+    {:keep_state, data, {:reply, from, {:error, :unconfigured}}}
   end
 
   @impl true
@@ -452,5 +536,32 @@ defmodule VintageNet.Interface do
 
     PropertyTable.put(VintageNet, ["interface", ifname, "type"], config.type)
     PropertyTable.put(VintageNet, ["interface", ifname, "state"], to_string(state))
+  end
+
+  defp run_ioctl(data, from, mfa) do
+    interface_pid = self()
+
+    {:ok, pid} = Task.start_link(fn -> run_ioctl_and_report(mfa, interface_pid) end)
+
+    new_inflight = Map.put(data.inflight_ioctls, pid, {from, mfa})
+
+    %{data | inflight_ioctls: new_inflight}
+  end
+
+  defp run_ioctl_and_report({module, function_name, args} = mfa, interface_pid) do
+    _ = Logger.debug("Running ioctl: #{inspect(mfa)}")
+    result = apply(module, function_name, args)
+    _ = Logger.debug("Done. Sending response")
+    send(interface_pid, {:ioctl_done, self(), result})
+  end
+
+  defp cancel_ioctls(data) do
+    actions =
+      Enum.map(data.inflight_ioctls, fn {pid, {from, _mfa}} ->
+        Process.exit(pid, :kill)
+        {:reply, from, {:error, :cancelled}}
+      end)
+
+    {%{data | inflight_ioctls: %{}}, actions}
   end
 end

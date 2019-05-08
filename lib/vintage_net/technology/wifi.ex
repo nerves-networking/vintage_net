@@ -4,11 +4,7 @@ defmodule VintageNet.Technology.WiFi do
   alias VintageNet.WiFi.{Scan, WPA2}
   alias VintageNet.Interface.RawConfig
 
-  @spec to_raw_config(
-          String.t(),
-          map(),
-          keyword()
-        ) :: VintageNet.Interface.RawConfig.t()
+  @impl true
   def to_raw_config(ifname, %{type: __MODULE__, wifi: wifi_config} = config, opts) do
     ifup = Keyword.fetch!(opts, :bin_ifup)
     ifdown = Keyword.fetch!(opts, :bin_ifdown)
@@ -83,8 +79,13 @@ defmodule VintageNet.Technology.WiFi do
     {:error, :bad_configuration}
   end
 
-  def handle_ioctl(ifname, :scan) do
+  @impl true
+  def ioctl(ifname, :scan, _args) do
     Scan.scan(ifname)
+  end
+
+  def ioctl(_ifname, _command, _args) do
+    {:error, :unsupported}
   end
 
   defp wifi_to_supplicant_contents(wifi, control_interface_path) do

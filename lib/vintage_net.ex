@@ -25,14 +25,14 @@ defmodule VintageNet do
   """
   @spec configure(ifname(), map()) :: :ok | {:error, any()}
   def configure(ifname, config) do
-    # The logic here is to validate the config by converting it to
-    # a raw_config. We'd need to do that anyway, so just get it over with.
-    # The next step is to persist the config. This is important since
-    # if the Interface GenServer ever crashes and restarts, we want it to use this
-    # new config. `maybe_start_interface` might start up an Interface
-    # GenServer. If it does, then it will reach into reach into Persistence for
-    # the config and it would be bad for it to get an old config. If a GenServer
-    # isn't started, configure the running one.
+    # The logic here is to validate the config by converting it to a
+    # raw_config. We'd need to do that anyway, so just get it over with.  The
+    # next step is to persist the config. This is important since if the
+    # Interface GenServer ever crashes and restarts, we want it to use this new
+    # config. `maybe_start_interface` might start up an Interface GenServer. If
+    # it does, then it will reach into reach into Persistence for the config
+    # and it would be bad for it to get an old config. If a GenServer isn't
+    # started, configure the running one.
     with {:ok, raw_config} <- Interface.to_raw_config(ifname, config),
          :ok <- Persistence.call(:save, [ifname, config]),
          {:error, :already_started} <- maybe_start_interface(ifname) do
@@ -51,8 +51,8 @@ defmodule VintageNet do
   @doc """
   Check if this is a valid configuration
 
-  This runs the validation routines for a settings map, but doesn't try
-  to apply them.
+  This runs the validation routines for a settings map, but doesn't try to
+  apply them.
   """
   @spec configuration_valid?(ifname(), map()) :: boolean()
   def configuration_valid?(ifname, config) do
@@ -63,16 +63,30 @@ defmodule VintageNet do
   end
 
   @doc """
-  Scan wireless interface for other access points
+  Run a command on a network interface
+
+  Commands are mostly network interface-specific. Also see the `VintageNet`
+  PropertyTable fo getting status or registering for status changes.
   """
-  @spec scan(ifname()) :: {:ok, [String.t()]} | {:error, String.t()}
+  @spec ioctl(ifname(), atom(), any()) :: :ok | {:ok, any()} | {:error, any()}
+  def ioctl(ifname, command, args \\ []) do
+    Interface.ioctl(ifname, command, args)
+  end
+
+  @doc """
+  Scan wireless interface for other access points
+
+  This is a utility function for calling the `:scan` ioctl.
+  """
+  @spec scan(ifname()) :: {:ok, [VintageNet.WiFi.AccessPoint.t()]} | {:error, any()}
   def scan(ifname) do
-    Interface.ioctl(ifname, :scan)
+    ioctl(ifname, :scan)
   end
 
   @doc """
   Check that the system has the required programs installed
 
+  TODO!!!!
   """
   @spec verify_system([atom()] | atom(), keyword()) :: :ok | {:error, any()}
   def verify_system(types, opts) when is_list(types) do
