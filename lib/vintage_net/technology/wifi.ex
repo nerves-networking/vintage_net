@@ -11,6 +11,7 @@ defmodule VintageNet.Technology.WiFi do
     wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
     killall = Keyword.fetch!(opts, :bin_killall)
     tmpdir = Keyword.fetch!(opts, :tmpdir)
+    regulatory_domain = Keyword.fetch!(opts, :regulatory_domain)
 
     network_interfaces_path = Path.join(tmpdir, "network_interfaces.#{ifname}")
     wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
@@ -20,7 +21,8 @@ defmodule VintageNet.Technology.WiFi do
 
     files = [
       {network_interfaces_path, "iface #{ifname} inet dhcp" <> dhcp_options(hostname)},
-      {wpa_supplicant_conf_path, wifi_to_supplicant_contents(wifi_config, control_interface_path)}
+      {wpa_supplicant_conf_path,
+       wifi_to_supplicant_contents(wifi_config, control_interface_path, regulatory_domain)}
     ]
 
     up_cmds = [
@@ -50,6 +52,7 @@ defmodule VintageNet.Technology.WiFi do
     wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
     killall = Keyword.fetch!(opts, :bin_killall)
     tmpdir = Keyword.fetch!(opts, :tmpdir)
+
     wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
     control_interface_path = Path.join(tmpdir, "wpa_supplicant")
 
@@ -90,10 +93,10 @@ defmodule VintageNet.Technology.WiFi do
     {:error, :unsupported}
   end
 
-  defp wifi_to_supplicant_contents(wifi, control_interface_path) do
+  defp wifi_to_supplicant_contents(wifi, control_interface_path, regulatory_domain) do
     """
     ctrl_interface=#{control_interface_path}
-    country=#{wifi.regulatory_domain}
+    country=#{regulatory_domain}
     """ <> into_wifi_network_config(wifi)
   end
 

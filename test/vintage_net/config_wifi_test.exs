@@ -9,7 +9,6 @@ defmodule VintageNet.ConfigWiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        regulatory_domain: "US",
         ssid: "testing",
         mode: :client,
         psk: "1234567890123456789012345678901234567890123456789012345678901234",
@@ -29,7 +28,7 @@ defmodule VintageNet.ConfigWiFiTest do
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
-         country=US
+         country=00
          network={
          ssid="testing"
          psk=1234567890123456789012345678901234567890123456789012345678901234
@@ -58,7 +57,6 @@ defmodule VintageNet.ConfigWiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        regulatory_domain: "US",
         ssid: "testing",
         mode: :client,
         psk: "a_passphrase_and_not_a_psk",
@@ -78,7 +76,7 @@ defmodule VintageNet.ConfigWiFiTest do
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
-         country=US
+         country=00
          network={
          ssid="testing"
          psk=1EE0A473A954F61007E526365D4FDC056FE2A102ED2CE77D64492A9495B83030
@@ -107,7 +105,6 @@ defmodule VintageNet.ConfigWiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        regulatory_domain: "US",
         ssid: "testing",
         mode: :client,
         key_mgmt: :none
@@ -126,7 +123,7 @@ defmodule VintageNet.ConfigWiFiTest do
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
-         country=US
+         country=00
          network={
          ssid="testing"
 
@@ -155,7 +152,6 @@ defmodule VintageNet.ConfigWiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        regulatory_domain: "US",
         ssid: "testing",
         mode: :client,
         psk: "42FEEDDEAFBABEDEAFBEEFAA55",
@@ -175,7 +171,7 @@ defmodule VintageNet.ConfigWiFiTest do
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
-         country=US
+         country=00
          network={
          ssid="testing"
          key_mgmt=NONE
@@ -203,7 +199,6 @@ defmodule VintageNet.ConfigWiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        regulatory_domain: "US",
         ssid: "testing",
         mode: :client,
         psk: "1234567890123456789012345678901234567890123456789012345678901234",
@@ -224,7 +219,7 @@ defmodule VintageNet.ConfigWiFiTest do
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
-         country=US
+         country=00
          network={
          ssid="testing"
          psk=1234567890123456789012345678901234567890123456789012345678901234
@@ -255,7 +250,6 @@ defmodule VintageNet.ConfigWiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        regulatory_domain: "US",
         mode: :client,
         networks: [
           %{
@@ -292,7 +286,7 @@ defmodule VintageNet.ConfigWiFiTest do
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
-         country=US
+         country=00
          network={
          ssid="first_priority"
          psk=1234567890123456789012345678901234567890123456789012345678901234

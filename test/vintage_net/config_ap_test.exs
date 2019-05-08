@@ -7,7 +7,6 @@ defmodule VintageNet.ConfigAPTest do
     input = %{
       type: :wifi_ap,
       wifi: %{
-        regulatory_domain: "US",
         ssid: "my_accesspoint",
         mode: :ap,
         psk: "1234567890123456789012345678901234567890123456789012345678901234",
@@ -32,7 +31,7 @@ defmodule VintageNet.ConfigAPTest do
         {"/tmp/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/wpa_supplicant
-         country=US
+         country=00
 
          network={
            ap_scan=2

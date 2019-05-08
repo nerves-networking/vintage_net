@@ -9,7 +9,6 @@ defmodule VintageNet.Template.WiFi do
     %{
       type: :wifi,
       wifi: %{
-        regulatory_domain: "US",
         ssid: ssid,
         mode: :client,
         psk: psk,

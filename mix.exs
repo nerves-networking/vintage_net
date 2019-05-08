@@ -40,7 +40,8 @@ defmodule VintageNet.MixProject do
         resolvconf: "/etc/resolv.conf",
         persistence: VintageNet.Persistence.FlatFile,
         persistence_dir: "/root/vintage_net",
-        internet_host: "1.1.1.1"
+        internet_host: "1.1.1.1",
+        regulatory_domain: "00"
       ],
       extra_applications: [:logger],
       mod: {VintageNet.Application, []}
