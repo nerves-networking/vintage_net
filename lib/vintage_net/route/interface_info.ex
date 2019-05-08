@@ -8,8 +8,8 @@ defmodule VintageNet.Route.InterfaceInfo do
             status: :disabled
 
   @type t :: %__MODULE__{
-          default_gateway: :inet.address() | nil,
-          ip_subnets: [{:inet.address(), Calculator.subnet_bits()}],
+          default_gateway: :inet.ip_address() | nil,
+          ip_subnets: [{:inet.ip_address(), Calculator.subnet_bits()}],
           interface_type: Classification.interface_type(),
           status: Classification.connection_status()
         }
