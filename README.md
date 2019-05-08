@@ -2,6 +2,10 @@
 
 [![CircleCI](https://circleci.com/gh/fhunleth/vintage_net.svg?style=svg)](https://circleci.com/gh/fhunleth/vintage_net)
 
+## This library is very much a work in progress without sufficient documentation
+
+## It will get there, but the current Nerves libraries are much more stable and tested for what they do
+
 ## System Requirements
 
 - `ifupdown`
