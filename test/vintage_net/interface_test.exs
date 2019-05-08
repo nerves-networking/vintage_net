@@ -337,4 +337,32 @@ defmodule VintageNet.InterfaceTest do
       assert {:error, :cancelled} = Task.await(task)
     end)
   end
+
+  test "call configure during retry timeout", context do
+    in_tmp(context.test, fn ->
+      # Make the retry timeout really long
+      raw_config1 = %RawConfig{
+        ifname: @ifname,
+        type: @interface_type,
+        retry_millis: 100_000,
+        up_cmds: [{:run, "false", []}]
+      }
+
+      raw_config2 = %RawConfig{
+        ifname: @ifname,
+        type: @interface_type
+      }
+
+      property = ["interface", @ifname, "state"]
+      PropertyTable.subscribe(VintageNet, property)
+
+      {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(@ifname)
+      :ok = Interface.configure(raw_config1)
+
+      assert_receive {VintageNet, property, _old_value, "retrying", _meta}
+
+      assert :ok == Interface.configure(raw_config2)
+      assert :ok == Interface.wait_until_configured(@ifname)
+    end)
+  end
 end

@@ -201,7 +201,7 @@ defmodule VintageNet.Interface do
         :configuring,
         %State{config: config} = data
       ) do
-    _ = Logger.debug(":configuring -> done error: retrying after %{config.retry_millis} ms")
+    _ = Logger.debug(":configuring -> done error: retrying after #{config.retry_millis} ms")
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
     actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
@@ -218,7 +218,7 @@ defmodule VintageNet.Interface do
       ) do
     _ =
       Logger.debug(
-        ":configuring -> done crash (#{inspect(reason)}): retrying after %{config.retry_millis} ms"
+        ":configuring -> done crash (#{inspect(reason)}): retrying after #{config.retry_millis} ms"
       )
 
     {new_data, actions} = reply_to_waiters(data)
@@ -237,7 +237,7 @@ defmodule VintageNet.Interface do
       ) do
     _ =
       Logger.debug(
-        ":configuring -> recovering from hang: retrying after %{config.retry_millis} ms"
+        ":configuring -> recovering from hang: retrying after #{config.retry_millis} ms"
       )
 
     Process.exit(pid, :kill)
@@ -453,7 +453,26 @@ defmodule VintageNet.Interface do
     CommandRunner.create_files(config.files)
     new_data = run_commands(data, config.up_cmds)
     update_properties(:configuring, new_data)
-    {:next_state, :configuring, new_data}
+
+    {:next_state, :configuring, new_data,
+     {:state_timeout, config.up_cmd_millis, :configuring_timeout}}
+  end
+
+  @impl true
+  def handle_event(
+        {:call, from},
+        {:configure, config},
+        :retrying,
+        data
+      ) do
+    _ = Logger.debug(":retrying -> configure")
+
+    CommandRunner.create_files(config.files)
+    new_data = run_commands(data, config.up_cmds)
+    update_properties(:configuring, new_data)
+
+    {:next_state, :configuring, new_data,
+     [{:reply, from, :ok}, {:state_timeout, config.up_cmd_millis, :configuring_timeout}]}
   end
 
   # Catch all event handlers
