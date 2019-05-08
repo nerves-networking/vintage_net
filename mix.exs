@@ -7,6 +7,7 @@ defmodule VintageNet.MixProject do
       version: "0.1.0",
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
+      test_coverage: [tool: ExCoveralls],
       start_permanent: Mix.env() == :prod,
       build_embedded: true,
       compilers: [:elixir_make | Mix.compilers()],
@@ -72,9 +73,10 @@ defmodule VintageNet.MixProject do
   defp deps do
     [
       {:elixir_make, "~> 0.5", runtime: false},
-      {:ex_doc, "~> 0.19", only: [:dev, :test], runtime: false},
-      {:mix_test_watch, "~> 0.5", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.4", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
+      {:mix_test_watch, "~> 0.5", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.8", only: :test, runtime: false},
+      {:dialyxir, "~> 1.0.0-rc.4", only: :dev, runtime: false},
       {:muontrap, "~> 0.4.1"},
       {:gen_state_machine, "~> 2.0.0"}
     ]
