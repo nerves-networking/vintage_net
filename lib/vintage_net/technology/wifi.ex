@@ -39,6 +39,7 @@ defmodule VintageNet.Technology.WiFi do
        type: __MODULE__,
        source_config: config,
        files: files,
+       cleanup_files: [Path.join(control_interface_path, ifname)],
        child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
        up_cmds: up_cmds,
        down_cmds: down_cmds
@@ -71,7 +72,8 @@ defmodule VintageNet.Technology.WiFi do
        files: files,
        child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
        up_cmds: up_cmds,
-       down_cmds: down_cmds
+       down_cmds: down_cmds,
+       cleanup_files: [Path.join(control_interface_path, ifname)]
      }}
   end
 

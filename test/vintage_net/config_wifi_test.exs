@@ -47,7 +47,8 @@ defmodule VintageNet.ConfigWiFiTest do
       down_cmds: [
         {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
-      ]
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
@@ -95,7 +96,8 @@ defmodule VintageNet.ConfigWiFiTest do
       down_cmds: [
         {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
-      ]
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
@@ -142,7 +144,8 @@ defmodule VintageNet.ConfigWiFiTest do
       down_cmds: [
         {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
-      ]
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
@@ -189,7 +192,8 @@ defmodule VintageNet.ConfigWiFiTest do
       down_cmds: [
         {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
-      ]
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
@@ -238,7 +242,8 @@ defmodule VintageNet.ConfigWiFiTest do
       down_cmds: [
         {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
-      ]
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
@@ -319,7 +324,8 @@ defmodule VintageNet.ConfigWiFiTest do
       down_cmds: [
         {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
-      ]
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())

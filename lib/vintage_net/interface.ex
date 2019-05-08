@@ -367,6 +367,7 @@ defmodule VintageNet.Interface do
       ) do
     # TODO
     _ = Logger.debug(":reconfiguring -> done success")
+    rm(config.cleanup_files)
     CommandRunner.remove_files(config.files)
     CommandRunner.create_files(new_config.files)
     new_data = run_commands(data, new_config.up_cmds)
@@ -389,6 +390,7 @@ defmodule VintageNet.Interface do
       ) do
     # TODO
     _ = Logger.debug(":reconfiguring -> done error")
+    rm(config.cleanup_files)
     CommandRunner.remove_files(config.files)
     CommandRunner.create_files(new_config.files)
     new_data = run_commands(data, new_config.up_cmds)
@@ -411,6 +413,7 @@ defmodule VintageNet.Interface do
       ) do
     # TODO
     _ = Logger.debug(":reconfiguring -> done crash (#{inspect(reason)})")
+    rm(config.cleanup_files)
     CommandRunner.remove_files(config.files)
     CommandRunner.create_files(new_config.files)
     new_data = run_commands(data, new_config.up_cmds)
@@ -433,6 +436,7 @@ defmodule VintageNet.Interface do
       ) do
     _ = Logger.debug(":reconfiguring -> recovering from hang")
     Process.exit(pid, :kill)
+    rm(config.cleanup_files)
     CommandRunner.remove_files(config.files)
     CommandRunner.create_files(new_config.files)
     new_data = run_commands(data, new_config.up_cmds)
@@ -549,6 +553,9 @@ defmodule VintageNet.Interface do
     # TODO!!!
   end
 
+  defp rm(files) do
+    Enum.each(files, &File.rm(&1))
+  end
   defp update_properties(state, data) do
     ifname = data.ifname
     config = data.config

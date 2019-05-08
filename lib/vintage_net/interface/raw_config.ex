@@ -16,7 +16,7 @@ defmodule VintageNet.Interface.RawConfig do
   * `up_cmds` - a list of commands to run to configure the interface
   * `down_cmd_millis` - the maximum amount of time to allow the down command list to take
   * `down_cmds` - a list of commands to run to unconfigure the interface
-  * `ioctl` a function that handles non-configuration commands when configured
+  * `cleanup_files` - additional files to delete (the files listed in `files` are deleted too)
 
   """
 
@@ -34,7 +34,8 @@ defmodule VintageNet.Interface.RawConfig do
             up_cmd_millis: 5_000,
             up_cmds: [],
             down_cmd_millis: 5_000,
-            down_cmds: []
+            down_cmds: [],
+            cleanup_files: []
 
   @type t :: %__MODULE__{
           ifname: String.t(),
@@ -46,7 +47,8 @@ defmodule VintageNet.Interface.RawConfig do
           up_cmd_millis: non_neg_integer(),
           up_cmds: [command()],
           down_cmd_millis: non_neg_integer(),
-          down_cmds: [command()]
+          down_cmds: [command()],
+          cleanup_files: [Path.t()]
         }
 
   def unimplemented_ioctl(_, _), do: {:error, :unimplemented}

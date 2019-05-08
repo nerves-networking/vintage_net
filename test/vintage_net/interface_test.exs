@@ -98,6 +98,25 @@ defmodule VintageNet.InterfaceTest do
     end)
   end
 
+  test "cleans up cleanup files", context do
+    in_tmp(context.test, fn ->
+      raw_config = %RawConfig{
+        ifname: @ifname,
+        type: @interface_type,
+        cleanup_files: ["i_am_configured"],
+        up_cmds: [{:run, "touch", ["i_am_configured"]}]
+      }
+
+      start_and_configure(raw_config)
+
+      assert File.exists?("i_am_configured")
+
+      Interface.unconfigure(@ifname)
+      assert :ok == Interface.wait_until_configured(@ifname)
+      refute File.exists?("i_am_configured")
+    end)
+  end
+
   test "failed command retries", context do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
