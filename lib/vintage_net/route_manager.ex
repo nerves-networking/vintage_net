@@ -194,7 +194,11 @@ defmodule VintageNet.RouteManager do
 
     route_delta = List.myers_difference(state.routes, new_routes)
 
+    # Update Linux's routing tables
     Enum.each(route_delta, &handle_delta/1)
+
+    # Update the property table's "available_interfaces" list
+    update_available_interfaces(new_routes)
 
     %{state | route_state: new_route_state, routes: new_routes}
   end
@@ -234,5 +238,23 @@ defmodule VintageNet.RouteManager do
     _ = IPRoute.clear_a_local_route(ifname, address, subnet_bits, 0)
 
     IPRoute.add_local_route(ifname, address, subnet_bits, metric)
+  end
+
+  defp update_available_interfaces(routes) do
+    # Available interfaces are those with local routes
+    # in priority order.
+
+    interfaces =
+      routes
+      |> local_routes()
+      |> Enum.sort()
+      |> Enum.map(fn {_metric, ifname} -> ifname end)
+
+    PropertyTable.put(VintageNet, ["available_interfaces"], interfaces)
+  end
+
+  defp local_routes(routes) do
+    for {:local_route, ifname, _address, _subnet_bits, metric} <- routes,
+        do: {metric, ifname}
   end
 end

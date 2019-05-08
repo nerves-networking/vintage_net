@@ -74,13 +74,50 @@ specified using maps. The following sections so examples:
 ```elixir
 ```
 
-## Status updates
+## Properties
 
-Network interface status can be retrieved from `VintageNet`'s `PropertyTable`. You can
-also register with the `PropertyTable` to receive messages for status changes.
+Network interface status is retrieved from `VintageNet`'s `PropertyTable`:
 
-All network interface properties can be found under `["interface", ifname]` in the `PropertyTable`.
-The following table lists out properties common to all interfaces:
+```elixir
+iex> PropertyTable.get(VintageNet, ["interface", "eth0", "connection"])
+:internet
+
+iex> PropertyTable.get_by_prefix(VintageNet, [])
+[
+  {["interface", "eth0", "connection"], :internet},
+  {["interface", "eth0", "state"], "configured"},
+  {["interface", "eth0", "type"], VintageNet.Technology.Ethernet},
+  {["interface", "wlan0", "connection"], :internet},
+  {["interface", "wlan0", "state"], "configured"},
+  {["interface", "wlan0", "type"], VintageNet.Technology.WiFi}
+]
+```
+
+You can also subscribe to changes in one item or to a prefix:
+
+```elixir
+iex> PropertyTable.subscribe(VintageNet, ["interface", "eth0"])
+:ok
+
+iex> flush
+{VintageNet, ["interface", "eth0", "state"], "configuring", "configured", %{}}
+```
+
+The message format is `{VintageNet, property_name, old_value, new_value,
+metadata}`
+
+### Global properties
+
+Property               | Values           | Description
+ --------------------- | ---------------- | -----------
+`available_interfaces` | `[eth0, ...]`    | The currently available network
+interfaces in priority order. E.g., the first one is used by default
+
+### Common network interface properties
+
+All network interface properties can be found under `["interface", ifname]` in
+the `PropertyTable`.  The following table lists out properties common to all
+interfaces:
 
 Property     | Values           | Description
  ----------- | ---------------- | -----------
