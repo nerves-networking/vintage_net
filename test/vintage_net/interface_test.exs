@@ -350,6 +350,10 @@ defmodule VintageNet.InterfaceTest do
       start_and_configure(raw_config1)
 
       task = Task.async(fn -> Interface.ioctl(@ifname, :sleep, [10_000]) end)
+
+      # Make sure that the task starts
+      Process.sleep(10)
+
       assert :ok == Interface.configure(raw_config2)
       assert :ok == Interface.wait_until_configured(@ifname)
 
