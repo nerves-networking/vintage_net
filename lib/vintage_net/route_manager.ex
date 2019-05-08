@@ -115,6 +115,7 @@ defmodule VintageNet.RouteManager do
     # Fresh slate
     IPRoute.clear_all_routes()
     IPRoute.clear_all_rules(100..200)
+    PropertyTable.put(VintageNet, ["available_interfaces"], [])
 
     {:ok, state}
   end
