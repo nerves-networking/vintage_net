@@ -7,6 +7,7 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
   @delay_to_first_check 100
   @interval 30_000
+  @ping_port 80
 
   @doc false
   Record.defrecord(:hostent, Record.extract(:hostent, from_lib: "kernel/include/inet.hrl"))
@@ -32,7 +33,10 @@ defmodule VintageNet.Interface.ConnectivityChecker do
         :ok ->
           :internet
 
-        {:error, :no_ip_address} ->
+        {:error, :if_not_found} ->
+          :disabled
+
+        {:error, :no_ipv4_address} ->
           :disabled
 
         {:error, _reason} ->
@@ -49,25 +53,41 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
     with {:ok, src_ip} <- get_interface_address(ifname),
          {:ok, dest_ip} <- resolve_addr(internet_host),
-         {:ok, tcp} <- :gen_tcp.connect(dest_ip, 80, ip: src_ip) do
+         {:ok, tcp} <- :gen_tcp.connect(dest_ip, @ping_port, ip: src_ip) do
       _ = :gen_tcp.close(tcp)
       :ok
     end
   end
 
   defp get_interface_address(ifname) do
-    ifname_cl = to_charlist(ifname)
-
     with {:ok, addresses} <- :inet.getifaddrs(),
-         {_, params} <- Enum.find(addresses, fn {k, _v} -> k == ifname_cl end),
-         address when is_tuple(address) <- Keyword.get(params, :addr) do
-      {:ok, address}
-    else
-      _ ->
-        {:error, :no_ip_address}
+         {:ok, params} <- find_ifaddr(addresses, ifname) do
+      find_ipv4_addr(params)
     end
   end
 
+  defp find_ifaddr(addresses, ifname) do
+    ifname_cl = to_charlist(ifname)
+
+    case Enum.find(addresses, fn {k, _v} -> k == ifname_cl end) do
+      {^ifname_cl, params} -> {:ok, params}
+      _ -> {:error, :if_not_found}
+    end
+  end
+
+  defp find_ipv4_addr(params) do
+    case Enum.find(params, &ipv4_addr?/1) do
+      {:addr, ipv4_addr} -> {:ok, ipv4_addr}
+      _ -> {:error, :no_ipv4_address}
+    end
+  end
+
+  defp ipv4_addr?({:addr, {_, _, _, _}}), do: true
+  defp ipv4_addr?(_), do: false
+
+  # TODO: Drop support for DNS since DNS can't be forced through
+  # an interface? I.e., errors on other interfaces mess up DNS
+  # even if the one of interest is ok.
   defp resolve_addr(address) do
     with {:ok, hostent} <- :inet.gethostbyname(to_charlist(address)),
          hostent(h_addr_list: ip_list) = hostent,
