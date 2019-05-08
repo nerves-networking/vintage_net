@@ -62,8 +62,7 @@ defmodule VintageNet.MixProject do
         "README.md",
         "src/*.[ch]",
         "LICENSE",
-        "CHANGELOG.md",
-        "docs/*.md"
+        "CHANGELOG.md"
       ],
       licenses: ["Apache-2.0"],
       links: %{"GitHub" => "https://github.com/nerves-project/vintage_networking"}
