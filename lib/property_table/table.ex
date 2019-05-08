@@ -1,16 +1,13 @@
 defmodule PropertyTable.Table do
   use GenServer
 
-  @doc """
-  """
+  @moduledoc false
+
   @spec start_link({PropertyTable.table_id(), Registry.registry()}) :: GenServer.on_start()
   def start_link({table, _registry_name} = args) do
     GenServer.start_link(__MODULE__, args, name: table)
   end
 
-  @doc """
-
-  """
   @spec get(PropertyTable.table_id(), PropertyTable.property(), PropertyTable.value()) ::
           PropertyTable.value()
   def get(table, name, default) do

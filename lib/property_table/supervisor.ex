@@ -1,9 +1,8 @@
 defmodule PropertyTable.Supervisor do
   use Supervisor
 
-  @doc """
-  Start
-  """
+  @moduledoc false
+
   @spec start_link(PropertyTable.table_id()) :: Supervisor.on_start()
   def start_link(name) do
     Supervisor.start_link(__MODULE__, name)

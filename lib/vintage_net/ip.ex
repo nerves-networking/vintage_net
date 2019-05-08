@@ -1,4 +1,6 @@
 defmodule VintageNet.IP do
+  @moduledoc false
+
   def link(args \\ []) do
     case System.cmd("ip", ["link"] ++ args, stderr_to_stdout: true) do
       {output, 0} -> {:ok, output}
