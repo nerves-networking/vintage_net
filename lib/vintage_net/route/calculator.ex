@@ -62,7 +62,7 @@ defmodule VintageNet.Route.Calculator do
       iex> Calculator.to_subnet({192, 168, 255, 50}, 22)
       {192, 168, 252, 0}
   """
-  @spec to_subnet(:inet.address(), subnet_bits()) :: :inet.address()
+  @spec to_subnet(:inet.ip_address(), subnet_bits()) :: :inet.ip_address()
   def to_subnet({a, b, c, d}, subnet_bits) when subnet_bits >= 8 and subnet_bits < 32 do
     not_subnet_bits = 32 - subnet_bits
     <<subnet::size(subnet_bits), _::binary>> = <<a, b, c, d>>

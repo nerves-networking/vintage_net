@@ -82,8 +82,7 @@ defmodule VintageNet.MixProject do
 
   defp dialyzer() do
     [
-      # flags: [:unmatched_returns, :error_handling, :race_conditions, :underspecs]
-      flags: [:race_conditions, :underspecs]
+      flags: [:race_conditions, :unmatched_returns, :error_handling]
     ]
   end
 end
