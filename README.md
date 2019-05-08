@@ -1,4 +1,6 @@
-# VintageNet
+# 🍇 VintageNet
+
+[![CircleCI](https://circleci.com/gh/fhunleth/vintage_net.svg?style=svg)](https://circleci.com/gh/fhunleth/vintage_net)
 
 ## System Requirements
 
@@ -7,7 +9,6 @@
 - `ifconfig`
 - `run-parts`
 - `mktemp`
-
 
 ### Additional Requirements for Access Point Mode
 

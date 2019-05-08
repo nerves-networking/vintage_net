@@ -5,7 +5,7 @@ defmodule VintageNet.MixProject do
     [
       app: :vintage_net,
       version: "0.1.0",
-      elixir: "~> 1.8",
+      elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       build_embedded: true,
@@ -14,7 +14,7 @@ defmodule VintageNet.MixProject do
       make_clean: ["clean"],
       deps: deps(),
       dialyzer: dialyzer(),
-      docs: [extras: ["README.md"]],
+      docs: [extras: ["README.md"], main: "readme"],
       package: package(),
       description: description()
     ]
