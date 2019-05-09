@@ -110,46 +110,94 @@ defmodule VintageNet.Technology.WiFi do
     |> IO.iodata_to_binary()
   end
 
-  defp key_mgmt_to_string(key) when key in [:none, :wep], do: "NONE"
+  defp key_mgmt_to_string(:none), do: "NONE"
   defp key_mgmt_to_string(:wpa_psk), do: "WPA-PSK"
   defp key_mgmt_to_string(:wpa_eap), do: "WPA-EAP"
+  defp key_mgmt_to_string(:IEEE8021X), do: "IEEE8021X"
+  # This is to allow passing multi mgmts
+  defp key_mgmt_to_string(string) when is_binary(string), do: string
+
+  defp mode_to_string(:client), do: "0"
+  defp mode_to_string(:adhoc), do: "1"
+  defp mode_to_string(:host), do: "2"
+  # In case the user supplies data as the integer type
+  defp mode_to_string(mode) when is_integer(mode), do: mode
 
   defp into_wifi_network_config(%{networks: networks}) do
     Enum.map(networks, &into_wifi_network_config/1)
   end
 
-  defp into_wifi_network_config(%{key_mgmt: :wep} = wifi) do
+  defp into_wifi_network_config(wifi) do
     network_config([
+      # Common settings
       into_config_string(wifi, :ssid),
-      "key_mgmt=NONE",
-      "wep_tx_keyidx=0",
-      "wep_key0=#{wifi.psk}"
-    ])
-  end
-
-  defp into_wifi_network_config(%{key_mgmt: :wpa_eap} = wifi) do
-    network_config([
-      into_config_string(wifi, :ssid),
+      into_config_string(wifi, :bssid),
       into_config_string(wifi, :key_mgmt),
       into_config_string(wifi, :scan_ssid),
       into_config_string(wifi, :priority),
+      into_config_string(wifi, :bssid_whitelist),
+      into_config_string(wifi, :bssid_blacklist),
+      into_config_string(wifi, :wps_disabled),
+      into_config_string(wifi, :mode),
+      into_config_string(wifi, :ap_scan),
+
+      # WPA-PSK settings
+      into_config_string(wifi, :psk),
+      into_config_string(wifi, :wpa_ptk_rekey),
+
+      # MACSEC settings
+      into_config_string(wifi, :macsec_policy),
+      into_config_string(wifi, :macsec_integ_only),
+      into_config_string(wifi, :macsec_replay_protect),
+      into_config_string(wifi, :macsec_replay_window),
+      into_config_string(wifi, :macsec_port),
+      into_config_string(wifi, :mka_cak),
+      into_config_string(wifi, :mka_ckn),
+      into_config_string(wifi, :mka_priority),
+
+      # EAP settings 
+      into_config_string(wifi, :identity),
+      into_config_string(wifi, :anonymous_identity),
+      into_config_string(wifi, :password),
       into_config_string(wifi, :pairwise),
       into_config_string(wifi, :group),
+      into_config_string(wifi, :group_mgmt),
       into_config_string(wifi, :eap),
-      into_config_string(wifi, :identity),
-      into_config_string(wifi, :password),
+      into_config_string(wifi, :eapol_flags),
       into_config_string(wifi, :phase1),
-      into_config_string(wifi, :phase2)
-    ])
-  end
+      into_config_string(wifi, :phase2),
+      into_config_string(wifi, :fragment_size),
+      into_config_string(wifi, :ocsp),
+      into_config_string(wifi, :openssl_ciphers),
+      into_config_string(wifi, :erp),
 
-  defp into_wifi_network_config(wifi) do
-    network_config([
-      into_config_string(wifi, :ssid),
-      into_config_string(wifi, :psk),
-      into_config_string(wifi, :key_mgmt),
-      into_config_string(wifi, :scan_ssid),
-      into_config_string(wifi, :priority)
+      # TODO:
+      # These parts are files.
+      # They should probably be added to the `files` part
+      # of raw_config
+      into_config_string(wifi, :ca_cert),
+      into_config_string(wifi, :ca_cert2),
+      into_config_string(wifi, :dh_file),
+      into_config_string(wifi, :dh_file2),
+      into_config_string(wifi, :client_cert),
+      into_config_string(wifi, :client_cert2),
+      into_config_string(wifi, :private_key),
+      into_config_string(wifi, :private_key2),
+      into_config_string(wifi, :private_key_passwd),
+      into_config_string(wifi, :private_key2_passwd),
+      into_config_string(wifi, :pac_file),
+
+      # WEP Settings
+      into_config_string(wifi, :auth_alg),
+      into_config_string(wifi, :wep_key0),
+      into_config_string(wifi, :wep_key1),
+      into_config_string(wifi, :wep_key2),
+      into_config_string(wifi, :wep_key3),
+      into_config_string(wifi, :wep_tx_keyidx),
+
+      # SIM Settings
+      into_config_string(wifi, :pin),
+      into_config_string(wifi, :pcsc)
     ])
   end
 
@@ -164,13 +212,25 @@ defmodule VintageNet.Technology.WiFi do
     "ssid=#{inspect(ssid)}"
   end
 
+  defp wifi_opt_to_config_string(_wifi, :bssid, bssid) do
+    "bssid=#{bssid}"
+  end
+
   defp wifi_opt_to_config_string(wifi, :psk, psk) do
     {:ok, real_psk} = WPA2.to_psk(wifi.ssid, psk)
     "psk=#{real_psk}"
   end
 
+  defp wifi_opt_to_config_string(_wifi, :wpa_ptk_rekey, wpa_ptk_rekey) do
+    "wpa_ptk_rekey=#{wpa_ptk_rekey}"
+  end
+
   defp wifi_opt_to_config_string(_wifi, :key_mgmt, key_mgmt) do
     "key_mgmt=#{key_mgmt_to_string(key_mgmt)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :mode, mode) do
+    "mode=#{mode_to_string(mode)}"
   end
 
   defp wifi_opt_to_config_string(_wifi, :scan_ssid, value) do
@@ -182,19 +242,23 @@ defmodule VintageNet.Technology.WiFi do
   end
 
   defp wifi_opt_to_config_string(_wifi, :identity, value) do
-    "identity=#{value}"
+    "identity=#{inspect(value)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :anonymous_identity, value) do
+    "anonymous_identity=#{inspect(value)}"
   end
 
   defp wifi_opt_to_config_string(_wifi, :password, value) do
-    "password=#{value}"
+    "password=#{inspect(value)}"
   end
 
   defp wifi_opt_to_config_string(_wifi, :phase1, value) do
-    "phase1=#{value}"
+    "phase1=#{inspect(value)}"
   end
 
   defp wifi_opt_to_config_string(_wifi, :phase2, value) do
-    "phase2=#{value}"
+    "phase2=#{inspect(value)}"
   end
 
   defp wifi_opt_to_config_string(_wifi, :pairwise, value) do
@@ -207,6 +271,78 @@ defmodule VintageNet.Technology.WiFi do
 
   defp wifi_opt_to_config_string(_wifi, :eap, value) do
     "eap=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :eapol_flags, value) do
+    "eapol_flags=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :ca_cert, value) do
+    "ca_cert=#{inspect(value)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :ca_cert2, value) do
+    "ca_cert2=#{inspect(value)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :client_cert, value) do
+    "client_cert=#{inspect(value)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :client_cert2, value) do
+    "client_cert2=#{inspect(value)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :private_key, value) do
+    "private_key=#{inspect(value)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :private_key2, value) do
+    "private_key2=#{inspect(value)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :private_key_passwd, value) do
+    "private_key_passwd=#{inspect(value)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :private_key2_passwd, value) do
+    "private_key2_passwd=#{inspect(value)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :pin, value) do
+    "pin=#{inspect(value)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :wep_tx_keyidx, value) do
+    "wep_tx_keyidx=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :wep_key0, value) do
+    "wep_key0=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :wep_key1, value) do
+    "wep_key1=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :wep_key2, value) do
+    "wep_key2=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :wep_key3, value) do
+    "wep_key3=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :pcsc, value) do
+    "pcsc=#{inspect(value)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :bssid_blacklist, value) do
+    "bssid_blacklist=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :bssid_whitelist, value) do
+    "bssid_whitelist=#{value}"
   end
 
   # TODO: Remove duplication with ethernet!!

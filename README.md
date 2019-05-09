@@ -185,12 +185,18 @@ WiFi configuration looks like this:
 
 The `:ipv4` key is the same as in Wired Ethernet and only DHCP is currently supported.
 
-The `:wifi` key has the following fields:
+The `:wifi` key has the following common fields:
 
 * `:key_mgmt` - WiFi security mode (`:wpa_psk` for WPA2, `:none` for no password)
-* `:mode` - Only `:client` mode is supported
+* `:mode` - 
+  * `:client` (default) - Normal operation. Associate with an AP 
+  * `:adhoc` - peer to peer mode
+  * `:host` - access point mode
 * `:psk` - A WPA2 passphrase or the raw PSK. If a passphrase is passed in, it will be converted to a PSK and disgarded.
 * `:ssid` - The SSID for the network
+
+See the [official docs](https://w1.fi/cgit/hostap/plain/wpa_supplicant/wpa_supplicant.conf) for
+the complete list of options.
 
 Here's an example:
 
@@ -207,6 +213,41 @@ iex> VintageNet.configure("wlan0", %{
     })
 ```
 
+Example of WEP:
+
+```elixir
+iex> VintageNet.configure("wlan0", %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        ssid: "my_network_ssid",
+        wep_key0: "42FEEDDEAFBABEDEAFBEEFAA55",
+        key_mgmt: :none,
+        wep_tx_keyidx: 0
+      },
+      ipv4: %{method: :dhcp}
+    })
+```
+
+Example of WPA-EAP:
+
+```elixir
+iex> VintageNet.configure("wlan0", %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        ipv4: %{method: :dhcp},
+        ssid: "testing",
+        key_mgmt: :wpa_eap,
+        scan_ssid: 1,
+        pairwise: "CCMP TKIP",
+        group: "CCMP TKIP",
+        eap: "PEAP",
+        identity: "user1",
+        password: "supersecret",
+        phase1: "peapver=auto",
+        phase2: "MSCHAPV2"
+      },
+      ipv4: %{method: :dhcp}
+})
 ### LTE
 
 ```elixir
