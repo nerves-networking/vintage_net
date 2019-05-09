@@ -2,6 +2,11 @@ defmodule VintageNetTest do
   use VintageNetTest.Case
   doctest VintageNet
 
+  setup_all do
+    Application.stop(:vintage_net)
+    Application.start(:vintage_net)
+  end
+
   test "configure fails on bad technologies" do
     assert {:error, :type_missing} == VintageNet.configure("eth0", %{})
   end
