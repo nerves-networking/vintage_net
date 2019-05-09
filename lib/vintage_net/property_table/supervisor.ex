@@ -1,5 +1,7 @@
-defmodule PropertyTable.Supervisor do
+defmodule VintageNet.PropertyTable.Supervisor do
   use Supervisor
+
+  alias VintageNet.PropertyTable
 
   @moduledoc false
 
@@ -13,7 +15,7 @@ defmodule PropertyTable.Supervisor do
     registry_name = registry_name(name)
 
     children = [
-      {PropertyTable.Table, {name, registry_name}},
+      {VintageNet.PropertyTable.Table, {name, registry_name}},
       {Registry, [keys: :duplicate, name: registry_name]}
     ]
 

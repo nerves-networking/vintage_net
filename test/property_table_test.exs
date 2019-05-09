@@ -1,6 +1,8 @@
 defmodule PropertyTableTest do
   use ExUnit.Case, async: true
 
+  alias VintageNet.PropertyTable
+
   doctest PropertyTable
 
   setup config do

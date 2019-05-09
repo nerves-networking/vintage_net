@@ -4,7 +4,7 @@ defmodule VintageNet do
 
 
   """
-  alias VintageNet.{Interface, Persistence}
+  alias VintageNet.{Interface, Persistence, PropertyTable}
 
   @type ifname :: String.t()
 

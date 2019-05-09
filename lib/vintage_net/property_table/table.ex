@@ -1,5 +1,7 @@
-defmodule PropertyTable.Table do
+defmodule VintageNet.PropertyTable.Table do
   use GenServer
+
+  alias VintageNet.PropertyTable
 
   @moduledoc false
 

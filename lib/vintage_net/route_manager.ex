@@ -115,7 +115,7 @@ defmodule VintageNet.RouteManager do
     # Fresh slate
     IPRoute.clear_all_routes()
     IPRoute.clear_all_rules(100..200)
-    PropertyTable.put(VintageNet, ["available_interfaces"], [])
+    VintageNet.PropertyTable.put(VintageNet, ["available_interfaces"], [])
 
     {:ok, state}
   end
@@ -251,7 +251,7 @@ defmodule VintageNet.RouteManager do
       |> Enum.sort()
       |> Enum.map(fn {_metric, ifname} -> ifname end)
 
-    PropertyTable.put(VintageNet, ["available_interfaces"], interfaces)
+    VintageNet.PropertyTable.put(VintageNet, ["available_interfaces"], interfaces)
   end
 
   defp local_routes(routes) do

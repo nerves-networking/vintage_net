@@ -1,4 +1,4 @@
-defmodule PropertyTable do
+defmodule VintageNet.PropertyTable do
   @moduledoc """
   PropertyTables are in-memory key-value stores
 
@@ -26,7 +26,7 @@ defmodule PropertyTable do
   is a map.
   """
 
-  alias PropertyTable.Table
+  alias VintageNet.PropertyTable.Table
 
   @typedoc """
   A table_id identifies a group of properties
@@ -48,7 +48,7 @@ defmodule PropertyTable do
       raise ArgumentError, "expected :name to be given and to be an atom, got: #{inspect(name)}"
     end
 
-    PropertyTable.Supervisor.start_link(name)
+    VintageNet.PropertyTable.Supervisor.start_link(name)
   end
 
   @doc """
@@ -58,7 +58,7 @@ defmodule PropertyTable do
   def child_spec(opts) do
     %{
       id: Keyword.get(opts, :name, PropertyTable),
-      start: {PropertyTable, :start_link, [opts]},
+      start: {VintageNet.PropertyTable, :start_link, [opts]},
       type: :supervisor
     }
   end
@@ -70,7 +70,7 @@ defmodule PropertyTable do
   def subscribe(table, name) when is_list(name) do
     assert_name(name)
 
-    registry = PropertyTable.Supervisor.registry_name(table)
+    registry = VintageNet.PropertyTable.Supervisor.registry_name(table)
     {:ok, _} = Registry.register(registry, name, nil)
 
     :ok
@@ -81,7 +81,7 @@ defmodule PropertyTable do
   """
   @spec unsubscribe(table_id(), property()) :: :ok
   def unsubscribe(table, name) when is_list(name) do
-    registry = PropertyTable.Supervisor.registry_name(table)
+    registry = VintageNet.PropertyTable.Supervisor.registry_name(table)
     Registry.unregister(registry, name)
   end
 

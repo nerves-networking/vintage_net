@@ -45,7 +45,7 @@ defmodule VintageNet.InterfaceTest do
 
       start_and_configure(raw_config)
 
-      assert PropertyTable.get(VintageNet, ["interface", @ifname, "type"]) == @interface_type
+      assert VintageNet.PropertyTable.get(VintageNet, ["interface", @ifname, "type"]) == @interface_type
       assert File.exists?("testing")
       assert File.read!("testing") == "Hello, world"
 
@@ -377,7 +377,7 @@ defmodule VintageNet.InterfaceTest do
       }
 
       property = ["interface", @ifname, "state"]
-      PropertyTable.subscribe(VintageNet, property)
+      VintageNet.PropertyTable.subscribe(VintageNet, property)
 
       {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(@ifname)
       :ok = Interface.configure(raw_config1)

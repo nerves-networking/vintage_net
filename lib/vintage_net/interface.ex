@@ -13,7 +13,7 @@ defmodule VintageNet.Interface do
   require Logger
 
   alias VintageNet.Interface.{CommandRunner, RawConfig}
-  alias VintageNet.{Persistence, RouteManager}
+  alias VintageNet.{Persistence, PropertyTable, RouteManager}
 
   defmodule State do
     @moduledoc false

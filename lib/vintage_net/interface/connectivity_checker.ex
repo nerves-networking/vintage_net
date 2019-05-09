@@ -1,7 +1,7 @@
 defmodule VintageNet.Interface.ConnectivityChecker do
   use GenServer
 
-  alias VintageNet.RouteManager
+  alias VintageNet.{PropertyTable, RouteManager}
 
   require Record
 
