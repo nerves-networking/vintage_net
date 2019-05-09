@@ -94,10 +94,14 @@ defmodule VintageNet.Technology.WiFi do
   end
 
   defp wifi_to_supplicant_contents(wifi, control_interface_path, regulatory_domain) do
-    """
-    ctrl_interface=#{control_interface_path}
-    country=#{regulatory_domain}
-    """ <> into_wifi_network_config(wifi)
+    [
+      "ctrl_interface=#{control_interface_path}",
+      "\n",
+      "country=#{regulatory_domain}",
+      "\n",
+      into_wifi_network_config(wifi)
+    ]
+    |> IO.iodata_to_binary()
   end
 
   defp key_mgmt_to_string(key) when key in [:none, :wep], do: "NONE"
@@ -105,55 +109,47 @@ defmodule VintageNet.Technology.WiFi do
   defp key_mgmt_to_string(:wpa_eap), do: "WPA-EAP"
 
   defp into_wifi_network_config(%{networks: networks}) do
-    Enum.reduce(networks, "", fn network, config ->
-      config <> into_wifi_network_config(network)
-    end)
+    Enum.map(networks, &into_wifi_network_config/1)
   end
 
   defp into_wifi_network_config(%{key_mgmt: :wep} = wifi) do
-    """
-    network={
-    #{into_config_string(wifi, :ssid)}
-    key_mgmt=NONE
-    wep_tx_keyidx=0
-    wep_key0=#{wifi.psk}
-    }
-    """
+    network_config([
+      into_config_string(wifi, :ssid),
+      "key_mgmt=NONE",
+      "wep_tx_keyidx=0",
+      "wep_key0=#{wifi.psk}"
+    ])
   end
 
   defp into_wifi_network_config(%{key_mgmt: :wpa_eap} = wifi) do
-    """
-    network={
-      #{into_config_string(wifi, :ssid)}
-      #{into_config_string(wifi, :key_mgmt)}
-      #{into_config_string(wifi, :scan_ssid)}
-      #{into_config_string(wifi, :priority)}
-      #{into_config_string(wifi, :pairwise)}
-      #{into_config_string(wifi, :group)}
-      #{into_config_string(wifi, :eap)}
-      #{into_config_string(wifi, :identity)}
-      #{into_config_string(wifi, :password)}
-      #{into_config_string(wifi, :phase1)}
-      #{into_config_string(wifi, :phase2)}
-    }
-    """
+    network_config([
+      into_config_string(wifi, :ssid),
+      into_config_string(wifi, :key_mgmt),
+      into_config_string(wifi, :scan_ssid),
+      into_config_string(wifi, :priority),
+      into_config_string(wifi, :pairwise),
+      into_config_string(wifi, :group),
+      into_config_string(wifi, :eap),
+      into_config_string(wifi, :identity),
+      into_config_string(wifi, :password),
+      into_config_string(wifi, :phase1),
+      into_config_string(wifi, :phase2)
+    ])
   end
 
   defp into_wifi_network_config(wifi) do
-    """
-    network={
-    #{into_config_string(wifi, :ssid)}
-    #{into_config_string(wifi, :psk)}
-    #{into_config_string(wifi, :key_mgmt)}
-    #{into_config_string(wifi, :scan_ssid)}
-    #{into_config_string(wifi, :priority)}
-    }
-    """
+    network_config([
+      into_config_string(wifi, :ssid),
+      into_config_string(wifi, :psk),
+      into_config_string(wifi, :key_mgmt),
+      into_config_string(wifi, :scan_ssid),
+      into_config_string(wifi, :priority)
+    ])
   end
 
   defp into_config_string(wifi, opt_key) do
     case Map.get(wifi, opt_key) do
-      nil -> ""
+      nil -> nil
       opt -> wifi_opt_to_config_string(wifi, opt_key, opt)
     end
   end
@@ -223,5 +219,15 @@ defmodule VintageNet.Technology.WiFi do
   defp get_hostname do
     {:ok, hostname} = :inet.gethostname()
     to_string(hostname)
+  end
+
+  defp network_config(config) do
+    config =
+      Enum.map(config, fn
+        nil -> []
+        conf -> [conf, "\n"]
+      end)
+
+    ["network={", "\n", config, "}", "\n"]
   end
 end
