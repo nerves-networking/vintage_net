@@ -33,8 +33,6 @@ defmodule VintageNet.ConfigWiFiTest do
          ssid="testing"
          psk=1234567890123456789012345678901234567890123456789012345678901234
          key_mgmt=WPA-PSK
-
-
          }
          """}
       ],
@@ -81,8 +79,6 @@ defmodule VintageNet.ConfigWiFiTest do
          ssid="testing"
          psk=1EE0A473A954F61007E526365D4FDC056FE2A102ED2CE77D64492A9495B83030
          key_mgmt=WPA-PSK
-
-
          }
          """}
       ],
@@ -126,10 +122,7 @@ defmodule VintageNet.ConfigWiFiTest do
          country=00
          network={
          ssid="testing"
-
          key_mgmt=NONE
-
-
          }
          """}
       ],
@@ -225,7 +218,6 @@ defmodule VintageNet.ConfigWiFiTest do
          psk=1234567890123456789012345678901234567890123456789012345678901234
          key_mgmt=WPA-PSK
          scan_ssid=1
-
          }
          """}
       ],
@@ -244,7 +236,7 @@ defmodule VintageNet.ConfigWiFiTest do
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
-  test "create a EAP network" do
+  test "create a basic EAP network" do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
@@ -276,17 +268,16 @@ defmodule VintageNet.ConfigWiFiTest do
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
          country=00
          network={
-           ssid="testing"
-           key_mgmt=WPA-EAP
-           scan_ssid=1
-           
-           pairwise=CCMP TKIP
-           group=CCMP TKIP
-           eap=PEAP
-           identity=user1
-           password=supersecret
-           phase1=peapver=auto
-           phase2=MSCHAPV2
+         ssid="testing"
+         key_mgmt=WPA-EAP
+         scan_ssid=1
+         pairwise=CCMP TKIP
+         group=CCMP TKIP
+         eap=PEAP
+         identity=user1
+         password=supersecret
+         phase1=peapver=auto
+         phase2=MSCHAPV2
          }
          """}
       ],
@@ -352,21 +343,18 @@ defmodule VintageNet.ConfigWiFiTest do
          ssid="first_priority"
          psk=1234567890123456789012345678901234567890123456789012345678901234
          key_mgmt=WPA-PSK
-
          priority=100
          }
          network={
          ssid="second_priority"
          psk=1234567890123456789012345678901234567890123456789012345678901234
          key_mgmt=WPA-PSK
-
          priority=1
          }
          network={
          ssid="third_priority"
          psk=1234567890123456789012345678901234567890123456789012345678901234
          key_mgmt=NONE
-
          priority=0
          }
          """}
