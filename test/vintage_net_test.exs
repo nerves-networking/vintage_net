@@ -2,6 +2,8 @@ defmodule VintageNetTest do
   use VintageNetTest.Case
   doctest VintageNet
 
+  import ExUnit.CaptureIO
+
   setup_all do
     Application.stop(:vintage_net)
     Application.start(:vintage_net)
@@ -24,6 +26,13 @@ defmodule VintageNetTest do
     assert [] == VintageNet.configured_interfaces()
   end
 
+  test "info does something" do
+    output = capture_io(&VintageNet.info/0)
+
+    assert output =~ "All interfaces"
+    assert output =~ "Available interfaces"
+  end
+
   test "verify system works", context do
     # create files here at some tmp place
     in_tmp(context.test, fn ->
@@ -33,7 +42,7 @@ defmodule VintageNetTest do
       File.touch!("sbin/ifup")
       File.touch!("sbin/ifdown")
       File.touch!("sbin/ip")
-      assert :ok == VintageNet.verify_system(:ethernet, opts)
+      assert :ok == VintageNet.verify_system(opts)
     end)
   end
 
@@ -41,7 +50,7 @@ defmodule VintageNetTest do
     Enum.map(opts, fn kv -> prefix_path(kv, prefix) end)
   end
 
-  def prefix_path({key, path}, prefix) do
+  defp prefix_path({key, path}, prefix) do
     key_str = to_string(key)
 
     if String.starts_with?(key_str, "bin_") do

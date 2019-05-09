@@ -13,8 +13,9 @@ defmodule VintageNet do
   * Internet connection monitoring and failure detection (currently slow and
     simplistic)
 
-  See [github.com/nerves-networking/vintage_net](https://github.com/nerves-networking/vintage_net) for
-  more information.
+  See
+  [github.com/nerves-networking/vintage_net](https://github.com/nerves-networking/vintage_net)
+  for more information.
   """
   alias VintageNet.{Interface, Persistence, PropertyTable}
 
@@ -105,7 +106,8 @@ defmodule VintageNet do
   @doc """
   Get a list of all properties matching the specified prefix
 
-  To get a list of all known properties and their values, call `VintageNet.get_by_prefix([])`
+  To get a list of all known properties and their values, call
+  `VintageNet.get_by_prefix([])`
   """
   @spec get_by_prefix(PropertyTable.property()) :: [
           {PropertyTable.property(), PropertyTable.value()}
@@ -158,48 +160,55 @@ defmodule VintageNet do
   end
 
   @doc """
+  Print the current network status
+  """
+  @spec info() :: :ok
+  def info() do
+    version = :application.loaded_applications() |> List.keyfind(:vintage_net, 0) |> elem(2)
+
+    IO.write("""
+    VintageNet #{version}
+
+    All interfaces:       #{inspect(all_interfaces())}
+    Available interfaces: #{inspect(get(["available_interfaces"]))}
+    """)
+
+    ifnames = configured_interfaces()
+
+    if ifnames == [] do
+      IO.puts("\nNo configured interfaces")
+    else
+      for ifname <- configured_interfaces() do
+        IO.puts("\nInterface #{ifname}")
+        print_if_attribute(ifname, "type", "Type")
+        print_if_attribute(ifname, "present", "Present")
+        print_if_attribute(ifname, "state", "State")
+        print_if_attribute(ifname, "connection", "Connection")
+      end
+    end
+
+    :ok
+  end
+
+  defp print_if_attribute(ifname, name, print_name) do
+    value = get(["interface", ifname, name])
+    IO.puts("  #{print_name}: #{inspect(value)}")
+  end
+
+  @doc """
   Check that the system has the required programs installed
 
-  TODO!!!!
+  NOTE: This isn't completely implemented yet!
   """
-  @spec verify_system([atom()] | atom(), keyword()) :: :ok | {:error, any()}
-  def verify_system(types, opts) when is_list(types) do
-    # TODO...Fix with whatever the right Enum thing is.
-    with :ok <- verify_system(:ethernet, opts) do
-      :ok
-    end
-  end
+  @spec verify_system(keyword() | nil) :: :ok | {:error, String.t()}
+  def verify_system(opts \\ nil) do
+    opts = opts || Application.get_all_env(:vintage_net)
 
-  def verify_system(:ethernet, opts) do
-    with :ok <- check_program(opts[:bin_ifup]) do
-      :ok
+    for ifname <- configured_interfaces() do
+      type = get(["interface", ifname, "type"])
+      apply(type, :check_system, [opts])
     end
-  end
-
-  def verify_system(:wifi, opts) do
-    with :ok <- check_program(opts[:bin_ifup]) do
-      :ok
-    end
-  end
-
-  def verify_system(:wifi_ap, opts) do
-    with :ok <- check_program(opts[:bin_ifup]) do
-      :ok
-    end
-  end
-
-  def verify_system(:mobile, opts) do
-    with :ok <- check_program(opts[:bin_ifup]) do
-      :ok
-    end
-  end
-
-  defp check_program(path) do
-    if File.exists?(path) do
-      :ok
-    else
-      {:error, "Can't find #{path}"}
-    end
+    |> Enum.find(:ok, fn rc -> rc != :ok end)
   end
 
   defp maybe_start_interface(ifname) do
