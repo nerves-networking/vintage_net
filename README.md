@@ -69,7 +69,7 @@ want to add [Toolshed](https://github.com/fhunleth/toolshed) to your dependencie
 so that you can have more familiar looking tools like `ifconfig` and `ping` at
 the IEx prompt.
 
-## Application configuration
+## Configuration
 
 `VintageNet` has many application configuration keys. Most defaults are fine. At
 a minimum, you'll want to specify a default configuration and default regulatory domain if using WiFi. In your main `config.exs`,
@@ -120,7 +120,7 @@ persistence_dir    | Path to a directory for storing persisted configurations
 internet_host      | IP address for host to `ping` to check for Internet connectivity
 regulatory_domain  | ISO 3166-1 alpha-2 country (`00` for global, `US`, etc.)
 
-## Configuration
+## Network interface configuration
 
 `VintageNet` supports several network technologies out of the box and
 third-party libraries can provide more via the `VintageNet.Technology` behaviour.
