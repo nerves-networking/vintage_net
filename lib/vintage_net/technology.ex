@@ -29,6 +29,14 @@ defmodule VintageNet.Technology do
   @callback ioctl(VintageNet.ifname(), command :: atom(), args :: list()) ::
               :ok | {:ok, any()} | {:error, any()}
 
+  @doc """
+  Check that the system has all of the required programs for this technology
+
+  This is intended to help identify missing programs without configuring
+  a network.
+  """
+  @callback check_system(opts :: keyword()) :: :ok | {:error, String.t()}
+
   @spec to_raw_config!(atom(), map()) :: RawConfig.t()
   def to_raw_config!(implementation, config) do
     case implementation.to_raw_config(config) do

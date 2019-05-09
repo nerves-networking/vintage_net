@@ -41,6 +41,12 @@ defmodule VintageNet.Technology.Mobile do
     {:error, :unsupported}
   end
 
+  @impl true
+  def check_system(_opts) do
+    # TODO
+    :ok
+  end
+
   defp make_pppd_args(pppd, chat_bin) do
     [
       "connect",

@@ -93,6 +93,12 @@ defmodule VintageNet.Technology.WiFi do
     {:error, :unsupported}
   end
 
+  @impl true
+  def check_system(_opts) do
+    # TODO
+    :ok
+  end
+
   defp wifi_to_supplicant_contents(wifi, control_interface_path, regulatory_domain) do
     [
       "ctrl_interface=#{control_interface_path}",

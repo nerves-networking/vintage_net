@@ -21,4 +21,7 @@ defmodule VintageNet.Technology.Null do
   def ioctl(_ifname, _command, _args) do
     {:error, :unsupported}
   end
+
+  @impl true
+  def check_system(_opts), do: :ok
 end
