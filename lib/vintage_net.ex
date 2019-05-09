@@ -14,7 +14,7 @@ defmodule VintageNet do
   @spec get_interfaces() :: [ifname()]
   def get_interfaces() do
     for {[_interface, ifname | _rest], _value} <-
-          PropertyTable.get_by_prefix(VintageNet, ["interface"]) do
+          get_by_prefix(["interface"]) do
       ifname
     end
     |> Enum.uniq()
@@ -60,6 +60,50 @@ defmodule VintageNet do
       {:ok, _raw_config} -> true
       _ -> false
     end
+  end
+
+  @doc """
+  Get the current value of a network property
+
+  See `get_by_prefix/1` to get some or all properties.
+  """
+  @spec get(PropertyTable.property(), PropertyTable.value()) :: PropertyTable.value()
+  def get(name, default \\ nil) do
+    PropertyTable.get(VintageNet, name, default)
+  end
+
+  @doc """
+  Get a list of all properties matching the specified prefix
+
+  To get a list of all known properties and their values, call `VintageNet.get_by_prefix([])`
+  """
+  @spec get_by_prefix(PropertyTable.property()) :: [
+          {PropertyTable.property(), PropertyTable.value()}
+        ]
+  def get_by_prefix(prefix) do
+    PropertyTable.get_by_prefix(VintageNet, prefix)
+  end
+
+  @doc """
+  Subscribe to receive property change messages
+
+  Messages have the form:
+
+  ```
+  {VintageNet, property_name, old_value, new_value, metadata}
+  ```
+  """
+  @spec subscribe(PropertyTable.property()) :: :ok
+  def subscribe(name) do
+    PropertyTable.subscribe(VintageNet, name)
+  end
+
+  @doc """
+  Stop subscribing to property change messages
+  """
+  @spec unsubscribe(PropertyTable.property()) :: :ok
+  def unsubscribe(name) do
+    PropertyTable.unsubscribe(VintageNet, name)
   end
 
   @doc """

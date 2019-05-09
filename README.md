@@ -175,13 +175,13 @@ specified using maps. The following sections so examples:
 
 ## Properties
 
-Network interface status is retrieved from `VintageNet`'s `PropertyTable`:
+`VintageNet` maintains a key/value store for retrieving information on networking information:
 
 ```elixir
-iex> PropertyTable.get(VintageNet, ["interface", "eth0", "connection"])
+iex> VintageNet.get(["interface", "eth0", "connection"])
 :internet
 
-iex> PropertyTable.get_by_prefix(VintageNet, [])
+iex> VintageNet.get_by_prefix([])
 [
   {["interface", "eth0", "connection"], :internet},
   {["interface", "eth0", "state"], "configured"},
@@ -192,17 +192,18 @@ iex> PropertyTable.get_by_prefix(VintageNet, [])
 ]
 ```
 
-You can also subscribe to changes in one item or to a prefix:
+You can also subscribe to keys and receive a message every time it or one
+its child keys changes:
 
 ```elixir
-iex> PropertyTable.subscribe(VintageNet, ["interface", "eth0"])
+iex> VintageNet.subscribe(["interface", "eth0"])
 :ok
 
 iex> flush
 {VintageNet, ["interface", "eth0", "state"], "configuring", "configured", %{}}
 ```
 
-The message format is `{VintageNet, property_name, old_value, new_value,
+The message format is `{VintageNet, name, old_value, new_value,
 metadata}`
 
 ### Global properties

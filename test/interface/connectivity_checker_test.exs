@@ -7,7 +7,7 @@ defmodule VintageNet.Interface.ConnectivityChecker.Test do
     start_supervised!({ConnectivityChecker, "disabled_interface"})
 
     property = ["interface", "disabled_interface", "connection"]
-    VintageNet.PropertyTable.subscribe(VintageNet, property)
+    VintageNet.subscribe(property)
 
     assert_receive {VintageNet, property, _old_value, :disabled, _meta}, 1_000
   end
@@ -17,7 +17,7 @@ defmodule VintageNet.Interface.ConnectivityChecker.Test do
     start_supervised!({ConnectivityChecker, ifname})
 
     property = ["interface", ifname, "connection"]
-    VintageNet.PropertyTable.subscribe(VintageNet, property)
+    VintageNet.subscribe(property)
 
     assert_receive {VintageNet, property, _old_value, :internet, _meta}, 1_000
   end
