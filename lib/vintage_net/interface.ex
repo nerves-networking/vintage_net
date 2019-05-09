@@ -140,6 +140,8 @@ defmodule VintageNet.Interface do
     initial_data = %State{ifname: ifname, config: null_raw_config(ifname)}
     update_properties(:configured, initial_data)
 
+    VintageNet.subscribe(["interface", ifname, "present"])
+
     actions =
       case load_config(ifname) do
         {:ok, saved_raw_config} ->
@@ -363,22 +365,33 @@ defmodule VintageNet.Interface do
         :info,
         {:commands_done, :ok},
         :reconfiguring,
-        %State{config: config, next_config: new_config} = data
+        %State{config: old_config, next_config: new_config} = data
       ) do
     # TODO
-    _ = Logger.debug(":reconfiguring -> done success")
-    rm(config.cleanup_files)
-    CommandRunner.remove_files(config.files)
-    CommandRunner.create_files(new_config.files)
-    new_data = run_commands(data, new_config.up_cmds)
-    new_data = %{new_data | config: new_config, next_config: nil}
+    _ = Logger.debug("#{data.ifname}:reconfiguring -> cleanup success")
+    rm(old_config.cleanup_files)
+    CommandRunner.remove_files(old_config.files)
 
-    action = [
-      {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
-    ]
+    data = %{data | config: new_config, next_config: nil}
 
-    update_properties(:configuring, new_data)
-    {:next_state, :configuring, new_data, action}
+    if interface_available?(data) do
+      rm(new_config.cleanup_files)
+      CommandRunner.create_files(new_config.files)
+      new_data = run_commands(data, new_config.up_cmds)
+
+      actions = [
+        {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
+      ]
+
+      update_properties(:configuring, new_data)
+      {:next_state, :configuring, new_data, actions}
+    else
+      {new_data, actions} = reply_to_waiters(data)
+      new_data = %{new_data | command_runner: nil}
+      actions = [{:state_timeout, new_config.retry_millis, :retry_timeout} | actions]
+      update_properties(:retrying, new_data)
+      {:next_state, :retrying, new_data, actions}
+    end
   end
 
   @impl true
@@ -386,22 +399,33 @@ defmodule VintageNet.Interface do
         :info,
         {:commands_done, {:error, _reason}},
         :reconfiguring,
-        %State{config: config, next_config: new_config} = data
+        %State{config: old_config, next_config: new_config} = data
       ) do
     # TODO
     _ = Logger.debug(":reconfiguring -> done error")
-    rm(config.cleanup_files)
-    CommandRunner.remove_files(config.files)
-    CommandRunner.create_files(new_config.files)
-    new_data = run_commands(data, new_config.up_cmds)
-    new_data = %{new_data | config: new_config, next_config: nil}
+    rm(old_config.cleanup_files)
+    CommandRunner.remove_files(old_config.files)
 
-    action = [
-      {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
-    ]
+    data = %{data | config: new_config, next_config: nil}
 
-    update_properties(:configuring, new_data)
-    {:next_state, :configuring, new_data, action}
+    if interface_available?(data) do
+      rm(new_config.cleanup_files)
+      CommandRunner.create_files(new_config.files)
+      new_data = run_commands(data, new_config.up_cmds)
+
+      actions = [
+        {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
+      ]
+
+      update_properties(:configuring, new_data)
+      {:next_state, :configuring, new_data, actions}
+    else
+      {new_data, actions} = reply_to_waiters(data)
+      new_data = %{new_data | command_runner: nil}
+      actions = [{:state_timeout, new_config.retry_millis, :retry_timeout} | actions]
+      update_properties(:retrying, new_data)
+      {:next_state, :retrying, new_data, actions}
+    end
   end
 
   @impl true
@@ -409,22 +433,32 @@ defmodule VintageNet.Interface do
         :info,
         {:EXIT, pid, reason},
         :reconfiguring,
-        %State{config: config, command_runner: pid, next_config: new_config} = data
+        %State{config: old_config, command_runner: pid, next_config: new_config} = data
       ) do
     # TODO
     _ = Logger.debug(":reconfiguring -> done crash (#{inspect(reason)})")
-    rm(config.cleanup_files)
-    CommandRunner.remove_files(config.files)
-    CommandRunner.create_files(new_config.files)
-    new_data = run_commands(data, new_config.up_cmds)
-    new_data = %{new_data | config: new_config, next_config: nil}
+    rm(old_config.cleanup_files)
+    CommandRunner.remove_files(old_config.files)
+    data = %{data | config: new_config, next_config: nil}
 
-    action = [
-      {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
-    ]
+    if interface_available?(data) do
+      rm(new_config.cleanup_files)
+      CommandRunner.create_files(new_config.files)
+      new_data = run_commands(data, new_config.up_cmds)
 
-    update_properties(:configuring, new_data)
-    {:next_state, :configuring, new_data, action}
+      actions = [
+        {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
+      ]
+
+      update_properties(:configuring, new_data)
+      {:next_state, :configuring, new_data, actions}
+    else
+      {new_data, actions} = reply_to_waiters(data)
+      new_data = %{new_data | command_runner: nil}
+      actions = [{:state_timeout, new_config.retry_millis, :retry_timeout} | actions]
+      update_properties(:retrying, new_data)
+      {:next_state, :retrying, new_data, actions}
+    end
   end
 
   @impl true
@@ -432,51 +466,81 @@ defmodule VintageNet.Interface do
         :state_timeout,
         _event,
         :reconfiguring,
-        %State{command_runner: pid, config: config, next_config: new_config} = data
+        %State{command_runner: pid, config: old_config, next_config: new_config} = data
       ) do
     _ = Logger.debug(":reconfiguring -> recovering from hang")
     Process.exit(pid, :kill)
-    rm(config.cleanup_files)
-    CommandRunner.remove_files(config.files)
-    CommandRunner.create_files(new_config.files)
-    new_data = run_commands(data, new_config.up_cmds)
-    new_data = %{new_data | config: new_config, next_config: nil}
+    rm(old_config.cleanup_files)
+    CommandRunner.remove_files(old_config.files)
 
-    action = [
-      {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
-    ]
+    data = %{data | config: new_config, next_config: nil}
 
-    update_properties(:configuring, new_data)
-    {:next_state, :configuring, new_data, action}
+    if interface_available?(data) do
+      rm(new_config.cleanup_files)
+      CommandRunner.create_files(new_config.files)
+      new_data = run_commands(data, new_config.up_cmds)
+
+      actions = [
+        {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
+      ]
+
+      update_properties(:configuring, new_data)
+      {:next_state, :configuring, new_data, actions}
+    else
+      {new_data, actions} = reply_to_waiters(data)
+      new_data = %{new_data | command_runner: nil}
+      actions = [{:state_timeout, new_config.retry_millis, :retry_timeout} | actions]
+      update_properties(:retrying, new_data)
+      {:next_state, :retrying, new_data, actions}
+    end
   end
 
   # :retrying
 
   @impl true
-  def handle_event(:state_timeout, _event, :retrying, %State{config: config} = data) do
-    CommandRunner.create_files(config.files)
-    new_data = run_commands(data, config.up_cmds)
-    update_properties(:configuring, new_data)
+  def handle_event(:state_timeout, _event, :retrying, %State{config: new_config} = data) do
+    if interface_available?(data) do
+      rm(new_config.cleanup_files)
+      CommandRunner.create_files(new_config.files)
+      new_data = run_commands(data, new_config.up_cmds)
 
-    {:next_state, :configuring, new_data,
-     {:state_timeout, config.up_cmd_millis, :configuring_timeout}}
+      actions = [
+        {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
+      ]
+
+      update_properties(:configuring, new_data)
+      {:next_state, :configuring, new_data, actions}
+    else
+      {:keep_state, data, {:state_timeout, new_config.retry_millis, :retry_timeout}}
+    end
   end
 
   @impl true
   def handle_event(
         {:call, from},
-        {:configure, config},
+        {:configure, new_config},
         :retrying,
         data
       ) do
     _ = Logger.debug(":retrying -> configure")
 
-    CommandRunner.create_files(config.files)
-    new_data = run_commands(data, config.up_cmds)
-    update_properties(:configuring, new_data)
+    data = %{data | config: new_config}
+    actions = [{:reply, from, :ok}]
 
-    {:next_state, :configuring, new_data,
-     [{:reply, from, :ok}, {:state_timeout, config.up_cmd_millis, :configuring_timeout}]}
+    if interface_available?(data) do
+      rm(new_config.cleanup_files)
+      CommandRunner.create_files(new_config.files)
+      new_data = run_commands(data, new_config.up_cmds)
+
+      actions = [
+        {:state_timeout, new_config.up_cmd_millis, :configuring_timeout} | actions
+      ]
+
+      update_properties(:configuring, new_data)
+      {:next_state, :configuring, new_data, actions}
+    else
+      {:keep_state, data, [{:state_timeout, new_config.retry_millis, :retry_timeout} | actions]}
+    end
   end
 
   # Catch all event handlers
@@ -590,5 +654,9 @@ defmodule VintageNet.Interface do
       end)
 
     {%{data | inflight_ioctls: %{}}, actions}
+  end
+
+  defp interface_available?(data) do
+    not data.config.require_interface or VintageNet.get(["interface", data.ifname, "present"])
   end
 end

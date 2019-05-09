@@ -11,17 +11,20 @@ defmodule VintageNet.InterfaceTest do
     # Start clean slate for fresh InterfacesSupervisor each test.
     Application.stop(:vintage_net)
     Application.start(:vintage_net)
+
+    # Make the test interface available
+    VintageNet.PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
   end
 
-  defp start_and_configure(raw_config, sleep_millis \\ 0) do
-    {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(@ifname)
+  defp start_and_configure(raw_config, sleep_millis \\ 0, ifname \\ @ifname) do
+    {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(ifname)
     :ok = Interface.configure(raw_config)
 
     if sleep_millis do
       Process.sleep(sleep_millis)
     end
 
-    assert :ok == Interface.wait_until_configured(@ifname)
+    assert :ok == Interface.wait_until_configured(ifname)
   end
 
   test "starting null interface", context do
@@ -53,6 +56,52 @@ defmodule VintageNet.InterfaceTest do
       assert :ok == Interface.wait_until_configured(@ifname)
 
       refute File.exists?("testing")
+    end)
+  end
+
+  test "a missing interface won't run commands", context do
+    in_tmp(context.test, fn ->
+      # This assumes that ifname doesn't exist. Since we're requiring
+      # it to exist before doing anything, the file should never be
+      # created.
+      ifname = "some_non_existent_interface0"
+
+      raw_config = %RawConfig{
+        ifname: ifname,
+        type: @interface_type,
+        files: [{"testing", "Hello, world"}],
+        up_cmds: [],
+        down_cmds: []
+      }
+
+      {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(ifname)
+      :ok = Interface.configure(raw_config)
+
+      # It should be processed immediately. This is really just yielding
+      Process.sleep(10)
+
+      assert VintageNet.get(["interface", ifname, "type"]) == @interface_type
+      refute File.exists?("testing")
+    end)
+  end
+
+  test "a missing interface will run commands if not required", context do
+    in_tmp(context.test, fn ->
+      # This assumes that ifname doesn't exist.
+      ifname = "some_non_existent_interface0"
+
+      raw_config = %RawConfig{
+        ifname: ifname,
+        type: @interface_type,
+        require_interface: false,
+        files: [{"testing", "Hello, world"}],
+        up_cmds: [],
+        down_cmds: []
+      }
+
+      start_and_configure(raw_config, 0, ifname)
+
+      assert File.exists?("testing")
     end)
   end
 
@@ -192,10 +241,8 @@ defmodule VintageNet.InterfaceTest do
         ifname: @ifname,
         type: @interface_type,
         retry_millis: 10,
-        files: [],
         up_cmd_millis: 50,
-        up_cmds: [{:fun, crash_once}],
-        down_cmds: []
+        up_cmds: [{:fun, crash_once}]
       }
 
       start_and_configure(raw_config, 250)
@@ -212,8 +259,6 @@ defmodule VintageNet.InterfaceTest do
         type: @interface_type,
         retry_millis: 10,
         files: [{"hello", "world"}],
-        up_cmd_millis: 50,
-        up_cmds: [],
         down_cmd_millis: 50,
         down_cmds: [{:run, "sleep", ["100000"]}]
       }
@@ -267,9 +312,6 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
-        files: [],
-        up_cmds: [],
-        down_cmds: [],
         child_specs: [
           {Task,
            fn ->
@@ -313,7 +355,8 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: @interface_type
+        type: @interface_type,
+        require_interface: false
       }
 
       start_and_configure(raw_config, 250)
@@ -326,7 +369,8 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: @interface_type
+        type: @interface_type,
+        require_interface: false
       }
 
       start_and_configure(raw_config, 250)
@@ -339,12 +383,14 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config1 = %RawConfig{
         ifname: @ifname,
-        type: @interface_type
+        type: @interface_type,
+        require_interface: false
       }
 
       raw_config2 = %RawConfig{
         ifname: @ifname,
-        type: @interface_type
+        type: @interface_type,
+        require_interface: false
       }
 
       start_and_configure(raw_config1)
@@ -373,7 +419,8 @@ defmodule VintageNet.InterfaceTest do
 
       raw_config2 = %RawConfig{
         ifname: @ifname,
-        type: @interface_type
+        type: @interface_type,
+        require_interface: false
       }
 
       property = ["interface", @ifname, "state"]

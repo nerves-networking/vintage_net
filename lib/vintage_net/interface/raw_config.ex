@@ -10,6 +10,7 @@ defmodule VintageNet.Interface.RawConfig do
   * `ifname` - the name of the interface (e.g., `"eth0"`)
   * `type` - the type of network interface (aka the module that created the config)
   * `source_config` - the configuration that generated this one
+  * `require_interface` - require the interface to exist in the system before configuring
   * `retry_millis` - if bringing the interface up fails, wait this amount of time before retrying
   * `files` - a list of file path, content tuples
   * `up_cmd_millis` - the maximum amount of time to allow the up command list to take
@@ -28,6 +29,7 @@ defmodule VintageNet.Interface.RawConfig do
   defstruct ifname: nil,
             type: nil,
             source_config: %{},
+            require_interface: true,
             retry_millis: 30_000,
             files: [],
             child_specs: [],
@@ -41,6 +43,7 @@ defmodule VintageNet.Interface.RawConfig do
           ifname: VintageNet.ifname(),
           type: atom(),
           source_config: map(),
+          require_interface: boolean(),
           retry_millis: non_neg_integer(),
           files: [file_contents()],
           child_specs: [Supervisor.child_spec()],

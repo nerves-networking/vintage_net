@@ -12,7 +12,8 @@ defmodule VintageNet.Technology.Null do
      %RawConfig{
        ifname: ifname,
        type: __MODULE__,
-       source_config: %{type: __MODULE__}
+       source_config: %{type: __MODULE__},
+       require_interface: false
      }}
   end
 
