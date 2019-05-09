@@ -244,6 +244,67 @@ defmodule VintageNet.ConfigWiFiTest do
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
+  test "create a EAP network" do
+    input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        ssid: "testing",
+        mode: :client,
+        key_mgmt: :wpa_eap,
+        scan_ssid: 1,
+        pairwise: "CCMP TKIP",
+        group: "CCMP TKIP",
+        eap: "PEAP",
+        identity: "user1",
+        password: "supersecret",
+        phase1: "peapver=auto",
+        phase2: "MSCHAPV2"
+      },
+      ipv4: %{method: :dhcp},
+      hostname: "unit_test"
+    }
+
+    output = %RawConfig{
+      ifname: "wlan0",
+      type: VintageNet.Technology.WiFi,
+      source_config: input,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
+      files: [
+        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+         """
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
+         country=00
+         network={
+           ssid="testing"
+           key_mgmt=WPA-EAP
+           scan_ssid=1
+           
+           pairwise=CCMP TKIP
+           group=CCMP TKIP
+           eap=PEAP
+           identity=user1
+           password=supersecret
+           phase1=peapver=auto
+           phase2=MSCHAPV2
+         }
+         """}
+      ],
+      up_cmds: [
+        {:run, "/usr/sbin/wpa_supplicant",
+         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+      ],
+      down_cmds: [
+        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
+    }
+
+    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+  end
+
   test "create a multi-network WiFi configuration" do
     # All of the IPv4 settings need to be the same for this configuration. This is
     # probably "good enough". `nerves_network` does better, though.
