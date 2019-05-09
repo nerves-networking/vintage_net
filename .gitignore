@@ -23,7 +23,7 @@ erl_crash.dump
 vintage_net-*.tar
 
 # Test fixture temporaries
-/test/tmp
+/test_tmp
 
 # Don't put anything in the /priv directory. The Makefile "owns" it.
 /priv
