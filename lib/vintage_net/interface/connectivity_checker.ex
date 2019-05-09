@@ -15,7 +15,7 @@ defmodule VintageNet.Interface.ConnectivityChecker do
   @doc """
   Start the connectivity checker GenServer
   """
-  @spec start_link(String.t()) :: GenServer.on_start()
+  @spec start_link(VintageNet.ifname()) :: GenServer.on_start()
   def start_link(ifname) do
     GenServer.start_link(__MODULE__, ifname)
   end
