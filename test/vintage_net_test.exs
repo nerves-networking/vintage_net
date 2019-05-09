@@ -6,6 +6,19 @@ defmodule VintageNetTest do
     assert {:error, :type_missing} == VintageNet.configure("eth0", %{})
   end
 
+  test "interfaces exist" do
+    interfaces = VintageNet.all_interfaces()
+
+    # The loopback interface always exists, so check for it
+    assert interfaces != []
+
+    assert Enum.any?(interfaces, &String.starts_with?(&1, "lo"))
+  end
+
+  test "no interfaces are configured when testing" do
+    assert [] == VintageNet.configured_interfaces()
+  end
+
   test "verify system works", context do
     # create files here at some tmp place
     in_tmp(context.test, fn ->

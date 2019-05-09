@@ -1,23 +1,53 @@
 defmodule VintageNet do
   @moduledoc """
-  VintageNet configures network interfaces using Linux utilities
+  `VintageNet` is network configuration library built specifically for [Nerves
+  Project](https://nerves-project.org) devices. It has the following features:
 
+  * Ethernet and WiFi support included. Extendible to other technologies
+  * Default configurations specified in your Application config
+  * Runtime updates to configurations are persisted and applied on next boot (can
+    be disabled)
+  * Simple subscription to network status change events
+  * Connect to multiple networks at a time and prioritize which interfaces are
+    used (Ethernet over WiFi over cellular)
+  * Internet connection monitoring and failure detection (currently slow and
+    simplistic)
 
+  See [github.com/nerves-networking/vintage_net](https://github.com/nerves-networking/vintage_net) for
+  more information.
   """
   alias VintageNet.{Interface, Persistence, PropertyTable}
 
+  @typedoc """
+  A name for the network interface
+
+  Names depend on the device drivers and any software that may rename them.
+  Typical names on Nerves are:
+
+  * "eth0", "eth1", etc. for wired Ethernet interfaces
+  * "wlan0", etc. for WiFi interfaces
+  * "ppp0" for cellular modems
+  * "usb0" for gadget USB virtual Ethernet interfaces
+  """
   @type ifname :: String.t()
 
-  @doc """
-  Return a list of interface names that have been configured
-  """
-  @spec get_interfaces() :: [ifname()]
-  def get_interfaces() do
-    for {[_interface, ifname | _rest], _value} <-
+  @spec all_interfaces() :: [ifname()]
+  def all_interfaces() do
+    for {["interface", ifname, "present"], true} <-
           get_by_prefix(["interface"]) do
       ifname
     end
-    |> Enum.uniq()
+  end
+
+  @doc """
+  Return a list of configured interface
+  """
+  @spec configured_interfaces() :: [ifname()]
+  def configured_interfaces() do
+    for {["interface", ifname, "type"], _value} <-
+          get_by_prefix(["interface"]) do
+      ifname
+    end
   end
 
   @doc """
