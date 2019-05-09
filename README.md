@@ -118,54 +118,93 @@ resolvconf         | Path to `/etc/resolv.conf`
 persistence        | Module for persisting network configurations
 persistence_dir    | Path to a directory for storing persisted configurations
 internet_host      | IP address for host to `ping` to check for Internet connectivity
-regulatory_domain  | ISO 3166-1 alpha-2 country code
-
-## System Requirements
-
-TBD!!!
-
-- `ifupdown`
-- `udhcpc`
-- `ifconfig`
-- `run-parts`
-- `mktemp`
-
-### Additional Requirements for Access Point Mode
-
-- `hostapd`
-- `dnsmasq`
-
-### Additional Requirements for LTE
-
-#### Kernel modules (defconfig)
-
-- `CONFIG_PPP=m`
-- `CONFIG_PPP_BSDCOMP=m`
-- `CONFIG_PPP_DEFLATE=m`
-- `CONFIG_PPP_ASYNC=m`
-- `CONFIG_PPP_SYNC_TTY=m`
-- `CONFIG_USB_NET_CDC_NCM=m`
-- `CONFIG_USB_NET_HUAWEI_CDC_NCM=m`
-- `CONFIG_USB_SERIAL_OPTION=m`
-
-#### System deps
-
-- `pppd`
-- `mknod`
+regulatory_domain  | ISO 3166-1 alpha-2 country (`00` for global, `US`, etc.)
 
 ## Configuration
 
-`VintageNetwork` supports a variety of network technologies. Configurations are
-specified using maps. The following sections so examples:
+`VintageNet` supports several network technologies out of the box and
+third-party libraries can provide more via the `VintageNet.Technology` behaviour.
+
+Configurations are Elixir maps. These are specified in three places:
+
+1. The `vintage_net` application config (e.g., your `config.exs`)
+2. Locally saved configuration (see the `VintageNet.Persistence` behaviour for replacing the default)
+3. Calling `VintageNet.configure/2` to change the configuration at run-time
+
+When `vintage_net` starts, it applies saved configurations first and if any
+thing is wrong with those configs, it reverts to the application config. A
+good practice is to have safe defaults for all network interfaces in the application config.
+
+The only required key in the configuration maps is `:type`. All other keys follow from the type. `:type` should be set to a module that implements the `VintageNet.Technology` behaviour. The following are included:
+
+* `VintageNet.Technology.Ethernet` - Standard wired Ethernet
+* `VintageNet.Technology.WiFi` - Client configurations for 802.11 WiFi
+* `VintageNet.Technology.Mobile` - Cellular configurations (likely to be refactored to a separate library)
+* `VintageNet.Technology.Null` - An empty configuration useful for turning off a configuration
+
+The following sections describe the types in more detail.
 
 ### Wired Ethernet
 
+Wired Ethernet interfaces typically have names like `"eth0"`, `"eth1"`, etc. when using Nerves.
+
+Currently only IPv4 support using DHCP is supported:
+
 ```elixir
+%{type: VintageNet.Technology.Ethernet, ipv4: %{method: :dhcp}}
 ```
+
+For example, to set the configuration at runtime:
+
+```elixir
+iex> VintageNet.configure("eth0", %{type: VintageNet.Technology.Ethernet, ipv4: %{method: :dhcp}})
+:ok
+```
+
+Wired Ethernet connections are monitored for Internet connectivity. When internet-connected, they are preferred over all other network technologies even when the others provide default gateways.
 
 ### WiFi
 
+WiFi network interfaces typically have names like `"wlan0"` or `"wlan1"` when
+using Nerves. Most of the time, there's only one WiFi interface and its `"wlan0"`. Some WiFi adapters expose separate interfaces for 2.4 GHz and 5 GHz and they can be configured independently.
+
+WiFi configuration looks like this:
+
 ```elixir
+%{
+  type: VintageNet.Technology.WiFi,
+  wifi: %{
+    key_mgmt: :wpa_psk,
+    mode: :client,
+    psk: "a_passphrase_or_psk",
+    ssid: "my_network_ssid"
+  },
+  ipv4: %{method: :dhcp}
+}
+```
+
+The `:ipv4` key is the same as in Wired Ethernet and only DHCP is currently supported.
+
+The `:wifi` key has the following fields:
+
+* `:key_mgmt` - WiFi security mode (`:wpa_psk` for WPA2, `:none` for no password)
+* `:mode` - Only `:client` mode is supported
+* `:psk` - A WPA2 passphrase or the raw PSK. If a passphrase is passed in, it will be converted to a PSK and disgarded.
+* `:ssid` - The SSID for the network
+
+Here's an example:
+
+```elixir
+iex> VintageNet.configure("wlan0", %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        key_mgmt: :wpa_psk,
+        mode: :client,
+        psk: "a_passphrase_or_psk",
+        ssid: "my_network_ssid"
+      },
+      ipv4: %{method: :dhcp}
+    })
 ```
 
 ### LTE
@@ -242,3 +281,36 @@ Property     | Values           | Description
 Property     | Values           | Description
  ----------- | ---------------- | -----------
 `signal`     | 0 - 100          | This is a rough measure of signal strength from 0 (none) to 100 (all bars)
+
+## System Requirements
+
+TBD!!!
+
+* `ifupdown`
+* `udhcpc`
+* `ifconfig`
+* `run-parts`
+* `mktemp`
+
+### Additional Requirements for Access Point Mode
+
+* `hostapd`
+* `dnsmasq`
+
+### Additional Requirements for LTE
+
+#### Kernel modules (defconfig)
+
+* `CONFIG_PPP=m`
+* `CONFIG_PPP_BSDCOMP=m`
+* `CONFIG_PPP_DEFLATE=m`
+* `CONFIG_PPP_ASYNC=m`
+* `CONFIG_PPP_SYNC_TTY=m`
+* `CONFIG_USB_NET_CDC_NCM=m`
+* `CONFIG_USB_NET_HUAWEI_CDC_NCM=m`
+* `CONFIG_USB_SERIAL_OPTION=m`
+
+#### System deps
+
+* `pppd`
+* `mknod`
