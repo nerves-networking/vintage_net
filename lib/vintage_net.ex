@@ -178,16 +178,14 @@ defmodule VintageNet do
     if ifnames == [] do
       IO.puts("\nNo configured interfaces")
     else
-      for ifname <- configured_interfaces() do
+      Enum.each(ifnames, fn ifname ->
         IO.puts("\nInterface #{ifname}")
         print_if_attribute(ifname, "type", "Type")
         print_if_attribute(ifname, "present", "Present")
         print_if_attribute(ifname, "state", "State")
         print_if_attribute(ifname, "connection", "Connection")
-      end
+      end)
     end
-
-    :ok
   end
 
   defp print_if_attribute(ifname, name, print_name) do
