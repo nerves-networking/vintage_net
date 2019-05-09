@@ -102,6 +102,7 @@ defmodule VintageNet.Technology.WiFi do
 
   defp key_mgmt_to_string(key) when key in [:none, :wep], do: "NONE"
   defp key_mgmt_to_string(:wpa_psk), do: "WPA-PSK"
+  defp key_mgmt_to_string(:wpa_eap), do: "WPA-EAP"
 
   defp into_wifi_network_config(%{networks: networks}) do
     Enum.reduce(networks, "", fn network, config ->
@@ -116,6 +117,24 @@ defmodule VintageNet.Technology.WiFi do
     key_mgmt=NONE
     wep_tx_keyidx=0
     wep_key0=#{wifi.psk}
+    }
+    """
+  end
+
+  defp into_wifi_network_config(%{key_mgmt: :wpa_eap} = wifi) do
+    """
+    network={
+      #{into_config_string(wifi, :ssid)}
+      #{into_config_string(wifi, :key_mgmt)}
+      #{into_config_string(wifi, :scan_ssid)}
+      #{into_config_string(wifi, :priority)}
+      #{into_config_string(wifi, :pairwise)}
+      #{into_config_string(wifi, :group)}
+      #{into_config_string(wifi, :eap)}
+      #{into_config_string(wifi, :identity)}
+      #{into_config_string(wifi, :password)}
+      #{into_config_string(wifi, :phase1)}
+      #{into_config_string(wifi, :phase2)}
     }
     """
   end
@@ -158,6 +177,34 @@ defmodule VintageNet.Technology.WiFi do
 
   defp wifi_opt_to_config_string(_wifi, :priority, value) do
     "priority=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :identity, value) do
+    "identity=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :password, value) do
+    "password=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :phase1, value) do
+    "phase1=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :phase2, value) do
+    "phase2=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :pairwise, value) do
+    "pairwise=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :group, value) do
+    "group=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :eap, value) do
+    "eap=#{value}"
   end
 
   # TODO: Remove duplication with ethernet!!
