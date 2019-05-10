@@ -30,21 +30,19 @@ defmodule VintageNet.ConfigEthTest do
       type: VintageNet.Technology.Ethernet,
       ipv4: %{
         method: :static,
-        addresses: [
-          %{address: "192.168.0.2", netmask: "255.255.255.0", gateway: "192.168.0.1"}
-        ],
-        dns_servers: ["1.1.1.1", "8.8.8.8"],
-        search_domains: ["test.net"]
-      }
+        address: "192.168.0.2",
+        netmask: "255.255.255.0",
+        gateway: "192.168.0.1"
+      },
+      hostname: "unit_test"
     }
 
     interfaces_content = """
     iface eth0 inet static
       address 192.168.0.2
-      netmask 255.255.255.0
       gateway 192.168.0.1
-      dns_nameservers 1.1.1.1 8.8.8.8
-      dns-search test.net
+      netmask 255.255.255.0
+      hostname unit_test
     """
 
     output = %RawConfig{
@@ -60,7 +58,6 @@ defmodule VintageNet.ConfigEthTest do
       ]
     }
 
-    # TODO!!!!!
-    # assert {:ok, output} == Ethernet.to_raw_config("eth0"input, default_opts())
+    assert {:ok, output} == Ethernet.to_raw_config("eth0", input, default_opts())
   end
 end
