@@ -17,10 +17,8 @@ defmodule VintageNet.Technology.WiFi do
     wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
     control_interface_path = Path.join(tmpdir, "wpa_supplicant")
 
-    hostname = config[:hostname] || get_hostname()
-
     files = [
-      {network_interfaces_path, "iface #{ifname} inet dhcp" <> dhcp_options(hostname)},
+      {network_interfaces_path, config_to_interfaces_contents(ifname, config)},
       {wpa_supplicant_conf_path,
        wifi_to_supplicant_contents(wifi_config, control_interface_path, regulatory_domain)}
     ]
@@ -345,11 +343,51 @@ defmodule VintageNet.Technology.WiFi do
     "bssid_whitelist=#{value}"
   end
 
+  defp config_to_interfaces_contents(ifname, %{ipv4: %{method: :dhcp} = ipv4} = config) do
+    hostname = config[:hostname] || get_hostname()
+    "iface #{ifname} inet dhcp" <> dhcp_options(ipv4, hostname)
+  end
+
+  defp config_to_interfaces_contents(ifname, %{ipv4: %{method: :static} = ipv4} = config) do
+    hostname = config[:hostname] || get_hostname()
+    "iface #{ifname} inet static" <> static_options(ipv4, hostname)
+  end
+
+  # Default to DHCP
+  defp config_to_interfaces_contents(ifname, config) do
+    hostname = config[:hostname] || get_hostname()
+    "iface #{ifname} inet dhcp" <> dhcp_options(config, hostname)
+  end
+
   # TODO: Remove duplication with ethernet!!
-  defp dhcp_options(hostname) do
+  defp dhcp_options(_ipv4, hostname) do
     """
 
       script #{udhcpc_handler_path()}
+      hostname #{hostname}
+    """
+  end
+
+  defp static_options(ipv4, hostname) do
+    contents =
+      ipv4
+      |> Map.take([
+        :address,
+        :netmask,
+        :broadcast,
+        :metric,
+        :gateway,
+        :pointopoint,
+        :hwaddress,
+        :mtu,
+        :scope
+      ])
+      |> Enum.map(fn {option, value} -> "#{option} #{value}" end)
+      |> Enum.join("\n  ")
+
+    """
+
+      #{contents}
       hostname #{hostname}
     """
   end

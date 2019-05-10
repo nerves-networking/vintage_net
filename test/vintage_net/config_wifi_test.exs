@@ -954,4 +954,73 @@ defmodule VintageNet.ConfigWiFiTest do
 
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
   end
+
+  test "creates a static ip config" do
+    input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        ssid: "example ap",
+        psk: "very secret passphrase",
+        key_mgmt: :wpa_psk
+      },
+      ipv4: %{
+        method: :static,
+        address: "192.168.1.2",
+        netmask: "255.255.0.0",
+        broadcast: "192.168.1.255",
+        metric: "1000",
+        gateway: "192.168.1.1",
+        pointopoint: "192.168.1.100",
+        hwaddress: "e8:6a:64:63:16:30",
+        mtu: "1500",
+        scope: "global"
+      },
+      hostname: "unit_test"
+    }
+
+    output = %RawConfig{
+      ifname: "wlan0",
+      type: VintageNet.Technology.WiFi,
+      source_config: input,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
+      files: [
+        {"/tmp/vintage_net/network_interfaces.wlan0",
+         """
+         iface wlan0 inet static
+           address 192.168.1.2
+           broadcast 192.168.1.255
+           gateway 192.168.1.1
+           hwaddress e8:6a:64:63:16:30
+           metric 1000
+           mtu 1500
+           netmask 255.255.0.0
+           pointopoint 192.168.1.100
+           scope global
+           hostname unit_test
+         """},
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+         """
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
+         country=00
+         network={
+         ssid="example ap"
+         key_mgmt=WPA-PSK
+         psk=94A7360596213CEB96007A25A63FCBCF4D540314CEB636353C62A86632A6BD6E
+         }
+         """}
+      ],
+      up_cmds: [
+        {:run, "/usr/sbin/wpa_supplicant",
+         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+      ],
+      down_cmds: [
+        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
+    }
+
+    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+  end
 end
