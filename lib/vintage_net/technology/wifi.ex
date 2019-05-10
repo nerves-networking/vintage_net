@@ -3,6 +3,7 @@ defmodule VintageNet.Technology.WiFi do
 
   alias VintageNet.WiFi.{Scan, WPA2}
   alias VintageNet.Interface.RawConfig
+  alias VintageNet.IP.ConfigToInterfaces
 
   @impl true
   def to_raw_config(ifname, %{type: __MODULE__, wifi: wifi_config} = config, opts) do
@@ -18,7 +19,7 @@ defmodule VintageNet.Technology.WiFi do
     control_interface_path = Path.join(tmpdir, "wpa_supplicant")
 
     files = [
-      {network_interfaces_path, config_to_interfaces_contents(ifname, config)},
+      {network_interfaces_path, ConfigToInterfaces.config_to_interfaces_contents(ifname, config)},
       {wpa_supplicant_conf_path,
        wifi_to_supplicant_contents(wifi_config, control_interface_path, regulatory_domain)}
     ]
@@ -341,64 +342,6 @@ defmodule VintageNet.Technology.WiFi do
 
   defp wifi_opt_to_config_string(_wifi, :bssid_whitelist, value) do
     "bssid_whitelist=#{value}"
-  end
-
-  defp config_to_interfaces_contents(ifname, %{ipv4: %{method: :dhcp} = ipv4} = config) do
-    hostname = config[:hostname] || get_hostname()
-    "iface #{ifname} inet dhcp" <> dhcp_options(ipv4, hostname)
-  end
-
-  defp config_to_interfaces_contents(ifname, %{ipv4: %{method: :static} = ipv4} = config) do
-    hostname = config[:hostname] || get_hostname()
-    "iface #{ifname} inet static" <> static_options(ipv4, hostname)
-  end
-
-  # Default to DHCP
-  defp config_to_interfaces_contents(ifname, config) do
-    hostname = config[:hostname] || get_hostname()
-    "iface #{ifname} inet dhcp" <> dhcp_options(config, hostname)
-  end
-
-  # TODO: Remove duplication with ethernet!!
-  defp dhcp_options(_ipv4, hostname) do
-    """
-
-      script #{udhcpc_handler_path()}
-      hostname #{hostname}
-    """
-  end
-
-  defp static_options(ipv4, hostname) do
-    contents =
-      ipv4
-      |> Map.take([
-        :address,
-        :netmask,
-        :broadcast,
-        :metric,
-        :gateway,
-        :pointopoint,
-        :hwaddress,
-        :mtu,
-        :scope
-      ])
-      |> Enum.map(fn {option, value} -> "#{option} #{value}" end)
-      |> Enum.join("\n  ")
-
-    """
-
-      #{contents}
-      hostname #{hostname}
-    """
-  end
-
-  defp udhcpc_handler_path() do
-    Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])
-  end
-
-  defp get_hostname do
-    {:ok, hostname} = :inet.gethostname()
-    to_string(hostname)
   end
 
   defp network_config(config) do

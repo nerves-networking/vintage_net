@@ -2,6 +2,7 @@ defmodule VintageNet.Technology.Ethernet do
   @behaviour VintageNet.Technology
 
   alias VintageNet.Interface.RawConfig
+  alias VintageNet.IP.ConfigToInterfaces
 
   @impl true
   def to_raw_config(ifname, %{type: __MODULE__} = config, opts) do
@@ -11,15 +12,14 @@ defmodule VintageNet.Technology.Ethernet do
 
     network_interfaces_path = Path.join(tmpdir, "network_interfaces.#{ifname}")
 
-    hostname = config[:hostname] || get_hostname()
-
     {:ok,
      %RawConfig{
        ifname: ifname,
        type: __MODULE__,
        source_config: config,
        files: [
-         {network_interfaces_path, "iface #{ifname} inet dhcp" <> dhcp_options(hostname)}
+         {network_interfaces_path,
+          ConfigToInterfaces.config_to_interfaces_contents(ifname, config)}
        ],
        child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
        # ifup hangs forever until Ethernet is plugged in
@@ -32,14 +32,6 @@ defmodule VintageNet.Technology.Ethernet do
 
   def to_raw_config(_ifname, _config, _opts) do
     {:error, :bad_configuration}
-  end
-
-  defp dhcp_options(hostname) do
-    """
-
-      script #{udhcpc_handler_path()}
-      hostname #{hostname}
-    """
   end
 
   @impl true
@@ -61,14 +53,5 @@ defmodule VintageNet.Technology.Ethernet do
     else
       {:error, "Can't find #{path}"}
     end
-  end
-
-  defp udhcpc_handler_path() do
-    Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])
-  end
-
-  defp get_hostname do
-    {:ok, hostname} = :inet.gethostname()
-    to_string(hostname)
   end
 end
