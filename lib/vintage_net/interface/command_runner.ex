@@ -30,6 +30,11 @@ defmodule VintageNet.Interface.CommandRunner do
     end
   end
 
+  def run({:run_ignore_errors, command, args}) do
+    _ = MuonTrap.cmd(command, args)
+    :ok
+  end
+
   def run({:fun, fun}) do
     fun.()
   end

@@ -25,6 +25,7 @@ defmodule VintageNet.Technology.WiFi do
     ]
 
     up_cmds = [
+      {:run_ignore_errors, killall, ["-q", "wpa_supplicant"]},
       {:run, wpa_supplicant, ["-B", "-i", ifname, "-c", wpa_supplicant_conf_path, "-dd"]},
       {:run, ifup, ["-i", network_interfaces_path, ifname]}
     ]
@@ -154,7 +155,7 @@ defmodule VintageNet.Technology.WiFi do
       into_config_string(wifi, :mka_ckn),
       into_config_string(wifi, :mka_priority),
 
-      # EAP settings 
+      # EAP settings
       into_config_string(wifi, :identity),
       into_config_string(wifi, :anonymous_identity),
       into_config_string(wifi, :password),
