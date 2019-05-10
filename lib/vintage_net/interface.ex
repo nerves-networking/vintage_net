@@ -250,6 +250,26 @@ defmodule VintageNet.Interface do
     {:next_state, :retrying, new_data, actions}
   end
 
+  @impl true
+  def handle_event(
+        :info,
+        {VintageNet, ["interface", ifname, "present"], _old_value, nil, _meta},
+        :reconfiguring,
+        %State{ifname: ifname, command_runner: pid, config: config} = data
+      ) do
+    _ =
+      Logger.debug(
+        ":configuring -> interface disappeared: retrying after #{config.retry_millis} ms"
+      )
+
+    Process.exit(pid, :kill)
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | command_runner: nil}
+    actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
+    update_properties(:retrying, new_data)
+    {:next_state, :retrying, new_data, actions}
+  end
+
   # :configured
 
   def handle_event({:call, from}, :wait, :configured, %State{} = data) do
@@ -356,6 +376,27 @@ defmodule VintageNet.Interface do
         _ = Logger.debug(":configured -> ignoring process exit")
         {:keep_state, data}
     end
+  end
+
+  @impl true
+  def handle_event(
+        :info,
+        {VintageNet, ["interface", ifname, "present"], _old_value, nil, _meta},
+        :configured,
+        %State{ifname: ifname, config: config} = data
+      ) do
+    _ = Logger.debug(":configured -> interface disappeared")
+
+    {new_data, actions} = cancel_ioctls(data)
+
+    new_data = run_commands(new_data, config.down_cmds)
+
+    actions = [
+      {:state_timeout, config.down_cmd_millis, :unconfiguring_timeout} | actions
+    ]
+
+    update_properties(:reconfiguring, new_data)
+    {:next_state, :reconfiguring, %{new_data | next_config: config}, actions}
   end
 
   # :reconfiguring
@@ -517,6 +558,25 @@ defmodule VintageNet.Interface do
 
   @impl true
   def handle_event(
+        :info,
+        {VintageNet, ["interface", ifname, "present"], _old_value, true, _meta},
+        :retrying,
+        %State{ifname: ifname, config: new_config} = data
+      ) do
+    rm(new_config.cleanup_files)
+    CommandRunner.create_files(new_config.files)
+    new_data = run_commands(data, new_config.up_cmds)
+
+    actions = [
+      {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
+    ]
+
+    update_properties(:configuring, new_data)
+    {:next_state, :configuring, new_data, actions}
+  end
+
+  @impl true
+  def handle_event(
         {:call, from},
         {:configure, new_config},
         :retrying,
@@ -579,6 +639,17 @@ defmodule VintageNet.Interface do
   end
 
   @impl true
+  def handle_event(
+        :info,
+        {VintageNet, ["interface", ifname, "present"], _old_value, present, _meta},
+        other_state,
+        %State{ifname: ifname} = data
+      ) do
+    _ = Logger.debug("#{inspect(other_state)} -> interface #{ifname} is now #{inspect(present)}")
+    {:keep_state, data}
+  end
+
+  @impl true
   def terminate(_reason, _state, %{ifname: ifname}) do
     PropertyTable.clear(VintageNet, ["interface", ifname, "type"])
     PropertyTable.clear(VintageNet, ["interface", ifname, "state"])
@@ -626,7 +697,7 @@ defmodule VintageNet.Interface do
     config = data.config
 
     PropertyTable.put(VintageNet, ["interface", ifname, "type"], config.type)
-    PropertyTable.put(VintageNet, ["interface", ifname, "state"], to_string(state))
+    PropertyTable.put(VintageNet, ["interface", ifname, "state"], state)
   end
 
   defp run_ioctl(data, from, mfa) do

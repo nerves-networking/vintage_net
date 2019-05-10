@@ -41,9 +41,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
-        files: [{"testing", "Hello, world"}],
-        up_cmds: [],
-        down_cmds: []
+        files: [{"testing", "Hello, world"}]
       }
 
       start_and_configure(raw_config)
@@ -355,8 +353,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: @interface_type,
-        require_interface: false
+        type: @interface_type
       }
 
       start_and_configure(raw_config, 250)
@@ -369,8 +366,7 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: @interface_type,
-        require_interface: false
+        type: @interface_type
       }
 
       start_and_configure(raw_config, 250)
@@ -383,14 +379,12 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config1 = %RawConfig{
         ifname: @ifname,
-        type: @interface_type,
-        require_interface: false
+        type: @interface_type
       }
 
       raw_config2 = %RawConfig{
         ifname: @ifname,
-        type: @interface_type,
-        require_interface: false
+        type: @interface_type
       }
 
       start_and_configure(raw_config1)
@@ -419,8 +413,7 @@ defmodule VintageNet.InterfaceTest do
 
       raw_config2 = %RawConfig{
         ifname: @ifname,
-        type: @interface_type,
-        require_interface: false
+        type: @interface_type
       }
 
       property = ["interface", @ifname, "state"]
@@ -429,10 +422,38 @@ defmodule VintageNet.InterfaceTest do
       {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(@ifname)
       :ok = Interface.configure(raw_config1)
 
-      assert_receive {VintageNet, property, _old_value, "retrying", _meta}
+      assert_receive {VintageNet, property, _old_value, :retrying, _meta}
 
       assert :ok == Interface.configure(raw_config2)
       assert :ok == Interface.wait_until_configured(@ifname)
+    end)
+  end
+
+  test "interface disappearing stops interface", context do
+    in_tmp(context.test, fn ->
+      raw_config = %RawConfig{
+        ifname: @ifname,
+        type: @interface_type,
+        files: [{"testing", "Hello, world"}]
+      }
+
+      start_and_configure(raw_config)
+
+      assert File.exists?("testing")
+
+      # "remove" the interface
+      VintageNet.PropertyTable.clear(VintageNet, ["interface", @ifname, "present"])
+
+      Process.sleep(10)
+
+      refute File.exists?("testing")
+
+      # bring the interface back
+      VintageNet.PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
+
+      Process.sleep(10)
+
+      assert File.exists?("testing")
     end)
   end
 end
