@@ -1028,6 +1028,7 @@ defmodule VintageNet.ConfigWiFiTest do
          """}
       ],
       up_cmds: [
+        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
