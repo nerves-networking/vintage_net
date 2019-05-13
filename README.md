@@ -16,8 +16,8 @@ Project](https://nerves-project.org) devices. It has the following features:
 
 * Ethernet and WiFi support included. Extendible to other technologies
 * Default configurations specified in your Application config
-* Runtime updates to configurations are persisted and applied on next boot (can
-  be disabled)
+* Runtime updates to configurations are persisted and applied on next boot
+  (configurations are obfuscated by default to hide WiFi passphrases)
 * Simple subscription to network status change events
 * Connect to multiple networks at a time and prioritize which interfaces are
   used (Ethernet over WiFi over cellular)
@@ -117,6 +117,7 @@ udhcpc_handler     | Module for handling notifications from `udhcpc`
 resolvconf         | Path to `/etc/resolv.conf`
 persistence        | Module for persisting network configurations
 persistence_dir    | Path to a directory for storing persisted configurations
+persistence_secret | A 16-byte secret or an MFA for getting a secret
 internet_host      | IP address for host to `ping` to check for Internet connectivity
 regulatory_domain  | ISO 3166-1 alpha-2 country (`00` for global, `US`, etc.)
 
@@ -290,8 +291,7 @@ metadata}`
 
 Property               | Values           | Description
  --------------------- | ---------------- | -----------
-`available_interfaces` | `[eth0, ...]`    | The currently available network
-interfaces in priority order. E.g., the first one is used by default
+`available_interfaces` | `[eth0, ...]`    | Currently available network interfaces in priority order. E.g., the first one is used by default
 
 ### Common network interface properties
 

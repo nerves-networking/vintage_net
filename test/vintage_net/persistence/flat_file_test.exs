@@ -2,17 +2,17 @@ defmodule VintageNet.Persistence.FlatFileTest do
   use VintageNetTest.Case
   alias VintageNet.Persistence.FlatFile
 
+  @config %{
+    type: VintageNet.Technology.Ethernet,
+    ipv4: %{method: :dhcp},
+    hostname: "unit_test"
+  }
+
   test "saves and loads configurations", context do
     in_tmp(context.test, fn ->
-      config = %{
-        type: VintageNet.Technology.Ethernet,
-        ipv4: %{method: :dhcp},
-        hostname: "unit_test"
-      }
+      FlatFile.save("eth0", @config)
 
-      FlatFile.save("eth0", config)
-
-      assert {:ok, config} = FlatFile.load("eth0")
+      assert {:ok, @config} = FlatFile.load("eth0")
     end)
   end
 
@@ -24,36 +24,53 @@ defmodule VintageNet.Persistence.FlatFileTest do
 
   test "corrupt configurations return error", context do
     in_tmp(context.test, fn ->
-      config = %{
-        type: VintageNet.Technology.Ethernet,
-        ipv4: %{method: :dhcp},
-        hostname: "unit_test"
-      }
+      FlatFile.save("eth0", @config)
 
-      FlatFile.save("eth0", config)
-
-      <<_oops, contents::binary>> = File.read!("persistence/eth0")
-      File.write!("persistence/eth0", contents)
+      <<version, _oops, contents::binary>> = File.read!("persistence/eth0")
+      File.write!("persistence/eth0", [<<version>>, contents])
 
       assert {:error, _} = FlatFile.load("eth0")
     end)
   end
 
+  test "bad secrets return error", context do
+    in_tmp(context.test, fn ->
+      original_key = Application.get_env(:vintage_net, :persistence_secret)
+
+      FlatFile.save("eth0", @config)
+      Application.put_env(:vintage_net, :persistence_secret, "1234567890123456")
+      assert {:error, :decryption_failed} = FlatFile.load("eth0")
+
+      Application.put_env(:vintage_net, :persistence_secret, original_key)
+    end)
+  end
+
+  test "using an MFA for getting the secret key", context do
+    in_tmp(context.test, fn ->
+      original_key = Application.get_env(:vintage_net, :persistence_secret)
+
+      Application.put_env(:vintage_net, :persistence_secret, {__MODULE__, :get_secret, []})
+      FlatFile.save("eth0", @config)
+      assert {:ok, @config} = FlatFile.load("eth0")
+
+      Application.put_env(:vintage_net, :persistence_secret, original_key)
+      assert {:error, :decryption_failed} = FlatFile.load("eth0")
+    end)
+  end
+
+  def get_secret() do
+    "my_super_secret_"
+  end
+
   test "enumerates known interfaces", context do
     in_tmp(context.test, fn ->
-      config = %{
-        type: VintageNet.Technology.Ethernet,
-        ipv4: %{method: :dhcp},
-        hostname: "unit_test"
-      }
-
       assert [] == FlatFile.enumerate()
 
-      FlatFile.save("eth0", config)
+      FlatFile.save("eth0", @config)
 
       assert ["eth0"] == FlatFile.enumerate()
 
-      FlatFile.save("wlan0", config)
+      FlatFile.save("wlan0", @config)
 
       assert ["eth0", "wlan0"] == FlatFile.enumerate()
 

@@ -40,6 +40,7 @@ defmodule VintageNet.MixProject do
         resolvconf: "/etc/resolv.conf",
         persistence: VintageNet.Persistence.FlatFile,
         persistence_dir: "/root/vintage_net",
+        persistence_secret: "obfuscate_things",
         internet_host: "1.1.1.1",
         regulatory_domain: "00"
       ],
