@@ -16,24 +16,27 @@ defmodule VintageNet.Interface.ClassificationTest do
     assert Classification.to_type("something0") == :unknown
   end
 
-  test "disabled interfaces classify as disabled" do
-    assert Classification.compute_metric(
-             :ethernet,
-             :disabled,
-             Classification.default_prioritization()
-           )
+  test "disconnected interfaces classify as disabled" do
+    assert :disabled ==
+             Classification.compute_metric(
+               :ethernet,
+               :disconnected,
+               Classification.default_prioritization()
+             )
 
-    assert Classification.compute_metric(
-             :wifi,
-             :disabled,
-             Classification.default_prioritization()
-           )
+    assert :disabled ==
+             Classification.compute_metric(
+               :wifi,
+               :disconnected,
+               Classification.default_prioritization()
+             )
 
-    assert Classification.compute_metric(
-             :mobile,
-             :disabled,
-             Classification.default_prioritization()
-           )
+    assert :disabled ==
+             Classification.compute_metric(
+               :mobile,
+               :disconnected,
+               Classification.default_prioritization()
+             )
   end
 
   test "priorities go from wired to wireless to lte and other" do

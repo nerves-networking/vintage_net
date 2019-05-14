@@ -11,13 +11,13 @@ defmodule VintageNet.Interface.Classification do
   @typedoc """
   Interface connection status
 
+  * `:disconnected` - The interface doesn't exist or it's not connected
   * `:lan` - The interface is connected to the LAN, but may not be able
     reach the Internet
   * `:internet` - Packets going through the interface should be able to
     reach the Internet
-  * `:disabled` - Don't use this interface
   """
-  @type connection_status :: :lan | :internet | :disabled
+  @type connection_status :: :lan | :internet | :disconnected
 
   @typedoc """
   Prioritization for using default gateways

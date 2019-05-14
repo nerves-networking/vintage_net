@@ -3,13 +3,13 @@ defmodule VintageNet.Interface.ConnectivityChecker.Test do
 
   alias VintageNet.Interface.ConnectivityChecker
 
-  test "disabled interface" do
-    start_supervised!({ConnectivityChecker, "disabled_interface"})
+  test "disconnected interface" do
+    start_supervised!({ConnectivityChecker, "disconnected_interface"})
 
-    property = ["interface", "disabled_interface", "connection"]
+    property = ["interface", "disconnected_interface", "connection"]
     VintageNet.subscribe(property)
 
-    assert_receive {VintageNet, property, _old_value, :disabled, _meta}, 1_000
+    assert_receive {VintageNet, property, _old_value, :disconnected, _meta}, 1_000
   end
 
   test "internet connected interface" do
