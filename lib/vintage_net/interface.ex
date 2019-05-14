@@ -184,8 +184,7 @@ defmodule VintageNet.Interface do
 
   @impl true
   def handle_event(:info, {:commands_done, :ok}, :configuring, %State{} = data) do
-    # TODO
-    _ = Logger.debug(":configuring -> done success")
+    # _ = Logger.debug(":configuring -> done success")
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
 
@@ -273,7 +272,7 @@ defmodule VintageNet.Interface do
   # :configured
 
   def handle_event({:call, from}, :wait, :configured, %State{} = data) do
-    _ = Logger.debug(":configured -> wait (return immediately)")
+    # _ = Logger.debug(":configured -> wait (return immediately)")
     {:keep_state, data, {:reply, from, :ok}}
   end
 
@@ -284,7 +283,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{config: old_config} = data
       ) do
-    _ = Logger.debug(":configured -> internal configure")
+    # _ = Logger.debug(":configured -> internal configure")
 
     {new_data, actions} = cancel_ioctls(data)
 
@@ -305,7 +304,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{config: old_config} = data
       ) do
-    _ = Logger.debug(":configured -> configure")
+    # _ = Logger.debug(":configured -> configure")
 
     {new_data, actions} = cancel_ioctls(data)
     new_data = run_commands(new_data, old_config.down_cmds)
@@ -326,7 +325,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{} = data
       ) do
-    _ = Logger.debug(":configured -> run ioctl")
+    # _ = Logger.debug(":configured -> run ioctl")
 
     # Delegate the ioctl to the technology
     mfa = {data.config.type, :ioctl, [data.ifname, command, args]}
@@ -342,8 +341,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{inflight_ioctls: inflight} = data
       ) do
-    # TODO
-    _ = Logger.debug(":configured -> ioctl done")
+    # _ = Logger.debug(":configured -> ioctl done")
 
     {{from, _mfa}, new_inflight} = Map.pop(inflight, ioctl_pid)
     action = {:reply, from, result}
@@ -373,7 +371,7 @@ defmodule VintageNet.Interface do
         {:keep_state, new_data, action}
 
       {nil, _} ->
-        _ = Logger.debug(":configured -> ignoring process exit")
+        # _ = Logger.debug(":configured -> ignoring process exit")
         {:keep_state, data}
     end
   end
@@ -409,7 +407,7 @@ defmodule VintageNet.Interface do
         %State{config: old_config, next_config: new_config} = data
       ) do
     # TODO
-    _ = Logger.debug("#{data.ifname}:reconfiguring -> cleanup success")
+    # _ = Logger.debug("#{data.ifname}:reconfiguring -> cleanup success")
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
 
@@ -582,7 +580,7 @@ defmodule VintageNet.Interface do
         :retrying,
         data
       ) do
-    _ = Logger.debug(":retrying -> configure")
+    # _ = Logger.debug(":retrying -> configure")
 
     data = %{data | config: new_config}
     actions = [{:reply, from, :ok}]
@@ -605,9 +603,9 @@ defmodule VintageNet.Interface do
 
   # Catch all event handlers
   @impl true
-  def handle_event(:info, {:EXIT, _pid, _reason}, state, data) do
+  def handle_event(:info, {:EXIT, _pid, _reason}, _state, data) do
     # Ignore latent or expected command runner and ioctl exits
-    _ = Logger.debug("#{inspect(state)} -> process exit (ignoring)")
+    # _ = Logger.debug("#{inspect(state)} -> process exit (ignoring)")
     {:keep_state, data}
   end
 
@@ -615,10 +613,10 @@ defmodule VintageNet.Interface do
   def handle_event(
         {:call, from},
         :wait,
-        other_state,
+        _other_state,
         %State{waiters: waiters} = data
       ) do
-    _ = Logger.debug("#{inspect(other_state)} -> wait")
+    # _ = Logger.debug("#{inspect(other_state)} -> wait")
     {:keep_state, %{data | waiters: [from | waiters]}}
   end
 
@@ -667,9 +665,7 @@ defmodule VintageNet.Interface do
   end
 
   defp run_commands_and_report(commands, interface_pid) do
-    _ = Logger.debug("Running commands: #{inspect(commands)}")
     result = CommandRunner.run(commands)
-    _ = Logger.debug("Done. Sending response")
     send(interface_pid, {:commands_done, result})
   end
 
@@ -685,7 +681,7 @@ defmodule VintageNet.Interface do
 
     RouteManager.clear_route(ifname)
 
-    # TODO!!!
+    # More?
   end
 
   defp rm(files) do
@@ -710,10 +706,8 @@ defmodule VintageNet.Interface do
     %{data | inflight_ioctls: new_inflight}
   end
 
-  defp run_ioctl_and_report({module, function_name, args} = mfa, interface_pid) do
-    _ = Logger.debug("Running ioctl: #{inspect(mfa)}")
+  defp run_ioctl_and_report({module, function_name, args}, interface_pid) do
     result = apply(module, function_name, args)
-    _ = Logger.debug("Done. Sending response")
     send(interface_pid, {:ioctl_done, self(), result})
   end
 

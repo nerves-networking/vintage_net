@@ -3,10 +3,16 @@ defmodule VintageNetTest do
   doctest VintageNet
 
   import ExUnit.CaptureIO
+  import ExUnit.CaptureLog
 
   setup_all do
-    Application.stop(:vintage_net)
-    Application.start(:vintage_net)
+    # Capture Application exited logs
+    capture_log(fn ->
+      Application.stop(:vintage_net)
+      Application.start(:vintage_net)
+    end)
+
+    :ok
   end
 
   test "configure fails on bad technologies" do

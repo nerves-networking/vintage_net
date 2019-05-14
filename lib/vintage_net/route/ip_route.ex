@@ -20,13 +20,6 @@ defmodule VintageNet.Route.IPRoute do
   def add_default_route(ifname, route, metric, table_index) do
     table_index_string = table_index_to_string(table_index)
 
-    _ =
-      Logger.debug(
-        "ip route add default table #{table_index_string} metric #{metric} via #{inspect(route)} dev #{
-          ifname
-        }"
-      )
-
     ip_cmd([
       "route",
       "add",
@@ -56,13 +49,6 @@ defmodule VintageNet.Route.IPRoute do
     subnet = Calculator.to_subnet(ip, subnet_bits)
     subnet_string = ip_to_string(subnet) <> "/" <> to_string(subnet_bits)
 
-    _ =
-      Logger.debug(
-        "ip route add #{subnet_string} metric #{metric} dev #{ifname} scope link src #{
-          inspect(ip)
-        }"
-      )
-
     ip_cmd([
       "route",
       "add",
@@ -84,7 +70,6 @@ defmodule VintageNet.Route.IPRoute do
   @spec add_rule(:inet.ip_address(), Calculator.table_index()) :: :ok | {:error, any()}
   def add_rule(ip_address, table_index) do
     table_index_string = table_index_to_string(table_index)
-    _ = Logger.debug("ip rule add from #{inspect(ip_address)} lookup #{table_index_string}")
 
     ip_cmd(["rule", "add", "from", ip_to_string(ip_address), "lookup", table_index_string])
   end
@@ -123,15 +108,12 @@ defmodule VintageNet.Route.IPRoute do
 
   @spec clear_a_route() :: :ok | {:error, any()}
   def clear_a_route() do
-    _ = Logger.debug("ip route del default")
-
     ip_cmd(["route", "del", "default"])
   end
 
   @spec clear_a_route(VintageNet.ifname(), Calculator.table_index()) :: :ok | {:error, any()}
   def clear_a_route(ifname, table_index \\ :main) do
     table_index_string = table_index_to_string(table_index)
-    _ = Logger.debug("ip route del default dev #{ifname} table #{table_index_string}")
     ip_cmd(["route", "del", "default", "dev", ifname, "table", table_index_string])
   end
 
@@ -146,20 +128,17 @@ defmodule VintageNet.Route.IPRoute do
     subnet = Calculator.to_subnet(ip, subnet_bits)
     subnet_string = ip_to_string(subnet) <> "/" <> to_string(subnet_bits)
 
-    _ = Logger.debug("ip route del #{subnet_string} metric #{metric} dev #{ifname} scope link")
     ip_cmd(["route", "del", subnet_string, "metric", "#{metric}", "dev", ifname, "scope", "link"])
   end
 
   @spec clear_a_local_route(VintageNet.ifname()) :: :ok | {:error, any()}
   def clear_a_local_route(ifname) do
-    _ = Logger.debug("ip route del dev #{ifname} scope link")
     ip_cmd(["route", "del", "dev", ifname, "scope", "link"])
   end
 
   @spec clear_a_rule(Calculator.table_index()) :: :ok | {:error, any()}
   def clear_a_rule(table_index) do
     table_index_string = table_index_to_string(table_index)
-    # _ = Logger.debug("ip rule del lookup #{table_index_string}")
 
     ip_cmd(["rule", "del", "lookup", to_string(table_index_string)])
   end
@@ -171,6 +150,9 @@ defmodule VintageNet.Route.IPRoute do
 
   defp ip_cmd(args) do
     bin_ip = Application.get_env(:vintage_net, :bin_ip)
+
+    # Send iodata to the logger with the command and args interspersed with spaces
+    # _ = Logger.debug(Enum.intersperse(["ip" | args], " "))
 
     case System.cmd(bin_ip, args, stderr_to_stdout: true) do
       {_, 0} -> :ok

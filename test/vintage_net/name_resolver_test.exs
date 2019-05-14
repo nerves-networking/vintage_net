@@ -1,12 +1,15 @@
 defmodule VintageNet.Interface.NameResolverTest do
   use VintageNetTest.Case
   alias VintageNet.NameResolver
+  import ExUnit.CaptureLog
 
   @resolvconf_path "resolv.conf"
 
   setup do
     # Run the tests with the application stopped.
-    Application.stop(:vintage_net)
+    capture_log(fn ->
+      Application.stop(:vintage_net)
+    end)
 
     on_exit(fn -> Application.start(:vintage_net) end)
     :ok

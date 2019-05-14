@@ -2,15 +2,17 @@ defmodule VintageNet.InterfaceTest do
   use VintageNetTest.Case
   alias VintageNet.Interface
   alias VintageNet.Interface.RawConfig
-  require Logger
+  import ExUnit.CaptureLog
 
   @ifname "test0"
   @interface_type VintageNetTest.TestTechnology
 
   setup do
     # Start clean slate for fresh InterfacesSupervisor each test.
-    Application.stop(:vintage_net)
-    Application.start(:vintage_net)
+    capture_log(fn ->
+      Application.stop(:vintage_net)
+      Application.start(:vintage_net)
+    end)
 
     # Make the test interface available
     VintageNet.PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
