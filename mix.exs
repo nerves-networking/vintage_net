@@ -53,7 +53,7 @@ defmodule VintageNet.MixProject do
   defp elixirc_paths(_), do: ["lib"]
 
   defp description do
-    "Manage network connections the way your parents did"
+    "Alternative network management for Nerves"
   end
 
   defp package do
@@ -62,6 +62,7 @@ defmodule VintageNet.MixProject do
         "lib",
         "test",
         "mix.exs",
+        "Makefile",
         "README.md",
         "src/*.[ch]",
         "LICENSE",
