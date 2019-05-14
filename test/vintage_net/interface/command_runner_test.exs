@@ -53,7 +53,7 @@ defmodule VintageNet.Interface.CommandRunnerTest do
     end)
   end
 
-  test "can run functions", context do
+  test "can run functions" do
     :ok =
       CommandRunner.run([
         {:fun,
