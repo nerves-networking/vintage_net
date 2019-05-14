@@ -36,12 +36,4 @@ defmodule VintageNet.Technology do
   a network.
   """
   @callback check_system(opts :: keyword()) :: :ok | {:error, String.t()}
-
-  @spec to_raw_config!(atom(), map()) :: RawConfig.t()
-  def to_raw_config!(implementation, config) do
-    case implementation.to_raw_config(config) do
-      {:ok, data} -> data
-      {:error, error} -> raise ArgumentError, "Error in configuration: #{error}"
-    end
-  end
 end
