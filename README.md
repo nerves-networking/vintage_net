@@ -345,18 +345,24 @@ Property     | Values           | Description
 
 ## System Requirements
 
-TBD!!!
+### Busybox Requirements
 
-* `ifupdown`
-* `udhcpc`
-* `ifconfig`
-* `run-parts`
-* `mktemp`
+* `CONFIG_UDHCPC=y` - `udhcpc` DHCP Client
+* `CONFIG_UDHCPD=y` - `udhcpd` DHCP Server (optional)
+* `CONFIG_IFUP=y` - `ifup`
+* `CONFIG_IFDOWN=y` `ifdown`
+* `CONFIG_RUN_PARTS=y`
+* `CONFIG_MKTEMP=y`
+
+### Buildroot Requirements
+
+* `BR2_PACKAGE_WPA_SUPPLICANT`
+* `BR2_PACKAGE_WPA_SUPPLICANT_CLI`
 
 ### Additional Requirements for Access Point Mode
 
-* `hostapd`
-* `dnsmasq`
+* `BR2_PACKAGE_DNSMASQ` or `CONFIG_UDHCPD` (in busybox)
+* `BR2_PACKAGE_HOSTAPD` or `BR2_PACKAGE_WPA_SUPPLICANT_HOTSPOT`
 
 ### Additional Requirements for LTE
 
