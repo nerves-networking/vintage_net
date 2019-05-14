@@ -1,4 +1,4 @@
-defmodule PropertyTableTest do
+defmodule VintageNet.PropertyTableTest do
   use ExUnit.Case, async: true
 
   alias VintageNet.PropertyTable

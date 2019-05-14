@@ -1,4 +1,4 @@
-defmodule VintageNet.ConfigEthTest do
+defmodule VintageNet.Technology.EthernetTest do
   use ExUnit.Case
   alias VintageNet.Interface.RawConfig
   alias VintageNet.Technology.Ethernet
