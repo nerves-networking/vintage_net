@@ -41,7 +41,7 @@ defmodule VintageNet.MixProject do
         persistence: VintageNet.Persistence.FlatFile,
         persistence_dir: "/root/vintage_net",
         persistence_secret: "obfuscate_things",
-        internet_host: "1.1.1.1",
+        internet_host: {1, 1, 1, 1},
         regulatory_domain: "00"
       ],
       extra_applications: [:logger],

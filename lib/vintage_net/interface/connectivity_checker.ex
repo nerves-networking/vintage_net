@@ -85,17 +85,11 @@ defmodule VintageNet.Interface.ConnectivityChecker do
   defp ipv4_addr?({:addr, {_, _, _, _}}), do: true
   defp ipv4_addr?(_), do: false
 
-  # TODO: Drop support for DNS since DNS can't be forced through
-  # an interface? I.e., errors on other interfaces mess up DNS
+  # Note: No support for DNS since DNS can't be forced through
+  # an interface. I.e., errors on other interfaces mess up DNS
   # even if the one of interest is ok.
-  defp resolve_addr(address) do
-    with {:ok, hostent} <- :inet.gethostbyname(to_charlist(address)),
-         hostent(h_addr_list: ip_list) = hostent,
-         first_ip = hd(ip_list) do
-      {:ok, first_ip}
-    else
-      _ -> {:error, :no_dns}
-    end
+  defp resolve_addr(address) when is_tuple(address) do
+    {:ok, address}
   end
 
   defp ping_wait(interval) do
