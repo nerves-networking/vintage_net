@@ -1,8 +1,31 @@
 defmodule VintageNet.IP.ConfigToInterfaces do
   @moduledoc """
-  Common config for ifup ip configs
+  This is a helper module for VintageNet.Technology implementations that use
+  IPv4.
   """
 
+  @doc """
+  Convert a configuration to the contents of a /etc/interfaces file
+
+  The IPv4 configuration should be specified in the map under the `:ipv4` key.
+  Fields are:
+
+  * `:method` - `:dhcp` or `:static`
+
+  If `method: :static`, then the following addition fields are checked:
+
+  * `:address` - IPv4 address as a string
+  * `:netmask` - IPv4 netmask as a string
+  * `:broadcast` - IPv4 broadcast address as a string
+  * `:metric` - Route metric (TODO: THIS WON'T WORK)
+  * `:gateway` - Default gateway (TODO: THIS WON'T WORK)
+  * `:pointopoint` - Address of the other end point
+  * `:hwaddress` - Set the MAC address
+  * `:mtu` - Set the MTU
+  * `:scope` - Route scope (TODO: THIS WON'T WORK)
+
+  """
+  @spec config_to_interfaces_contents(VintageNet.ifname(), map()) :: String.t()
   def config_to_interfaces_contents(ifname, %{ipv4: %{method: :dhcp} = ipv4} = config) do
     hostname = config[:hostname] || get_hostname()
     "iface #{ifname} inet dhcp" <> dhcp_options(ipv4, hostname)
