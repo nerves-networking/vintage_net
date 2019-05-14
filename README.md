@@ -28,10 +28,12 @@ The following network configurations are supported:
 
 * [x] Wired Ethernet, IPv4 DHCP
 * [ ] Wired Ethernet, IPv4 static IP
-* [x] WiFi password-less and WPA2, IPv4 DHCP
+* [x] WiFi password-less and WEP
+* [x] WPA2 PSK and EAP
 * [ ] USB gadget mode Ethernet, IPv4 DHCP server to supply host IP address
 * [ ] Cellular networks
 * [ ] WiFi AP mode
+* [ ] IPv6
 
 `VintageNet` takes a different approach to networking from `nerves_network`. It
 supports calling "old school" Linux utilities like `ifup` and `ifdown` to
@@ -189,8 +191,8 @@ The `:ipv4` key is the same as in Wired Ethernet and only DHCP is currently supp
 The `:wifi` key has the following common fields:
 
 * `:key_mgmt` - WiFi security mode (`:wpa_psk` for WPA2, `:none` for no password)
-* `:mode` - 
-  * `:client` (default) - Normal operation. Associate with an AP 
+* `:mode` -
+  * `:client` (default) - Normal operation. Associate with an AP
   * `:adhoc` - peer to peer mode
   * `:host` - access point mode
 * `:psk` - A WPA2 passphrase or the raw PSK. If a passphrase is passed in, it will be converted to a PSK and disgarded.
