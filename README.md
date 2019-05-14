@@ -253,7 +253,6 @@ Example of WPA-EAP:
 iex> VintageNet.configure("wlan0", %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ipv4: %{method: :dhcp},
         ssid: "testing",
         key_mgmt: :wpa_eap,
         scan_ssid: 1,
@@ -266,6 +265,24 @@ iex> VintageNet.configure("wlan0", %{
         phase2: "MSCHAPV2"
       },
       ipv4: %{method: :dhcp}
+})
+
+Example of host mode:
+(note this will not create a DHCP server)
+```
+iex> VintageNet.configure("wlan0", %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        mode: :host,
+        ssid: "test ssid",
+        key_mgmt: :none
+      },
+      ipv4: %{
+        method: :static,
+        address: "192.168.24.1",
+        netmask: "255.255.255.0",
+        gateway: "192.168.24.1"
+      }
 })
 ```
 
