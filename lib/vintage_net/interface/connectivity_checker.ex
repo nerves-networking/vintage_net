@@ -34,10 +34,10 @@ defmodule VintageNet.Interface.ConnectivityChecker do
           :internet
 
         {:error, :if_not_found} ->
-          :disabled
+          :disconnected
 
         {:error, :no_ipv4_address} ->
-          :disabled
+          :disconnected
 
         {:error, _reason} ->
           :lan
