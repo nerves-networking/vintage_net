@@ -1,4 +1,4 @@
-defmodule VintageNet.Interface.ConnectivityChecker.Test do
+defmodule VintageNet.Interface.ConnectivityCheckerTest do
   use ExUnit.Case, async: true
 
   alias VintageNet.Interface.ConnectivityChecker

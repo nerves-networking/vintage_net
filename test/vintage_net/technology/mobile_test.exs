@@ -1,4 +1,4 @@
-defmodule VintageNet.ConfigLTETest do
+defmodule VintageNet.Technology.MobileTest do
   use ExUnit.Case
   alias VintageNet.Technology.Mobile
   alias VintageNet.Interface.RawConfig

@@ -1,4 +1,4 @@
-defmodule VintageNet.ConfigWiFiTest do
+defmodule VintageNet.Technology.WiFiTest do
   use ExUnit.Case
   alias VintageNet.Interface.RawConfig
   alias VintageNet.Technology.WiFi

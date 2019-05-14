@@ -1,4 +1,4 @@
-defmodule ToElixirTest do
+defmodule VintageNet.ToElixirTest do
   use ExUnit.Case
   import ExUnit.CaptureLog
 

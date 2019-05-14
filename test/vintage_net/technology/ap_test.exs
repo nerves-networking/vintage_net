@@ -1,4 +1,4 @@
-defmodule VintageNet.ConfigAPTest do
+defmodule VintageNet.Technology.APTest do
   use ExUnit.Case
 
   # TBD

@@ -1,4 +1,4 @@
-defmodule InterfacesMonitorTest do
+defmodule VintageNet.InterfacesMonitorTest do
   use ExUnit.Case
 
   alias VintageNet.InterfacesMonitor
