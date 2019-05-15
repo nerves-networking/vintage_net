@@ -32,7 +32,7 @@ The following network configurations are supported:
 * [x] WPA2 PSK and EAP
 * [ ] USB gadget mode Ethernet, IPv4 DHCP server to supply host IP address
 * [ ] Cellular networks
-* [ ] WiFi AP mode
+* [x] WiFi AP mode
 * [ ] IPv6
 
 `VintageNet` takes a different approach to networking from `nerves_network`. It
@@ -268,8 +268,7 @@ iex> VintageNet.configure("wlan0", %{
 })
 ```
 
-Example of host mode:
-(note this will not create a DHCP server)
+Example of access point mode:
 
 ```elixir
 iex> VintageNet.configure("wlan0", %{
@@ -284,6 +283,10 @@ iex> VintageNet.configure("wlan0", %{
         address: "192.168.24.1",
         netmask: "255.255.255.0",
         gateway: "192.168.24.1"
+      },
+      dhcpd: %{
+        start: "192.168.24.2",
+        end: "192.168.24.10"
       }
 })
 ```

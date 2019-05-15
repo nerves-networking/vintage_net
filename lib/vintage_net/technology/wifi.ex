@@ -3,7 +3,7 @@ defmodule VintageNet.Technology.WiFi do
 
   alias VintageNet.WiFi.{Scan, WPA2}
   alias VintageNet.Interface.RawConfig
-  alias VintageNet.IP.ConfigToInterfaces
+  alias VintageNet.IP.{ConfigToInterfaces, ConfigToUdhcpd}
 
   @impl true
   def to_raw_config(ifname, %{type: __MODULE__, wifi: wifi_config} = config, opts) do
@@ -35,17 +35,33 @@ defmodule VintageNet.Technology.WiFi do
       {:run, killall, ["-q", "wpa_supplicant"]}
     ]
 
-    {:ok,
-     %RawConfig{
-       ifname: ifname,
-       type: __MODULE__,
-       source_config: config,
-       files: files,
-       cleanup_files: [Path.join(control_interface_path, ifname)],
-       child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
-       up_cmds: up_cmds,
-       down_cmds: down_cmds
-     }}
+    case maybe_add_udhcpd(ifname, config, opts) do
+      {udhcpd_files, udhcpd_up_cmds, udhcpd_down_cmds} ->
+        {:ok,
+         %RawConfig{
+           ifname: ifname,
+           type: __MODULE__,
+           source_config: config,
+           files: files ++ udhcpd_files,
+           cleanup_files: [Path.join(control_interface_path, ifname)],
+           child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
+           up_cmds: up_cmds ++ udhcpd_up_cmds,
+           down_cmds: down_cmds ++ udhcpd_down_cmds
+         }}
+
+      nil ->
+        {:ok,
+         %RawConfig{
+           ifname: ifname,
+           type: __MODULE__,
+           source_config: config,
+           files: files,
+           cleanup_files: [Path.join(control_interface_path, ifname)],
+           child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
+           up_cmds: up_cmds,
+           down_cmds: down_cmds
+         }}
+    end
   end
 
   def to_raw_config(ifname, %{type: __MODULE__}, opts) do
@@ -83,6 +99,29 @@ defmodule VintageNet.Technology.WiFi do
   def to_raw_config(_ifname, _config, _opts) do
     {:error, :bad_configuration}
   end
+
+  defp maybe_add_udhcpd(ifname, %{dhcpd: _dhcpd} = config, opts) do
+    tmpdir = Keyword.fetch!(opts, :tmpdir)
+    killall = Keyword.fetch!(opts, :bin_killall)
+    udhcpd = Keyword.fetch!(opts, :bin_udhcpd)
+    udhcpd_conf_path = Path.join(tmpdir, "udhcpd.conf.#{ifname}")
+
+    files = [
+      {udhcpd_conf_path, ConfigToUdhcpd.config_to_udhcpd_contents(ifname, config, tmpdir)}
+    ]
+
+    up_cmds = [
+      {:run, udhcpd, [udhcpd_conf_path]}
+    ]
+
+    down_cmds = [
+      {:run, killall, ["-q", "udhcpd"]}
+    ]
+
+    {files, up_cmds, down_cmds}
+  end
+
+  defp maybe_add_udhcpd(_, _, _), do: nil
 
   @impl true
   def ioctl(ifname, :scan, _args) do

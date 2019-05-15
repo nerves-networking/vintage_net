@@ -1042,4 +1042,78 @@ defmodule VintageNet.Technology.WiFiTest do
 
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
   end
+
+  test "create a dhcpd config" do
+    input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        ssid: "example ap",
+        key_mgmt: :none,
+        mode: :host
+      },
+      ipv4: %{
+        method: :static,
+        address: "192.168.24.1",
+        netmask: "255.255.255.0",
+        gateway: "192.168.24.1"
+      },
+      dhcpd: %{
+        start: "192.168.24.2",
+        end: "192.168.24.100"
+      },
+      hostname: "unit_test"
+    }
+
+    output = %RawConfig{
+      ifname: "wlan0",
+      type: VintageNet.Technology.WiFi,
+      source_config: input,
+      child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
+      files: [
+        {"/tmp/vintage_net/network_interfaces.wlan0",
+         """
+         iface wlan0 inet static
+           address 192.168.24.1
+           gateway 192.168.24.1
+           netmask 255.255.255.0
+           hostname unit_test
+         """},
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+         """
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
+         country=00
+         network={
+         ssid="example ap"
+         key_mgmt=NONE
+         mode=2
+         }
+         """},
+        {"/tmp/vintage_net/udhcpd.conf.wlan0",
+         """
+         interface wlan0
+         pidfile /tmp/vintage_net/udhcpd.wlan0.pid
+         lease_file /tmp/vintage_net/udhcpd.wlan0.leases
+
+         end 192.168.24.100
+         start 192.168.24.2
+
+         """}
+      ],
+      up_cmds: [
+        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
+        {:run, "/usr/sbin/wpa_supplicant",
+         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/usr/sbin/udhcpd", ["/tmp/vintage_net/udhcpd.conf.wlan0"]}
+      ],
+      down_cmds: [
+        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
+        {:run, "/usr/bin/killall", ["-q", "udhcpd"]}
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
+    }
+
+    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+  end
 end
