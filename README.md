@@ -212,6 +212,11 @@ The `:wifi` key has the following common fields:
 * `:psk` - A WPA2 passphrase or the raw PSK. If a passphrase is passed in, it
   will be converted to a PSK and disgarded.
 * `:ssid` - The SSID for the network
+* `:bgscan` - Periodic background scanning. See the link below for more information.
+  * `:simple`
+  * `{:simple, args}` - args is a string to be passed to the `simple` wpa module
+  * `:learn`
+  * `{:learn, args}` args is a string to be passed to the `learn` wpa module
 
 See the [official
 docs](https://w1.fi/cgit/hostap/plain/wpa_supplicant/wpa_supplicant.conf) for

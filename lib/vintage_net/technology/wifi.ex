@@ -139,14 +139,15 @@ defmodule VintageNet.Technology.WiFi do
   end
 
   defp wifi_to_supplicant_contents(wifi, control_interface_path, regulatory_domain) do
-    [
+    config = [
       "ctrl_interface=#{control_interface_path}",
-      "\n",
       "country=#{regulatory_domain}",
-      "\n",
-      into_wifi_network_config(wifi)
+      into_config_string(wifi, :bgscan),
+      into_config_string(wifi, :ap_scan)
     ]
-    |> IO.iodata_to_binary()
+
+    iodata = into_newlines(config) ++ into_wifi_network_config(wifi)
+    IO.iodata_to_binary(iodata)
   end
 
   defp key_mgmt_to_string(:none), do: "NONE"
@@ -161,6 +162,11 @@ defmodule VintageNet.Technology.WiFi do
   defp mode_to_string(:host), do: "2"
   # In case the user supplies data as the integer type
   defp mode_to_string(mode) when is_integer(mode), do: mode
+
+  defp bgscan_to_string(:simple), do: "\"simple\""
+  defp bgscan_to_string({:simple, args}), do: "\"simple:#{args}\""
+  defp bgscan_to_string(:learn), do: "\"learn\""
+  defp bgscan_to_string({:learn, args}), do: "\"learn:#{args}\""
 
   defp into_wifi_network_config(%{networks: networks}) do
     Enum.map(networks, &into_wifi_network_config/1)
@@ -178,7 +184,6 @@ defmodule VintageNet.Technology.WiFi do
       into_config_string(wifi, :bssid_blacklist),
       into_config_string(wifi, :wps_disabled),
       into_config_string(wifi, :mode),
-      into_config_string(wifi, :ap_scan),
 
       # WPA-PSK settings
       into_config_string(wifi, :psk),
@@ -270,6 +275,10 @@ defmodule VintageNet.Technology.WiFi do
 
   defp wifi_opt_to_config_string(_wifi, :mode, mode) do
     "mode=#{mode_to_string(mode)}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :ap_scan, value) do
+    "ap_scan=#{value}"
   end
 
   defp wifi_opt_to_config_string(_wifi, :scan_ssid, value) do
@@ -384,13 +393,18 @@ defmodule VintageNet.Technology.WiFi do
     "bssid_whitelist=#{value}"
   end
 
-  defp network_config(config) do
-    config =
-      Enum.map(config, fn
-        nil -> []
-        conf -> [conf, "\n"]
-      end)
+  defp wifi_opt_to_config_string(_wifi, :bgscan, value) do
+    "bgscan=#{bgscan_to_string(value)}"
+  end
 
-    ["network={", "\n", config, "}", "\n"]
+  defp network_config(config) do
+    ["network={", "\n", into_newlines(config), "}", "\n"]
+  end
+
+  defp into_newlines(config) do
+    Enum.map(config, fn
+      nil -> []
+      conf -> [conf, "\n"]
+    end)
   end
 end
