@@ -17,16 +17,19 @@ defmodule VintageNet.WiFi.Scan do
       {:ok, parse(results)}
     else
       {error, 255} -> {:error, error}
+      {:error, reason} -> {:error, reason}
     end
   end
 
   defp run_wpa_cli(ifname, command) do
     bin_wpa_cli = Application.get_env(:vintage_net, :bin_wpa_cli)
     tmpdir = Application.get_env(:vintage_net, :tmpdir)
-    ctrl_interface = Path.join([tmpdir, "wpa_supplicant", ifname])
 
-    case System.cmd(bin_wpa_cli, ["-i", ifname, "-g", ctrl_interface, command]) do
-      {results, 0} -> {:ok, results}
+    with {:ok, ctrl_interface} <- detect_ctrl_interface(ifname, tmpdir),
+         {results, 0} <- System.cmd(bin_wpa_cli, ["-i", ifname, "-g", ctrl_interface, command]) do
+      {:ok, results}
+    else
+      {:error, reason} -> {:error, reason}
       {error, _} -> {:error, error}
     end
   end
@@ -76,5 +79,15 @@ defmodule VintageNet.WiFi.Scan do
   defp parse_flag(other) do
     _ = Logger.warn("Ignoring unknown WiFi Access Point flag: #{other}")
     []
+  end
+
+  defp detect_ctrl_interface(ifname, tmpdir) do
+    base = Path.join([tmpdir, "wpa_supplicant"])
+    normal = Path.join(base, ifname)
+    p2p = Path.join(base, "p2p-dev-#{ifname}")
+
+    Enum.find_value([normal, p2p], {:error, :ctrl_interface_not_found}, fn file ->
+      File.exists?(file) && {:ok, file}
+    end)
   end
 end
