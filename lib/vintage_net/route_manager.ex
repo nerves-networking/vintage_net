@@ -216,29 +216,32 @@ defmodule VintageNet.RouteManager do
 
   defp handle_delete({:default_route, ifname, _default_gateway, _metric, table_index}) do
     IPRoute.clear_a_route(ifname, table_index)
+    |> warn_on_error("clear_a_route")
   end
 
   defp handle_delete({:local_route, ifname, address, subnet_bits, metric}) do
     IPRoute.clear_a_local_route(ifname, address, subnet_bits, metric)
+    |> warn_on_error("clear_a_local_route")
   end
 
   defp handle_delete({:rule, table_index, _address}) do
     IPRoute.clear_a_rule(table_index)
+    |> warn_on_error("clear_a_rule")
   end
 
   defp handle_insert({:default_route, ifname, default_gateway, metric, table_index}) do
-    IPRoute.add_default_route(ifname, default_gateway, metric, table_index)
+    :ok = IPRoute.add_default_route(ifname, default_gateway, metric, table_index)
   end
 
   defp handle_insert({:rule, table_index, address}) do
-    IPRoute.add_rule(address, table_index)
+    :ok = IPRoute.add_rule(address, table_index)
   end
 
   defp handle_insert({:local_route, ifname, address, subnet_bits, metric}) do
     # HACK: Delete automatically created local routes that have a 0 metric
     _ = IPRoute.clear_a_local_route(ifname, address, subnet_bits, 0)
 
-    IPRoute.add_local_route(ifname, address, subnet_bits, metric)
+    :ok = IPRoute.add_local_route(ifname, address, subnet_bits, metric)
   end
 
   defp update_available_interfaces(routes) do
@@ -257,5 +260,11 @@ defmodule VintageNet.RouteManager do
   defp local_routes(routes) do
     for {:local_route, ifname, _address, _subnet_bits, metric} <- routes,
         do: {metric, ifname}
+  end
+
+  defp warn_on_error(:ok, _label), do: :ok
+
+  defp warn_on_error({:error, reason}, label) do
+    Logger.warn("route_manager(#{label}): ignoring failure #{inspect(reason)}")
   end
 end
