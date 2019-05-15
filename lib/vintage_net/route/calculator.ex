@@ -46,9 +46,34 @@ defmodule VintageNet.Route.Calculator do
     {new_table_indices, entries} =
       Enum.reduce(infos, {table_indices, []}, &make_entries(&1, &2, prioritization))
 
-    sorted_entries = Enum.sort(entries)
+    sorted_entries = Enum.sort(entries, &sort/2)
 
     {new_table_indices, sorted_entries}
+  end
+
+  # Sort order
+  #
+  # 1. Local routes
+  # 2. Rules
+  # 3. Default routes
+  #
+  # The most important part is that local routes get created before default
+  # routes.  Linux disallows default routes that can't be supported and the
+  # local routes are needed for that.
+  defp sort({:local_route, _, _, _, _} = a, {:local_route, _, _, _, _} = b) do
+    a <= b
+  end
+
+  defp sort({:local_route, _, _, _, _}, _other) do
+    true
+  end
+
+  defp sort(_other, {:local_route, _, _, _, _}) do
+    false
+  end
+
+  defp sort(a, b) do
+    a <= b
   end
 
   @doc """
