@@ -302,16 +302,16 @@ iex> VintageNet.configure("wlan0", %{
 networking information:
 
 ```elixir
-iex> VintageNet.get(["interface", "eth0", "connection"])
+iex> VintageNet.get(["interface", "eth0", :connection])
 :internet
 
 iex> VintageNet.get_by_prefix([])
 [
   {["interface", "eth0", "connection"], :internet},
-  {["interface", "eth0", "state"], "configured"},
+  {["interface", "eth0", "state"], :configured},
   {["interface", "eth0", "type"], VintageNet.Technology.Ethernet},
   {["interface", "wlan0", "connection"], :internet},
-  {["interface", "wlan0", "state"], "configured"},
+  {["interface", "wlan0", "state"], :configured},
   {["interface", "wlan0", "type"], VintageNet.Technology.WiFi}
 ]
 ```
@@ -324,7 +324,7 @@ iex> VintageNet.subscribe(["interface", "eth0"])
 :ok
 
 iex> flush
-{VintageNet, ["interface", "eth0", "state"], "configuring", "configured", %{}}
+{VintageNet, ["interface", "eth0", "state"], :configuring, :configured, %{}}
 ```
 
 The message format is `{VintageNet, name, old_value, new_value, metadata}`

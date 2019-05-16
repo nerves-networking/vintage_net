@@ -336,8 +336,8 @@ defmodule VintageNet.InterfaceTest do
 
   test "ioctls fail when not configured", context do
     in_tmp(context.test, fn ->
-      # Make a configuration that hangs in the "configuring" state
-      # so that it's easy to make an ioctl when not "configured".
+      # Make a configuration that hangs in the :configuring state
+      # so that it's easy to make an ioctl when not :configured.
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
