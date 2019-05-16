@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.1
+
+* New features
+  * Expose summary status of whether the whole device is
+    disconnected, LAN-connected, or Internet-connected
+
 ## v0.2.0
 
 * New features
