@@ -3,7 +3,7 @@ defmodule VintageNet.RouteManager do
   require Logger
 
   alias VintageNet.Interface.Classification
-  alias VintageNet.Route.{Calculator, InterfaceInfo, IPRoute}
+  alias VintageNet.Route.{Calculator, InterfaceInfo, IPRoute, Properties}
 
   @moduledoc """
   This module manages the default route.
@@ -198,8 +198,9 @@ defmodule VintageNet.RouteManager do
     # Update Linux's routing tables
     Enum.each(route_delta, &handle_delta/1)
 
-    # Update the property table's "available_interfaces" list
-    update_available_interfaces(new_routes)
+    # Update the global routing properties in the property table
+    Properties.update_available_interfaces(new_routes)
+    Properties.update_best_connection(state.interfaces)
 
     %{state | route_state: new_route_state, routes: new_routes}
   end
@@ -242,24 +243,6 @@ defmodule VintageNet.RouteManager do
     _ = IPRoute.clear_a_local_route(ifname, address, subnet_bits, 0)
 
     :ok = IPRoute.add_local_route(ifname, address, subnet_bits, metric)
-  end
-
-  defp update_available_interfaces(routes) do
-    # Available interfaces are those with local routes
-    # in priority order.
-
-    interfaces =
-      routes
-      |> local_routes()
-      |> Enum.sort()
-      |> Enum.map(fn {_metric, ifname} -> ifname end)
-
-    VintageNet.PropertyTable.put(VintageNet, ["available_interfaces"], interfaces)
-  end
-
-  defp local_routes(routes) do
-    for {:local_route, ifname, _address, _subnet_bits, metric} <- routes,
-        do: {metric, ifname}
   end
 
   defp warn_on_error(:ok, _label), do: :ok

@@ -334,6 +334,7 @@ The message format is `{VintageNet, name, old_value, new_value, metadata}`
 Property               | Values           | Description
  --------------------- | ---------------- | -----------
 `available_interfaces` | `[eth0, ...]`    | Currently available network interfaces in priority order. E.g., the first one is used by default
+`connection`           | `:disconnected`, `:lan`, `:internet` | The overall network connection status. This is the best status of all interfaces.
 
 ### Common network interface properties
 
@@ -343,9 +344,9 @@ interfaces:
 
 Property     | Values           | Description
  ----------- | ---------------- | -----------
-`type`       | `Ethernet`, etc. | The type of the interface
-`state`      | `configured`, `configuring`, etc. | The state of the interface from `VintageNet`'s point of view.
-`connection` | `disconnected`, `lan`, `internet` | This provides a determination of the Internet connection status
+`type`       | `VintageNet.Technology.Ethernet`, etc. | The type of the interface
+`state`      | `:configured`, `:configuring`, etc. | The state of the interface from `VintageNet`'s point of view.
+`connection` | `:disconnected`, `:lan`, `:internet` | This provides a determination of the Internet connection status
 `ipv4`       | IPv4 parameters  | This is a map of IPv4 parameters on the interface. This includes IP address, subnet, gateway, etc.
 
 Specific types of interfaces provide more parameters.

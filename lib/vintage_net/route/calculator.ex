@@ -20,7 +20,9 @@ defmodule VintageNet.Route.Calculator do
   @type rule :: {:rule, table_index(), :inet.ip_address()}
   @type default_route ::
           {:default_route, VintageNet.ifname(), :inet.ip_address(), metric(), table_index()}
-  @type entry :: rule() | default_route()
+  @type local_route ::
+          {:local_route, VintageNet.ifname(), :inet.ip_address(), metric(), table_index()}
+  @type entry :: rule() | default_route() | local_route()
   @type entries :: [entry()]
   @type table_indices :: %{VintageNet.ifname() => table_index()}
 
