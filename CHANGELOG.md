@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.2
+
+* Bug fixes
+  * Fix local LAN routing
+
 ## v0.2.1
 
 * New features
