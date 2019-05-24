@@ -69,7 +69,6 @@ jobs:
         environment:
           ELIXIR_VERSION: 1.7.4-otp-21
           LC_ALL: C.UTF-8
-          SUDO: true
     <<: *defaults
     steps:
       - checkout
