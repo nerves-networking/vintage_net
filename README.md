@@ -302,7 +302,7 @@ iex> VintageNet.configure("wlan0", %{
 networking information:
 
 ```elixir
-iex> VintageNet.get(["interface", "eth0", :connection])
+iex> VintageNet.get(["interface", "eth0", "connection"])
 :internet
 
 iex> VintageNet.get_by_prefix([])
