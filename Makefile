@@ -19,7 +19,7 @@
 # ERL_LDFLAGS	additional linker flags for projects referencing Erlang libraries
 
 ifeq ($(MIX_COMPILE_PATH),)
-call_from_mix:
+call_from_make:
 	mix compile
 endif
 
@@ -52,9 +52,6 @@ CC ?= $(CROSSCOMPILE)-gcc
 # CFLAGS += -DDEBUG
 
 CFLAGS += -std=gnu99
-
-calling_from_make:
-	mix compile
 
 all: install
 
