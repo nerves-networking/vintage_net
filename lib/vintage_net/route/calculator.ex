@@ -55,27 +55,25 @@ defmodule VintageNet.Route.Calculator do
 
   # Sort order
   #
-  # 1. Local routes
-  # 2. Rules
+  # 1. Rules
+  # 2. Local routes
   # 3. Default routes
   #
   # The most important part is that local routes get created before default
   # routes.  Linux disallows default routes that can't be supported and the
   # local routes are needed for that.
-  defp sort({:local_route, _, _, _, _} = a, {:local_route, _, _, _, _} = b) do
+  defp sort_priority(:rule), do: 0
+  defp sort_priority(:local_route), do: 1
+  defp sort_priority(:default_route), do: 2
+
+  defp sort(a, b) when elem(a, 0) == elem(b, 0) do
     a <= b
-  end
-
-  defp sort({:local_route, _, _, _, _}, _other) do
-    true
-  end
-
-  defp sort(_other, {:local_route, _, _, _, _}) do
-    false
   end
 
   defp sort(a, b) do
-    a <= b
+    priority_a = elem(a, 0) |> sort_priority()
+    priority_b = elem(b, 0) |> sort_priority()
+    priority_a <= priority_b
   end
 
   @doc """
@@ -112,7 +110,8 @@ defmodule VintageNet.Route.Calculator do
         {ip, subnet_bits} = hd(info.ip_subnets)
 
         [
-          {:local_route, ifname, ip, subnet_bits, metric}
+          {:local_route, ifname, ip, subnet_bits, 0, table_index},
+          {:local_route, ifname, ip, subnet_bits, metric, :main}
         ]
       else
         []

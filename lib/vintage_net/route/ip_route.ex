@@ -42,19 +42,23 @@ defmodule VintageNet.Route.IPRoute do
           VintageNet.ifname(),
           :inet.ip_address(),
           Calculator.subnet_bits(),
-          Calculator.metric()
+          Calculator.metric(),
+          Calculator.table_index()
         ) ::
           :ok | {:error, any()}
-  def add_local_route(ifname, ip, subnet_bits, metric) do
+  def add_local_route(ifname, ip, subnet_bits, metric, table_index) do
     subnet = Calculator.to_subnet(ip, subnet_bits)
     subnet_string = ip_to_string(subnet) <> "/" <> to_string(subnet_bits)
+    table_index_string = table_index_to_string(table_index)
 
     ip_cmd([
       "route",
       "add",
       subnet_string,
+      "table",
+      table_index_string,
       "metric",
-      "#{metric}",
+      to_string(metric),
       "dev",
       ifname,
       "scope",
@@ -114,21 +118,35 @@ defmodule VintageNet.Route.IPRoute do
   @spec clear_a_route(VintageNet.ifname(), Calculator.table_index()) :: :ok | {:error, any()}
   def clear_a_route(ifname, table_index \\ :main) do
     table_index_string = table_index_to_string(table_index)
-    ip_cmd(["route", "del", "default", "dev", ifname, "table", table_index_string])
+    ip_cmd(["route", "del", "default", "table", table_index_string, "dev", ifname])
   end
 
   @spec clear_a_local_route(
           VintageNet.ifname(),
           :inet.ip_address(),
           Calculator.subnet_bits(),
-          Calculator.metric()
+          Calculator.metric(),
+          Calculator.table_index()
         ) ::
           :ok | {:error, any()}
-  def clear_a_local_route(ifname, ip, subnet_bits, metric) do
+  def clear_a_local_route(ifname, ip, subnet_bits, metric, table_index) do
     subnet = Calculator.to_subnet(ip, subnet_bits)
     subnet_string = ip_to_string(subnet) <> "/" <> to_string(subnet_bits)
+    table_index_string = table_index_to_string(table_index)
 
-    ip_cmd(["route", "del", subnet_string, "metric", "#{metric}", "dev", ifname, "scope", "link"])
+    ip_cmd([
+      "route",
+      "del",
+      subnet_string,
+      "table",
+      table_index_string,
+      "metric",
+      "#{metric}",
+      "dev",
+      ifname,
+      "scope",
+      "link"
+    ])
   end
 
   @spec clear_a_local_route(VintageNet.ifname()) :: :ok | {:error, any()}
@@ -140,7 +158,7 @@ defmodule VintageNet.Route.IPRoute do
   def clear_a_rule(table_index) do
     table_index_string = table_index_to_string(table_index)
 
-    ip_cmd(["rule", "del", "lookup", to_string(table_index_string)])
+    ip_cmd(["rule", "del", "lookup", table_index_string])
   end
 
   defp table_index_to_string(:main), do: "main"

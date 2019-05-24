@@ -220,8 +220,8 @@ defmodule VintageNet.RouteManager do
     |> warn_on_error("clear_a_route")
   end
 
-  defp handle_delete({:local_route, ifname, address, subnet_bits, metric}) do
-    IPRoute.clear_a_local_route(ifname, address, subnet_bits, metric)
+  defp handle_delete({:local_route, ifname, address, subnet_bits, metric, table_index}) do
+    IPRoute.clear_a_local_route(ifname, address, subnet_bits, metric, table_index)
     |> warn_on_error("clear_a_local_route")
   end
 
@@ -238,11 +238,14 @@ defmodule VintageNet.RouteManager do
     :ok = IPRoute.add_rule(address, table_index)
   end
 
-  defp handle_insert({:local_route, ifname, address, subnet_bits, metric}) do
-    # HACK: Delete automatically created local routes that have a 0 metric
-    _ = IPRoute.clear_a_local_route(ifname, address, subnet_bits, 0)
+  defp handle_insert({:local_route, ifname, address, subnet_bits, metric, table_index}) do
+    if table_index == :main do
+      # HACK: Delete automatically created local routes that have a 0 metric
+      _ = IPRoute.clear_a_local_route(ifname, address, subnet_bits, 0, :main)
+      :ok
+    end
 
-    :ok = IPRoute.add_local_route(ifname, address, subnet_bits, metric)
+    :ok = IPRoute.add_local_route(ifname, address, subnet_bits, metric, table_index)
   end
 
   defp warn_on_error(:ok, _label), do: :ok
