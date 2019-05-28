@@ -1049,6 +1049,9 @@ defmodule VintageNet.Technology.WiFiTest do
       wifi: %{
         ssid: "example ap",
         key_mgmt: :none,
+        scan_ssid: 1,
+        ap_scan: 1,
+        bgscan: :simple,
         mode: :host
       },
       ipv4: %{
@@ -1082,9 +1085,12 @@ defmodule VintageNet.Technology.WiFiTest do
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
          country=00
+         bgscan="simple"
+         ap_scan=1
          network={
          ssid="example ap"
          key_mgmt=NONE
+         scan_ssid=1
          mode=2
          }
          """},
