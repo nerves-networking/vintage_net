@@ -4,6 +4,9 @@ defmodule VintageNet.Technology.Mobile do
   alias VintageNet.Interface.RawConfig
 
   @impl true
+  def normalize(%{type: __MODULE__} = config), do: {:ok, config}
+
+  @impl true
   def to_raw_config(ifname, %{type: __MODULE__, pppd: pppd_config} = config, opts) do
     mknod = Keyword.fetch!(opts, :bin_mknod)
     killall = Keyword.fetch!(opts, :bin_killall)

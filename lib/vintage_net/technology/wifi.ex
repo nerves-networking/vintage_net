@@ -6,7 +6,16 @@ defmodule VintageNet.Technology.WiFi do
   alias VintageNet.IP.{ConfigToInterfaces, ConfigToUdhcpd}
 
   @impl true
-  def to_raw_config(ifname, %{type: __MODULE__, wifi: wifi_config} = config, opts) do
+  def normalize(%{type: __MODULE__, wifi: %{ssid: ssid, psk: psk}} = config) do
+    # If the user passes in a passphrase for the PSK, change it to a PSK
+    {:ok, real_psk} = WPA2.to_psk(ssid, psk)
+    {:ok, put_in(config.wifi.psk, real_psk)}
+  end
+
+  def normalize(%{type: __MODULE__} = config), do: {:ok, config}
+
+  @impl true
+  def to_raw_config(ifname, %{type: __MODULE__, wifi: %{}} = config, opts) do
     ifup = Keyword.fetch!(opts, :bin_ifup)
     ifdown = Keyword.fetch!(opts, :bin_ifdown)
     wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
@@ -18,10 +27,17 @@ defmodule VintageNet.Technology.WiFi do
     wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
     control_interface_path = Path.join(tmpdir, "wpa_supplicant")
 
+    {:ok, normalized_config} = normalize(config)
+
     files = [
-      {network_interfaces_path, ConfigToInterfaces.config_to_interfaces_contents(ifname, config)},
+      {network_interfaces_path,
+       ConfigToInterfaces.config_to_interfaces_contents(ifname, normalized_config)},
       {wpa_supplicant_conf_path,
-       wifi_to_supplicant_contents(wifi_config, control_interface_path, regulatory_domain)}
+       wifi_to_supplicant_contents(
+         normalized_config.wifi,
+         control_interface_path,
+         regulatory_domain
+       )}
     ]
 
     up_cmds = [
@@ -35,13 +51,13 @@ defmodule VintageNet.Technology.WiFi do
       {:run, killall, ["-q", "wpa_supplicant"]}
     ]
 
-    case maybe_add_udhcpd(ifname, config, opts) do
+    case maybe_add_udhcpd(ifname, normalized_config, opts) do
       {udhcpd_files, udhcpd_up_cmds, udhcpd_down_cmds} ->
         {:ok,
          %RawConfig{
            ifname: ifname,
            type: __MODULE__,
-           source_config: config,
+           source_config: normalized_config,
            files: files ++ udhcpd_files,
            cleanup_files: [Path.join(control_interface_path, ifname)],
            child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
@@ -55,7 +71,7 @@ defmodule VintageNet.Technology.WiFi do
          %RawConfig{
            ifname: ifname,
            type: __MODULE__,
-           source_config: config,
+           source_config: normalized_config,
            files: files,
            cleanup_files: [Path.join(control_interface_path, ifname)],
            child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
@@ -262,9 +278,8 @@ defmodule VintageNet.Technology.WiFi do
     "bssid=#{bssid}"
   end
 
-  defp wifi_opt_to_config_string(wifi, :psk, psk) do
-    {:ok, real_psk} = WPA2.to_psk(wifi.ssid, psk)
-    "psk=#{real_psk}"
+  defp wifi_opt_to_config_string(_wifi, :psk, psk) do
+    "psk=#{psk}"
   end
 
   defp wifi_opt_to_config_string(_wifi, :wpa_ptk_rekey, wpa_ptk_rekey) do

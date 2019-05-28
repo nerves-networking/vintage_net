@@ -5,6 +5,9 @@ defmodule VintageNet.Technology.Ethernet do
   alias VintageNet.IP.ConfigToInterfaces
 
   @impl true
+  def normalize(%{type: __MODULE__} = config), do: {:ok, config}
+
+  @impl true
   def to_raw_config(ifname, %{type: __MODULE__} = config, opts) do
     ifup = Keyword.fetch!(opts, :bin_ifup)
     ifdown = Keyword.fetch!(opts, :bin_ifdown)

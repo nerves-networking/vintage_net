@@ -3,16 +3,22 @@ defmodule VintageNet.Technology.Null do
 
   alias VintageNet.Interface.RawConfig
 
+  @null_config %{type: __MODULE__}
+
   @moduledoc """
   An interface with this technology is unconfigured
   """
+
+  @impl true
+  def normalize(_config), do: {:ok, @null_config}
+
   @impl true
   def to_raw_config(ifname, _config \\ %{}, _opts \\ []) do
     {:ok,
      %RawConfig{
        ifname: ifname,
        type: __MODULE__,
-       source_config: %{type: __MODULE__},
+       source_config: @null_config,
        require_interface: false
      }}
   end

@@ -9,6 +9,14 @@ defmodule VintageNet.Technology do
   """
 
   @doc """
+  Normalize a configuration
+
+  Technologies can use this to update provided configurations so that same configurations that could
+  be specified in multiple ways have a single representation.
+  """
+  @callback normalize(config :: map()) :: {:ok, map()} | {:error, any()}
+
+  @doc """
   Convert a technology-specific configuration to one for VintageNet
   """
   @callback to_raw_config(VintageNet.ifname(), config :: map(), opts :: keyword()) ::

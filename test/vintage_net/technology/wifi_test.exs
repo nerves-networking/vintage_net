@@ -5,6 +5,33 @@ defmodule VintageNet.Technology.WiFiTest do
 
   import VintageNetTest.Utils
 
+  defp normalize_config(config) do
+    {:ok, normalized} = WiFi.normalize(config)
+    normalized
+  end
+
+  test "normalization converts passphrases to psks" do
+    input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        ssid: "IEEE",
+        psk: "password",
+        key_mgmt: :wpa_psk
+      }
+    }
+
+    normalized_input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        ssid: "IEEE",
+        psk: "F42C6FC52DF0EBEF9EBB4B90B38A5F902E83FE1B135A70E23AED762E9710A12E",
+        key_mgmt: :wpa_psk
+      }
+    }
+
+    assert {:ok, normalized_input} == WiFi.normalize(input)
+  end
+
   test "create a WPA2 WiFi configuration" do
     input = %{
       type: VintageNet.Technology.WiFi,
@@ -20,7 +47,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -67,7 +94,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -113,7 +140,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -164,7 +191,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -217,7 +244,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -272,7 +299,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -330,7 +357,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -388,7 +415,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -448,7 +475,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -506,7 +533,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -566,7 +593,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -623,7 +650,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -675,7 +702,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -731,7 +758,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -784,7 +811,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -831,7 +858,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -879,7 +906,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -946,7 +973,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -1017,7 +1044,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0",
@@ -1089,7 +1116,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: input,
+      source_config: normalize_config(input),
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "wlan0"}],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0",
