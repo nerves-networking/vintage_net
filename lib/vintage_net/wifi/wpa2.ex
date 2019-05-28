@@ -27,7 +27,7 @@ defmodule VintageNet.WiFi.WPA2 do
     end
   end
 
-  def to_psk(ssid, passphrase) do
+  def to_psk(ssid, passphrase) when is_binary(passphrase) do
     with :ok <- password_ok(passphrase),
          :ok <- ssid_ok(ssid) do
       {:ok, compute_psk(ssid, passphrase)}
