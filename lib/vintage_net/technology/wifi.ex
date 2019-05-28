@@ -46,6 +46,7 @@ defmodule VintageNet.Technology.WiFi do
            cleanup_files: [Path.join(control_interface_path, ifname)],
            child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
            up_cmds: up_cmds ++ udhcpd_up_cmds,
+           up_cmd_millis: 60_000,
            down_cmds: down_cmds ++ udhcpd_down_cmds
          }}
 
@@ -59,6 +60,7 @@ defmodule VintageNet.Technology.WiFi do
            cleanup_files: [Path.join(control_interface_path, ifname)],
            child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
            up_cmds: up_cmds,
+           up_cmd_millis: 60_000,
            down_cmds: down_cmds
          }}
     end

@@ -35,6 +35,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -81,6 +82,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -125,6 +127,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -181,6 +184,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -229,6 +233,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -289,6 +294,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -342,6 +348,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -403,6 +410,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -461,6 +469,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -517,6 +526,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -579,6 +589,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -629,6 +640,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -681,6 +693,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -739,6 +752,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -785,6 +799,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -831,6 +846,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -879,6 +895,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -957,6 +974,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -1027,6 +1045,7 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
@@ -1105,6 +1124,7 @@ defmodule VintageNet.Technology.WiFiTest do
 
          """}
       ],
+      up_cmd_millis: 60_000,
       up_cmds: [
         {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
         {:run, "/usr/sbin/wpa_supplicant",
