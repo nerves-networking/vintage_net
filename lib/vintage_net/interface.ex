@@ -160,23 +160,25 @@ defmodule VintageNet.Interface do
          {:ok, raw_config} <- to_raw_config(ifname, config) do
       {:ok, raw_config}
     else
+      {:error, :corrupt} ->
+        _ = Logger.warn("VintageNet(#{ifname}): ignoring corrupt config and using default")
+        load_default_config(ifname)
+
       {:error, reason} ->
-        Application.get_env(:vintage_net, :config)
-        |> Enum.find(fn {k, _v} -> k == ifname end)
-        |> case do
-          {_ifname, config} ->
-            _ =
-              Logger.info(
-                "VintageNet: persisted config for #{ifname} failed so reverting to app config: #{
-                  inspect(reason)
-                }"
-              )
+        _ = Logger.info("VintageNet(#{ifname}): loading config failed: #{inspect(reason)}")
+        load_default_config(ifname)
+    end
+  end
 
-            to_raw_config(ifname, config)
+  defp load_default_config(ifname) do
+    Application.get_env(:vintage_net, :config)
+    |> Enum.find(fn {k, _v} -> k == ifname end)
+    |> case do
+      {_ifname, config} ->
+        to_raw_config(ifname, config)
 
-          nil ->
-            {:error, :no_config}
-        end
+      nil ->
+        {:error, :no_config}
     end
   end
 
