@@ -633,7 +633,7 @@ defmodule VintageNet.Interface do
 
   @impl true
   def handle_event({:call, from}, :get_configuration, _state, data) do
-    {:reply, from, data.config.source_config}
+    {:keep_state, data, {:reply, from, data.config.source_config}}
   end
 
   @impl true

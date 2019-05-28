@@ -38,6 +38,15 @@ defmodule VintageNet.InterfaceTest do
     end)
   end
 
+  test "getting the configuration", context do
+    in_tmp(context.test, fn ->
+      {:ok, raw_config} = VintageNet.Technology.Null.to_raw_config(@ifname)
+      start_and_configure(raw_config)
+
+      assert %{type: VintageNet.Technology.Null} == VintageNet.get_configuration(@ifname)
+    end)
+  end
+
   test "creates and deletes files", context do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
