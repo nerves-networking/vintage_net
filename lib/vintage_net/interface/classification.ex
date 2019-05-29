@@ -66,9 +66,9 @@ defmodule VintageNet.Interface.Classification do
   """
   @spec compute_metric(interface_type(), connection_status(), [prioritization()]) ::
           pos_integer() | :disabled
-  def compute_metric(_type, :disabled, _prioritization), do: :disabled
+  def compute_metric(_type, :disconnected, _prioritization), do: :disabled
 
-  def compute_metric(type, status, prioritization) when is_atom(type) do
+  def compute_metric(type, status, prioritization) when status in [:lan, :internet] do
     case Enum.find_index(prioritization, fn option -> matches_option?(option, type, status) end) do
       nil ->
         :disabled

@@ -98,6 +98,17 @@ defmodule VintageNet.Route.Calculator do
   defp make_entries({ifname, info}, {table_indices, entries}, prioritization) do
     {new_table_indices, table_index} = get_table_index(ifname, table_indices)
     metric = InterfaceInfo.metric(info, prioritization)
+
+    new_entries = routing_table_entries(metric, ifname, table_index, info)
+
+    {new_table_indices, new_entries ++ entries}
+  end
+
+  defp routing_table_entries(:disabled, _ifname, _table_index, _info) do
+    []
+  end
+
+  defp routing_table_entries(metric, ifname, table_index, info) do
     # Every package with a source IP address of this interface needs to using
     # routing table "table_index"
     rules = for {ip, _subnet} <- info.ip_subnets, do: {:rule, table_index, ip}
@@ -131,7 +142,7 @@ defmodule VintageNet.Route.Calculator do
         []
       end
 
-    {new_table_indices, rules ++ local_routes ++ tables ++ entries}
+    rules ++ local_routes ++ tables
   end
 
   defp get_table_index(ifname, table_indices) do

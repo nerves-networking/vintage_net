@@ -36,6 +36,24 @@ defmodule VintageNet.Route.CalculatorTest do
             ]} == Calculator.compute(state, interfaces, prioritization)
   end
 
+  test "a disconnected interface" do
+    prioritization = Classification.default_prioritization()
+    state = Calculator.init()
+
+    # The calculator should ignore the IP address and gateway even
+    # if they're present.
+    interfaces = %{
+      "eth0" => %InterfaceInfo{
+        interface_type: :ethernet,
+        status: :disconnected,
+        ip_subnets: [{{192, 168, 1, 50}, 24}],
+        default_gateway: {192, 168, 1, 1}
+      }
+    }
+
+    assert {%{"eth0" => 100}, []} == Calculator.compute(state, interfaces, prioritization)
+  end
+
   test "interface w/o addresses" do
     prioritization = Classification.default_prioritization()
     state = Calculator.init()

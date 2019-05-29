@@ -17,7 +17,7 @@ defmodule VintageNet.Route.IPRoute do
           Calculator.table_index()
         ) ::
           :ok | {:error, any()}
-  def add_default_route(ifname, route, metric, table_index) do
+  def add_default_route(ifname, route, metric, table_index) when is_integer(metric) do
     table_index_string = table_index_to_string(table_index)
 
     ip_cmd([
@@ -27,7 +27,7 @@ defmodule VintageNet.Route.IPRoute do
       "table",
       table_index_string,
       "metric",
-      "#{metric}",
+      to_string(metric),
       "via",
       ip_to_string(route),
       "dev",
@@ -46,7 +46,7 @@ defmodule VintageNet.Route.IPRoute do
           Calculator.table_index()
         ) ::
           :ok | {:error, any()}
-  def add_local_route(ifname, ip, subnet_bits, metric, table_index) do
+  def add_local_route(ifname, ip, subnet_bits, metric, table_index) when is_integer(metric) do
     subnet = Calculator.to_subnet(ip, subnet_bits)
     subnet_string = ip_to_string(subnet) <> "/" <> to_string(subnet_bits)
     table_index_string = table_index_to_string(table_index)
@@ -129,7 +129,7 @@ defmodule VintageNet.Route.IPRoute do
           Calculator.table_index()
         ) ::
           :ok | {:error, any()}
-  def clear_a_local_route(ifname, ip, subnet_bits, metric, table_index) do
+  def clear_a_local_route(ifname, ip, subnet_bits, metric, table_index) when is_integer(metric) do
     subnet = Calculator.to_subnet(ip, subnet_bits)
     subnet_string = ip_to_string(subnet) <> "/" <> to_string(subnet_bits)
     table_index_string = table_index_to_string(table_index)
@@ -141,7 +141,7 @@ defmodule VintageNet.Route.IPRoute do
       "table",
       table_index_string,
       "metric",
-      "#{metric}",
+      to_string(metric),
       "dev",
       ifname,
       "scope",
