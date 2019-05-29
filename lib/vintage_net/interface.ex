@@ -417,6 +417,7 @@ defmodule VintageNet.Interface do
 
     if interface_available?(data) do
       rm(new_config.cleanup_files)
+      cleanup_interface(data.ifname)
       CommandRunner.create_files(new_config.files)
       new_data = run_commands(data, new_config.up_cmds)
 
@@ -451,6 +452,7 @@ defmodule VintageNet.Interface do
 
     if interface_available?(data) do
       rm(new_config.cleanup_files)
+      cleanup_interface(data.ifname)
       CommandRunner.create_files(new_config.files)
       new_data = run_commands(data, new_config.up_cmds)
 
@@ -484,6 +486,7 @@ defmodule VintageNet.Interface do
 
     if interface_available?(data) do
       rm(new_config.cleanup_files)
+      cleanup_interface(data.ifname)
       CommandRunner.create_files(new_config.files)
       new_data = run_commands(data, new_config.up_cmds)
 
@@ -518,6 +521,7 @@ defmodule VintageNet.Interface do
 
     if interface_available?(data) do
       rm(new_config.cleanup_files)
+      cleanup_interface(data.ifname)
       CommandRunner.create_files(new_config.files)
       new_data = run_commands(data, new_config.up_cmds)
 
@@ -542,6 +546,7 @@ defmodule VintageNet.Interface do
   def handle_event(:state_timeout, _event, :retrying, %State{config: new_config} = data) do
     if interface_available?(data) do
       rm(new_config.cleanup_files)
+      cleanup_interface(data.ifname)
       CommandRunner.create_files(new_config.files)
       new_data = run_commands(data, new_config.up_cmds)
 
@@ -564,6 +569,7 @@ defmodule VintageNet.Interface do
         %State{ifname: ifname, config: new_config} = data
       ) do
     rm(new_config.cleanup_files)
+    cleanup_interface(data.ifname)
     CommandRunner.create_files(new_config.files)
     new_data = run_commands(data, new_config.up_cmds)
 
@@ -589,6 +595,7 @@ defmodule VintageNet.Interface do
 
     if interface_available?(data) do
       rm(new_config.cleanup_files)
+      cleanup_interface(data.ifname)
       CommandRunner.create_files(new_config.files)
       new_data = run_commands(data, new_config.up_cmds)
 
