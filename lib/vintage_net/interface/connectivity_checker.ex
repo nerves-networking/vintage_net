@@ -8,6 +8,7 @@ defmodule VintageNet.Interface.ConnectivityChecker do
   @delay_to_first_check 100
   @interval 30_000
   @ping_port 80
+  @ping_timeout 5_000
 
   @doc false
   Record.defrecord(:hostent, Record.extract(:hostent, from_lib: "kernel/include/inet.hrl"))
@@ -22,12 +23,19 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
   @impl true
   def init(ifname) do
-    ping_wait(@delay_to_first_check)
-    {:ok, %{ifname: ifname, interval: @interval}}
+    state = %{ifname: ifname, interval: @interval}
+    {:ok, state, {:continue, :continue}}
   end
 
   @impl true
-  def handle_info(:ping, %{ifname: ifname, interval: interval} = state) do
+  def handle_continue(:continue, %{ifname: ifname} = state) do
+    set_connectivity(ifname, :disconnected)
+
+    {:noreply, state, @delay_to_first_check}
+  end
+
+  @impl true
+  def handle_info(:timeout, %{ifname: ifname, interval: interval} = state) do
     connectivity =
       case ping(ifname) do
         :ok ->
@@ -44,8 +52,8 @@ defmodule VintageNet.Interface.ConnectivityChecker do
       end
 
     set_connectivity(ifname, connectivity)
-    ping_wait(interval)
-    {:noreply, state}
+
+    {:noreply, state, interval}
   end
 
   defp ping(ifname) do
@@ -53,7 +61,7 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
     with {:ok, src_ip} <- get_interface_address(ifname),
          {:ok, dest_ip} <- resolve_addr(internet_host),
-         {:ok, tcp} <- :gen_tcp.connect(dest_ip, @ping_port, ip: src_ip) do
+         {:ok, tcp} <- :gen_tcp.connect(dest_ip, @ping_port, [ip: src_ip], @ping_timeout) do
       _ = :gen_tcp.close(tcp)
       :ok
     end
@@ -90,10 +98,6 @@ defmodule VintageNet.Interface.ConnectivityChecker do
   # even if the one of interest is ok.
   defp resolve_addr(address) when is_tuple(address) do
     {:ok, address}
-  end
-
-  defp ping_wait(interval) do
-    Process.send_after(self(), :ping, interval)
   end
 
   defp set_connectivity(ifname, connectivity) do
