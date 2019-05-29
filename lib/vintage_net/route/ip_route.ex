@@ -1,6 +1,6 @@
 defmodule VintageNet.Route.IPRoute do
   @moduledoc """
-  This module knows how to invoke `ip` to change the routing table
+  This module knows how to invoke the `ip` command to modify the Linux routing tables
   """
 
   require Logger
@@ -110,17 +110,26 @@ defmodule VintageNet.Route.IPRoute do
     end
   end
 
+  @doc """
+  Clear one default route out of the main table for any interface
+  """
   @spec clear_a_route() :: :ok | {:error, any()}
   def clear_a_route() do
     ip_cmd(["route", "del", "default"])
   end
 
+  @doc """
+  Clear one default route that goes to the specified interface
+  """
   @spec clear_a_route(VintageNet.ifname(), Calculator.table_index()) :: :ok | {:error, any()}
   def clear_a_route(ifname, table_index \\ :main) do
     table_index_string = table_index_to_string(table_index)
     ip_cmd(["route", "del", "default", "table", table_index_string, "dev", ifname])
   end
 
+  @doc """
+  Clear one local route
+  """
   @spec clear_a_local_route(
           VintageNet.ifname(),
           :inet.ip_address(),
@@ -149,11 +158,17 @@ defmodule VintageNet.Route.IPRoute do
     ])
   end
 
+  @doc """
+  Clear one local route generically
+  """
   @spec clear_a_local_route(VintageNet.ifname()) :: :ok | {:error, any()}
   def clear_a_local_route(ifname) do
     ip_cmd(["route", "del", "dev", ifname, "scope", "link"])
   end
 
+  @doc """
+  Clear out one rule
+  """
   @spec clear_a_rule(Calculator.table_index()) :: :ok | {:error, any()}
   def clear_a_rule(table_index) do
     table_index_string = table_index_to_string(table_index)
