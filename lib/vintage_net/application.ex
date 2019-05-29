@@ -19,7 +19,7 @@ defmodule VintageNet.Application do
       VintageNet.InterfacesSupervisor
     ]
 
-    opts = [strategy: :one_for_one, name: VintageNet.Supervisor]
+    opts = [strategy: :rest_for_one, name: VintageNet.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end
