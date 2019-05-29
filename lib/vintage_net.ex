@@ -190,8 +190,19 @@ defmodule VintageNet do
         print_if_attribute(ifname, "present", "Present")
         print_if_attribute(ifname, "state", "State")
         print_if_attribute(ifname, "connection", "Connection")
+        IO.puts("  Configuration:")
+        print_config(ifname, "    ")
       end)
     end
+  end
+
+  defp print_config(ifname, prefix) do
+    VintageNet.get_configuration(ifname)
+    |> inspect(pretty: true, width: 80 - String.length(prefix))
+    |> String.split("\n")
+    |> Enum.map(fn s -> prefix <> s end)
+    |> Enum.intersperse("\n")
+    |> IO.puts()
   end
 
   defp print_if_attribute(ifname, name, print_name) do
