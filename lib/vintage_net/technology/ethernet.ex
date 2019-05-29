@@ -27,7 +27,10 @@ defmodule VintageNet.Technology.Ethernet do
        child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
        # ifup hangs forever until Ethernet is plugged in
        up_cmd_millis: 60_000,
-       up_cmds: [{:run, ifup, ["-i", network_interfaces_path, ifname]}],
+       up_cmds: [
+         {:run_ignore_errors, ifdown, ["-i", network_interfaces_path, ifname]},
+         {:run, ifup, ["-i", network_interfaces_path, ifname]}
+       ],
        down_cmd_millis: 5_000,
        down_cmds: [{:run, ifdown, ["-i", network_interfaces_path, ifname]}]
      }}

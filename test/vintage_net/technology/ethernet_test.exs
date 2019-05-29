@@ -16,7 +16,11 @@ defmodule VintageNet.Technology.EthernetTest do
         {"/tmp/vintage_net/network_interfaces.eth0", dhcp_interface("eth0", "unittest")}
       ],
       up_cmd_millis: 60_000,
-      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}],
+      up_cmds: [
+        {:run_ignore_errors, "/sbin/ifdown",
+         ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
+      ],
       down_cmds: [
         {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
       ]
@@ -52,7 +56,11 @@ defmodule VintageNet.Technology.EthernetTest do
       child_specs: [{VintageNet.Interface.ConnectivityChecker, "eth0"}],
       files: [{"/tmp/vintage_net/network_interfaces.eth0", interfaces_content}],
       up_cmd_millis: 60_000,
-      up_cmds: [{:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}],
+      up_cmds: [
+        {:run_ignore_errors, "/sbin/ifdown",
+         ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]},
+        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
+      ],
       down_cmds: [
         {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
       ]

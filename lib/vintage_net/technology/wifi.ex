@@ -41,6 +41,7 @@ defmodule VintageNet.Technology.WiFi do
     ]
 
     up_cmds = [
+      {:run_ignore_errors, ifdown, ["-i", network_interfaces_path, ifname]},
       {:run_ignore_errors, killall, ["-q", "wpa_supplicant"]},
       {:run, wpa_supplicant, ["-B", "-i", ifname, "-c", wpa_supplicant_conf_path, "-dd"]},
       {:run, ifup, ["-i", network_interfaces_path, ifname]}
