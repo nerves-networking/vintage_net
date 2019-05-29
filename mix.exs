@@ -4,7 +4,7 @@ defmodule VintageNet.MixProject do
   def project do
     [
       app: :vintage_net,
-      version: "0.2.2",
+      version: "0.2.3",
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       test_coverage: [tool: ExCoveralls],

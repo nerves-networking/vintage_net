@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.3
+
+* Bug fixes
+  * This release fixes supervision issues so that internal VintageNet crashes
+    can be recovered
+  * `VintageNet.get_configuration/1` works now
+  * `"available_interfaces"` is updated again
+
 ## v0.2.2
 
 * Bug fixes
