@@ -696,6 +696,13 @@ defmodule VintageNet.Interface do
 
     PropertyTable.put(VintageNet, ["interface", ifname, "type"], config.type)
     PropertyTable.put(VintageNet, ["interface", ifname, "state"], state)
+
+    if state != :configured do
+      # Once a state is `:configured`, then the configuration provides the connection
+      # status. When not configured, report it as `:disconnected` to avoid any confusion
+      # with stale or unset values.
+      PropertyTable.put(VintageNet, ["interface", ifname, "connection"], :disconnected)
+    end
   end
 
   defp run_ioctl(data, from, mfa) do
