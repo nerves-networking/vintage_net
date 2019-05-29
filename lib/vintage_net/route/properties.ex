@@ -54,7 +54,7 @@ defmodule VintageNet.Route.Properties do
   defp status_to_priority(:internet), do: 2
 
   defp local_routes(routes) do
-    for {:local_route, ifname, _address, _subnet_bits, metric} <- routes,
+    for {:local_route, ifname, _address, _subnet_bits, metric, :main} <- routes,
         do: {metric, ifname}
   end
 end

@@ -18,10 +18,12 @@ defmodule VintageNet.Route.PropertiesTest do
 
   test "orders available_interface by metric" do
     routes = [
-      {:local_route, "eth0", {192, 168, 1, 50}, 24, 10},
-      {:local_route, "wlan0", {192, 168, 1, 60}, 24, 20},
       {:rule, 100, {192, 168, 1, 50}},
       {:rule, 101, {192, 168, 1, 60}},
+      {:local_route, "eth0", {192, 168, 1, 50}, 24, 0, 100},
+      {:local_route, "eth0", {192, 168, 1, 50}, 24, 10, :main},
+      {:local_route, "wlan0", {192, 168, 1, 60}, 24, 0, 101},
+      {:local_route, "wlan0", {192, 168, 1, 60}, 24, 20, :main},
       {:default_route, "eth0", {192, 168, 1, 1}, 0, 100},
       {:default_route, "eth0", {192, 168, 1, 1}, 10, :main},
       {:default_route, "wlan0", {192, 168, 1, 1}, 0, 101},
@@ -30,15 +32,17 @@ defmodule VintageNet.Route.PropertiesTest do
 
     :ok = Properties.update_available_interfaces(routes)
 
-    assert ["eth0", "wlan0"] = VintageNet.get(["available_interfaces"])
+    assert ["eth0", "wlan0"] == VintageNet.get(["available_interfaces"])
   end
 
   test "orders available_interface by metric 2" do
     routes = [
-      {:local_route, "eth0", {192, 168, 1, 50}, 24, 50},
-      {:local_route, "wlan0", {192, 168, 1, 60}, 24, 20},
       {:rule, 100, {192, 168, 1, 50}},
       {:rule, 101, {192, 168, 1, 60}},
+      {:local_route, "eth0", {192, 168, 1, 50}, 24, 0, 100},
+      {:local_route, "eth0", {192, 168, 1, 50}, 24, 50, :main},
+      {:local_route, "wlan0", {192, 168, 1, 60}, 24, 0, 101},
+      {:local_route, "wlan0", {192, 168, 1, 60}, 24, 20, :main},
       {:default_route, "eth0", {192, 168, 1, 1}, 0, 100},
       {:default_route, "eth0", {192, 168, 1, 1}, 50, :main},
       {:default_route, "wlan0", {192, 168, 1, 1}, 0, 101},
@@ -47,7 +51,7 @@ defmodule VintageNet.Route.PropertiesTest do
 
     :ok = Properties.update_available_interfaces(routes)
 
-    assert ["wlan0", "eth0"] = VintageNet.get(["available_interfaces"])
+    assert ["wlan0", "eth0"] == VintageNet.get(["available_interfaces"])
   end
 
   test "updates best connection" do
