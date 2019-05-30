@@ -87,4 +87,23 @@ defmodule VintageNet.WiFi.ScanTest do
 
     assert output == Scan.parse(results)
   end
+
+  test "wps access point" do
+    results = """
+    bssid / frequency / signal level / flags / ssid
+    04:18:d6:47:1a:6a\t2462\t-74\t[WPA2-PSK-CCMP+TKIP][WPS]\twps lan
+    """
+
+    output = [
+      %VintageNet.WiFi.AccessPoint{
+        bssid: "04:18:d6:47:1a:6a",
+        frequency: 2462,
+        signal: -74,
+        flags: [:wpa2_psk_ccmp_tkip, :wps],
+        ssid: "wps lan"
+      }
+    ]
+
+    assert output == Scan.parse(results)
+  end
 end
