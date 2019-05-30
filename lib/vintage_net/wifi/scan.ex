@@ -73,8 +73,12 @@ defmodule VintageNet.WiFi.Scan do
   end
 
   defp parse_flag("WPA2-PSK-CCMP"), do: [:wpa2_psk_ccmp]
+  defp parse_flag("WPA2-EAP-CCMP"), do: [:wpa2_eap_ccmp]
+  defp parse_flag("IBSS"), do: [:ibss]
+  defp parse_flag("MESH"), do: [:mesh]
   defp parse_flag("ESS"), do: [:ess]
   defp parse_flag("P2P"), do: [:p2p]
+  defp parse_flag("RSN--CCMP"), do: [:rsn_ccmp]
 
   defp parse_flag(other) do
     _ = Logger.warn("Ignoring unknown WiFi Access Point flag: #{other}")
