@@ -351,7 +351,8 @@ Property     | Values           | Description
 `type`       | `VintageNet.Technology.Ethernet`, etc. | The type of the interface
 `state`      | `:configured`, `:configuring`, etc. | The state of the interface from `VintageNet`'s point of view.
 `connection` | `:disconnected`, `:lan`, `:internet` | This provides a determination of the Internet connection status
-`ipv4`       | IPv4 parameters  | This is a map of IPv4 parameters on the interface. This includes IP address, subnet, gateway, etc.
+`lower_up`   | `true` or `false` | This indicates whether the physical layer is "up". E.g., a cable is connected or WiFi associated
+`ipv4`       | IPv4 parameters  | This is a map of IPv4 parameters on the interface. This includes IP address, subnet, gateway, etc. NOT IMPLEMENTED YET
 
 Specific types of interfaces provide more parameters.
 
