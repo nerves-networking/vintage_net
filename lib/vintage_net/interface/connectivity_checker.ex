@@ -29,9 +29,19 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
   @impl true
   def handle_continue(:continue, %{ifname: ifname} = state) do
+    VintageNet.subscribe(lower_up_property(ifname))
+
     set_connectivity(ifname, :disconnected)
 
-    {:noreply, state, @delay_to_first_check}
+    case VintageNet.get(lower_up_property(ifname)) do
+      true ->
+        {:noreply, state, @delay_to_first_check}
+
+      _not_true ->
+        # If the physical layer isn't up, don't start polling until
+        # we're notified that it is available.
+        {:noreply, state}
+    end
   end
 
   @impl true
@@ -54,6 +64,26 @@ defmodule VintageNet.Interface.ConnectivityChecker do
     set_connectivity(ifname, connectivity)
 
     {:noreply, state, interval}
+  end
+
+  def handle_info(
+        {VintageNet, ["interface", ifname, "lower_up"], _old_value, false, _meta},
+        %{ifname: ifname} = state
+      ) do
+    # Physical layer is down. We're definitely disconnected, so skip right to it and
+    # don't poll until the lower_up changes
+    set_connectivity(ifname, :disconnected)
+    {:noreply, state}
+  end
+
+  def handle_info(
+        {VintageNet, ["interface", ifname, "lower_up"], _old_value, true, _meta},
+        %{ifname: ifname} = state
+      ) do
+    # Physical layer is up. Optimistically assume that the LAN is accessible and
+    # start polling again after a short delay
+    set_connectivity(ifname, :lan)
+    {:noreply, state, @delay_to_first_check}
   end
 
   defp ping(ifname) do
@@ -103,5 +133,9 @@ defmodule VintageNet.Interface.ConnectivityChecker do
   defp set_connectivity(ifname, connectivity) do
     RouteManager.set_connection_status(ifname, connectivity)
     PropertyTable.put(VintageNet, ["interface", ifname, "connection"], connectivity)
+  end
+
+  defp lower_up_property(ifname) do
+    ["interface", ifname, "lower_up"]
   end
 end
