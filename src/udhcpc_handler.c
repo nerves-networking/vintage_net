@@ -34,8 +34,7 @@ static int count_elements(const char *str)
 
     int n = 1;
     const char *p = str;
-    while (*p != '\0')
-    {
+    while (*p != '\0') {
         if (*p == ' ')
             n++;
         p++;
@@ -48,13 +47,11 @@ static void encode_kv_list(ei_x_buff *buff, const char *key, const char *str)
     ei_x_encode_atom(buff, key);
 
     int n = count_elements(str);
-    if (n > 0)
-    {
+    if (n > 0) {
         ei_x_encode_list_header(buff, n);
 
         const char *p = str;
-        while (n > 1)
-        {
+        while (n > 1) {
             const char *end = strchr(p, ' ');
             ei_x_encode_binary(buff, p, end - p);
             p = end + 1;
@@ -99,8 +96,7 @@ static int count_environ_to_encode()
     char **p = environ;
     int n = 0;
 
-    while (*p != NULL)
-    {
+    while (*p != NULL) {
         if (should_encode(*p))
             n++;
 
@@ -140,8 +136,7 @@ static void encode_environ(ei_x_buff *buff)
     char **p = environ;
 
     // We want to encode all lower case environment variables. Those are the ones from udhcpc.
-    while (*p != NULL)
-    {
+    while (*p != NULL) {
         const char *kv = *p;
 
         if (should_encode(kv))

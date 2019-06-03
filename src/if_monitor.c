@@ -39,11 +39,16 @@
 // 16.04 has IFF_LOWER_UP always being set to 0x10000.
 #define WORKAROUND_IFF_LOWER_UP (0x10000)
 
-#define MACADDR_STR_LEN      18 // aa:bb:cc:dd:ee:ff and a null terminator
+#define MACADDR_STR_LEN 18 // aa:bb:cc:dd:ee:ff and a null terminator
 
 //#define DEBUG
 #ifdef DEBUG
-#define debug(...) do { fprintf(stderr, __VA_ARGS__); fprintf(stderr, "\r\n"); } while(0)
+#define debug(...)                    \
+    do                                \
+    {                                 \
+        fprintf(stderr, __VA_ARGS__); \
+        fprintf(stderr, "\r\n");      \
+    } while (0)
 #else
 #define debug(...)
 #endif
@@ -74,7 +79,7 @@ static void netif_init(struct netif *nb)
         err(EXIT_FAILURE, "mnl_socket_open (NETLINK_KOBJECT_UEVENT)");
 
     // There is one single group in kobject over netlink
-    if (mnl_socket_bind(nb->nl_uevent, (1<<0), MNL_SOCKET_AUTOPID) < 0)
+    if (mnl_socket_bind(nb->nl_uevent, (1 << 0), MNL_SOCKET_AUTOPID) < 0)
         err(EXIT_FAILURE, "mnl_socket_bind");
 }
 
@@ -154,7 +159,7 @@ static void encode_kv_macaddr(ei_x_buff *buff, const char *key, const unsigned c
 
 static void encode_kv_stats(ei_x_buff *buff, const char *key, struct nlattr *attr)
 {
-    struct rtnl_link_stats *stats = (struct rtnl_link_stats *) mnl_attr_get_payload(attr);
+    struct rtnl_link_stats *stats = (struct rtnl_link_stats *)mnl_attr_get_payload(attr);
 
     ei_x_encode_atom(buff, key);
     ei_x_encode_map_header(buff, 10);
@@ -205,7 +210,7 @@ static void encode_kv_operstate(ei_x_buff *buff, int operstate)
 
 static int netif_build_ifinfo(const struct nlmsghdr *nlh, void *data)
 {
-    ei_x_buff *buff = (ei_x_buff *) data;
+    ei_x_buff *buff = (ei_x_buff *)data;
     struct nlattr *tb[IFLA_MAX + 1];
     memset(tb, 0, sizeof(tb));
     struct ifinfomsg *ifm = mnl_nlmsg_get_payload(nlh);
@@ -295,7 +300,6 @@ static void netif_request_status(struct netif *nb,
     if (mnl_socket_sendto(nb->nl, nlh, nlh->nlmsg_len) < 0)
         err(EXIT_FAILURE, "mnl_socket_send");
 }
-
 
 static void nl_uevent_process(struct netif *nb)
 {
@@ -401,7 +405,7 @@ static void request_all_interfaces(struct netif *nb)
         err(EXIT_FAILURE, "if_nameindex");
 
     for (struct if_nameindex *i = if_ni;
-            ! (i->if_index == 0 && i->if_name == NULL);
+            !(i->if_index == 0 && i->if_name == NULL);
             i++) {
         netif_request_status(nb, i->if_index);
     }
@@ -411,8 +415,8 @@ static void request_all_interfaces(struct netif *nb)
 
 int main(int argc, char *argv[])
 {
-    (void) argc;
-    (void) argv;
+    (void)argc;
+    (void)argv;
 
     struct netif nb;
     netif_init(&nb);

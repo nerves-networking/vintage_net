@@ -75,4 +75,18 @@ $(PREFIX) $(BUILD):
 clean:
 	$(RM) $(PREFIX)/to_elixir $(PREFIX)/udhcpc_handler $(PREFIX)/if_monitor $(BUILD)/*.o
 
-.PHONY: all clean calling_from_make install
+format:
+	astyle \
+	    --style=kr \
+	    --indent=spaces=4 \
+	    --align-pointer=name \
+	    --align-reference=name \
+	    --convert-tabs \
+	    --attach-namespaces \
+	    --max-code-length=100 \
+	    --max-instatement-indent=120 \
+	    --pad-header \
+	    --pad-oper \
+	    src/*.c
+
+.PHONY: all clean calling_from_make install format
