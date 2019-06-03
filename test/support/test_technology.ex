@@ -6,6 +6,10 @@ defmodule VintageNetTest.TestTechnology do
   @moduledoc """
   Support for unit testing APIs that require a Technology behaviour
   """
+
+  @impl true
+  def normalize(config), do: {:ok, config}
+
   @impl true
   def to_raw_config(ifname, _config \\ %{}, _opts \\ []) do
     {:ok,
