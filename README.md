@@ -372,6 +372,12 @@ Property     | Values           | Description
 
 ## System Requirements
 
+### Kernel Requirements
+
+* `CONFIG_IP_ADVANCED_ROUTER=y`
+* `CONFIG_IP_MULTIPLE_TABLES=y`
+* `CONFIG_IP_ROUTE_VERBOSE=y` - (optional)
+
 ### Busybox Requirements
 
 * `CONFIG_UDHCPC=y` - `udhcpc` DHCP Client
