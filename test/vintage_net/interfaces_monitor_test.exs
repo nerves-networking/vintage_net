@@ -20,6 +20,10 @@ defmodule VintageNet.InterfacesMonitorTest do
   test "populates the property table" do
     names = get_interfaces()
 
+    # vintage_net is starting up so allow some time for the interfaces
+    # to be enumerated
+    Process.sleep(100)
+
     for name <- names do
       assert true == VintageNet.get(["interface", name, "present"])
     end
