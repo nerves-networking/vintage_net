@@ -16,6 +16,7 @@ defmodule VintageNet.InterfacesMonitorTest do
     :ok
   end
 
+  @tag :requires_interfaces_monitor
   test "populates the property table" do
     names = get_interfaces()
 
