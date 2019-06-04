@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.4
+
+* New features
+  * Listen for interface additions and physical layer notifications so that
+    routing and status updates can be made much more quickly
+  * Add `lower_up` to the interface properties
+
 ## v0.2.3
 
 * Bug fixes
