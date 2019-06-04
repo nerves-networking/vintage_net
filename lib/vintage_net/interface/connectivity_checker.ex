@@ -5,8 +5,9 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
   require Record
 
-  @delay_to_first_check 100
-  @interval 30_000
+  @min_interval 500
+  @max_interval 30_000
+
   @ping_port 80
   @ping_timeout 5_000
 
@@ -23,7 +24,7 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
   @impl true
   def init(ifname) do
-    state = %{ifname: ifname, interval: @interval}
+    state = %{ifname: ifname, interval: @min_interval}
     {:ok, state, {:continue, :continue}}
   end
 
@@ -35,7 +36,7 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
     case VintageNet.get(lower_up_property(ifname)) do
       true ->
-        {:noreply, state, @delay_to_first_check}
+        {:noreply, state, @min_interval}
 
       _not_true ->
         # If the physical layer isn't up, don't start polling until
@@ -63,7 +64,7 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
     set_connectivity(ifname, connectivity)
 
-    {:noreply, state, interval}
+    {:noreply, state, next_interval(connectivity, interval)}
   end
 
   def handle_info(
@@ -83,7 +84,9 @@ defmodule VintageNet.Interface.ConnectivityChecker do
     # Physical layer is up. Optimistically assume that the LAN is accessible and
     # start polling again after a short delay
     set_connectivity(ifname, :lan)
-    {:noreply, state, @delay_to_first_check}
+
+    new_state = %{state | interval: @min_interval}
+    {:noreply, new_state, @min_interval}
   end
 
   defp ping(ifname) do
@@ -137,5 +140,12 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
   defp lower_up_property(ifname) do
     ["interface", ifname, "lower_up"]
+  end
+
+  # Back off of checks if they're not working
+  defp next_interval(:internet, _interval), do: @max_interval
+
+  defp next_interval(_not_internet, interval) do
+    min(interval * 2, @max_interval)
   end
 end
