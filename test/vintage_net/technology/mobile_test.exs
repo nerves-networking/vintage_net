@@ -59,11 +59,11 @@ defmodule VintageNet.Technology.MobileTest do
          """}
       ],
       up_cmds: [
-        {:run, "/bin/mknod", ["/dev/ppp", "c", "108", "0"]},
-        {:run, "/usr/sbin/pppd",
+        {:run, "mknod", ["/dev/ppp", "c", "108", "0"]},
+        {:run, "pppd",
          [
            "connect",
-           "/usr/sbin/chat -v -f /tmp/chat_script",
+           "chat -v -f /tmp/chat_script",
            "/dev/ttyUSB1",
            "115200",
            "noipdefault",
@@ -73,7 +73,7 @@ defmodule VintageNet.Technology.MobileTest do
            "persist"
          ]}
       ],
-      down_cmds: [{:run, "/usr/bin/killall", ["-q", "pppd"]}]
+      down_cmds: [{:run, "killall", ["-q", "pppd"]}]
     }
   end
 
