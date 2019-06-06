@@ -64,16 +64,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -113,16 +113,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -160,16 +160,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -219,16 +219,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -270,16 +270,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -333,16 +333,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -389,16 +389,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -453,16 +453,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -514,16 +514,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -573,16 +573,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -638,16 +638,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -691,16 +691,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -746,16 +746,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -807,16 +807,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -856,16 +856,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -905,16 +905,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -956,16 +956,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -1037,16 +1037,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -1110,16 +1110,16 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -1191,18 +1191,18 @@ defmodule VintageNet.Technology.WiFiTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/sbin/wpa_supplicant",
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/sbin/udhcpd", ["/tmp/vintage_net/udhcpd.conf.wlan0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "udhcpd", ["/tmp/vintage_net/udhcpd.conf.wlan0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "/usr/bin/killall", ["-q", "wpa_supplicant"]},
-        {:run, "/usr/bin/killall", ["-q", "udhcpd"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "killall", ["-q", "udhcpd"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }

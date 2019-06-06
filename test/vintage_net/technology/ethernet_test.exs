@@ -17,12 +17,12 @@ defmodule VintageNet.Technology.EthernetTest do
       ],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
       ]
     }
 
@@ -57,12 +57,12 @@ defmodule VintageNet.Technology.EthernetTest do
       files: [{"/tmp/vintage_net/network_interfaces.eth0", interfaces_content}],
       up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "/sbin/ifdown",
+        {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]},
-        {:run, "/sbin/ifup", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
       ],
       down_cmds: [
-        {:run, "/sbin/ifdown", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.eth0", "eth0"]}
       ]
     }
 
