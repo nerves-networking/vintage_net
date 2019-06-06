@@ -19,6 +19,7 @@ defmodule VintageNetTest do
     assert {:error, :type_missing} == VintageNet.configure("eth0", %{})
   end
 
+  @tag :requires_interfaces_monitor
   test "interfaces exist" do
     interfaces = VintageNet.all_interfaces()
 
