@@ -15,6 +15,17 @@ defmodule VintageNetTest do
     :ok
   end
 
+  test "program paths resolve" do
+    # For testing, the ip program is overridden to use "false". Check that it
+    # was resolved.
+    false_path = Application.get_env(:vintage_net, :bin_ip)
+    assert String.starts_with?(false_path, "/")
+    assert File.exists?(false_path)
+
+    # Busybox is included as an optional dependency and it should always install udhcpc
+    assert Application.get_env(:vintage_net, :bin_udhcpd) =~ ~r"busybox.*priv.*/sbin/udhcpd"
+  end
+
   test "configure fails on bad technologies" do
     assert {:error, :type_missing} == VintageNet.configure("eth0", %{})
   end
