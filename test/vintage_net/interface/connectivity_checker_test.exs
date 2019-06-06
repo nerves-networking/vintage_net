@@ -12,6 +12,7 @@ defmodule VintageNet.Interface.ConnectivityCheckerTest do
     assert_receive {VintageNet, property, _old_value, :disconnected, _meta}, 1_000
   end
 
+  @tag :requires_interfaces_monitor
   test "internet connected interface" do
     ifname = get_ifname()
     property = ["interface", ifname, "connection"]
