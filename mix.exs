@@ -23,20 +23,22 @@ defmodule VintageNet.MixProject do
 
   def application do
     [
+      # The bin_* variables are paths to programs. Set to absolute paths to pin.
+      # Program names are found at application start and converted to absolute.
       env: [
         config: [],
         tmpdir: "/tmp/vintage_net",
         to_elixir_socket: "comms",
-        bin_ifup: "/sbin/ifup",
-        bin_ifdown: "/sbin/ifdown",
-        bin_chat: "/usr/sbin/chat",
-        bin_pppd: "/usr/sbin/pppd",
-        bin_mknod: "/bin/mknod",
-        bin_killall: "/usr/bin/killall",
+        bin_ifup: "ifup",
+        bin_ifdown: "ifdown",
+        bin_chat: "chat",
+        bin_pppd: "pppd",
+        bin_mknod: "mknod",
+        bin_killall: "killall",
         bin_wpa_supplicant: "/usr/sbin/wpa_supplicant",
         bin_wpa_cli: "/usr/sbin/wpa_cli",
-        bin_ip: "/sbin/ip",
-        bin_udhcpd: "/usr/sbin/udhcpd",
+        bin_ip: "ip",
+        bin_udhcpd: "udhcpd",
         udhcpc_handler: VintageNet.Interface.Udhcpc,
         resolvconf: "/etc/resolv.conf",
         persistence: VintageNet.Persistence.FlatFile,
@@ -82,13 +84,15 @@ defmodule VintageNet.MixProject do
       {:excoveralls, "~> 0.8", only: :test, runtime: false},
       {:dialyxir, "~> 1.0.0-rc.4", only: :dev, runtime: false},
       {:muontrap, "~> 0.4.1"},
-      {:gen_state_machine, "~> 2.0.0"}
+      {:gen_state_machine, "~> 2.0.0"},
+      {:busybox, "~> 0.1", optional: true}
     ]
   end
 
   defp dialyzer() do
     [
-      flags: [:race_conditions, :unmatched_returns, :error_handling]
+      flags: [:race_conditions, :unmatched_returns, :error_handling],
+      plt_add_apps: [:busybox]
     ]
   end
 end
