@@ -1,5 +1,7 @@
 defmodule VintageNet.WiFi.Scan do
   alias VintageNet.WiFi.AccessPoint
+  alias VintageNet.Command
+
   require Logger
 
   @moduledoc """
@@ -22,11 +24,10 @@ defmodule VintageNet.WiFi.Scan do
   end
 
   defp run_wpa_cli(ifname, command) do
-    bin_wpa_cli = Application.get_env(:vintage_net, :bin_wpa_cli)
     tmpdir = Application.get_env(:vintage_net, :tmpdir)
 
     with {:ok, ctrl_interface} <- detect_ctrl_interface(ifname, tmpdir),
-         {results, 0} <- System.cmd(bin_wpa_cli, ["-i", ifname, "-g", ctrl_interface, command]) do
+         {results, 0} <- Command.cmd(:bin_wpa_cli, ["-i", ifname, "-g", ctrl_interface, command]) do
       {:ok, results}
     else
       {:error, reason} -> {:error, reason}

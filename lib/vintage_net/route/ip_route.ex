@@ -6,6 +6,7 @@ defmodule VintageNet.Route.IPRoute do
   require Logger
 
   alias VintageNet.Route.Calculator
+  alias VintageNet.Command
 
   @doc """
   Add a default route
@@ -182,12 +183,10 @@ defmodule VintageNet.Route.IPRoute do
     do: to_string(table_index)
 
   defp ip_cmd(args) do
-    bin_ip = Application.get_env(:vintage_net, :bin_ip)
-
     # Send iodata to the logger with the command and args interspersed with spaces
     # _ = Logger.debug(Enum.intersperse(["ip" | args], " "))
 
-    case System.cmd(bin_ip, args, stderr_to_stdout: true) do
+    case Command.cmd(:bin_ip, args, stderr_to_stdout: true) do
       {_, 0} -> :ok
       {message, _error} -> {:error, message}
     end

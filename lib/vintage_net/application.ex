@@ -10,9 +10,17 @@ defmodule VintageNet.Application do
     socket_path = Path.join(Keyword.get(args, :tmpdir), Keyword.get(args, :to_elixir_socket))
 
     # Resolve paths to all of the programs that might be used.
-    args
-    |> resolve_paths()
-    |> Enum.each(fn {k, v} -> Application.put_env(:vintage_net, k, v) end)
+    if using_elixir_busybox() do
+      args
+      |> resolve_paths(&resolve_busybox_path/1)
+      |> put_env()
+
+      Application.put_env(:vintage_net, :path, Busybox.path() |> Enum.join(":"))
+    else
+      args
+      |> resolve_paths(&resolve_standard_path/1)
+      |> put_env()
+    end
 
     children = [
       {VintageNet.PropertyTable, name: VintageNet},
@@ -28,23 +36,22 @@ defmodule VintageNet.Application do
     Supervisor.start_link(children, opts)
   end
 
-  def resolve_paths(env) do
-    resolver =
-      if Code.ensure_loaded?(Busybox),
-        do: &resolve_busybox_path/1,
-        else: &resolve_standard_path/1
-
-    resolve_paths(env, resolver)
+  defp using_elixir_busybox() do
+    Code.ensure_loaded?(Busybox)
   end
 
-  def resolve_paths(env, resolver) do
+  defp put_env(list) do
+    Enum.each(list, fn {k, v} -> Application.put_env(:vintage_net, k, v) end)
+  end
+
+  defp resolve_paths(env, resolver) do
     env
     |> Enum.filter(fn {k, _v} -> String.starts_with?(to_string(k), "bin_") end)
     |> Enum.filter(fn {_k, v} -> !String.starts_with?(v, "/") end)
     |> Enum.map(resolver)
   end
 
-  def resolve_busybox_path({key, program_name}) do
+  defp resolve_busybox_path({key, program_name}) do
     case Busybox.find_executable(program_name) do
       nil ->
         resolve_standard_path({key, program_name})
@@ -54,7 +61,7 @@ defmodule VintageNet.Application do
     end
   end
 
-  def resolve_standard_path({key, program_name}) do
+  defp resolve_standard_path({key, program_name}) do
     case System.find_executable(program_name) do
       nil ->
         {key, program_name}

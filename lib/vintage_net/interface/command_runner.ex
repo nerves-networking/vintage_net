@@ -14,6 +14,7 @@ defmodule VintageNet.Interface.CommandRunner do
   """
   require Logger
   alias VintageNet.Interface.RawConfig
+  alias VintageNet.Command
 
   @doc """
   Run a list of commands
@@ -37,7 +38,7 @@ defmodule VintageNet.Interface.CommandRunner do
   Non-zero exit status will return an error.
   """
   def run({:run, command, args}) do
-    case MuonTrap.cmd(command, args) do
+    case Command.muon_cmd(command, args) do
       {_, 0} ->
         :ok
 
@@ -51,7 +52,7 @@ defmodule VintageNet.Interface.CommandRunner do
   Run a command and ignore its exit code
   """
   def run({:run_ignore_errors, command, args}) do
-    _ = MuonTrap.cmd(command, args)
+    _ = Command.muon_cmd(command, args)
     :ok
   end
 
