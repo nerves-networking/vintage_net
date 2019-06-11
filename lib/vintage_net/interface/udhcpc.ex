@@ -1,7 +1,7 @@
 defmodule VintageNet.Interface.Udhcpc do
   @behaviour VintageNet.ToElixir.UdhcpcHandler
 
-  alias VintageNet.{NameResolver, RouteManager}
+  alias VintageNet.{Command, NameResolver, RouteManager}
 
   require Logger
 
@@ -13,8 +13,8 @@ defmodule VintageNet.Interface.Udhcpc do
 
     # /sbin/ifconfig $interface up
     # /sbin/ifconfig $interface 0.0.0.0
-    _ = System.cmd("/sbin/ifconfig", [ifname, "up"])
-    _ = System.cmd("/sbin/ifconfig", [ifname, "0.0.0.0"])
+    _ = Command.cmd(:bin_ifconfig, [ifname, "up"])
+    _ = Command.cmd(:bin_ifconfig, [ifname, "0.0.0.0"])
 
     # # drop info from this interface
     # # resolv.conf may be a symlink to /tmp/, so take care
@@ -79,7 +79,7 @@ defmodule VintageNet.Interface.Udhcpc do
     # /sbin/ifconfig $interface $ip $BROADCAST $NETMASK
 
     ifconfig_args = build_ifconfig_args(ifname, info)
-    _ = System.cmd("/sbin/ifconfig", ifconfig_args)
+    _ = Command.cmd(:bin_ifconfig, ifconfig_args)
 
     case info[:router] do
       routers when is_list(routers) ->
