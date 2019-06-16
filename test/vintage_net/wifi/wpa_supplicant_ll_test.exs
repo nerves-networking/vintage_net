@@ -52,4 +52,15 @@ defmodule VintageNet.WiFi.WPASupplicantLLTest do
       assert Process.alive?(ll)
     end)
   end
+
+  test "handles notifications while waiting for a response", context do
+    ll = start_supervised!({WPASupplicantLL, context.socket_path})
+    :ok = WPASupplicantLL.subscribe(ll, self())
+
+    MockWPASupplicant.set_responses(context.mock, %{"SCAN" => ["<1>Notification", "OK"]})
+
+    assert {:ok, "OK"} = WPASupplicantLL.control_request(ll, "SCAN")
+    assert_receive {VintageNet.WiFi.WPASupplicantLL, 1, "Notification"}
+    assert MockWPASupplicant.get_requests(context.mock) == ["SCAN"]
+  end
 end

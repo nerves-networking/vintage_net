@@ -11,6 +11,11 @@ defmodule VintageNetTest.MockWPASupplicant do
     GenServer.call(server, {:set_responses, responses})
   end
 
+  @spec get_requests(GenServer.server()) :: []
+  def get_requests(server) do
+    GenServer.call(server, :get_requests)
+  end
+
   @spec send_message(GenServer.server(), binary()) :: :ok
   def send_message(server, message) do
     GenServer.cast(server, {:send_message, message})
@@ -22,12 +27,24 @@ defmodule VintageNetTest.MockWPASupplicant do
 
     {:ok, socket} = :gen_udp.open(0, [:local, :binary, {:active, true}, {:ip, {:local, path}}])
 
-    {:ok, %{socket_path: path, socket: socket, client_path: path <> ".ex", responses: %{}}}
+    {:ok,
+     %{
+       socket_path: path,
+       socket: socket,
+       client_path: path <> ".ex",
+       responses: %{},
+       requests: []
+     }}
   end
 
   @impl true
   def handle_call({:set_responses, responses}, _from, state) do
     {:reply, :ok, %{state | responses: responses}}
+  end
+
+  @impl true
+  def handle_call(:get_requests, _from, %{requests: requests} = state) do
+    {:reply, requests, state}
   end
 
   @impl true
@@ -42,16 +59,21 @@ defmodule VintageNetTest.MockWPASupplicant do
   @impl true
   def handle_info(
         {:udp, socket, from, 0, message},
-        %{socket: socket, responses: responses} = state
+        %{socket: socket, responses: responses, requests: requests} = state
       ) do
-    :ok =
-      :gen_udp.send(
-        socket,
-        from,
-        0,
-        Map.get(responses, message, "Mock doesn't know about #{message}")
-      )
+    responses
+    |> lookup(message)
+    |> Enum.each(fn payload ->
+      :ok = :gen_udp.send(socket, from, 0, payload)
+    end)
 
-    {:noreply, state}
+    {:noreply, %{state | requests: requests ++ [message]}}
+  end
+
+  defp lookup(responses, message) do
+    case Map.get(responses, message, "Mock doesn't know about #{message}") do
+      list when is_list(list) -> list
+      other -> [other]
+    end
   end
 end
