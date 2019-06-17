@@ -56,14 +56,14 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
       "BSS 1" => ""
     })
 
-    supplicant =
+    _supplicant =
       start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
 
     ap_property = ["interface", "test_wlan0", "access_points"]
     VintageNet.PropertyTable.clear(VintageNet, ap_property)
 
     VintageNet.subscribe(ap_property)
-    :ok = WPASupplicant.scan(supplicant)
+    :ok = WPASupplicant.scan("test_wlan0")
 
     assert_receive {VintageNet, ^ap_property, _old,
                     %{

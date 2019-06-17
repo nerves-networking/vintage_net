@@ -1,7 +1,7 @@
 defmodule VintageNet.Technology.WiFi do
   @behaviour VintageNet.Technology
 
-  alias VintageNet.WiFi.{Scan, WPA2, WPASupplicant}
+  alias VintageNet.WiFi.{WPA2, WPASupplicant}
   alias VintageNet.Interface.RawConfig
   alias VintageNet.IP.{ConfigToInterfaces, ConfigToUdhcpd}
 
