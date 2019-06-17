@@ -47,6 +47,7 @@ defmodule VintageNet.Interface do
 
   Note that this doesn't unconfigure it.
   """
+  @spec stop(VintageNet.ifname()) :: :ok
   def stop(ifname) do
     GenStateMachine.stop(via_name(ifname))
   end
