@@ -1,7 +1,7 @@
 defmodule VintageNet.Technology.WiFi do
   @behaviour VintageNet.Technology
 
-  alias VintageNet.WiFi.{Scan, WPA2}
+  alias VintageNet.WiFi.{Scan, WPA2, WPASupplicant}
   alias VintageNet.Interface.RawConfig
   alias VintageNet.IP.{ConfigToInterfaces, ConfigToUdhcpd}
 
@@ -25,7 +25,8 @@ defmodule VintageNet.Technology.WiFi do
 
     network_interfaces_path = Path.join(tmpdir, "network_interfaces.#{ifname}")
     wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
-    control_interface_path = Path.join(tmpdir, "wpa_supplicant")
+    control_interface_dir = Path.join(tmpdir, "wpa_supplicant")
+    control_interface_path = Path.join(control_interface_dir, ifname)
 
     {:ok, normalized_config} = normalize(config)
 
@@ -35,7 +36,7 @@ defmodule VintageNet.Technology.WiFi do
       {wpa_supplicant_conf_path,
        wifi_to_supplicant_contents(
          normalized_config.wifi,
-         control_interface_path,
+         control_interface_dir,
          regulatory_domain
        )}
     ]
@@ -60,8 +61,11 @@ defmodule VintageNet.Technology.WiFi do
            type: __MODULE__,
            source_config: normalized_config,
            files: files ++ udhcpd_files,
-           cleanup_files: [Path.join(control_interface_path, ifname)],
-           child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
+           cleanup_files: [control_interface_path],
+           child_specs: [
+             {VintageNet.Interface.ConnectivityChecker, ifname},
+             {WPASupplicant, ifname: ifname, control_path: control_interface_path}
+           ],
            up_cmds: up_cmds ++ udhcpd_up_cmds,
            up_cmd_millis: 60_000,
            down_cmds: down_cmds ++ udhcpd_down_cmds
@@ -74,8 +78,11 @@ defmodule VintageNet.Technology.WiFi do
            type: __MODULE__,
            source_config: normalized_config,
            files: files,
-           cleanup_files: [Path.join(control_interface_path, ifname)],
-           child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
+           cleanup_files: [control_interface_path],
+           child_specs: [
+             {VintageNet.Interface.ConnectivityChecker, ifname},
+             {WPASupplicant, ifname: ifname, control_path: control_interface_path}
+           ],
            up_cmds: up_cmds,
            up_cmd_millis: 60_000,
            down_cmds: down_cmds
@@ -89,10 +96,11 @@ defmodule VintageNet.Technology.WiFi do
     tmpdir = Keyword.fetch!(opts, :tmpdir)
 
     wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
-    control_interface_path = Path.join(tmpdir, "wpa_supplicant")
+    control_interface_dir = Path.join(tmpdir, "wpa_supplicant")
+    control_interface_path = Path.join(control_interface_dir, ifname)
 
     files = [
-      {wpa_supplicant_conf_path, "ctrl_interface=#{control_interface_path}"}
+      {wpa_supplicant_conf_path, "ctrl_interface=#{control_interface_dir}"}
     ]
 
     up_cmds = [
@@ -108,10 +116,13 @@ defmodule VintageNet.Technology.WiFi do
        ifname: ifname,
        type: __MODULE__,
        files: files,
-       child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
+       child_specs: [
+         {VintageNet.Interface.ConnectivityChecker, ifname},
+         {WPASupplicant, ifname: ifname, control_path: control_interface_path}
+       ],
        up_cmds: up_cmds,
        down_cmds: down_cmds,
-       cleanup_files: [Path.join(control_interface_path, ifname)]
+       cleanup_files: [control_interface_path]
      }}
   end
 
@@ -144,7 +155,7 @@ defmodule VintageNet.Technology.WiFi do
 
   @impl true
   def ioctl(ifname, :scan, _args) do
-    Scan.scan(ifname)
+    WPASupplicant.scan(ifname)
   end
 
   def ioctl(_ifname, _command, _args) do
@@ -157,9 +168,9 @@ defmodule VintageNet.Technology.WiFi do
     :ok
   end
 
-  defp wifi_to_supplicant_contents(wifi, control_interface_path, regulatory_domain) do
+  defp wifi_to_supplicant_contents(wifi, control_interface_dir, regulatory_domain) do
     config = [
-      "ctrl_interface=#{control_interface_path}",
+      "ctrl_interface=#{control_interface_dir}",
       "country=#{regulatory_domain}",
       into_config_string(wifi, :bgscan),
       into_config_string(wifi, :ap_scan)

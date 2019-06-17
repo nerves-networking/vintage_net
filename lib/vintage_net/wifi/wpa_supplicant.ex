@@ -7,28 +7,35 @@ defmodule VintageNet.WiFi.WPASupplicant do
   @moduledoc """
 
   """
-
+  @spec start_link(keyword) :: GenServer.on_start()
   def start_link(args) do
-    GenServer.start_link(__MODULE__, args)
+    ifname = Keyword.fetch!(args, :ifname)
+    GenServer.start_link(__MODULE__, args, name: via_name(ifname))
+  end
+
+  defp via_name(ifname) do
+    {:via, Registry, {VintageNet.Interface.Registry, {__MODULE__, ifname}}}
   end
 
   @doc """
   Initiate a scan of WiFi networks
   """
-  def scan(server) do
-    GenServer.call(server, :scan)
+  @spec scan(VintageNet.ifname()) :: :ok
+  def scan(ifname) do
+    GenServer.call(via_name(ifname), :scan)
   end
 
   @impl true
   def init(args) do
     control_path = Keyword.fetch!(args, :control_path)
     ifname = Keyword.fetch!(args, :ifname)
+    keep_alive_interval = Keyword.get(args, :keep_alive_interval, 60000)
 
     {:ok, ll} = WPASupplicantLL.start_link(control_path)
     :ok = WPASupplicantLL.subscribe(ll)
 
     state = %{
-      keep_alive_interval: Keyword.get(args, :keep_alive_interval, 60000),
+      keep_alive_interval: keep_alive_interval,
       ll: ll,
       ifname: ifname
     }
@@ -50,7 +57,8 @@ defmodule VintageNet.WiFi.WPASupplicant do
 
   @impl true
   def handle_info(:timeout, state) do
-    {:ok, "PONG\n"} = WPASupplicantLL.control_request(state.ll, "PING")
+    {:ok, pong} = WPASupplicantLL.control_request(state.ll, "PING")
+    "PONG" = String.trim(pong)
     {:noreply, state, state.keep_alive_interval}
   end
 
