@@ -15,7 +15,7 @@ defmodule VintageNet.Application do
       |> resolve_paths(&resolve_busybox_path/1)
       |> put_env()
 
-      Application.put_env(:vintage_net, :path, Busybox.path() |> Enum.join(":"))
+      Application.put_env(:vintage_net, :path, busybox_path() |> Enum.join(":"))
     else
       args
       |> resolve_paths(&resolve_standard_path/1)
@@ -52,13 +52,17 @@ defmodule VintageNet.Application do
   end
 
   defp resolve_busybox_path({key, program_name}) do
-    case Busybox.find_executable(program_name) do
+    case apply(Busybox, :find_executable, [program_name]) do
       nil ->
         resolve_standard_path({key, program_name})
 
       path ->
         {key, path}
     end
+  end
+
+  defp busybox_path() do
+    apply(Busybox, :path, [])
   end
 
   defp resolve_standard_path({key, program_name}) do
