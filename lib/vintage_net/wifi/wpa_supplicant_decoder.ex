@@ -25,7 +25,7 @@ defmodule VintageNet.WiFi.WPASupplicantDecoder do
       Regex.scan(~r(\w+=[a-zA-Z0-9:\"_]+), Enum.join(info, " "))
       |> Map.new(fn [str] ->
         [key, val] = String.split(str, "=")
-        {key, kv_value(val)}
+        {key, unescape_string(val)}
       end)
 
     {:event, "CTRL-EVENT-CONNECTED", bssid, status, info}
@@ -67,7 +67,7 @@ defmodule VintageNet.WiFi.WPASupplicantDecoder do
       |> String.split(" ")
       |> Map.new(fn str ->
         [key, val] = String.split(str, "=", parts: 2)
-        {key, kv_value(val)}
+        {key, unquote_string(val)}
       end)
 
     {:event, "CTRL-EVENT-EAP-PEER-CERT", info}
@@ -78,7 +78,7 @@ defmodule VintageNet.WiFi.WPASupplicantDecoder do
       Regex.scan(~r/\w+=(["'])(?:(?=(\\?))\2.)*?\1/, rest)
       |> Map.new(fn [str | _] ->
         [key, val] = String.split(str, "=", parts: 2)
-        {key, kv_value(val)}
+        {key, unquote_string(val)}
       end)
 
     {:event, "CTRL-EVENT-EAP-STATUS", info}
@@ -122,7 +122,9 @@ defmodule VintageNet.WiFi.WPASupplicantDecoder do
       |> Map.new(fn [str] ->
         str = String.replace(str, "\'", "")
         [key, val] = String.split(str, "=", parts: 2)
-        {key, kv_value(val)}
+
+        clean_val = val |> unquote_string() |> unescape_string()
+        {key, clean_val}
       end)
 
     case Map.pop(info, "bssid") do
@@ -134,15 +136,20 @@ defmodule VintageNet.WiFi.WPASupplicantDecoder do
   @doc """
   Decode a key-value response from the wpa_supplicant
   """
-  @spec decode_kv_response(String.t()) :: map()
+  @spec decode_kv_response(String.t()) :: [{String.t(), String.t()}]
   def decode_kv_response(resp) do
     resp
     |> String.split("\n", trim: true)
-    |> List.foldl(%{}, fn pair, acc ->
-      case String.split(pair, "=") do
+    |> decode_kv_pairs()
+  end
+
+  defp decode_kv_pairs(pairs) do
+    Enum.reduce(pairs, %{}, fn pair, acc ->
+      case String.split(pair, "=", parts: 2) do
         [key, value] ->
-          acc
-          |> Map.put(key, kv_value(String.trim_trailing(value)))
+          clean_value = value |> String.trim_trailing() |> unescape_string()
+
+          Map.put(acc, key, clean_value)
 
         _ ->
           # Skip
@@ -151,19 +158,24 @@ defmodule VintageNet.WiFi.WPASupplicantDecoder do
     end)
   end
 
-  defp kv_value("TRUE"), do: true
-  defp kv_value("FALSE"), do: false
-  defp kv_value(""), do: nil
-  defp kv_value(<<"\"", _::binary>> = msg), do: String.trim(msg, "\"")
-  defp kv_value(<<"\'", _::binary>> = msg), do: String.trim(msg, "\'")
-  defp kv_value(<<"0x", hex::binary>>), do: kv_value(hex, 16)
-  defp kv_value(str), do: kv_value(str, 10)
+  defp unquote_string(<<"\"", _::binary>> = msg), do: String.trim(msg, "\"")
+  defp unquote_string(<<"\'", _::binary>> = msg), do: String.trim(msg, "\'")
+  defp unquote_string(other), do: other
 
-  defp kv_value(value, base) do
-    try do
-      String.to_integer(value, base)
-    rescue
-      ArgumentError -> value
-    end
+  defp unescape_string(string) do
+    unescape_string(string, [])
+    |> Enum.reverse()
+    |> :erlang.list_to_binary()
+  end
+
+  defp unescape_string("", acc), do: acc
+
+  defp unescape_string(<<?\\, ?x, hex::binary-size(2), rest::binary>>, acc) do
+    value = String.to_integer(hex, 16)
+    unescape_string(rest, [value | acc])
+  end
+
+  defp unescape_string(<<other, rest::binary>>, acc) do
+    unescape_string(rest, [other | acc])
   end
 end
