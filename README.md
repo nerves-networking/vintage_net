@@ -362,8 +362,30 @@ No additional parameters
 
 ### WiFi status
 
-Property     | Values           | Description
- ----------- | ---------------- | -----------
+Property        | Values           | Description
+--- ----------- | ---------------- | -----------
+`access_points` | %{"11:22:33:44:55:66" => %AccessPoint{}} | A map of access points as found by the most recent scan
+
+Access points are identified by their BSSID. Information about an access point
+has the following form:
+
+```elixir
+%VintageNet.WiFi.AccessPoint{
+  bssid: "78:8a:20:87:7a:50",
+  flags: [:wpa2_psk_ccmp, :ess],
+  frequency: 2437,
+  signal: -67,
+  ssid: "MyNetwork"
+}
+```
+
+Applications can scan for access points in a couple ways. The first is to call
+`VintageNet.scan("wlan0")`, wait for a second, and then call
+`VintageNet.get(["interface", "wlan0", "access_points"])`. This works for
+scanning networks once or twice. A better way, though, is to subscribe to the
+`"access_points"` property and then call `VintageNet.scan("wlan0")` on a timer.
+The `"access_points"` property updates as soon as the WiFi module notifies that
+it is complete so applications don't need to guess how long to wait.
 
 ### LTE status
 
