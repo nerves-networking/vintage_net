@@ -101,8 +101,8 @@ defmodule VintageNet.WiFi.WPASupplicant do
     else
       ap = %VintageNet.WiFi.AccessPoint{
         bssid: response["bssid"],
-        frequency: response["freq"],
-        signal: response["level"],
+        frequency: String.to_integer(response["freq"]),
+        signal: String.to_integer(response["level"]),
         flags: parse_flags(response["flags"]),
         ssid: response["ssid"]
       }
