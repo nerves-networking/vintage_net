@@ -136,7 +136,7 @@ defmodule VintageNet.WiFi.WPASupplicantDecoder do
   @doc """
   Decode a key-value response from the wpa_supplicant
   """
-  @spec decode_kv_response(String.t()) :: [{String.t(), String.t()}]
+  @spec decode_kv_response(String.t()) :: %{String.t() => String.t()}
   def decode_kv_response(resp) do
     resp
     |> String.split("\n", trim: true)
