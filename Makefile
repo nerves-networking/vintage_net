@@ -51,7 +51,16 @@ CC ?= $(CROSSCOMPILE)-gcc
 # Enable for debug messages
 # CFLAGS += -DDEBUG
 
+# Unfortunately, depending on the system we're on, we need
+# to specify -std=c99 or -std=gnu99. The later is more correct,
+# but it fails to build on many setups.
+# NOTE: Need to call sh here since file permissions are not preserved
+#       in hex packages.
+ifeq ($(shell CC=$(CC) sh src/test-c99.sh),yes)
+CFLAGS += -std=c99 -D_XOPEN_SOURCE=600
+else
 CFLAGS += -std=gnu99
+endif
 
 all: install
 
