@@ -36,7 +36,8 @@ defmodule VintageNet.WiFi.Utils do
           delta2
 
     # Constrain the percent to integers and never go to 0
-    max(floor(percent), 1)
+    # (Kernel.floor/1 was added to Elixir 1.8, so don't use it)
+    max(:erlang.floor(percent), 1)
   end
 
   @doc """
