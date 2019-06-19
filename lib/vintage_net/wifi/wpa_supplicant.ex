@@ -51,15 +51,25 @@ defmodule VintageNet.WiFi.WPASupplicant do
 
   @impl true
   def handle_call(:scan, _from, state) do
-    {:ok, "OK\n"} = WPASupplicantLL.control_request(state.ll, "SCAN")
-    {:reply, :ok, state}
+    response =
+      case WPASupplicantLL.control_request(state.ll, "SCAN") do
+        {:ok, <<"OK", _rest::binary>>} -> :ok
+        {:ok, something_else} -> {:error, String.trim(something_else)}
+        error -> error
+      end
+
+    {:reply, response, state}
   end
 
   @impl true
   def handle_info(:timeout, state) do
-    {:ok, pong} = WPASupplicantLL.control_request(state.ll, "PING")
-    "PONG" = String.trim(pong)
-    {:noreply, state, state.keep_alive_interval}
+    case WPASupplicantLL.control_request(state.ll, "PING") do
+      {:ok, <<"PONG", _rest::binary>>} ->
+        {:noreply, state, state.keep_alive_interval}
+
+      other ->
+        raise "Bad PING response: #{inspect(other)}"
+    end
   end
 
   @impl true

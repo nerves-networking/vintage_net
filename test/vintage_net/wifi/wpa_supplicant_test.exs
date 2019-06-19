@@ -76,4 +76,17 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
                       }
                     }, _metadata}
   end
+
+  test "handles scan failures", context do
+    MockWPASupplicant.set_responses(context.mock, %{
+      "ATTACH" => "OK\n",
+      "PING" => "PONG\n",
+      "SCAN" => ["FAIL-BUSY  \n"]
+    })
+
+    _supplicant =
+      start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
+
+    assert {:error, "FAIL-BUSY"} == WPASupplicant.scan("test_wlan0")
+  end
 end
