@@ -10,7 +10,6 @@ defmodule VintageNetTest.Utils do
       bin_mknod: "mknod",
       bin_killall: "killall",
       bin_wpa_supplicant: "wpa_supplicant",
-      bin_wpa_cli: "wpa_cli",
       bin_ip: "ip",
       bin_udhcpd: "udhcpd"
     )

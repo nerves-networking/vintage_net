@@ -113,7 +113,6 @@ bin_pppd           | Path to `pppd`
 bin_mknod          | Path to `mknod`
 bin_killall        | Path to `killall`
 bin_wpa_supplicant | Path to `wpa_supplicant`
-bin_wpa_cli        | Path to `wpa_cli`
 bin_ip             | Path to `ip`
 udhcpc_handler     | Module for handling notifications from `udhcpc`
 resolvconf         | Path to `/etc/resolv.conf`

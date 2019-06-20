@@ -37,7 +37,6 @@ defmodule VintageNet.MixProject do
         bin_mknod: "mknod",
         bin_killall: "killall",
         bin_wpa_supplicant: "/usr/sbin/wpa_supplicant",
-        bin_wpa_cli: "/usr/sbin/wpa_cli",
         bin_ip: "ip",
         bin_udhcpd: "udhcpd",
         path: "/usr/sbin:/usr/bin:/sbin:/bin",
