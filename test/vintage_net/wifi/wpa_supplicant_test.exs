@@ -71,7 +71,7 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
                         bssid: "78:8a:20:82:7a:50",
                         flags: [:wpa2_psk_ccmp, :ess],
                         frequency: 2437,
-                        signal: -71,
+                        signal_dbm: -71,
                         ssid: "TestLAN"
                       }
                     }, _metadata}

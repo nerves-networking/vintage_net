@@ -112,7 +112,7 @@ defmodule VintageNet.WiFi.WPASupplicant do
       ap = %VintageNet.WiFi.AccessPoint{
         bssid: response["bssid"],
         frequency: String.to_integer(response["freq"]),
-        signal: String.to_integer(response["level"]),
+        signal_dbm: String.to_integer(response["level"]),
         flags: parse_flags(response["flags"]),
         ssid: response["ssid"]
       }

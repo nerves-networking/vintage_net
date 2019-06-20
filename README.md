@@ -373,7 +373,7 @@ has the following form:
   bssid: "78:8a:20:87:7a:50",
   flags: [:wpa2_psk_ccmp, :ess],
   frequency: 2437,
-  signal: -67,
+  signal_dbm: -67,
   ssid: "MyNetwork"
 }
 ```

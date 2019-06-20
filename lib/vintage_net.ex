@@ -156,11 +156,16 @@ defmodule VintageNet do
   end
 
   @doc """
-  Scan wireless interface for other access points
+  Initiate an access point scan on a wireless interface
+
+  The scan results are posted asynchronously to the `["interfaces", ifname, "access_points"]`
+  property as they come in. It appears that there's some variation in how scanning
+  is implemented on WiFi adapters. One strategy that seems to work is to call `scan/1` every
+  10 seconds or so while prompting a user to pick a WiFi network.
 
   This is a utility function for calling the `:scan` ioctl.
   """
-  @spec scan(ifname()) :: {:ok, [VintageNet.WiFi.AccessPoint.t()]} | {:error, any()}
+  @spec scan(ifname()) :: :ok | {:error, any()}
   def scan(ifname) do
     ioctl(ifname, :scan)
   end
