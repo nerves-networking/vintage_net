@@ -37,7 +37,8 @@ defmodule VintageNet.WiFi.WPASupplicant do
     state = %{
       keep_alive_interval: keep_alive_interval,
       ll: ll,
-      ifname: ifname
+      ifname: ifname,
+      access_points: %{}
     }
 
     {:ok, state, {:continue, :continue}}
@@ -46,7 +47,15 @@ defmodule VintageNet.WiFi.WPASupplicant do
   @impl true
   def handle_continue(:continue, state) do
     {:ok, "OK\n"} = WPASupplicantLL.control_request(state.ll, "ATTACH")
-    {:noreply, state, state.keep_alive_interval}
+
+    # Refresh the AP list
+    access_points = get_access_points(state.ll)
+
+    new_state = %{state | access_points: access_points}
+
+    update_access_points_property(new_state)
+
+    {:noreply, new_state, state.keep_alive_interval}
   end
 
   @impl true
@@ -74,51 +83,91 @@ defmodule VintageNet.WiFi.WPASupplicant do
 
   @impl true
   def handle_info({VintageNet.WiFi.WPASupplicantLL, _priority, message}, state) do
-    new_state = handle_notification(String.trim_trailing(message), state)
+    notification = WPASupplicantDecoder.decode_notification(message)
+
+    new_state = handle_notification(notification, state)
     {:noreply, new_state, new_state.keep_alive_interval}
   end
 
-  defp handle_notification("CTRL-EVENT-SCAN-RESULTS", state) do
+  defp handle_notification({:event, "CTRL-EVENT-SCAN-RESULTS"}, state) do
     # Collect all of the access points
-    access_points = all_bss(state.ll, 0, %{})
+    access_points = get_access_points(state.ll)
+    new_state = %{state | access_points: access_points}
 
+    update_access_points_property(new_state)
+
+    new_state
+  end
+
+  defp handle_notification({:event, "CTRL-EVENT-BSS-ADDED", _index, bssid}, state) do
+    case get_access_point_info(state.ll, bssid) do
+      {:ok, ap} ->
+        access_points = Map.put(state.access_points, ap.bssid, ap)
+        new_state = %{state | access_points: access_points}
+        update_access_points_property(new_state)
+        new_state
+
+      _error ->
+        _ = Logger.warn("AP added and then removed before we could get info on it: #{bssid}")
+        state
+    end
+  end
+
+  defp handle_notification({:event, "CTRL-EVENT-BSS-REMOVED", _index, bssid}, state) do
+    access_points = Map.delete(state.access_points, bssid)
+    new_state = %{state | access_points: access_points}
+    update_access_points_property(new_state)
+    new_state
+  end
+
+  # Ignored
+  defp handle_notification({:event, "CTRL-EVENT-SCAN-STARTED"}, state), do: state
+
+  defp handle_notification(unhandled, state) do
+    _ = Logger.info("WPASupplicant ignoring #{inspect(unhandled)}")
+    state
+  end
+
+  defp get_access_points(ll) do
+    get_access_points(ll, 0, %{})
+  end
+
+  defp get_access_points(ll, index, acc) do
+    case get_access_point_info(ll, index) do
+      {:ok, ap} ->
+        get_access_points(ll, index + 1, Map.put(acc, ap.bssid, ap))
+
+      _error ->
+        acc
+    end
+  end
+
+  defp get_access_point_info(ll, index_or_bssid) do
+    with {:ok, raw_response} <- WPASupplicantLL.control_request(ll, "BSS #{index_or_bssid}") do
+      case WPASupplicantDecoder.decode_kv_response(raw_response) do
+        empty when empty == %{} ->
+          {:error, :unknown}
+
+        response ->
+          ap = %VintageNet.WiFi.AccessPoint{
+            bssid: response["bssid"],
+            frequency: String.to_integer(response["freq"]),
+            signal_dbm: String.to_integer(response["level"]),
+            flags: parse_flags(response["flags"]),
+            ssid: response["ssid"]
+          }
+
+          {:ok, ap}
+      end
+    end
+  end
+
+  defp update_access_points_property(state) do
     VintageNet.PropertyTable.put(
       VintageNet,
       ["interface", state.ifname, "access_points"],
-      access_points
+      state.access_points
     )
-
-    state
-  end
-
-  # Ignored on purpose
-  defp handle_notification("CTRL-EVENT-SCAN-STARTED", state), do: state
-  defp handle_notification("CTRL-EVENT-BSS-ADDED " <> _rest, state), do: state
-  defp handle_notification("CTRL-EVENT-BSS-REMOVED " <> _rest, state), do: state
-  defp handle_notification("CTRL-EVENT-NETWORK-NOT-FOUND", state), do: state
-
-  defp handle_notification(unknown_message, state) do
-    _ = Logger.info("WPASupplicant ignoring #{inspect(unknown_message)}")
-    state
-  end
-
-  defp all_bss(ll, count, acc) do
-    {:ok, raw_response} = WPASupplicantLL.control_request(ll, "BSS #{count}")
-    response = WPASupplicantDecoder.decode_kv_response(raw_response)
-
-    if response == %{} do
-      acc
-    else
-      ap = %VintageNet.WiFi.AccessPoint{
-        bssid: response["bssid"],
-        frequency: String.to_integer(response["freq"]),
-        signal_dbm: String.to_integer(response["level"]),
-        flags: parse_flags(response["flags"]),
-        ssid: response["ssid"]
-      }
-
-      all_bss(ll, count + 1, Map.put(acc, ap.bssid, ap))
-    end
   end
 
   defp parse_flags(flags) do
