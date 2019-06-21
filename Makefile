@@ -36,10 +36,10 @@ ifeq ($(CROSSCOMPILE),)
         $(warning this should be done automatically.)
         $(warning .)
         $(warning Skipping some C compilation unless targets explicitly passed to make.)
-        DEFAULT_TARGETS ?= $(PREFIX) $(PREFIX)/to_elixir $(PREFIX)/udhcpc_handler
+        DEFAULT_TARGETS ?= $(PREFIX) $(PREFIX)/to_elixir $(PREFIX)/udhcpc_handler $(PREFIX)/udhcpd_handler
     endif
 endif
-DEFAULT_TARGETS ?= $(PREFIX) $(PREFIX)/to_elixir $(PREFIX)/udhcpc_handler $(PREFIX)/if_monitor
+DEFAULT_TARGETS ?= $(PREFIX) $(PREFIX)/to_elixir $(PREFIX)/udhcpc_handler $(PREFIX)/udhcpd_handler $(PREFIX)/if_monitor
 
 # Set Erlang-specific compile and linker flags
 ERL_CFLAGS ?= -I$(ERL_EI_INCLUDE_DIR)
@@ -75,6 +75,9 @@ $(PREFIX)/to_elixir: $(BUILD)/to_elixir.o
 $(PREFIX)/udhcpc_handler: $(BUILD)/udhcpc_handler.o
 	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -o $@
 
+$(PREFIX)/udhcpd_handler: $(BUILD)/udhcpd_handler.o
+	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -o $@
+
 $(PREFIX)/if_monitor: $(BUILD)/if_monitor.o
 	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -lmnl -o $@
 
@@ -82,7 +85,7 @@ $(PREFIX) $(BUILD):
 	mkdir -p $@
 
 clean:
-	$(RM) $(PREFIX)/to_elixir $(PREFIX)/udhcpc_handler $(PREFIX)/if_monitor $(BUILD)/*.o
+	$(RM) $(PREFIX)/to_elixir $(PREFIX)/udhcpc_handler $(PREFIX)/udhcpd_handler $(PREFIX)/if_monitor $(BUILD)/*.o
 
 format:
 	astyle \

@@ -2,7 +2,7 @@ defmodule VintageNet.ToElixir.Server do
   use GenServer
   require Logger
 
-  alias VintageNet.ToElixir.UdhcpcHandler
+  alias VintageNet.ToElixir.{UdhcpcHandler, UdhcpdHandler}
 
   @moduledoc """
   This GenServer routes messages from C and shell scripts to the appropriate
@@ -47,6 +47,11 @@ defmodule VintageNet.ToElixir.Server do
   defp dispatch({:udhcpc, report}) do
     UdhcpcHandler.dispatch(report.command, report.interface, report)
     :ok
+  end
+
+  defp dispatch({:udhcpd, report}) do
+    [_, interface, "udhcpd_handler"] = String.split(report.interface, ".")
+    UdhcpdHandler.dispatch(report.command, interface, report)
   end
 
   defp dispatch({:to_elixir, message}) do
