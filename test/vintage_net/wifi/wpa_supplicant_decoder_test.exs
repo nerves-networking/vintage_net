@@ -449,4 +449,16 @@ defmodule VintageNet.WiFi.WPASupplicantDecoderTest do
              {:info,
               "Trying to associate with 58:6d:8f:8d:c8:92 (SSID='LKC Tech HQ' freq=2412 MHz)"}
   end
+
+  test "flag parsing" do
+    assert [:wpa2_psk_ccmp, :ess] = WPASupplicantDecoder.parse_flags("[WPA2-PSK-CCMP][ESS]")
+    assert [:wpa2_eap_ccmp, :ess] = WPASupplicantDecoder.parse_flags("[WPA2-EAP-CCMP][ESS]")
+    assert [:rsn_ccmp, :mesh] = WPASupplicantDecoder.parse_flags("[RSN--CCMP][MESH]")
+    assert [:ibss] = WPASupplicantDecoder.parse_flags("[IBSS]")
+
+    assert [:wpa2_psk_ccmp_tkip, :wps] =
+             WPASupplicantDecoder.parse_flags("[WPA2-PSK-CCMP+TKIP][WPS]")
+
+    assert [] = WPASupplicantDecoder.parse_flags("[something random]")
+  end
 end

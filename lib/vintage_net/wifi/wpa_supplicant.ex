@@ -149,14 +149,13 @@ defmodule VintageNet.WiFi.WPASupplicant do
           {:error, :unknown}
 
         response ->
-          ap = %VintageNet.WiFi.AccessPoint{
-            bssid: response["bssid"],
-            frequency: String.to_integer(response["freq"]),
-            signal_dbm: String.to_integer(response["level"]),
-            flags: parse_flags(response["flags"]),
-            ssid: response["ssid"]
-          }
+          frequency = String.to_integer(response["freq"])
+          signal_dbm = String.to_integer(response["level"])
+          flags = WPASupplicantDecoder.parse_flags(response["flags"])
+          ssid = response["ssid"]
+          bssid = response["bssid"]
 
+          ap = VintageNet.WiFi.AccessPoint.new(bssid, ssid, frequency, signal_dbm, flags)
           {:ok, ap}
       end
     end
@@ -168,27 +167,5 @@ defmodule VintageNet.WiFi.WPASupplicant do
       ["interface", state.ifname, "access_points"],
       state.access_points
     )
-  end
-
-  defp parse_flags(flags) do
-    flags
-    |> String.split(["]", "["], trim: true)
-    |> Enum.flat_map(&parse_flag/1)
-  end
-
-  defp parse_flag("WPA2-PSK-CCMP"), do: [:wpa2_psk_ccmp]
-  defp parse_flag("WPA2-EAP-CCMP"), do: [:wpa2_eap_ccmp]
-  defp parse_flag("WPA2-PSK-CCMP+TKIP"), do: [:wpa2_psk_ccmp_tkip]
-  defp parse_flag("WPA-PSK-CCMP+TKIP"), do: [:wpa_psk_ccmp_tkip]
-  defp parse_flag("IBSS"), do: [:ibss]
-  defp parse_flag("MESH"), do: [:mesh]
-  defp parse_flag("ESS"), do: [:ess]
-  defp parse_flag("P2P"), do: [:p2p]
-  defp parse_flag("WPS"), do: [:wps]
-  defp parse_flag("RSN--CCMP"), do: [:rsn_ccmp]
-
-  defp parse_flag(other) do
-    _ = Logger.warn("Ignoring unknown WiFi Access Point flag: #{other}")
-    []
   end
 end

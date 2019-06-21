@@ -3,11 +3,10 @@ defmodule VintageNet.WiFi.Utils do
   Various utility functions for handling WiFi information
   """
 
-  @type band() :: :wifi_2_4_ghz | :wifi_5_ghz | :unknown
-  @type info() :: %{
-          band: band(),
-          band_name: String.t(),
-          channel: non_neg_integer()
+  @type frequency_info() :: %{
+          band: VintageNet.WiFi.AccessPoint.band(),
+          channel: non_neg_integer(),
+          dbm_to_percent: function()
         }
 
   @doc """
@@ -20,8 +19,6 @@ defmodule VintageNet.WiFi.Utils do
   See https://web.archive.org/web/20141222024740/http://www.ces.clemson.edu/linux/nm-ipw2200.shtml
   """
   @spec dbm_to_percent(number(), number(), number()) :: 1..100
-  def dbm_to_percent(dbm, best_dbm \\ -20, worst_dbm \\ -83.7)
-
   def dbm_to_percent(dbm, best_dbm, _worst_dbm) when dbm >= best_dbm do
     100
   end
@@ -47,7 +44,7 @@ defmodule VintageNet.WiFi.Utils do
   information about the frequency that may be helpful to
   users.
   """
-  @spec frequency_info(non_neg_integer()) :: info()
+  @spec frequency_info(non_neg_integer()) :: frequency_info()
   def(frequency_info(2412), do: band2_4(1))
   def frequency_info(2417), do: band2_4(2)
   def frequency_info(2422), do: band2_4(3)
@@ -129,15 +126,23 @@ defmodule VintageNet.WiFi.Utils do
   def frequency_info(4960), do: band5(192)
   def frequency_info(4980), do: band5(196)
 
-  def frequency_info(unknown) do
-    %{band: :unknown, band_name: "#{unknown} Mhz", channel: 0}
+  def frequency_info(_unknown) do
+    %{band: :unknown, channel: 0, dbm_to_percent: fn dbm -> dbm_to_percent(dbm, -20, -83.7) end}
   end
 
   defp band2_4(channel) do
-    %{band: :wifi_2_4_ghz, band_name: "2.4 GHz", channel: channel}
+    %{
+      band: :wifi_2_4_ghz,
+      channel: channel,
+      dbm_to_percent: fn dbm -> dbm_to_percent(dbm, -20, -83.7) end
+    }
   end
 
   defp band5(channel) do
-    %{band: :wifi_5_ghz, band_name: "5 GHz", channel: channel}
+    %{
+      band: :wifi_5_ghz,
+      channel: channel,
+      dbm_to_percent: fn dbm -> dbm_to_percent(dbm, -44, -89) end
+    }
   end
 end
