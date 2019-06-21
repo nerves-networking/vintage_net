@@ -79,6 +79,29 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
                     }, _metadata}
   end
 
+  test "hostmode station connect updates property", context do
+    MockWPASupplicant.set_responses(context.mock, %{
+      "ATTACH" => "OK\n",
+      "PING" => "PONG\n"
+    })
+
+    _supplicant =
+      start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
+
+    clients_property = ["interface", "test_wlan0", "clients"]
+    VintageNet.PropertyTable.clear(VintageNet, clients_property)
+
+    VintageNet.subscribe(clients_property)
+    :ok = MockWPASupplicant.send_message(context.mock, "<1>AP-STA-CONNECTED f8:a2:d6:b5:d4:07")
+    assert_receive {VintageNet, ^clients_property, _old, ["f8:a2:d6:b5:d4:07"], _metadata}
+
+    :ok = MockWPASupplicant.send_message(context.mock, "<1>AP-STA-DISCONNECTED f8:a2:d6:b5:d4:07")
+    assert_receive {VintageNet, ^clients_property, _old, [], _metadata}
+
+    :ok = MockWPASupplicant.send_message(context.mock, "<1>AP-STA-DISCONNECTED f8:a2:d6:b5:d4:07")
+    refute_receive {VintageNet, ^clients_property, _old, [], _metadata}
+  end
+
   test "handles scan failures", context do
     MockWPASupplicant.set_responses(context.mock, %{
       "ATTACH" => "OK\n",

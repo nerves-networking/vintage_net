@@ -38,7 +38,8 @@ defmodule VintageNet.WiFi.WPASupplicant do
       keep_alive_interval: keep_alive_interval,
       ll: ll,
       ifname: ifname,
-      access_points: %{}
+      access_points: %{},
+      clients: []
     }
 
     {:ok, state, {:continue, :continue}}
@@ -123,6 +124,24 @@ defmodule VintageNet.WiFi.WPASupplicant do
   # Ignored
   defp handle_notification({:event, "CTRL-EVENT-SCAN-STARTED"}, state), do: state
 
+  defp handle_notification({:event, "AP-STA-CONNECTED", client}, state) do
+    if client in state.clients do
+      state
+    else
+      clients = [client | state.clients]
+      new_state = %{state | clients: clients}
+      update_clients_property(new_state)
+      new_state
+    end
+  end
+
+  defp handle_notification({:event, "AP-STA-DISCONNECTED", client}, state) do
+    clients = List.delete(state.clients, client)
+    new_state = %{state | clients: clients}
+    update_clients_property(new_state)
+    new_state
+  end
+
   defp handle_notification(unhandled, state) do
     _ = Logger.info("WPASupplicant ignoring #{inspect(unhandled)}")
     state
@@ -166,6 +185,14 @@ defmodule VintageNet.WiFi.WPASupplicant do
       VintageNet,
       ["interface", state.ifname, "access_points"],
       state.access_points
+    )
+  end
+
+  defp update_clients_property(state) do
+    VintageNet.PropertyTable.put(
+      VintageNet,
+      ["interface", state.ifname, "clients"],
+      state.clients
     )
   end
 end
