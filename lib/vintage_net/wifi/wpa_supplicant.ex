@@ -183,7 +183,7 @@ defmodule VintageNet.WiFi.WPASupplicant do
   defp update_access_points_property(state) do
     VintageNet.PropertyTable.put(
       VintageNet,
-      ["interface", state.ifname, "access_points"],
+      ["interface", state.ifname, "wifi", "access_points"],
       state.access_points
     )
   end
@@ -191,7 +191,7 @@ defmodule VintageNet.WiFi.WPASupplicant do
   defp update_clients_property(state) do
     VintageNet.PropertyTable.put(
       VintageNet,
-      ["interface", state.ifname, "clients"],
+      ["interface", state.ifname, "wifi", "clients"],
       state.clients
     )
   end

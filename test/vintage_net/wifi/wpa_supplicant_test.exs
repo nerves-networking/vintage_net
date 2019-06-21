@@ -61,7 +61,7 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     _supplicant =
       start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
 
-    ap_property = ["interface", "test_wlan0", "access_points"]
+    ap_property = ["interface", "test_wlan0", "wifi", "access_points"]
     VintageNet.PropertyTable.clear(VintageNet, ap_property)
 
     VintageNet.subscribe(ap_property)
@@ -88,7 +88,7 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     _supplicant =
       start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
 
-    clients_property = ["interface", "test_wlan0", "clients"]
+    clients_property = ["interface", "test_wlan0", "wifi", "clients"]
     VintageNet.PropertyTable.clear(VintageNet, clients_property)
 
     VintageNet.subscribe(clients_property)
@@ -132,7 +132,7 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     _supplicant =
       start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
 
-    ap_property = ["interface", "test_wlan0", "access_points"]
+    ap_property = ["interface", "test_wlan0", "wifi", "access_points"]
     VintageNet.PropertyTable.clear(VintageNet, ap_property)
 
     VintageNet.subscribe(ap_property)
@@ -168,7 +168,7 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     _supplicant =
       start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
 
-    ap_property = ["interface", "test_wlan0", "access_points"]
+    ap_property = ["interface", "test_wlan0", "wifi", "access_points"]
     VintageNet.PropertyTable.clear(VintageNet, ap_property)
 
     VintageNet.subscribe(ap_property)
