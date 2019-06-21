@@ -1263,6 +1263,7 @@ defmodule VintageNet.Technology.WiFiTest do
          interface wlan0
          pidfile /tmp/vintage_net/udhcpd.wlan0.pid
          lease_file /tmp/vintage_net/udhcpd.wlan0.leases
+         notify_file /tmp/vintage_net/udhcpd.wlan0.udhcpd_handler
 
          end 192.168.24.100
          start 192.168.24.2

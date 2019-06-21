@@ -43,6 +43,7 @@ defmodule VintageNet.MixProject do
         bin_udhcpd: "udhcpd",
         path: "/usr/sbin:/usr/bin:/sbin:/bin",
         udhcpc_handler: VintageNet.Interface.Udhcpc,
+        udhcpd_handler: VintageNet.Interface.Udhcpd,
         resolvconf: "/etc/resolv.conf",
         persistence: VintageNet.Persistence.FlatFile,
         persistence_dir: "/root/vintage_net",

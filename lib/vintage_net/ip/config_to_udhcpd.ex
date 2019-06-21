@@ -26,6 +26,7 @@ defmodule VintageNet.IP.ConfigToUdhcpd do
     interface #{ifname}
     pidfile #{pidfile}
     lease_file #{lease_file}
+    notify_file #{udhcpd_handler_path(tmpdir, ifname)}
     """
 
     config = Enum.map(dhcpd, &to_udhcpd_string/1)
@@ -68,5 +69,12 @@ defmodule VintageNet.IP.ConfigToUdhcpd do
     Enum.map(leases, fn {mac, ip} ->
       "static_lease #{mac} #{ip}\n"
     end)
+  end
+
+  defp udhcpd_handler_path(tmpdir, ifname) do
+    from = Application.app_dir(:vintage_net, ["priv", "udhcpd_handler"])
+    to = Path.join(tmpdir, "udhcpd.#{ifname}.udhcpd_handler")
+    _ = File.ln_s(from, to)
+    to
   end
 end
