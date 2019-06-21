@@ -370,10 +370,13 @@ has the following form:
 
 ```elixir
 %VintageNet.WiFi.AccessPoint{
-  bssid: "78:8a:20:87:7a:50",
+  band: :wifi_5_ghz,
+  bssid: "8a:8a:20:88:7a:50",
+  channel: 149,
   flags: [:wpa2_psk_ccmp, :ess],
-  frequency: 2437,
-  signal_dbm: -67,
+  frequency: 5745,
+  signal_dbm: -76,
+  signal_percent: 57,
   ssid: "MyNetwork"
 }
 ```
@@ -381,16 +384,16 @@ has the following form:
 Applications can scan for access points in a couple ways. The first is to call
 `VintageNet.scan("wlan0")`, wait for a second, and then call
 `VintageNet.get(["interface", "wlan0", "access_points"])`. This works for
-scanning networks once or twice. A better way, though, is to subscribe to the
+scanning networks once or twice. A better way is to subscribe to the
 `"access_points"` property and then call `VintageNet.scan("wlan0")` on a timer.
 The `"access_points"` property updates as soon as the WiFi module notifies that
 it is complete so applications don't need to guess how long to wait.
 
 ### LTE status
 
-Property     | Values           | Description
- ----------- | ---------------- | -----------
-`signal`     | 0 - 100          | This is a rough measure of signal strength from 0 (none) to 100 (all bars)
+Property         | Values           | Description
+ --------------- | ---------------- | -----------
+`signal_percent` | 0 - 100          | This is a rough measure of signal strength from 0 (none) to 100 (all bars)
 
 ## System Requirements
 
@@ -402,6 +405,8 @@ Property     | Values           | Description
 
 ### Busybox Requirements
 
+To avoid enabling these, add `{:busybox, "~> 0.1"}` to your `mix` dependencies.
+
 * `CONFIG_UDHCPC=y` - `udhcpc` DHCP Client
 * `CONFIG_UDHCPD=y` - `udhcpd` DHCP Server (optional)
 * `CONFIG_IFUP=y` - `ifup`
@@ -412,7 +417,6 @@ Property     | Values           | Description
 ### Buildroot Requirements
 
 * `BR2_PACKAGE_WPA_SUPPLICANT`
-* `BR2_PACKAGE_WPA_SUPPLICANT_CLI`
 
 ### Additional Requirements for Access Point Mode
 
