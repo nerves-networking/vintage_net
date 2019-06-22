@@ -54,7 +54,7 @@ jobs:
       - run: MIX_ENV=test mix coveralls.circle
       - run: mix format --check-formatted
       - run: mdl --style .circleci/md-style.rb *.md
-      - run: mix docs
+      - run: MIX_ENV=docs mix docs
       - run: mix hex.build
       - run: mix dialyzer --halt-exit-status
       - save_cache:

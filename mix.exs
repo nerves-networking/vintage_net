@@ -1,10 +1,12 @@
 defmodule VintageNet.MixProject do
   use Mix.Project
 
+  @version "0.2.4"
+
   def project do
     [
       app: :vintage_net,
-      version: "0.2.4",
+      version: @version,
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       test_coverage: [tool: ExCoveralls],
@@ -15,7 +17,7 @@ defmodule VintageNet.MixProject do
       make_clean: ["clean"],
       deps: deps(),
       dialyzer: dialyzer(),
-      docs: [extras: ["README.md"], main: "readme"],
+      docs: docs(),
       package: package(),
       description: description()
     ]
@@ -80,10 +82,10 @@ defmodule VintageNet.MixProject do
   defp deps do
     [
       {:elixir_make, "~> 0.5", runtime: false},
-      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.19", only: :docs, runtime: false},
       {:mix_test_watch, "~> 0.5", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.8", only: :test, runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.4", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.0.0-rc.4", only: [:dev, :test], runtime: false},
       {:muontrap, "~> 0.4.1"},
       {:gen_state_machine, "~> 2.0.0"},
       {:busybox, "~> 0.1", optional: true}
@@ -94,6 +96,15 @@ defmodule VintageNet.MixProject do
     [
       flags: [:race_conditions, :unmatched_returns, :error_handling],
       plt_add_apps: [:busybox]
+    ]
+  end
+
+  defp docs do
+    [
+      extras: ["README.md"],
+      main: "readme",
+      source_ref: "v#{@version}",
+      source_url: "https://github.com/nerves-networking/vintage_net"
     ]
   end
 end
