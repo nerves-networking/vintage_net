@@ -104,6 +104,15 @@ defmodule VintageNet.Interface.ConnectivityChecker do
     {:noreply, new_state, @min_interval}
   end
 
+  def handle_info(
+        {VintageNet, ["interface", ifname, "lower_up"], old_value, nil, _meta},
+        %{ifname: ifname} = state
+      ) do
+    # The interface was completely removed!
+    if old_value, do: set_connectivity(ifname, :disconnected)
+    {:noreply, state}
+  end
+
   defp set_connectivity(ifname, connectivity) do
     RouteManager.set_connection_status(ifname, connectivity)
     PropertyTable.put(VintageNet, ["interface", ifname, "connection"], connectivity)
