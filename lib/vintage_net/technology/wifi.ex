@@ -26,7 +26,7 @@ defmodule VintageNet.Technology.WiFi do
     network_interfaces_path = Path.join(tmpdir, "network_interfaces.#{ifname}")
     wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
     control_interface_dir = Path.join(tmpdir, "wpa_supplicant")
-    control_interface_path = Path.join(control_interface_dir, ifname)
+    control_interface_path = ctrl_interface_path(ifname, control_interface_dir, config)
 
     {:ok, normalized_config} = normalize(config)
 
@@ -90,14 +90,14 @@ defmodule VintageNet.Technology.WiFi do
     end
   end
 
-  def to_raw_config(ifname, %{type: __MODULE__}, opts) do
+  def to_raw_config(ifname, %{type: __MODULE__} = config, opts) do
     wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
     killall = Keyword.fetch!(opts, :bin_killall)
     tmpdir = Keyword.fetch!(opts, :tmpdir)
 
     wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
     control_interface_dir = Path.join(tmpdir, "wpa_supplicant")
-    control_interface_path = Path.join(control_interface_dir, ifname)
+    control_interface_path = ctrl_interface_path(ifname, control_interface_dir, config)
 
     files = [
       {wpa_supplicant_conf_path, "ctrl_interface=#{control_interface_dir}"}
@@ -437,4 +437,10 @@ defmodule VintageNet.Technology.WiFi do
       conf -> [conf, "\n"]
     end)
   end
+
+  defp ctrl_interface_path(ifname, dir, %{wifi: %{mode: mode}}) when mode in [:host, 2],
+    do: Path.join(dir, "p2p-dev-#{ifname}")
+
+  defp ctrl_interface_path(ifname, dir, _),
+    do: Path.join(dir, ifname)
 end

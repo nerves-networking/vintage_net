@@ -1006,7 +1006,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/p2p-dev-wlan0"]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -1035,7 +1035,7 @@ defmodule VintageNet.Technology.WiFiTest do
         {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "killall", ["-q", "wpa_supplicant"]}
       ],
-      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/p2p-dev-wlan0"]
     }
 
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
@@ -1234,7 +1234,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/p2p-dev-wlan0"]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0",
@@ -1284,7 +1284,7 @@ defmodule VintageNet.Technology.WiFiTest do
         {:run, "killall", ["-q", "wpa_supplicant"]},
         {:run, "killall", ["-q", "udhcpd"]}
       ],
-      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/p2p-dev-wlan0"]
     }
 
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
