@@ -79,7 +79,7 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
                     }, _metadata}
   end
 
-  test "hostmode station connect updates property", context do
+  test "ap-mode station connect updates property", context do
     MockWPASupplicant.set_responses(context.mock, %{
       "ATTACH" => "OK\n",
       "PING" => "PONG\n"
