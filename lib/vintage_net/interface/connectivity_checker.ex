@@ -1,18 +1,13 @@
 defmodule VintageNet.Interface.ConnectivityChecker do
   use GenServer
+  require Logger
 
   alias VintageNet.{PropertyTable, RouteManager}
-
-  require Record
+  alias VintageNet.Interface.InternetTester
 
   @min_interval 500
   @max_interval 30_000
-
-  @ping_port 80
-  @ping_timeout 5_000
-
-  @doc false
-  Record.defrecord(:hostent, Record.extract(:hostent, from_lib: "kernel/include/inet.hrl"))
+  @max_fails_in_a_row 3
 
   @doc """
   Start the connectivity checker GenServer
@@ -24,7 +19,7 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
   @impl true
   def init(ifname) do
-    state = %{ifname: ifname, interval: @min_interval}
+    state = %{ifname: ifname, strikes: @max_fails_in_a_row, interval: @min_interval}
     {:ok, state, {:continue, :continue}}
   end
 
@@ -46,25 +41,45 @@ defmodule VintageNet.Interface.ConnectivityChecker do
   end
 
   @impl true
-  def handle_info(:timeout, %{ifname: ifname, interval: interval} = state) do
-    connectivity =
-      case ping(ifname) do
+  def handle_info(:timeout, %{ifname: ifname, strikes: strikes, interval: interval} = state) do
+    {connectivity, new_strikes} =
+      case InternetTester.ping(ifname) do
         :ok ->
-          :internet
+          # Success - reset the number of strikes to stay in Internet mode
+          # even if there are hiccups.
+          {:internet, 0}
 
         {:error, :if_not_found} ->
-          :disconnected
+          {:disconnected, @max_fails_in_a_row}
 
         {:error, :no_ipv4_address} ->
-          :disconnected
+          {:disconnected, @max_fails_in_a_row}
 
-        {:error, _reason} ->
-          :lan
+        {:error, reason} ->
+          if strikes < @max_fails_in_a_row do
+            _ =
+              Logger.debug(
+                "#{ifname}: Internet test failed (#{inspect(reason)}: #{strikes + 1}/#{
+                  @max_fails_in_a_row
+                } strikes"
+              )
+
+            {:internet, strikes + 1}
+          else
+            _ = Logger.debug("#{ifname}: Internet test failed: (#{inspect(reason)})")
+            {:lan, @max_fails_in_a_row}
+          end
       end
+
+    next_state = %{
+      state
+      | strikes: new_strikes,
+        interval: next_interval(connectivity, interval, strikes)
+    }
 
     set_connectivity(ifname, connectivity)
 
-    {:noreply, state, next_interval(connectivity, interval)}
+    {:noreply, next_state, next_state.interval}
   end
 
   def handle_info(
@@ -89,50 +104,6 @@ defmodule VintageNet.Interface.ConnectivityChecker do
     {:noreply, new_state, @min_interval}
   end
 
-  defp ping(ifname) do
-    internet_host = Application.get_env(:vintage_net, :internet_host)
-
-    with {:ok, src_ip} <- get_interface_address(ifname),
-         {:ok, dest_ip} <- resolve_addr(internet_host),
-         {:ok, tcp} <- :gen_tcp.connect(dest_ip, @ping_port, [ip: src_ip], @ping_timeout) do
-      _ = :gen_tcp.close(tcp)
-      :ok
-    end
-  end
-
-  defp get_interface_address(ifname) do
-    with {:ok, addresses} <- :inet.getifaddrs(),
-         {:ok, params} <- find_ifaddr(addresses, ifname) do
-      find_ipv4_addr(params)
-    end
-  end
-
-  defp find_ifaddr(addresses, ifname) do
-    ifname_cl = to_charlist(ifname)
-
-    case Enum.find(addresses, fn {k, _v} -> k == ifname_cl end) do
-      {^ifname_cl, params} -> {:ok, params}
-      _ -> {:error, :if_not_found}
-    end
-  end
-
-  defp find_ipv4_addr(params) do
-    case Enum.find(params, &ipv4_addr?/1) do
-      {:addr, ipv4_addr} -> {:ok, ipv4_addr}
-      _ -> {:error, :no_ipv4_address}
-    end
-  end
-
-  defp ipv4_addr?({:addr, {_, _, _, _}}), do: true
-  defp ipv4_addr?(_), do: false
-
-  # Note: No support for DNS since DNS can't be forced through
-  # an interface. I.e., errors on other interfaces mess up DNS
-  # even if the one of interest is ok.
-  defp resolve_addr(address) when is_tuple(address) do
-    {:ok, address}
-  end
-
   defp set_connectivity(ifname, connectivity) do
     RouteManager.set_connection_status(ifname, connectivity)
     PropertyTable.put(VintageNet, ["interface", ifname, "connection"], connectivity)
@@ -142,10 +113,16 @@ defmodule VintageNet.Interface.ConnectivityChecker do
     ["interface", ifname, "lower_up"]
   end
 
-  # Back off of checks if they're not working
-  defp next_interval(:internet, _interval), do: @max_interval
+  # If pings work, then wait the max interval before checking again
+  defp next_interval(:internet, _interval, 0), do: @max_interval
 
-  defp next_interval(_not_internet, interval) do
+  # If a ping fails, retry, but don't wait as long as when everything is working
+  defp next_interval(:internet, _interval, strikes) do
+    max(@min_interval, @max_interval / (strikes + 1))
+  end
+
+  # Back off of checks if they're not working
+  defp next_interval(_not_internet, interval, _strikes) do
     min(interval * 2, @max_interval)
   end
 end
