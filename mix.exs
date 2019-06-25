@@ -94,8 +94,10 @@ defmodule VintageNet.MixProject do
 
   defp dialyzer() do
     [
-      flags: [:race_conditions, :unmatched_returns, :error_handling],
-      plt_add_apps: [:busybox]
+      flags: [:race_conditions, :unmatched_returns, :error_handling, :underspecs],
+      plt_add_apps: [:busybox],
+      ignore_warnings: ".dialyzer_ignore.exs",
+      list_unused_filters: true
     ]
   end
 
