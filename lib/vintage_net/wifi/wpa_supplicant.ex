@@ -31,15 +31,13 @@ defmodule VintageNet.WiFi.WPASupplicant do
     ifname = Keyword.fetch!(args, :ifname)
     keep_alive_interval = Keyword.get(args, :keep_alive_interval, 60000)
 
-    {:ok, ll} = WPASupplicantLL.start_link(control_path)
-    :ok = WPASupplicantLL.subscribe(ll)
-
     state = %{
+      control_path: control_path,
       keep_alive_interval: keep_alive_interval,
-      ll: ll,
       ifname: ifname,
       access_points: %{},
-      clients: []
+      clients: [],
+      ll: nil
     }
 
     {:ok, state, {:continue, :continue}}
@@ -47,12 +45,17 @@ defmodule VintageNet.WiFi.WPASupplicant do
 
   @impl true
   def handle_continue(:continue, state) do
-    {:ok, "OK\n"} = WPASupplicantLL.control_request(state.ll, "ATTACH")
+    :ok = wait_for_file(state.control_path)
+
+    {:ok, ll} = WPASupplicantLL.start_link(state.control_path)
+    :ok = WPASupplicantLL.subscribe(ll)
+
+    {:ok, "OK\n"} = WPASupplicantLL.control_request(ll, "ATTACH")
 
     # Refresh the AP list
-    access_points = get_access_points(state.ll)
+    access_points = get_access_points(ll)
 
-    new_state = %{state | access_points: access_points}
+    new_state = %{state | access_points: access_points, ll: ll}
 
     # Make sure that the property table is in sync with our state
     update_access_points_property(new_state)
@@ -196,5 +199,20 @@ defmodule VintageNet.WiFi.WPASupplicant do
       ["interface", state.ifname, "wifi", "clients"],
       state.clients
     )
+  end
+
+  defp wait_for_file(path, timeleft \\ 3000)
+
+  defp wait_for_file(path, timeleft) when timeleft <= 0 do
+    {:error, "#{path} not found"}
+  end
+
+  defp wait_for_file(path, timeleft) do
+    if File.exists?(path) do
+      :ok
+    else
+      Process.sleep(250)
+      wait_for_file(path, timeleft - 250)
+    end
   end
 end
