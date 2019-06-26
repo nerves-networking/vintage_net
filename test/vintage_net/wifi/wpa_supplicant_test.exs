@@ -85,13 +85,19 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
       "PING" => "PONG\n"
     })
 
+    clients_property = ["interface", "test_wlan0", "wifi", "clients"]
+    VintageNet.PropertyTable.clear(VintageNet, clients_property)
+    VintageNet.subscribe(clients_property)
+
     _supplicant =
       start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
 
-    clients_property = ["interface", "test_wlan0", "wifi", "clients"]
-    VintageNet.PropertyTable.clear(VintageNet, clients_property)
+    # This serves two purposes:
+    #  1. tests that the client property is initialized
+    #  2. waits for the WPASupplicant to be ready to receive messages for our tests
 
-    VintageNet.subscribe(clients_property)
+    assert_receive {VintageNet, ^clients_property, nil, [], _metadata}
+
     :ok = MockWPASupplicant.send_message(context.mock, "<1>AP-STA-CONNECTED f8:a2:d6:b5:d4:07")
     assert_receive {VintageNet, ^clients_property, _old, ["f8:a2:d6:b5:d4:07"], _metadata}
 

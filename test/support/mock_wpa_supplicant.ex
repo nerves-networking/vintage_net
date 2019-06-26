@@ -52,7 +52,14 @@ defmodule VintageNetTest.MockWPASupplicant do
         {:send_message, message},
         %{socket: socket, client_path: client_path} = state
       ) do
-    :ok = :gen_udp.send(socket, {:local, client_path}, 0, message)
+    case :gen_udp.send(socket, {:local, client_path}, 0, message) do
+      :ok ->
+        :ok
+
+      {:error, reason} ->
+        raise ":gen_udp.send failed to send to #{client_path}: #{inspect(reason)}"
+    end
+
     {:noreply, state}
   end
 

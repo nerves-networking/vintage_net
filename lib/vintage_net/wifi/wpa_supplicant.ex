@@ -54,7 +54,9 @@ defmodule VintageNet.WiFi.WPASupplicant do
 
     new_state = %{state | access_points: access_points}
 
+    # Make sure that the property table is in sync with our state
     update_access_points_property(new_state)
+    update_clients_property(new_state)
 
     {:noreply, new_state, state.keep_alive_interval}
   end
