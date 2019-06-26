@@ -115,6 +115,7 @@ defmodule VintageNet.Technology.WiFi do
      %RawConfig{
        ifname: ifname,
        type: __MODULE__,
+       source_config: %{type: __MODULE__},
        files: files,
        child_specs: [
          {VintageNet.Interface.ConnectivityChecker, ifname},

@@ -25,7 +25,7 @@ defmodule VintageNet.Interface.RawConfig do
   @type command :: {:run | :run_ignore_errors, String.t(), [String.t()]} | {:fun, function()}
   @type file_contents :: {Path.t(), String.t()}
 
-  @enforce_keys [:ifname, :type]
+  @enforce_keys [:ifname, :type, :source_config]
   defstruct ifname: nil,
             type: nil,
             source_config: %{},

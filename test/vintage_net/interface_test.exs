@@ -52,6 +52,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         files: [{"testing", "Hello, world"}]
       }
 
@@ -78,6 +79,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: ifname,
         type: @interface_type,
+        source_config: %{},
         files: [{"testing", "Hello, world"}],
         up_cmds: [],
         down_cmds: []
@@ -102,6 +104,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: ifname,
         type: @interface_type,
+        source_config: %{},
         require_interface: false,
         files: [{"testing", "Hello, world"}],
         up_cmds: [],
@@ -119,6 +122,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         files: [{"one/two/three/testing", "Hello, world"}],
         up_cmds: [],
         down_cmds: []
@@ -141,6 +145,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         files: [],
         up_cmds: [{:run, "touch", ["i_am_configured"]}],
         down_cmds: [{:run, "rm", ["i_am_configured"]}]
@@ -161,6 +166,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         cleanup_files: ["i_am_configured"],
         up_cmds: [{:run, "touch", ["i_am_configured"]}]
       }
@@ -180,6 +186,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         retry_millis: 10,
         files: [
           {"run.sh",
@@ -209,6 +216,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         retry_millis: 10,
         files: [
           {"run.sh",
@@ -249,6 +257,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         retry_millis: 10,
         up_cmd_millis: 50,
         up_cmds: [{:fun, crash_once}]
@@ -266,6 +275,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         retry_millis: 10,
         files: [{"hello", "world"}],
         down_cmd_millis: 50,
@@ -288,6 +298,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config1 = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         files: [{"first", ""}],
         up_cmds: [],
         down_cmds: [{:run, "touch", ["ran_first_down"]}]
@@ -296,6 +307,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config2 = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         files: [{"second", ""}],
         up_cmds: [{:run, "touch", ["ran_second_up"]}],
         down_cmds: []
@@ -321,6 +333,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         child_specs: [
           {Task,
            fn ->
@@ -350,6 +363,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         up_cmd_millis: 10000,
         up_cmds: [{:run, "sleep", ["10000"]}]
       }
@@ -364,7 +378,8 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: @interface_type
+        type: @interface_type,
+        source_config: %{}
       }
 
       start_and_configure(raw_config, 250)
@@ -377,7 +392,8 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config = %RawConfig{
         ifname: @ifname,
-        type: @interface_type
+        type: @interface_type,
+        source_config: %{}
       }
 
       start_and_configure(raw_config, 250)
@@ -390,12 +406,14 @@ defmodule VintageNet.InterfaceTest do
     in_tmp(context.test, fn ->
       raw_config1 = %RawConfig{
         ifname: @ifname,
-        type: @interface_type
+        type: @interface_type,
+        source_config: %{}
       }
 
       raw_config2 = %RawConfig{
         ifname: @ifname,
-        type: @interface_type
+        type: @interface_type,
+        source_config: %{}
       }
 
       start_and_configure(raw_config1)
@@ -418,13 +436,15 @@ defmodule VintageNet.InterfaceTest do
       raw_config1 = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         retry_millis: 100_000,
         up_cmds: [{:run, "false", []}]
       }
 
       raw_config2 = %RawConfig{
         ifname: @ifname,
-        type: @interface_type
+        type: @interface_type,
+        source_config: %{}
       }
 
       property = ["interface", @ifname, "state"]
@@ -445,6 +465,7 @@ defmodule VintageNet.InterfaceTest do
       raw_config = %RawConfig{
         ifname: @ifname,
         type: @interface_type,
+        source_config: %{},
         files: [{"testing", "Hello, world"}]
       }
 
