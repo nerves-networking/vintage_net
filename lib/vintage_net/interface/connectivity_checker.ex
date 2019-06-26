@@ -19,7 +19,14 @@ defmodule VintageNet.Interface.ConnectivityChecker do
 
   @impl true
   def init(ifname) do
-    state = %{ifname: ifname, strikes: @max_fails_in_a_row, interval: @min_interval}
+    # Handle GenServer restarts when internet-connected
+    initial_strikes =
+      case VintageNet.get(["interface", ifname, "connection"]) do
+        :internet -> 0
+        _ -> @max_fails_in_a_row
+      end
+
+    state = %{ifname: ifname, strikes: initial_strikes, interval: @min_interval}
     {:ok, state, {:continue, :continue}}
   end
 
@@ -27,59 +34,25 @@ defmodule VintageNet.Interface.ConnectivityChecker do
   def handle_continue(:continue, %{ifname: ifname} = state) do
     VintageNet.subscribe(lower_up_property(ifname))
 
-    set_connectivity(ifname, :disconnected)
-
     case VintageNet.get(lower_up_property(ifname)) do
       true ->
-        {:noreply, state, @min_interval}
+        new_state = check_connectivity(state)
+
+        {:noreply, new_state, new_state.interval}
 
       _not_true ->
         # If the physical layer isn't up, don't start polling until
         # we're notified that it is available.
+        set_connectivity(ifname, :disconnected)
         {:noreply, state}
     end
   end
 
   @impl true
-  def handle_info(:timeout, %{ifname: ifname, strikes: strikes, interval: interval} = state) do
-    {connectivity, new_strikes} =
-      case InternetTester.ping(ifname) do
-        :ok ->
-          # Success - reset the number of strikes to stay in Internet mode
-          # even if there are hiccups.
-          {:internet, 0}
+  def handle_info(:timeout, state) do
+    new_state = check_connectivity(state)
 
-        {:error, :if_not_found} ->
-          {:disconnected, @max_fails_in_a_row}
-
-        {:error, :no_ipv4_address} ->
-          {:disconnected, @max_fails_in_a_row}
-
-        {:error, reason} ->
-          if strikes < @max_fails_in_a_row do
-            _ =
-              Logger.debug(
-                "#{ifname}: Internet test failed (#{inspect(reason)}: #{strikes + 1}/#{
-                  @max_fails_in_a_row
-                } strikes"
-              )
-
-            {:internet, strikes + 1}
-          else
-            _ = Logger.debug("#{ifname}: Internet test failed: (#{inspect(reason)})")
-            {:lan, @max_fails_in_a_row}
-          end
-      end
-
-    next_state = %{
-      state
-      | strikes: new_strikes,
-        interval: next_interval(connectivity, interval, strikes)
-    }
-
-    set_connectivity(ifname, connectivity)
-
-    {:noreply, next_state, next_state.interval}
+    {:noreply, new_state, new_state.interval}
   end
 
   def handle_info(
@@ -111,6 +84,47 @@ defmodule VintageNet.Interface.ConnectivityChecker do
     # The interface was completely removed!
     if old_value, do: set_connectivity(ifname, :disconnected)
     {:noreply, state}
+  end
+
+  defp check_connectivity(%{ifname: ifname, strikes: strikes, interval: interval} = state) do
+    {connectivity, new_strikes} =
+      case InternetTester.ping(ifname) do
+        :ok ->
+          # Success - reset the number of strikes to stay in Internet mode
+          # even if there are hiccups.
+          {:internet, 0}
+
+        {:error, :if_not_found} ->
+          {:disconnected, @max_fails_in_a_row}
+
+        {:error, :no_ipv4_address} ->
+          {:disconnected, @max_fails_in_a_row}
+
+        {:error, reason} ->
+          if strikes < @max_fails_in_a_row do
+            _ =
+              Logger.debug(
+                "#{ifname}: Internet test failed (#{inspect(reason)}: #{strikes + 1}/#{
+                  @max_fails_in_a_row
+                } strikes"
+              )
+
+            {:internet, strikes + 1}
+          else
+            _ = Logger.debug("#{ifname}: Internet test failed: (#{inspect(reason)})")
+            {:lan, @max_fails_in_a_row}
+          end
+      end
+
+    new_state = %{
+      state
+      | strikes: new_strikes,
+        interval: next_interval(connectivity, interval, strikes)
+    }
+
+    set_connectivity(ifname, connectivity)
+
+    new_state
   end
 
   defp set_connectivity(ifname, connectivity) do
