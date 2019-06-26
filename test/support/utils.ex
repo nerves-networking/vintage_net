@@ -11,7 +11,8 @@ defmodule VintageNetTest.Utils do
       bin_killall: "killall",
       bin_wpa_supplicant: "wpa_supplicant",
       bin_ip: "ip",
-      bin_udhcpd: "udhcpd"
+      bin_udhcpd: "udhcpd",
+      bin_dnsd: "dnsd"
     )
   end
 

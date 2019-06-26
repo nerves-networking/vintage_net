@@ -41,6 +41,7 @@ defmodule VintageNet.MixProject do
         bin_wpa_supplicant: "/usr/sbin/wpa_supplicant",
         bin_ip: "ip",
         bin_udhcpd: "udhcpd",
+        bin_dnsd: "dnsd",
         path: "/usr/sbin:/usr/bin:/sbin:/bin",
         udhcpc_handler: VintageNet.Interface.Udhcpc,
         resolvconf: "/etc/resolv.conf",

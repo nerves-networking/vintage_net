@@ -3,7 +3,7 @@ defmodule VintageNet.Technology.WiFi do
 
   alias VintageNet.WiFi.{WPA2, WPASupplicant}
   alias VintageNet.Interface.RawConfig
-  alias VintageNet.IP.{ConfigToInterfaces, ConfigToUdhcpd}
+  alias VintageNet.IP.{ConfigToInterfaces, ConfigToUdhcpd, ConfigToDnsd}
 
   @impl true
   def normalize(%{type: __MODULE__, wifi: %{ssid: ssid, psk: psk}} = config) do
@@ -53,41 +53,25 @@ defmodule VintageNet.Technology.WiFi do
       {:run, killall, ["-q", "wpa_supplicant"]}
     ]
 
-    case maybe_add_udhcpd(ifname, normalized_config, opts) do
-      {udhcpd_files, udhcpd_up_cmds, udhcpd_down_cmds} ->
-        {:ok,
-         %RawConfig{
-           ifname: ifname,
-           type: __MODULE__,
-           source_config: normalized_config,
-           files: files ++ udhcpd_files,
-           cleanup_files: [control_interface_path],
-           child_specs: [
-             {VintageNet.Interface.ConnectivityChecker, ifname},
-             {WPASupplicant, ifname: ifname, control_path: control_interface_path}
-           ],
-           up_cmds: up_cmds ++ udhcpd_up_cmds,
-           up_cmd_millis: 60_000,
-           down_cmds: down_cmds ++ udhcpd_down_cmds
-         }}
+    raw_config =
+      %RawConfig{
+        ifname: ifname,
+        type: __MODULE__,
+        source_config: normalized_config,
+        files: files,
+        cleanup_files: [control_interface_path],
+        child_specs: [
+          {VintageNet.Interface.ConnectivityChecker, ifname},
+          {WPASupplicant, ifname: ifname, control_path: control_interface_path}
+        ],
+        up_cmds: up_cmds,
+        up_cmd_millis: 60_000,
+        down_cmds: down_cmds
+      }
+      |> add_udhcpd(opts)
+      |> add_dnsd(opts)
 
-      nil ->
-        {:ok,
-         %RawConfig{
-           ifname: ifname,
-           type: __MODULE__,
-           source_config: normalized_config,
-           files: files,
-           cleanup_files: [control_interface_path],
-           child_specs: [
-             {VintageNet.Interface.ConnectivityChecker, ifname},
-             {WPASupplicant, ifname: ifname, control_path: control_interface_path}
-           ],
-           up_cmds: up_cmds,
-           up_cmd_millis: 60_000,
-           down_cmds: down_cmds
-         }}
-    end
+    {:ok, raw_config}
   end
 
   def to_raw_config(ifname, %{type: __MODULE__}, opts) do
@@ -130,7 +114,10 @@ defmodule VintageNet.Technology.WiFi do
     {:error, :bad_configuration}
   end
 
-  defp maybe_add_udhcpd(ifname, %{dhcpd: _dhcpd} = config, opts) do
+  defp add_udhcpd(
+         %RawConfig{ifname: ifname, source_config: %{dhcpd: _dhcpd} = config} = raw_config,
+         opts
+       ) do
     tmpdir = Keyword.fetch!(opts, :tmpdir)
     killall = Keyword.fetch!(opts, :bin_killall)
     udhcpd = Keyword.fetch!(opts, :bin_udhcpd)
@@ -148,10 +135,48 @@ defmodule VintageNet.Technology.WiFi do
       {:run, killall, ["-q", "udhcpd"]}
     ]
 
-    {files, up_cmds, down_cmds}
+    %{
+      raw_config
+      | files: raw_config.files ++ files,
+        up_cmds: raw_config.up_cmds ++ up_cmds,
+        down_cmds: raw_config.down_cmds ++ down_cmds,
+        cleanup_files: raw_config.cleanup_files ++ [udhcpd_conf_path]
+    }
   end
 
-  defp maybe_add_udhcpd(_, _, _), do: nil
+  defp add_udhcpd(raw_config, _opts), do: raw_config
+
+  defp add_dnsd(
+         %RawConfig{ifname: ifname, source_config: %{dnsd: _dnsd} = config} = raw_config,
+         opts
+       ) do
+    tmpdir = Keyword.fetch!(opts, :tmpdir)
+    killall = Keyword.fetch!(opts, :bin_killall)
+    dnsd = Keyword.fetch!(opts, :bin_dnsd)
+    dnsd_conf_path = Path.join(tmpdir, "dnsd.conf.#{ifname}")
+
+    files = [
+      {dnsd_conf_path, ConfigToDnsd.config_to_dnsd_contents(config)}
+    ]
+
+    up_cmds = [
+      {:run, dnsd, ConfigToDnsd.config_to_dnsd_args(config, dnsd_conf_path)}
+    ]
+
+    down_cmds = [
+      {:run, killall, ["-q", "dnsd"]}
+    ]
+
+    %{
+      raw_config
+      | files: raw_config.files ++ files,
+        up_cmds: raw_config.up_cmds ++ up_cmds,
+        down_cmds: raw_config.down_cmds ++ down_cmds,
+        cleanup_files: raw_config.cleanup_files ++ [dnsd_conf_path]
+    }
+  end
+
+  defp add_dnsd(raw_config, _opts), do: raw_config
 
   @impl true
   def ioctl(ifname, :scan, _args) do

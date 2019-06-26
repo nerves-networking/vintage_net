@@ -1203,7 +1203,7 @@ defmodule VintageNet.Technology.WiFiTest do
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
-  test "create a dhcpd config" do
+  test "create a dhcpd captive portal config" do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
@@ -1223,6 +1223,12 @@ defmodule VintageNet.Technology.WiFiTest do
       dhcpd: %{
         start: "192.168.24.2",
         end: "192.168.24.100"
+      },
+      dnsd: %{
+        address: "192.168.24.1",
+        ttl: 60,
+        port: 53,
+        nameservers: %{"google.com" => "192.168.24.1"}
       },
       hostname: "unit_test"
     }
@@ -1267,6 +1273,10 @@ defmodule VintageNet.Technology.WiFiTest do
          end 192.168.24.100
          start 192.168.24.2
 
+         """},
+        {"/tmp/vintage_net/dnsd.conf.wlan0",
+         """
+         google.com 192.168.24.1
          """}
       ],
       up_cmd_millis: 60_000,
@@ -1277,14 +1287,21 @@ defmodule VintageNet.Technology.WiFiTest do
         {:run, "wpa_supplicant",
          ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "udhcpd", ["/tmp/vintage_net/udhcpd.conf.wlan0"]}
+        {:run, "udhcpd", ["/tmp/vintage_net/udhcpd.conf.wlan0"]},
+        {:run, "dnsd",
+         ["-c", "/tmp/vintage_net/dnsd.conf.wlan0", "-i", "192.168.24.1", "-p", "53", "-t", "60"]}
       ],
       down_cmds: [
         {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "killall", ["-q", "udhcpd"]}
+        {:run, "killall", ["-q", "udhcpd"]},
+        {:run, "killall", ["-q", "dnsd"]}
       ],
-      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
+      cleanup_files: [
+        "/tmp/vintage_net/wpa_supplicant/wlan0",
+        "/tmp/vintage_net/udhcpd.conf.wlan0",
+        "/tmp/vintage_net/dnsd.conf.wlan0"
+      ]
     }
 
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
