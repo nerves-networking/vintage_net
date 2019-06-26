@@ -13,7 +13,7 @@ defmodule VintageNet.Interface.CommandRunner do
   cleanup logic.
   """
   require Logger
-  alias VintageNet.Interface.RawConfig
+  alias VintageNet.Interface.{RawConfig, OutputLogger}
   alias VintageNet.Command
 
   @doc """
@@ -38,13 +38,16 @@ defmodule VintageNet.Interface.CommandRunner do
   Non-zero exit status will return an error.
   """
   def run({:run, command, args}) do
-    case Command.muon_cmd(command, args) do
+    case Command.muon_cmd(command, args,
+           stderr_to_stdout: true,
+           into: OutputLogger.new(command <> ":")
+         ) do
       {_, 0} ->
         :ok
 
-      {message, _not_zero} ->
-        _ = Logger.error("Error running #{command}, #{inspect(args)}: #{message}")
-        {:error, message}
+      {_, not_zero} ->
+        _ = Logger.error("Nonzero exit from #{command}, #{inspect(args)}: #{not_zero}")
+        {:error, :non_zero_exit}
     end
   end
 
@@ -52,7 +55,12 @@ defmodule VintageNet.Interface.CommandRunner do
   Run a command and ignore its exit code
   """
   def run({:run_ignore_errors, command, args}) do
-    _ = Command.muon_cmd(command, args)
+    _ =
+      Command.muon_cmd(command, args,
+        stderr_to_stdout: true,
+        into: OutputLogger.new(command <> ":")
+      )
+
     :ok
   end
 
