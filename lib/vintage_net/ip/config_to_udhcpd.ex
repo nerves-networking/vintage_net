@@ -15,7 +15,7 @@ defmodule VintageNet.IP.ConfigToUdhcpd do
   `offer_time` - How long an offered address is reserved (seconds)
   `min_lease` - If client asks for lease below this value, it will be rounded up to this value (seconds)
   `auto_time` - The time period at which udhcpd will write out leases file.
-  `static_leases` - list of `{macaddress, ipaddress}`
+  `static_leases` - list of `{mac_address, ip_address}`
   """
   @spec config_to_udhcpd_contents(VintageNet.ifname(), map(), Path.t()) :: String.t()
   def config_to_udhcpd_contents(ifname, %{dhcpd: dhcpd}, tmpdir) do
@@ -26,7 +26,7 @@ defmodule VintageNet.IP.ConfigToUdhcpd do
     interface #{ifname}
     pidfile #{pidfile}
     lease_file #{lease_file}
-    notify_file #{udhcpd_handler_path(tmpdir, ifname)}
+    notify_file #{udhcpd_handler_path()}
     """
 
     config = Enum.map(dhcpd, &to_udhcpd_string/1)
@@ -71,10 +71,7 @@ defmodule VintageNet.IP.ConfigToUdhcpd do
     end)
   end
 
-  defp udhcpd_handler_path(tmpdir, ifname) do
-    from = Application.app_dir(:vintage_net, ["priv", "udhcpd_handler"])
-    to = Path.join(tmpdir, "udhcpd.#{ifname}.udhcpd_handler")
-    _ = File.ln_s(from, to)
-    to
+  defp udhcpd_handler_path() do
+    Application.app_dir(:vintage_net, ["priv", "udhcpd_handler"])
   end
 end
