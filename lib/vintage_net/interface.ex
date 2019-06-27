@@ -276,7 +276,7 @@ defmodule VintageNet.Interface do
   def handle_event(
         :info,
         {VintageNet, ["interface", ifname, "present"], _old_value, nil, _meta},
-        :reconfiguring,
+        :configuring,
         %State{ifname: ifname, command_runner: pid, config: config} = data
       ) do
     _ =
