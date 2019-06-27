@@ -6,9 +6,9 @@ defmodule VintageNet.ToElixirTest do
   test "can send message from C" do
     assert capture_log(fn ->
              to_elixir = Application.app_dir(:vintage_net, ["priv", "to_elixir"])
-             System.cmd(to_elixir, ["hello"])
-             Process.sleep(250)
-           end) =~ "[debug] Got a generic message: hello"
+             System.cmd(to_elixir, ["hello", "from", "a", "c", "program"])
+             Process.sleep(100)
+           end) =~ "[debug] Got a generic message: hello from a c program"
   end
 
   test "udhcpc handler notifies Elixir" do
