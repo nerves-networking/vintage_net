@@ -3,10 +3,7 @@ defmodule VintageNet.Interface.Udhcpd do
   require Logger
 
   @impl true
-  def lease_update(ifname, _) do
-    tmpdir = Application.get_env(:vintage_net, :tmpdir)
-    lease_file = Path.join(tmpdir, "udhcpd.#{ifname}.leases")
-
+  def lease_update(ifname, lease_file) do
     case parse_leases(lease_file) do
       {:ok, leases} ->
         VintageNet.PropertyTable.put(
@@ -16,7 +13,7 @@ defmodule VintageNet.Interface.Udhcpd do
         )
 
       {:error, _} ->
-        _ = Logger.error("Failed to handle lease update")
+        _ = Logger.error("#{ifname}: Failed to handle lease update from #{lease_file}")
 
         VintageNet.PropertyTable.clear_prefix(VintageNet, ["interface", ifname, "dhcpd", "leases"])
     end

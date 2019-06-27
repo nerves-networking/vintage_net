@@ -27,15 +27,16 @@ defmodule VintageNet.ToElixir.UdhcpdHandler do
   @type update_data :: map()
 
   @doc """
+  The DHCP lease file was updated
   """
-  @callback lease_update(ifname(), map()) :: :ok
+  @callback lease_update(ifname(), Path.t()) :: :ok
 
   @doc """
   Called internally by vintage_net to dispatch calls
   """
-  @spec dispatch(atom(), ifname(), update_data()) :: :ok
-  def dispatch(function, ifname, update_data) do
+  @spec dispatch(atom(), ifname(), Path.t()) :: :ok
+  def dispatch(function, ifname, lease_file) do
     handler = Application.get_env(:vintage_net, :udhcpd_handler)
-    apply(handler, function, [ifname, update_data])
+    apply(handler, function, [ifname, lease_file])
   end
 end
