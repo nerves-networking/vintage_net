@@ -2,6 +2,7 @@ defmodule VintageNet.ToElixirTest do
   use ExUnit.Case
   import ExUnit.CaptureLog
   alias VintageNetTest.CapturingUdhcpcHandler
+  alias VintageNetTest.CapturingUdhcpdHandler
 
   test "can send message from C" do
     assert capture_log(fn ->
@@ -118,16 +119,17 @@ defmodule VintageNet.ToElixirTest do
     assert options[:message] == "message"
   end
 
-        Process.sleep(250)
-      end)
+  test "udhcpd handler notifies Elixir" do
+    udhcpd_handler = Application.app_dir(:vintage_net, ["priv", "udhcpd_handler"])
+    CapturingUdhcpdHandler.clear()
 
-    assert log =~ "broadcast: \"broadcast\""
-    assert log =~ "command: :deconfig"
-    assert log =~ "dns: [\"1.1.1.1\", \"2.2.2.2\", \"3.3.3.3\", \"4.4.4.4\"]"
-    assert log =~ "domain: \"domain\""
-    assert log =~ "interface: \"eth0\""
-    assert log =~ "ip: \"ip\""
-    assert log =~ "message: \"message\""
-    assert log =~ "subnet: \"subnet\""
+    {_, 0} = System.cmd(udhcpd_handler, ["udhcpd.wlan0.leases"], env: [])
+
+    Process.sleep(100)
+
+    [{ifname, reported_op, lease_file}] = CapturingUdhcpdHandler.get()
+    assert reported_op == :lease_update
+    assert ifname == "wlan0"
+    assert lease_file == "udhcpd.wlan0.leases"
   end
 end

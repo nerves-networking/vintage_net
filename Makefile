@@ -72,11 +72,8 @@ $(BUILD)/%.o: src/%.c
 $(PREFIX)/to_elixir: $(BUILD)/to_elixir.o
 	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -o $@
 
-$(PREFIX)/udhcpc_handler: $(BUILD)/udhcpc_handler.o
-	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -o $@
-
-$(PREFIX)/udhcpd_handler: $(BUILD)/udhcpd_handler.o
-	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -o $@
+$(PREFIX)/udhcpd_handler $(PREFIX)/udhcpc_handler: $(PREFIX)/to_elixir
+	ln -sf to_elixir $@
 
 $(PREFIX)/if_monitor: $(BUILD)/if_monitor.o
 	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -lmnl -o $@
