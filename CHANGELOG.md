@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.3.0
+
+* New features
+  * Support the `busybox` hex.pm package to bring in networking support if not
+    present in the Nerves system image. This enables use with the minimal
+    official Nerves images.
+  * Add Unix domain socket interface to the `wpa_supplicant`. This enables
+    much faster scanning of WiFi networks and other things like collecting
+    attached clients when in AP-mode and pinging the supplicant to make sure
+    it's running.
+  * Log output of commandline-run applications so that error messages don't get
+    lost.
+  * Provide utilities for reporting WiFi signal strength as a percent to end
+    users.
+
+* Bug fixes
+  * Support scanning WiFi access points with Unicode names (emoji, etc. in their
+    SSIDs)
+  * Allow internet connectivity pings to be missed 3 times in a row before
+    deciding that the internet isn't reachable. This avoids transients due to
+    the random dropped packet.
+  * Reduce externally visible transients due to internal GenServers crashing and
+    restarting - also addressed the crashes
+  * Support configure while configuring - let's you cancel a configuration that
+    takes a long time to apply and apply a new one
+
 ## v0.2.4
 
 * New features
