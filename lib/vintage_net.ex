@@ -34,9 +34,6 @@ defmodule VintageNet do
 
   @doc """
   Return a list of all interfaces on the system
-
-  NOTE: This list is currently updated every 30 seconds rather than on change.
-        Be patient.
   """
   @spec all_interfaces() :: [ifname()]
   def all_interfaces() do
