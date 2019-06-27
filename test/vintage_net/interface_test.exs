@@ -326,6 +326,47 @@ defmodule VintageNet.InterfaceTest do
     end)
   end
 
+  test "configuring while configuring command", context do
+    in_tmp(context.test, fn ->
+      {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(@ifname)
+
+      # Start configuring the first one - it will hang
+      raw_config = %RawConfig{
+        ifname: @ifname,
+        type: @interface_type,
+        source_config: %{},
+        files: [{"first_config", ""}],
+        up_cmds: [{:run, "sleep", ["60"]}],
+        down_cmds: []
+      }
+
+      :ok = Interface.configure(raw_config)
+
+      # Make sure that everything is started before interrupting.
+      # I'm not sure this is even necessary, but is more like what
+      # happens in the wild.
+      Process.sleep(100)
+
+      # Configure the second one - it should interrupt the first
+      raw_config2 = %RawConfig{
+        ifname: @ifname,
+        type: @interface_type,
+        source_config: %{},
+        files: [{"second_config", ""}],
+        up_cmds: [{:run, "touch", ["did_it"]}],
+        down_cmds: []
+      }
+
+      :ok = Interface.configure(raw_config2)
+
+      assert :ok == Interface.wait_until_configured(@ifname)
+
+      refute File.exists?("first_config")
+      assert File.exists?("second_config")
+      assert File.exists?("did_it")
+    end)
+  end
+
   test "configure starts GenServers", context do
     in_tmp(context.test, fn ->
       us = self()
