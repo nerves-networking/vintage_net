@@ -254,6 +254,26 @@ defmodule VintageNet.Interface do
 
   @impl true
   def handle_event(
+        {:call, from},
+        {:configure, new_config},
+        :configuring,
+        %State{command_runner: pid, config: old_config} = data
+      ) do
+    _ = Logger.debug(":configuring -> configuring (stopping the old configuration)")
+    Process.exit(pid, :kill)
+    rm(old_config.cleanup_files)
+    CommandRunner.remove_files(old_config.files)
+
+    {new_data, actions} = reply_to_waiters(data)
+    new_data = %{new_data | config: new_config, command_runner: nil}
+
+    actions = [{:reply, from, :ok} | actions]
+
+    start_configuring(new_config, new_data, actions)
+  end
+
+  @impl true
+  def handle_event(
         :info,
         {VintageNet, ["interface", ifname, "present"], _old_value, nil, _meta},
         :reconfiguring,
