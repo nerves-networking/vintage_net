@@ -33,6 +33,7 @@ defmodule VintageNet.ToElixir.Server do
   def handle_info({:udp, socket, _, 0, data}, %{socket: socket} = state) do
     data
     |> :erlang.binary_to_term()
+    |> normalize_argv0()
     |> dispatch()
 
     {:noreply, state}
@@ -44,23 +45,34 @@ defmodule VintageNet.ToElixir.Server do
     _ = File.rm(state.path)
   end
 
-  defp dispatch({:udhcpc, report}) do
-    UdhcpcHandler.dispatch(report.command, report.interface, report)
+  defp normalize_argv0({[argv0 | args], env}) do
+    {[Path.basename(argv0) | args], env}
+  end
+
+  defp dispatch({["udhcpc_handler", command], %{interface: interface} = env}) do
+    UdhcpcHandler.dispatch(udhcpc_command(command), interface, env)
     :ok
   end
 
-  defp dispatch({:udhcpd, report}) do
-    [_, interface, "udhcpd_handler"] = String.split(report.interface, ".")
-    UdhcpdHandler.dispatch(report.command, interface, report)
+  defp dispatch({["udhcpd_handler", lease_file], _env}) do
+    [_, interface, "leases"] = String.split(lease_file, ".")
+    UdhcpdHandler.dispatch(:lease_update, interface, lease_file)
   end
 
-  defp dispatch({:to_elixir, message}) do
+  defp dispatch({["to_elixir" | args], _env}) do
+    message = Enum.join(args, " ")
     _ = Logger.debug("Got a generic message: #{message}")
     :ok
   end
 
   defp dispatch(unknown) do
-    _ = Logger.error("to_elixir: dropping unknown message '#{inspect(unknown)}''")
+    _ = Logger.error("to_elixir: dropping unknown report '#{inspect(unknown)}''")
     :ok
   end
+
+  defp udhcpc_command("deconfig"), do: :deconfig
+  defp udhcpc_command("leasefail"), do: :leasefail
+  defp udhcpc_command("nak"), do: :nak
+  defp udhcpc_command("renew"), do: :renew
+  defp udhcpc_command("bound"), do: :bound
 end
