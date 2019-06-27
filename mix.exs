@@ -72,6 +72,7 @@ defmodule VintageNet.MixProject do
         "Makefile",
         "README.md",
         "src/*.[ch]",
+        "src/test-c99.sh",
         "LICENSE",
         "CHANGELOG.md"
       ],
