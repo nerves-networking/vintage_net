@@ -5,11 +5,10 @@
 [![Hex version](https://img.shields.io/hexpm/v/vintage_net.svg "Hex version")](https://hex.pm/packages/vintage_net)
 
 > **_NOTE:_**  This library is very much a work in progress without sufficient
-> documentation. It will get there, but the current Nerves libraries are much
-> more stable, tested for what they do, and integrated into most other Nerves
-> libraries and examples. Most importantly, the official Nerves systems do not
-> contain some of the programs and kernel configuration needed to make this
-> work.
+> documentation. It will get there, but the current Nerves networking libraries
+> are more stable, tested for what they do, and integrated into most other
+> Nerves libraries and examples. Most importantly, the official Nerves systems
+> do not contain kernel configuration needed to make this work.
 
 `VintageNet` is network configuration library built specifically for [Nerves
 Project](https://nerves-project.org) devices. It has the following features:
@@ -55,21 +54,22 @@ are using `nerves_init_gadget`, you will need to remove it from your dependency
 list and add back in things it supplies like `nerves_runtime` and
 `nerves_firmware_ssh`.
 
-When [available in Hex](https://hex.pm/docs/publish), the package can be
-installed by adding `vintage_net` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `vintage_net` to your list of
+dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:vintage_net, "~> 0.1.0", targets: @all_targets}
+    {:vintage_net, "~> 0.3", targets: @all_targets},
+    {:busybox, "~> 0.1", targets: @all_targets}
   ]
 end
 ```
 
-Erlang/OTP provides many libraries for debugging networking issues. You may also
-want to add [Toolshed](https://github.com/fhunleth/toolshed) to your dependencies
-so that you can have more familiar looking tools like `ifconfig` and `ping` at
-the IEx prompt.
+If you have your own custom Nerves system, it's possible to modify that system's
+Busybox configuration to enable all of the networking tools used by
+`vintage_net`. See the end of this document for the needed settings. If you do
+that, delete the `:busybox` dependency above.
 
 ## Configuration
 
@@ -296,8 +296,122 @@ iex> VintageNet.configure("wlan0", %{
 
 ### LTE
 
+TBD
+
 ```elixir
 ```
+
+### USB gadget mode
+
+TBD
+
+## Persistence
+
+By default, VintageNet stores network configuration to disk. If you are
+migrating from `nerves_network` you may already have a persistence
+implementation. To disable the default persistence, configure `vintage_net` as
+follows:
+
+```elixir
+config :vintage_net,
+  persistence: VintageNet.Persistence.Null
+```
+
+## Debugging
+
+Debugging networking issues is not fun. When you're starting out with
+`vintage_net`, it is highly recommended to connect to your target using a method
+that doesn't require networking to work. This could be a UART connection to an
+IEx console on a Nerves device or maybe just hooking up a keyboard and monitor.
+
+If having trouble, first check `VintageNet.info()` to verify the configuration
+and connection status:
+
+```elixir
+iex> VintageNet.info
+VintageNet 0.3.0
+
+All interfaces:       ["eth0", "lo", "tap0", "wlan0"]
+Available interfaces: ["eth0", "wlan0"]
+
+Interface eth0
+  Type: VintageNet.Technology.Ethernet
+  Present: true
+  State: :configured
+  Connection: :internet
+  Configuration:
+    %{ipv4: %{method: :dhcp}, type: VintageNet.Technology.Ethernet}
+
+Interface wlan0
+  Type: VintageNet.Technology.WiFi
+  Present: true
+  State: :configured
+  Connection: :internet
+  Configuration:
+    %{
+      ipv4: %{method: :dhcp},
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        key_mgmt: :wpa_psk,
+        mode: :client,
+        psk: "******",
+        ssid: "MyLAN"
+      }
+    }
+```
+
+If you're using [Toolshed](https://github.com/fhunleth/toolshed), try running
+the following:
+
+```elixir
+iex> ifconfig
+lo: flags=[:up, :loopback, :running]
+    inet 127.0.0.1  netmask 255.0.0.0
+    inet ::1  netmask ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+    hwaddr 00:00:00:00:00:00
+
+eth0: flags=[:up, :broadcast, :running, :multicast]
+    inet 192.168.9.131  netmask 255.255.255.0  broadcast 192.168.9.255
+    inet fe80::6264:5ff:fee1:4045  netmask ffff:ffff:ffff:ffff::
+    hwaddr 60:64:05:e1:40:45
+
+wlan0: flags=[:up, :broadcast, :running, :multicast]
+    inet 192.168.9.175  netmask 255.255.255.0  broadcast 192.168.9.255
+    inet fe80::20c:e7ff:fe11:3d46  netmask ffff:ffff:ffff:ffff::
+    hwaddr 00:0c:e7:11:3d:46
+```
+
+Or ping:
+
+```elixir
+iex> ping "nerves-project.com"
+Press enter to stop
+Response from nerves-project.com (96.126.123.244): time=48.87ms
+Response from nerves-project.com (96.126.123.244): time=42.856ms
+Response from nerves-project.com (96.126.123.244): time=43.097ms
+```
+
+You can also specify an interface to use with `ping`:
+
+```elixir
+iex> ping "nerves-project.com", ifname: "wlan0"
+Press enter to stop
+Response from nerves-project.com (96.126.123.244): time=57.817ms
+Response from nerves-project.com (96.126.123.244): time=46.796ms
+
+iex> ping "nerves-project.com", ifname: "eth0"
+Press enter to stop
+Response from nerves-project.com (96.126.123.244): time=47.923ms
+Response from nerves-project.com (96.126.123.244): time=48.688ms
+```
+
+If it looks like nothing is working, check the logs. On Nerves devices, this
+is frequently done by calling `RingLogger.next` or `RingLogger.attach`.
+
+At a last resort, please open a GitHub issue. We would be glad to help. We only
+have one ask and that is that you get us started with an improvement to our
+documentation or code so that the next person to run into the issue will have an
+easier time. Thanks!
 
 ## Properties
 
@@ -400,6 +514,9 @@ Property         | Values           | Description
 
 ### Kernel Requirements
 
+IMPORTANT: `CONFIG_IP_MULTIPLE_TABLES=y` is critical. VintageNet is completely
+depended on source IP-based routing to work.
+
 * `CONFIG_IP_ADVANCED_ROUTER=y`
 * `CONFIG_IP_MULTIPLE_TABLES=y`
 * `CONFIG_IP_ROUTE_VERBOSE=y` - (optional)
@@ -421,8 +538,8 @@ To avoid enabling these, add `{:busybox, "~> 0.1"}` to your `mix` dependencies.
 
 ### Additional Requirements for Access Point Mode
 
-* `BR2_PACKAGE_DNSMASQ` or `CONFIG_UDHCPD` (in busybox)
-* `BR2_PACKAGE_HOSTAPD` or `BR2_PACKAGE_WPA_SUPPLICANT_HOTSPOT`
+* `CONFIG_UDHCPD` (in busybox)
+* `BR2_PACKAGE_WPA_SUPPLICANT_HOTSPOT`
 
 ### Additional Requirements for LTE
 
@@ -434,7 +551,6 @@ To avoid enabling these, add `{:busybox, "~> 0.1"}` to your `mix` dependencies.
 * `CONFIG_PPP_ASYNC=m`
 * `CONFIG_PPP_SYNC_TTY=m`
 * `CONFIG_USB_NET_CDC_NCM=m`
-* `CONFIG_USB_NET_HUAWEI_CDC_NCM=m`
 * `CONFIG_USB_SERIAL_OPTION=m`
 
 #### System deps
@@ -442,13 +558,3 @@ To avoid enabling these, add `{:busybox, "~> 0.1"}` to your `mix` dependencies.
 * `pppd`
 * `mknod`
 
-## Persistence
-
-By default, VintageNet stores network data on disk. If you are migrating from
-Nerves Networking you may already have a persistence implementation. To disable
-the default persistence, configure vintage_net:
-
-```elixir
-config :vintage_net,
-  persistence: VintageNet.Persistence.Null
-```
