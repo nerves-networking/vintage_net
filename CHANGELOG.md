@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.1
+
+* New features
+  * Add null persistence implementation for devices migrating from Nerves
+    Network that already have a persistence strategy in place
+
 ## v0.3.0
 
 * New features
