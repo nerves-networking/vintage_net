@@ -441,3 +441,14 @@ To avoid enabling these, add `{:busybox, "~> 0.1"}` to your `mix` dependencies.
 
 * `pppd`
 * `mknod`
+
+## Persistence
+
+By default, VintageNet stores network data on disk. If you are migrating from
+Nerves Networking you may already have a persistence implementation. To disable
+the default persistence, configure vintage_net:
+
+```elixir
+config :vintage_net,
+  persistence: VintageNet.Persistence.Null
+```
