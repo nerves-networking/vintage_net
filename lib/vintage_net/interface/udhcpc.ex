@@ -1,7 +1,7 @@
 defmodule VintageNet.Interface.Udhcpc do
   @behaviour VintageNet.ToElixir.UdhcpcHandler
 
-  alias VintageNet.{Command, NameResolver, RouteManager}
+  alias VintageNet.{Command, NameResolver, PropertyTable, RouteManager}
 
   require Logger
 
@@ -27,6 +27,9 @@ defmodule VintageNet.Interface.Udhcpc do
     # if [ -x /usr/sbin/avahi-autoipd ]; then
     # 	/usr/sbin/avahi-autoipd -k $interface
     # fi
+
+    # Drop the properties in the table
+    PropertyTable.clear(VintageNet, ["interface", ifname, "ipv4"])
 
     :ok
   end
@@ -130,6 +133,8 @@ defmodule VintageNet.Interface.Udhcpc do
     dns = Map.get(info, :dns, [])
 
     NameResolver.setup(ifname, domain, dns)
+
+    PropertyTable.put(VintageNet, ["interface", ifname, "ipv4"], info)
     :ok
   end
 
