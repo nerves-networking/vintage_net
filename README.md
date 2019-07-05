@@ -216,6 +216,8 @@ The `:wifi` key has the following common fields:
   * `{:simple, args}` - args is a string to be passed to the `simple` wpa module
   * `:learn`
   * `{:learn, args}` args is a string to be passed to the `learn` wpa module
+* `:priority`: The priority to set for a network if you are using multiple network configurations
+* `:networks` - A list of WiFi networks to configure, these configs have the same fields listed above
 
 See the [official
 docs](https://w1.fi/cgit/hostap/plain/wpa_supplicant/wpa_supplicant.conf) for
