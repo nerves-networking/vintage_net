@@ -65,4 +65,9 @@ defmodule VintageNet.Interface.InternetTester do
   defp resolve_addr(address) when is_tuple(address) do
     {:ok, address}
   end
+
+  defp resolve_addr(address) when is_bitstring(address) or is_list(address) do
+    to_charlist(address)
+    |> :inet.parse_address()
+  end
 end
