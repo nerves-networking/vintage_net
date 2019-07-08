@@ -119,7 +119,7 @@ resolvconf         | Path to `/etc/resolv.conf`
 persistence        | Module for persisting network configurations
 persistence_dir    | Path to a directory for storing persisted configurations
 persistence_secret | A 16-byte secret or an MFA for getting a secret
-internet_host      | IP address for host to `ping` to check for Internet connectivity
+internet_host      | IP address for host to `ping` to check for Internet connectivity. Must be a tuple of integers (`{1, 1, 1, 1}`) or binary representation (`"1.1.1.1"`)
 regulatory_domain  | ISO 3166-1 alpha-2 country (`00` for global, `US`, etc.)
 
 ## Network interface configuration
@@ -216,8 +216,10 @@ The `:wifi` key has the following common fields:
   * `{:simple, args}` - args is a string to be passed to the `simple` wpa module
   * `:learn`
   * `{:learn, args}` args is a string to be passed to the `learn` wpa module
-* `:priority`: The priority to set for a network if you are using multiple network configurations
-* `:networks` - A list of WiFi networks to configure, these configs have the same fields listed above
+* `:priority`: The priority to set for a network if you are using multiple network
+ configurations
+* `:networks` - A list of WiFi networks to configure, these configs have the same
+ fields listed above
 
 See the [official
 docs](https://w1.fi/cgit/hostap/plain/wpa_supplicant/wpa_supplicant.conf) for
