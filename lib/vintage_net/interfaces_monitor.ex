@@ -86,6 +86,7 @@ defmodule VintageNet.InterfacesMonitor do
       end
 
     update_lower_up(ifname, info)
+    update_mac_address(ifname, info)
 
     new_state
   end
@@ -93,6 +94,7 @@ defmodule VintageNet.InterfacesMonitor do
   defp clear_properties(ifname) do
     PropertyTable.clear(VintageNet, ["interface", ifname, "present"])
     PropertyTable.clear(VintageNet, ["interface", ifname, "lower_up"])
+    PropertyTable.clear(VintageNet, ["interface", ifname, "mac_address"])
   end
 
   defp update_present(ifname, value) do
@@ -101,5 +103,9 @@ defmodule VintageNet.InterfacesMonitor do
 
   defp update_lower_up(ifname, %{lower_up: value}) do
     PropertyTable.put(VintageNet, ["interface", ifname, "lower_up"], value)
+  end
+
+  defp update_mac_address(ifname, %{mac_address: value}) do
+    PropertyTable.put(VintageNet, ["interface", ifname, "mac_address"], value)
   end
 end

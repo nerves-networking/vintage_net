@@ -472,6 +472,7 @@ Property     | Values           | Description
 `state`      | `:configured`, `:configuring`, etc. | The state of the interface from `VintageNet`'s point of view.
 `connection` | `:disconnected`, `:lan`, `:internet` | This provides a determination of the Internet connection status
 `lower_up`   | `true` or `false` | This indicates whether the physical layer is "up". E.g., a cable is connected or WiFi associated
+`mac_address` | binary | Binary value of the interface's mac address
 `ipv4`       | IPv4 parameters  | This is a map of IPv4 parameters on the interface. This includes IP address, subnet, gateway, etc. NOT IMPLEMENTED YET
 
 Specific types of interfaces provide more parameters.
