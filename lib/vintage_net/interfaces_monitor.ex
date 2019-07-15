@@ -2,18 +2,19 @@ defmodule VintageNet.InterfacesMonitor do
   @moduledoc """
   Monitor available interfaces
 
-  Currently this works by polling the system for what interfaces are visible. They may or may not be configured.
+  Currently this works by polling the system for what interfaces are visible.
+  They may or may not be configured.
   """
 
   use GenServer
 
-  alias VintageNet.PropertyTable
+  alias VintageNet.InterfacesMonitor.Info
 
   defmodule State do
     @moduledoc false
 
     defstruct port: nil,
-              known_interfaces: %{}
+              interface_info: %{}
   end
 
   @spec start_link(any()) :: GenServer.on_start()
@@ -39,6 +40,7 @@ defmodule VintageNet.InterfacesMonitor do
 
   @impl true
   def handle_info({_port, {:data, raw_report}}, state) do
+    # IO.puts("Got: #{inspect(raw_report, limit: :infinity)}")
     report = :erlang.binary_to_term(raw_report)
 
     new_state = handle_report(state, report)
@@ -46,66 +48,65 @@ defmodule VintageNet.InterfacesMonitor do
     {:noreply, new_state}
   end
 
-  defp handle_report(state, {:added, ifname, ifindex}) do
-    new_known_interfaces = Map.put(state.known_interfaces, ifindex, ifname)
-    update_present(ifname, true)
+  defp handle_report(state, {:newlink, ifname, ifindex, link_report}) do
+    new_info =
+      get_or_create_info(state, ifindex, ifname)
+      |> Info.newlink(link_report)
+      |> Info.update_link_properties()
 
-    %{state | known_interfaces: new_known_interfaces}
+    %{state | interface_info: Map.put(state.interface_info, ifindex, new_info)}
   end
 
-  defp handle_report(state, {:renamed, ifname, ifindex}) do
-    case Map.fetch(state.known_interfaces, ifindex) do
-      {:ok, old_ifname} ->
-        state
-        |> handle_report({:removed, old_ifname, ifindex})
-        |> handle_report({:added, ifname, ifindex})
+  defp handle_report(state, {:dellink, ifname, ifindex, _link_report}) do
+    Info.clear_properties(ifname)
 
-      _error ->
-        handle_report(state, {:added, ifname, ifindex})
+    %{state | interface_info: Map.delete(state.interface_info, ifindex)}
+  end
+
+  defp handle_report(state, {:newaddr, ifindex, address_report}) do
+    new_info =
+      get_or_create_info(state, ifindex)
+      |> Info.newaddr(address_report)
+      |> Info.update_address_properties()
+
+    %{state | interface_info: Map.put(state.interface_info, ifindex, new_info)}
+  end
+
+  defp handle_report(state, {:deladdr, ifindex, address_report}) do
+    new_info =
+      get_or_create_info(state, ifindex)
+      |> Info.deladdr(address_report)
+      |> Info.update_address_properties()
+
+    %{state | interface_info: Map.put(state.interface_info, ifindex, new_info)}
+  end
+
+  defp get_or_create_info(state, ifindex, ifname) do
+    case Map.fetch(state.interface_info, ifindex) do
+      {:ok, %{ifname: ^ifname} = info} ->
+        info
+
+      {:ok, %{ifname: old_ifname} = info} ->
+        Info.clear_properties(old_ifname)
+
+        %{info | ifname: ifname}
+        |> Info.update_present()
+        |> Info.update_address_properties()
+
+      _missing ->
+        Info.new(ifname)
+        |> Info.update_present()
     end
   end
 
-  defp handle_report(state, {:removed, ifname, ifindex}) do
-    new_known_interfaces = Map.delete(state.known_interfaces, ifindex)
-    clear_properties(ifname)
+  defp get_or_create_info(state, ifindex) do
+    case Map.fetch(state.interface_info, ifindex) do
+      {:ok, info} ->
+        info
 
-    %{state | known_interfaces: new_known_interfaces}
-  end
-
-  defp handle_report(state, {:report, ifname, ifindex, info}) do
-    new_state =
-      case Map.fetch(state.known_interfaces, ifindex) do
-        {:ok, ^ifname} ->
-          state
-
-        {:ok, other_ifname} ->
-          raise "Unexpected ifname: #{other_ifname}. Wanted #{ifname}"
-
-        _error ->
-          handle_report(state, {:added, ifname, ifindex})
-      end
-
-    update_lower_up(ifname, info)
-    update_mac_address(ifname, info)
-
-    new_state
-  end
-
-  defp clear_properties(ifname) do
-    PropertyTable.clear(VintageNet, ["interface", ifname, "present"])
-    PropertyTable.clear(VintageNet, ["interface", ifname, "lower_up"])
-    PropertyTable.clear(VintageNet, ["interface", ifname, "mac_address"])
-  end
-
-  defp update_present(ifname, value) do
-    PropertyTable.put(VintageNet, ["interface", ifname, "present"], value)
-  end
-
-  defp update_lower_up(ifname, %{lower_up: value}) do
-    PropertyTable.put(VintageNet, ["interface", ifname, "lower_up"], value)
-  end
-
-  defp update_mac_address(ifname, %{mac_address: value}) do
-    PropertyTable.put(VintageNet, ["interface", ifname, "mac_address"], value)
+      _missing ->
+        # Race between address and link notifications?
+        Info.new("__unknown")
+    end
   end
 end
