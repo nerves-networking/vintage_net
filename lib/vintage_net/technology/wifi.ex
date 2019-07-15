@@ -427,6 +427,10 @@ defmodule VintageNet.Technology.WiFi do
     "bgscan=#{bgscan_to_string(value)}"
   end
 
+  defp wifi_opt_to_config_string(_wifi, :passive_scan, value) do
+    "passive_scan=#{value}"
+  end
+
   defp network_config(config) do
     ["network={", "\n", into_newlines(config), "}", "\n"]
   end

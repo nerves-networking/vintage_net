@@ -216,6 +216,9 @@ The `:wifi` key has the following common fields:
   * `{:simple, args}` - args is a string to be passed to the `simple` wpa module
   * `:learn`
   * `{:learn, args}` args is a string to be passed to the `learn` wpa module
+* `:passive_scan`
+  * 0:  Do normal scans (allow active scans) (default)
+  * 1:  Do passive scans.
 * `:priority`: The priority to set for a network if you are using multiple network
  configurations
 * `:networks` - A list of WiFi networks to configure, these configs have the same
