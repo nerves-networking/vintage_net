@@ -53,12 +53,19 @@
 #define debug(...)
 #endif
 
-struct netif {
-    // NETLINK_ROUTE socket information
-    struct mnl_socket *nl;
+struct netif
+{
+    // NETLINK_ROUTE socket for link information
+    struct mnl_socket *nl_link;
 
-    // NETLINK_KOBJECT_UEVENT socket information
-    struct mnl_socket *nl_uevent;
+    // NETLINK_ROUTE socket for address information
+    // NOTE: nl_addr and nl_link could share a socket, but
+    //       then you have to sequencing the initial dump
+    //       link and address operations.
+    struct mnl_socket *nl_addr;
+
+    // Sequence numbers for requests
+    int seq;
 
     // Netlink buffering
     char nlbuf[8192]; // See MNL_SOCKET_BUFFER_SIZE
@@ -67,31 +74,31 @@ struct netif {
 static void netif_init(struct netif *nb)
 {
     memset(nb, 0, sizeof(*nb));
-    nb->nl = mnl_socket_open(NETLINK_ROUTE);
-    if (!nb->nl)
+    nb->seq = 10;
+    nb->nl_link = mnl_socket_open(NETLINK_ROUTE);
+    if (!nb->nl_link)
         err(EXIT_FAILURE, "mnl_socket_open (NETLINK_ROUTE)");
 
-    if (mnl_socket_bind(nb->nl, RTMGRP_LINK, MNL_SOCKET_AUTOPID) < 0)
-        err(EXIT_FAILURE, "mnl_socket_bind");
+    if (mnl_socket_bind(nb->nl_link, RTMGRP_LINK, MNL_SOCKET_AUTOPID) < 0)
+        err(EXIT_FAILURE, "mnl_socket_bind(RTMGRP_LINK)");
 
-    nb->nl_uevent = mnl_socket_open(NETLINK_KOBJECT_UEVENT);
-    if (!nb->nl_uevent)
-        err(EXIT_FAILURE, "mnl_socket_open (NETLINK_KOBJECT_UEVENT)");
+    nb->nl_addr = mnl_socket_open(NETLINK_ROUTE);
+    if (!nb->nl_addr)
+        err(EXIT_FAILURE, "mnl_socket_open (NETLINK_ROUTE)");
 
-    // There is one single group in kobject over netlink
-    if (mnl_socket_bind(nb->nl_uevent, (1 << 0), MNL_SOCKET_AUTOPID) < 0)
-        err(EXIT_FAILURE, "mnl_socket_bind");
+    if (mnl_socket_bind(nb->nl_addr, RTMGRP_IPV4_IFADDR, MNL_SOCKET_AUTOPID) < 0)
+        err(EXIT_FAILURE, "mnl_socket_bind(RTMGRP_IPV4_IFADDR)");
 }
 
 static void netif_cleanup(struct netif *nb)
 {
-    mnl_socket_close(nb->nl);
-    mnl_socket_close(nb->nl_uevent);
-    nb->nl = NULL;
-    nb->nl_uevent = NULL;
+    mnl_socket_close(nb->nl_link);
+    mnl_socket_close(nb->nl_addr);
+    nb->nl_link = NULL;
+    nb->nl_addr = NULL;
 }
 
-static int collect_if_attrs(const struct nlattr *attr, void *data)
+static int collect_ifla_attrs(const struct nlattr *attr, void *data)
 {
     const struct nlattr **tb = data;
     int type = mnl_attr_get_type(attr);
@@ -101,7 +108,8 @@ static int collect_if_attrs(const struct nlattr *attr, void *data)
         return MNL_CB_OK;
 
     // Only save supported attributes (see encode logic)
-    switch (type) {
+    switch (type)
+    {
     case IFLA_MTU:
     case IFLA_IFNAME:
     case IFLA_ADDRESS:
@@ -112,6 +120,36 @@ static int collect_if_attrs(const struct nlattr *attr, void *data)
         tb[type] = attr;
         break;
 
+    default:
+        break;
+    }
+    return MNL_CB_OK;
+}
+
+static int collect_ifa_attrs(const struct nlattr *attr, void *data)
+{
+    const struct nlattr **tb = data;
+    int type = mnl_attr_get_type(attr);
+
+    // Skip unsupported attributes in user-space
+    if (mnl_attr_type_valid(attr, IFA_MAX) < 0)
+        return MNL_CB_OK;
+
+    // Only save supported attributes (see encode logic)
+    switch (type)
+    {
+    case IFA_ADDRESS:
+    case IFA_LOCAL:
+    case IFA_LABEL:
+    case IFA_BROADCAST:
+    case IFA_ANYCAST:
+    case IFA_MULTICAST:
+    case IFA_FLAGS:
+        tb[type] = attr;
+        break;
+
+    case IFA_CACHEINFO: // not supported
+    case IFA_UNSPEC:    // not supported
     default:
         break;
     }
@@ -157,6 +195,215 @@ static void encode_kv_macaddr(ei_x_buff *buff, const char *key, const unsigned c
     encode_string(buff, macaddr_str);
 }
 
+static void encode_kv_raw_address(ei_x_buff *buff, const char *key, const uint8_t *addr, uint16_t len)
+{
+    ei_x_encode_atom(buff, key);
+
+    switch (len)
+    {
+    case 16: // IPv6
+        ei_x_encode_tuple_header(buff, 8);
+        {
+            const uint16_t *addr2 = (const uint16_t *)addr;
+            uint16_t i;
+            for (i = 0; i < 8; i++)
+                ei_x_encode_ulong(buff, htons(addr2[i]));
+        }
+        break;
+    default:
+        ei_x_encode_tuple_header(buff, len);
+        {
+            uint16_t i;
+            for (i = 0; i < len; i++)
+                ei_x_encode_ulong(buff, addr[i]);
+        }
+        break;
+    }
+}
+
+static void encode_kv_string(ei_x_buff *buff, const char *key, const char *value)
+{
+    ei_x_encode_atom(buff, key);
+    encode_string(buff, value);
+}
+
+static void encode_kv_scope(ei_x_buff *buff, const char *key, uint8_t scope)
+{
+    ei_x_encode_atom(buff, key);
+
+    switch (scope)
+    {
+    case RT_SCOPE_UNIVERSE:
+        ei_x_encode_atom(buff, "universe");
+        break;
+    case RT_SCOPE_SITE:
+        ei_x_encode_atom(buff, "site");
+        break;
+    case RT_SCOPE_LINK:
+        ei_x_encode_atom(buff, "link");
+        break;
+    case RT_SCOPE_HOST:
+        ei_x_encode_atom(buff, "host");
+        break;
+    case RT_SCOPE_NOWHERE:
+        ei_x_encode_atom(buff, "nowhere");
+        break;
+    default:
+        ei_x_encode_ulong(buff, scope);
+        break;
+    }
+}
+
+static void encode_kv_family(ei_x_buff *buff, const char *key, uint8_t family)
+{
+    ei_x_encode_atom(buff, key);
+
+    char *str;
+    switch (family)
+    {
+    case AF_UNSPEC:
+        str = "unspec";
+        break;
+    case AF_UNIX:
+        str = "unix";
+        break;
+    case AF_INET:
+        str = "inet";
+        break;
+    case AF_AX25:
+        str = "ax25";
+        break;
+    case AF_IPX:
+        str = "ipx";
+        break;
+    case AF_APPLETALK:
+        str = "appletalk";
+        break;
+    case AF_NETROM:
+        str = "netrom";
+        break;
+    case AF_BRIDGE:
+        str = "bridge";
+        break;
+    case AF_ATMPVC:
+        str = "atmpvc";
+        break;
+    case AF_X25:
+        str = "x25";
+        break;
+    case AF_INET6:
+        str = "inet6";
+        break;
+    case AF_ROSE:
+        str = "rose";
+        break;
+    case AF_DECnet:
+        str = "decnet";
+        break;
+    case AF_NETBEUI:
+        str = "netbeui";
+        break;
+    case AF_SECURITY:
+        str = "security";
+        break;
+    case AF_KEY:
+        str = "key";
+        break;
+    case AF_NETLINK:
+        str = "netlink";
+        break;
+    case AF_PACKET:
+        str = "packet";
+        break;
+    case AF_ASH:
+        str = "ash";
+        break;
+    case AF_ECONET:
+        str = "econet";
+        break;
+    case AF_ATMSVC:
+        str = "atmsvc";
+        break;
+    case AF_RDS:
+        str = "rds";
+        break;
+    case AF_SNA:
+        str = "sna";
+        break;
+    case AF_IRDA:
+        str = "irda";
+        break;
+    case AF_PPPOX:
+        str = "pppox";
+        break;
+    case AF_WANPIPE:
+        str = "wanpipe";
+        break;
+    case AF_LLC:
+        str = "llc";
+        break;
+    case AF_IB:
+        str = "ib";
+        break;
+    case AF_MPLS:
+        str = "mpls";
+        break;
+    case AF_CAN:
+        str = "can";
+        break;
+    case AF_TIPC:
+        str = "tipc";
+        break;
+    case AF_BLUETOOTH:
+        str = "bluetooth";
+        break;
+    case AF_IUCV:
+        str = "iucv";
+        break;
+    case AF_RXRPC:
+        str = "rxrpc";
+        break;
+    case AF_ISDN:
+        str = "isdn";
+        break;
+    case AF_PHONET:
+        str = "phonet";
+        break;
+    case AF_IEEE802154:
+        str = "iee802154";
+        break;
+    case AF_CAIF:
+        str = "caif";
+        break;
+    case AF_ALG:
+        str = "alg";
+        break;
+    case AF_NFC:
+        str = "nfc";
+        break;
+    case AF_VSOCK:
+        str = "vsock";
+        break;
+    case AF_KCM:
+        str = "kcm";
+        break;
+#ifdef AF_QIPCRTR
+    case AF_QIPCRTR:
+        str = "qipcrtr";
+        break;
+#endif
+#ifdef AF_SMC
+    case AF_SMC:
+        str = "smc";
+        break;
+#endif
+    default:
+        str = "unknown";
+        break;
+    }
+
+    ei_x_encode_atom(buff, str);
+}
 static void encode_kv_stats(ei_x_buff *buff, const char *key, struct nlattr *attr)
 {
     struct rtnl_link_stats *stats = (struct rtnl_link_stats *)mnl_attr_get_payload(attr);
@@ -181,7 +428,8 @@ static void encode_kv_operstate(ei_x_buff *buff, int operstate)
 
     // Refer to RFC2863 for state descriptions (or the kernel docs)
     const char *operstate_atom;
-    switch (operstate) {
+    switch (operstate)
+    {
     default:
     case IF_OPER_UNKNOWN:
         operstate_atom = "unknown";
@@ -208,25 +456,27 @@ static void encode_kv_operstate(ei_x_buff *buff, int operstate)
     ei_x_encode_atom(buff, operstate_atom);
 }
 
-static int netif_build_ifinfo(const struct nlmsghdr *nlh, void *data)
+static int netif_build_link(ei_x_buff *buff, const char *report, const struct nlmsghdr *nlh)
 {
-    ei_x_buff *buff = (ei_x_buff *)data;
     struct nlattr *tb[IFLA_MAX + 1];
     memset(tb, 0, sizeof(tb));
     struct ifinfomsg *ifm = mnl_nlmsg_get_payload(nlh);
 
-    if (mnl_attr_parse(nlh, sizeof(*ifm), collect_if_attrs, tb) != MNL_CB_OK) {
+    if (mnl_attr_parse(nlh, sizeof(*ifm), collect_ifla_attrs, tb) != MNL_CB_OK)
+    {
         debug("Error from mnl_attr_parse");
         return MNL_CB_ERROR;
     }
 
     ei_x_encode_tuple_header(buff, 4);
-    ei_x_encode_atom(buff, "report");
+    ei_x_encode_atom(buff, report);
 
-    if (tb[IFLA_IFNAME])
-        encode_string(buff, mnl_attr_get_str(tb[IFLA_IFNAME]));
-    else
+    if (!tb[IFLA_IFNAME])
+    {
+        debug("IFLA_IFNAME missing and it shouldn't be");
         return MNL_CB_ERROR;
+    }
+    encode_string(buff, mnl_attr_get_str(tb[IFLA_IFNAME]));
 
     ei_x_encode_long(buff, ifm->ifi_index);
 
@@ -263,6 +513,65 @@ static int netif_build_ifinfo(const struct nlmsghdr *nlh, void *data)
     return MNL_CB_OK;
 }
 
+static int netif_build_addr(ei_x_buff *buff, const char *report, const struct nlmsghdr *nlh)
+{
+    struct nlattr *tb[IFA_MAX + 1];
+    memset(tb, 0, sizeof(tb));
+    struct ifaddrmsg *ifa = mnl_nlmsg_get_payload(nlh);
+
+    if (mnl_attr_parse(nlh, sizeof(*ifa), collect_ifa_attrs, tb) != MNL_CB_OK)
+    {
+        debug("Error from mnl_attr_parse");
+        return MNL_CB_ERROR;
+    }
+
+    ei_x_encode_tuple_header(buff, 3);
+    ei_x_encode_atom(buff, report);
+
+    ei_x_encode_long(buff, ifa->ifa_index);
+
+    int count = 4; // Base number of fields
+    int i;
+    for (i = 0; i <= IFA_MAX; i++)
+        if (tb[i])
+            count++;
+
+    uint32_t flags;
+    if (tb[IFA_FLAGS])
+    {
+        flags = mnl_attr_get_u32(tb[IFA_FLAGS]);
+        count--;
+    }
+    else
+    {
+        flags = ifa->ifa_flags;
+    }
+
+    ei_x_encode_map_header(buff, count);
+
+    encode_kv_family(buff, "family", ifa->ifa_family);
+    encode_kv_ulong(buff, "prefixlen", ifa->ifa_prefixlen);
+    encode_kv_bool(buff, "permanent", flags & IFA_F_PERMANENT);
+    encode_kv_scope(buff, "scope", ifa->ifa_scope);
+
+    if (tb[IFA_ADDRESS])
+        encode_kv_raw_address(buff, "address", mnl_attr_get_payload(tb[IFA_ADDRESS]), mnl_attr_get_payload_len(tb[IFA_ADDRESS]));
+    if (tb[IFA_LOCAL])
+        encode_kv_raw_address(buff, "local", mnl_attr_get_payload(tb[IFA_LOCAL]), mnl_attr_get_payload_len(tb[IFA_LOCAL]));
+    if (tb[IFA_LABEL])
+        encode_kv_string(buff, "label", mnl_attr_get_payload(tb[IFA_LABEL]));
+    if (tb[IFA_BROADCAST])
+        encode_kv_raw_address(buff, "broadcast", mnl_attr_get_payload(tb[IFA_BROADCAST]), mnl_attr_get_payload_len(tb[IFA_BROADCAST]));
+    if (tb[IFA_ANYCAST])
+        encode_kv_raw_address(buff, "anycast", mnl_attr_get_payload(tb[IFA_ANYCAST]), mnl_attr_get_payload_len(tb[IFA_ANYCAST]));
+    if (tb[IFA_MULTICAST])
+        encode_kv_raw_address(buff, "multicast", mnl_attr_get_payload(tb[IFA_MULTICAST]), mnl_attr_get_payload_len(tb[IFA_MULTICAST]));
+    //    if (tb[IFA_CACHEINFO])
+    //        encode_kv_cacheinfo(buff, "cacheinfo", mnl_attr_get_payload(tb[IFA_CACHEINFO]));
+
+    return MNL_CB_OK;
+}
+
 static void write_buff(const ei_x_buff *buff)
 {
     uint16_t be_len = htons(buff->index);
@@ -278,139 +587,102 @@ static void write_buff(const ei_x_buff *buff)
         errx(EXIT_FAILURE, "write wasn't able to send %d chars all at once!", buff->index);
 }
 
-static void netif_request_status(struct netif *nb,
-                                 int index)
+static int netif_build_notification(const struct nlmsghdr *nlh, void *data)
 {
-    static int seq = 1;
-    struct nlmsghdr *nlh;
-    struct ifinfomsg *ifi;
+    (void)data;
 
-    nlh = mnl_nlmsg_put_header(nb->nlbuf);
-    nlh->nlmsg_type = RTM_GETLINK;
-    nlh->nlmsg_flags = NLM_F_REQUEST;
-    nlh->nlmsg_seq = seq++;
+    ei_x_buff buff;
+    if (ei_x_new_with_version(&buff) < 0)
+        err(EXIT_FAILURE, "ei_x_new_with_version");
 
-    ifi = mnl_nlmsg_put_extra_header(nlh, sizeof(struct ifinfomsg));
-    ifi->ifi_family = AF_UNSPEC;
-    ifi->ifi_type = ARPHRD_ETHER;
-    ifi->ifi_index = index;
-    ifi->ifi_flags = 0;
-    ifi->ifi_change = 0xffffffff;
-
-    if (mnl_socket_sendto(nb->nl, nlh, nlh->nlmsg_len) < 0)
-        err(EXIT_FAILURE, "mnl_socket_send");
-}
-
-static void nl_uevent_process(struct netif *nb)
-{
-    int bytecount = mnl_socket_recvfrom(nb->nl_uevent, nb->nlbuf, sizeof(nb->nlbuf));
-    if (bytecount <= 0)
-        err(EXIT_FAILURE, "mnl_socket_recvfrom");
-
-    // uevent messages are concatenated strings
-    enum hotplug_operation {
-        HOTPLUG_OPERATION_NONE = 0,
-        HOTPLUG_OPERATION_ADD,
-        HOTPLUG_OPERATION_MOVE,
-        HOTPLUG_OPERATION_REMOVE
-    } operation;
-
-    const char *str = nb->nlbuf;
-    if (strncmp(str, "add@", 4) == 0)
-        operation = HOTPLUG_OPERATION_ADD;
-    else if (strncmp(str, "move@", 5) == 0)
-        operation = HOTPLUG_OPERATION_MOVE;
-    else if (strncmp(str, "remove@", 7) == 0)
-        operation = HOTPLUG_OPERATION_REMOVE;
-    else
-        return; // Not interested in this message.
-
-    const char *str_end = str + bytecount;
-    str += strlen(str) + 1;
-
-    // Extract the fields of interest
-    const char *ifname = NULL;
-    const char *subsystem = NULL;
-    const char *ifindex_str = NULL;
-    for (; str < str_end; str += strlen(str) + 1) {
-        if (strncmp(str, "INTERFACE=", 10) == 0)
-            ifname = str + 10;
-        else if (strncmp(str, "SUBSYSTEM=", 10) == 0)
-            subsystem = str + 10;
-        else if (strncmp(str, "IFINDEX=", 8) == 0)
-            ifindex_str = str + 8;
+    int rc;
+    switch (nlh->nlmsg_type)
+    {
+    case RTM_NEWLINK:
+        rc = netif_build_link(&buff, "newlink", nlh);
+        break;
+    case RTM_DELLINK:
+        rc = netif_build_link(&buff, "dellink", nlh);
+        break;
+    case RTM_NEWADDR:
+        rc = netif_build_addr(&buff, "newaddr", nlh);
+        break;
+    case RTM_DELADDR:
+        rc = netif_build_addr(&buff, "deladdr", nlh);
+        break;
+    default:
+        warn("Ignoring netlink message type: %d", nlh->nlmsg_type);
+        rc = MNL_CB_ERROR;
+        break;
     }
 
-    // Check that we have the required fields that this is a
-    // "net" subsystem event. If yes, send the notification.
-    if (ifname && subsystem && ifindex_str && strcmp(subsystem, "net") == 0) {
-        ei_x_buff buff;
-        if (ei_x_new_with_version(&buff) < 0)
-            err(EXIT_FAILURE, "ei_x_new_with_version");
-
-        ei_x_encode_tuple_header(&buff, 3);
-
-        switch (operation) {
-        case HOTPLUG_OPERATION_ADD:
-            ei_x_encode_atom(&buff, "added");
-            break;
-        case HOTPLUG_OPERATION_MOVE:
-            ei_x_encode_atom(&buff, "renamed");
-            break;
-        case HOTPLUG_OPERATION_REMOVE:
-        default: // Silence warning
-            ei_x_encode_atom(&buff, "removed");
-            break;
-        }
-
-        encode_string(&buff, ifname);
-
-        int ifindex = strtol(ifindex_str, NULL, 0);
-        ei_x_encode_long(&buff, ifindex);
-
+    if (rc == MNL_CB_OK)
         write_buff(&buff);
 
-        // Force a refresh on the interface status if it was added or moved
-        if (operation == HOTPLUG_OPERATION_ADD || operation == HOTPLUG_OPERATION_MOVE)
-            netif_request_status(nb, ifindex);
-    }
+    return rc;
 }
 
 static void handle_notification(struct netif *nb, int bytecount)
 {
-    ei_x_buff buff;
-
-    if (ei_x_new_with_version(&buff) < 0)
-        err(EXIT_FAILURE, "ei_x_new_with_version");
-
-    if (mnl_cb_run(nb->nlbuf, bytecount, 0, 0, netif_build_ifinfo, &buff) <= 0)
+    if (mnl_cb_run(nb->nlbuf, bytecount, 0, 0, netif_build_notification, NULL) == MNL_CB_ERROR)
         err(EXIT_FAILURE, "mnl_cb_run");
-
-    write_buff(&buff);
 }
 
-static void nl_route_process(struct netif *nb)
+static void nl_link_process(struct netif *nb)
 {
-    int bytecount = mnl_socket_recvfrom(nb->nl, nb->nlbuf, sizeof(nb->nlbuf));
+    int bytecount = mnl_socket_recvfrom(nb->nl_link, nb->nlbuf, sizeof(nb->nlbuf));
     if (bytecount <= 0)
-        err(EXIT_FAILURE, "mnl_socket_recvfrom");
+        err(EXIT_FAILURE, "mnl_socket_recvfrom(nl_link)");
+
+    handle_notification(nb, bytecount);
+}
+
+static void nl_addr_process(struct netif *nb)
+{
+    int bytecount = mnl_socket_recvfrom(nb->nl_addr, nb->nlbuf, sizeof(nb->nlbuf));
+    if (bytecount <= 0)
+        err(EXIT_FAILURE, "mnl_socket_recvfrom(nl_addr)");
 
     handle_notification(nb, bytecount);
 }
 
 static void request_all_interfaces(struct netif *nb)
 {
-    struct if_nameindex *if_ni = if_nameindex();
-    if (if_ni == NULL)
-        err(EXIT_FAILURE, "if_nameindex");
+    struct nlmsghdr *nlh;
 
-    for (struct if_nameindex *i = if_ni;
-            !(i->if_index == 0 && i->if_name == NULL);
-            i++) {
-        netif_request_status(nb, i->if_index);
-    }
+    // Request all links
+    nlh = mnl_nlmsg_put_header(nb->nlbuf);
+    nlh->nlmsg_type = RTM_GETLINK;
+    nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
+    nlh->nlmsg_seq = nb->seq++;
 
-    if_freenameindex(if_ni);
+    struct ifinfomsg *ifi;
+    ifi = mnl_nlmsg_put_extra_header(nlh, sizeof(struct ifinfomsg));
+    ifi->ifi_family = AF_PACKET;
+    ifi->ifi_type = ARPHRD_ETHER;
+    ifi->ifi_index = 0;
+    ifi->ifi_flags = 0;
+    ifi->ifi_change = 0;
+
+    if (mnl_socket_sendto(nb->nl_link, nlh, nlh->nlmsg_len) < 0)
+        err(EXIT_FAILURE, "mnl_socket_send(RTM_GETLINK)");
+
+    // Request all addresses
+    nlh = mnl_nlmsg_put_header(nb->nlbuf);
+    nlh->nlmsg_type = RTM_GETADDR;
+    nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
+    nlh->nlmsg_seq = nb->seq++;
+
+    struct ifaddrmsg *ifa;
+    ifa = mnl_nlmsg_put_extra_header(nlh, sizeof(struct ifaddrmsg));
+    ifa->ifa_family = AF_UNSPEC;
+    ifa->ifa_prefixlen = 0;
+    ifa->ifa_flags = 0;
+    ifa->ifa_scope = RT_SCOPE_UNIVERSE;
+    ifa->ifa_index = 0;
+
+    if (mnl_socket_sendto(nb->nl_addr, nlh, nlh->nlmsg_len) < 0)
+        err(EXIT_FAILURE, "mnl_socket_send(RTM_GETADDR)");
 }
 
 int main(int argc, char *argv[])
@@ -424,23 +696,25 @@ int main(int argc, char *argv[])
     /* Seed Elixir with notifications from all of the current interfaces */
     request_all_interfaces(&nb);
 
-    for (;;) {
-        struct pollfd fdset[3];
+    for (;;)
+    {
+        struct pollfd fdset[4];
 
-        fdset[0].fd = STDIN_FILENO;
+        fdset[0].fd = mnl_socket_get_fd(nb.nl_link);
         fdset[0].events = POLLIN;
         fdset[0].revents = 0;
 
-        fdset[1].fd = mnl_socket_get_fd(nb.nl);
+        fdset[1].fd = mnl_socket_get_fd(nb.nl_addr);
         fdset[1].events = POLLIN;
         fdset[1].revents = 0;
 
-        fdset[2].fd = mnl_socket_get_fd(nb.nl_uevent);
+        fdset[2].fd = STDIN_FILENO;
         fdset[2].events = POLLIN;
         fdset[2].revents = 0;
 
         int rc = poll(fdset, 3, -1);
-        if (rc < 0) {
+        if (rc < 0)
+        {
             // Retry if EINTR
             if (errno == EINTR)
                 continue;
@@ -449,11 +723,11 @@ int main(int argc, char *argv[])
         }
 
         if (fdset[0].revents & (POLLIN | POLLHUP))
-            break;
+            nl_link_process(&nb);
         if (fdset[1].revents & (POLLIN | POLLHUP))
-            nl_route_process(&nb);
+            nl_addr_process(&nb);
         if (fdset[2].revents & (POLLIN | POLLHUP))
-            nl_uevent_process(&nb);
+            break;
     }
 
     netif_cleanup(&nb);

@@ -17,7 +17,7 @@ defmodule VintageNet.InterfacesMonitorTest do
   end
 
   @tag :requires_interfaces_monitor
-  test "populates the property table" do
+  test "interfaces known to :inet are in property table" do
     names = get_interfaces()
 
     for name <- names do
@@ -25,60 +25,195 @@ defmodule VintageNet.InterfacesMonitorTest do
     end
   end
 
-  test "handles add and removes" do
-    add_notification = {:added, "bogus0", 56}
-    encoded_add = :erlang.term_to_binary(add_notification)
-
+  test "adding and removing links" do
     VintageNet.subscribe(["interface", "bogus0", "present"])
-    send(VintageNet.InterfacesMonitor, {:port, {:data, encoded_add}})
 
+    send_report({:newlink, "bogus0", 56, %{}})
     assert_receive {VintageNet, ["interface", "bogus0", "present"], nil, true, %{}}
 
-    removed_notification = {:removed, "bogus0", 56}
-    encoded_removed = :erlang.term_to_binary(removed_notification)
-
-    send(VintageNet.InterfacesMonitor, {:port, {:data, encoded_removed}})
-
+    send_report({:dellink, "bogus0", 56, %{}})
     assert_receive {VintageNet, ["interface", "bogus0", "present"], true, nil, %{}}
   end
 
-  test "rename" do
-    add_notification = {:added, "bogus0", 56}
-    encoded_add = :erlang.term_to_binary(add_notification)
-
+  test "renaming links" do
     VintageNet.subscribe(["interface", "bogus0", "present"])
     VintageNet.subscribe(["interface", "bogus2", "present"])
-    send(VintageNet.InterfacesMonitor, {:port, {:data, encoded_add}})
 
+    send_report({:newlink, "bogus0", 56, %{}})
     assert_receive {VintageNet, ["interface", "bogus0", "present"], nil, true, %{}}
 
-    renamed_notification = {:renamed, "bogus2", 56}
-    encoded_renamed = :erlang.term_to_binary(renamed_notification)
-
-    send(VintageNet.InterfacesMonitor, {:port, {:data, encoded_renamed}})
-
+    send_report({:newlink, "bogus2", 56, %{}})
     assert_receive {VintageNet, ["interface", "bogus0", "present"], true, nil, %{}}
     assert_receive {VintageNet, ["interface", "bogus2", "present"], nil, true, %{}}
   end
 
-  test "updates lower_up" do
-    add_notification = {:added, "bogus0", 56}
-    encoded_add = :erlang.term_to_binary(add_notification)
+  test "link fields show up as properties" do
+    # When adding support for fields, remember to add them to the docs
+    fields = [{"present", true}, {"lower_up", true}, {"mac_address", "70:85:c2:8f:98:e1"}]
 
-    VintageNet.subscribe(["interface", "bogus0", "present"])
-    VintageNet.subscribe(["interface", "bogus0", "lower_up"])
-    send(VintageNet.InterfacesMonitor, {:port, {:data, encoded_add}})
+    for {field, _expected} <- fields do
+      VintageNet.subscribe(["interface", "bogus0", field])
+    end
 
-    assert_receive {VintageNet, ["interface", "bogus0", "present"], nil, true, %{}}
+    # The current report from C has the following fields, but not all are exposed to Elixir.
+    send_report(
+      {:newlink, "bogus0", 56,
+       %{
+         broadcast: true,
+         lower_up: true,
+         mac_address: "70:85:c2:8f:98:e1",
+         mac_broadcast: "ff:ff:ff:ff:ff:ff",
+         mtu: 1500,
+         multicast: true,
+         operstate: :down,
+         running: false,
+         stats: %{
+           collisions: 0,
+           multicast: 0,
+           rx_bytes: 0,
+           rx_dropped: 0,
+           rx_errors: 0,
+           rx_packets: 0,
+           tx_bytes: 0,
+           tx_dropped: 0,
+           tx_errors: 0,
+           tx_packets: 0
+         },
+         type: :ethernet,
+         up: true
+       }}
+    )
 
-    report_notification = {:report, "bogus0", 56, %{lower_up: true}}
-    encoded_report = :erlang.term_to_binary(report_notification)
-    send(VintageNet.InterfacesMonitor, {:port, {:data, encoded_report}})
-    assert_receive {VintageNet, ["interface", "bogus0", "lower_up"], nil, true, %{}}
+    for {field, expected} <- fields do
+      assert_receive {VintageNet, ["interface", "bogus0", ^field], nil, ^expected, %{}}
+    end
+  end
+
+  test "ipv4 addresses get reported" do
+    VintageNet.subscribe(["interface", "bogus0", "addresses"])
+
+    send_report({:newlink, "bogus0", 56, %{}})
+
+    send_report(
+      {:newaddr, 56,
+       %{
+         address: {192, 168, 9, 5},
+         broadcast: {192, 168, 9, 255},
+         family: :inet,
+         label: "bogus0",
+         local: {192, 168, 9, 5},
+         permanent: false,
+         prefixlen: 24,
+         scope: :universe
+       }}
+    )
+
+    assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _before,
+                    [
+                      %{
+                        family: :inet,
+                        scope: :universe,
+                        address: {192, 168, 9, 5},
+                        netmask: {255, 255, 255, 0},
+                        broadcast: {192, 168, 9, 255}
+                      }
+                    ], %{}}
+
+    # Send a second IP address
+    send_report(
+      {:newaddr, 56,
+       %{
+         address: {192, 168, 10, 10},
+         broadcast: {192, 168, 10, 255},
+         family: :inet,
+         label: "bogus0",
+         local: {192, 168, 10, 10},
+         permanent: false,
+         prefixlen: 24,
+         scope: :universe
+       }}
+    )
+
+    assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _before,
+                    [
+                      %{
+                        family: :inet,
+                        scope: :universe,
+                        address: {192, 168, 10, 10},
+                        netmask: {255, 255, 255, 0},
+                        broadcast: {192, 168, 10, 255}
+                      },
+                      %{
+                        family: :inet,
+                        scope: :universe,
+                        address: {192, 168, 9, 5},
+                        netmask: {255, 255, 255, 0},
+                        broadcast: {192, 168, 9, 255}
+                      }
+                    ], %{}}
+
+    # Remove an address
+    send_report(
+      {:deladdr, 56,
+       %{
+         address: {192, 168, 10, 10},
+         broadcast: {192, 168, 10, 255},
+         family: :inet,
+         label: "bogus0",
+         local: {192, 168, 10, 10},
+         permanent: false,
+         prefixlen: 24,
+         scope: :universe
+       }}
+    )
+
+    assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _before,
+                    [
+                      %{
+                        family: :inet,
+                        scope: :universe,
+                        address: {192, 168, 9, 5},
+                        netmask: {255, 255, 255, 0},
+                        broadcast: {192, 168, 9, 255}
+                      }
+                    ], %{}}
+  end
+
+  test "ipv6 addresses get reported" do
+    VintageNet.subscribe(["interface", "bogus0", "addresses"])
+
+    send_report({:newlink, "bogus0", 56, %{}})
+
+    send_report(
+      {:newaddr, 56,
+       %{
+         address: {65152, 0, 0, 0, 45461, 64234, 43649, 26057},
+         family: :inet6,
+         permanent: true,
+         prefixlen: 64,
+         scope: :link
+       }}
+    )
+
+    assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _before,
+                    [
+                      %{
+                        family: :inet6,
+                        scope: :link,
+                        address: {65152, 0, 0, 0, 45461, 64234, 43649, 26057},
+                        netmask: {65535, 65535, 65535, 65535, 0, 0, 0, 0}
+                      }
+                    ], %{}}
   end
 
   defp get_interfaces() do
-    {:ok, addrs} = :inet.getifaddrs()
-    for {name, _info} <- addrs, do: to_string(name)
+    {:ok, interface_infos} = :inet.getifaddrs()
+    for {name, _info} <- interface_infos, do: to_string(name)
+  end
+
+  defp send_report(report) do
+    # Simulate a report coming from C
+    encoded_report = :erlang.term_to_binary(report)
+    send(VintageNet.InterfacesMonitor, {:port, {:data, encoded_report}})
   end
 end

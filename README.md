@@ -209,7 +209,7 @@ The `:wifi` key has the following common fields:
   * `:adhoc` - peer to peer mode
   * `:host` - access point mode
 * `:psk` - A WPA2 passphrase or the raw PSK. If a passphrase is passed in, it
-  will be converted to a PSK and disgarded.
+  will be converted to a PSK and discarded.
 * `:ssid` - The SSID for the network
 * `:bgscan` - Periodic background scanning. See the link below for more information.
   * `:simple`
@@ -466,14 +466,14 @@ All network interface properties can be found under `["interface", ifname]` in
 the `PropertyTable`.  The following table lists out properties common to all
 interfaces:
 
-Property     | Values           | Description
- ----------- | ---------------- | -----------
-`type`       | `VintageNet.Technology.Ethernet`, etc. | The type of the interface
-`state`      | `:configured`, `:configuring`, etc. | The state of the interface from `VintageNet`'s point of view.
-`connection` | `:disconnected`, `:lan`, `:internet` | This provides a determination of the Internet connection status
-`lower_up`   | `true` or `false` | This indicates whether the physical layer is "up". E.g., a cable is connected or WiFi associated
-`mac_address` | binary | Binary value of the interface's mac address
-`ipv4`       | IPv4 parameters  | This is a map of IPv4 parameters on the interface. This includes IP address, subnet, gateway, etc. NOT IMPLEMENTED YET
+Property      | Values              | Description
+ ------------ | ------------------- | -----------
+`type`        | `VintageNet.Technology.Ethernet`, etc. | The type of the interface
+`state`       | `:configured`, `:configuring`, etc. | The state of the interface from `VintageNet`'s point of view.
+`connection`  | `:disconnected`, `:lan`, `:internet` | This provides a determination of the Internet connection status
+`lower_up`    | `true` or `false`   | This indicates whether the physical layer is "up". E.g., a cable is connected or WiFi associated
+`mac_address` | "11:22:33:44:55:66" | The interface's MAC address as a string
+`addresses`   | [address_info]      | This is a list of all of the addresses assigned to this interface
 
 Specific types of interfaces provide more parameters.
 
@@ -565,4 +565,3 @@ To avoid enabling these, add `{:busybox, "~> 0.1"}` to your `mix` dependencies.
 
 * `pppd`
 * `mknod`
-
