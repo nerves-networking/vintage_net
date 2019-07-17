@@ -206,6 +206,66 @@ defmodule VintageNet.InterfacesMonitorTest do
                     ], %{}}
   end
 
+  test "address report beats link report" do
+    # Check that the address report isn't lost if it arrives before
+    # the initial link report
+
+    VintageNet.subscribe(["interface", "bogus0", "addresses"])
+
+    send_report(
+      {:newaddr, 56,
+       %{
+         address: {192, 168, 9, 5},
+         broadcast: {192, 168, 9, 255},
+         family: :inet,
+         label: "bogus0",
+         local: {192, 168, 9, 5},
+         permanent: false,
+         prefixlen: 24,
+         scope: :universe
+       }}
+    )
+
+    assert VintageNet.get(["interface", "bogus0", "addresses"]) == nil
+
+    send_report({:newlink, "bogus0", 56, %{}})
+
+    assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _before,
+                    [
+                      %{
+                        family: :inet,
+                        scope: :universe,
+                        address: {192, 168, 9, 5},
+                        netmask: {255, 255, 255, 0},
+                        broadcast: {192, 168, 9, 255}
+                      }
+                    ], %{}}
+  end
+
+  test "address delete beats link delete" do
+    # Check that if address removals are ignored if the link isn't around
+
+    before_delete = VintageNet.get_by_prefix(["interface"])
+
+    send_report(
+      {:deladdr, 56,
+       %{
+         address: {192, 168, 9, 5},
+         broadcast: {192, 168, 9, 255},
+         family: :inet,
+         label: "bogus0",
+         local: {192, 168, 9, 5},
+         permanent: false,
+         prefixlen: 24,
+         scope: :universe
+       }}
+    )
+
+    after_delete = VintageNet.get_by_prefix(["interface"])
+
+    assert before_delete == after_delete
+  end
+
   defp get_interfaces() do
     {:ok, interface_infos} = :inet.getifaddrs()
     for {name, _info} <- interface_infos, do: to_string(name)
