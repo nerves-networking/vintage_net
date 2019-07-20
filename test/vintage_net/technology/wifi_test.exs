@@ -51,7 +51,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -104,7 +104,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -156,7 +156,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -213,7 +213,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -272,7 +272,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -333,7 +333,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -397,7 +397,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -461,7 +461,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -527,7 +527,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -591,7 +591,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -657,7 +657,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -720,7 +720,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -778,7 +778,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -840,7 +840,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -899,7 +899,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -952,7 +952,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -1006,7 +1006,11 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/p2p-dev-wlan0"]}
+         [
+           ifname: "wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant/p2p-dev-wlan0",
+           ap_mode: true
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -1079,7 +1083,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -1156,7 +1160,7 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0"]}
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/wlan0", ap_mode: false]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0",
@@ -1234,7 +1238,11 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.ConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant/p2p-dev-wlan0"]}
+         [
+           ifname: "wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant/p2p-dev-wlan0",
+           ap_mode: true
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0",

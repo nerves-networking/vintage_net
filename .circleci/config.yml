@@ -20,7 +20,7 @@ install_system_deps: &install_system_deps
     name: Install system dependencies
     command: |
       apt update
-      apt install -y unzip libmnl-dev
+      apt install -y unzip libmnl-dev libnl-genl-3-dev
 
 install_mdl: &install_mdl
   run:

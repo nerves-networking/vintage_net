@@ -27,6 +27,7 @@ defmodule VintageNet.Technology.WiFi do
     wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
     control_interface_dir = Path.join(tmpdir, "wpa_supplicant")
     control_interface_path = ctrl_interface_path(ifname, control_interface_dir, config)
+    ap_mode = ap_mode?(config)
 
     {:ok, normalized_config} = normalize(config)
 
@@ -64,7 +65,8 @@ defmodule VintageNet.Technology.WiFi do
            cleanup_files: [control_interface_path],
            child_specs: [
              {VintageNet.Interface.ConnectivityChecker, ifname},
-             {WPASupplicant, ifname: ifname, control_path: control_interface_path}
+             {WPASupplicant,
+              ifname: ifname, control_path: control_interface_path, ap_mode: ap_mode}
            ],
            up_cmds: up_cmds ++ udhcpd_up_cmds,
            up_cmd_millis: 60_000,
@@ -81,7 +83,8 @@ defmodule VintageNet.Technology.WiFi do
            cleanup_files: [control_interface_path],
            child_specs: [
              {VintageNet.Interface.ConnectivityChecker, ifname},
-             {WPASupplicant, ifname: ifname, control_path: control_interface_path}
+             {WPASupplicant,
+              ifname: ifname, control_path: control_interface_path, ap_mode: ap_mode}
            ],
            up_cmds: up_cmds,
            up_cmd_millis: 60_000,
@@ -119,7 +122,7 @@ defmodule VintageNet.Technology.WiFi do
        files: files,
        child_specs: [
          {VintageNet.Interface.ConnectivityChecker, ifname},
-         {WPASupplicant, ifname: ifname, control_path: control_interface_path}
+         {WPASupplicant, ifname: ifname, control_path: control_interface_path, ap_mode: false}
        ],
        up_cmds: up_cmds,
        down_cmds: down_cmds,
@@ -441,6 +444,9 @@ defmodule VintageNet.Technology.WiFi do
       conf -> [conf, "\n"]
     end)
   end
+
+  defp ap_mode?(%{wifi: %{mode: mode}}) when mode in [:host, 2], do: true
+  defp ap_mode?(_config), do: false
 
   defp ctrl_interface_path(ifname, dir, %{wifi: %{mode: mode}}) when mode in [:host, 2],
     do: Path.join(dir, "p2p-dev-#{ifname}")

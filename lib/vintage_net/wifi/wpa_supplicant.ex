@@ -5,7 +5,20 @@ defmodule VintageNet.WiFi.WPASupplicant do
   require Logger
 
   @moduledoc """
+  Control a wpa_supplicant instance for an interface.
+  """
 
+  @doc """
+  Start a GenServer to manage communication with a wpa_supplicant
+
+  Arguments:
+
+  * `:ifname` - the network interface
+  * `:control_path` - the path to the wpa_supplicant control file
+  * `:keep_alive_interval` - how often to ping the wpa_supplicant to
+    make sure it's still alive (defaults to 60,000 seconds)
+  * `:ap_mode` - true if the WiFi module and wpa_supplicant are
+    in access point mode
   """
   @spec start_link(keyword) :: GenServer.on_start()
   def start_link(args) do
@@ -30,11 +43,13 @@ defmodule VintageNet.WiFi.WPASupplicant do
     control_path = Keyword.fetch!(args, :control_path)
     ifname = Keyword.fetch!(args, :ifname)
     keep_alive_interval = Keyword.get(args, :keep_alive_interval, 60000)
+    ap_mode = Keyword.get(args, :ap_mode, false)
 
     state = %{
       control_path: control_path,
       keep_alive_interval: keep_alive_interval,
       ifname: ifname,
+      ap_mode: ap_mode,
       access_points: %{},
       clients: [],
       ll: nil
@@ -62,6 +77,23 @@ defmodule VintageNet.WiFi.WPASupplicant do
     update_clients_property(new_state)
 
     {:noreply, new_state, state.keep_alive_interval}
+  end
+
+  @impl true
+  def handle_call(:scan, _from, %{ap_mode: true} = state) do
+    # When in AP mode, scans need to be forced so that they work.
+    # The wpa_supplicant won't set the appropriate flag to make
+    # this happen, so call a C program to do it.
+
+    force_ap_scan = Application.app_dir(:vintage_net, ["priv", "force_ap_scan"])
+
+    case System.cmd(force_ap_scan, [state.ifname]) do
+      {_output, 0} ->
+        {:reply, :ok, state}
+
+      {_output, _nonzero} ->
+        {:reply, {:error, "force_ap_scan failed"}, state}
+    end
   end
 
   @impl true
