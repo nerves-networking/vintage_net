@@ -40,13 +40,13 @@ defmodule VintageNet.WiFi.WPASupplicant do
 
   @impl true
   def init(args) do
-    control_path = Keyword.fetch!(args, :control_path)
+    control_dir = Keyword.fetch!(args, :control_path)
     ifname = Keyword.fetch!(args, :ifname)
     keep_alive_interval = Keyword.get(args, :keep_alive_interval, 60000)
     ap_mode = Keyword.get(args, :ap_mode, false)
 
     state = %{
-      control_path: control_path,
+      control_dir: control_dir,
       keep_alive_interval: keep_alive_interval,
       ifname: ifname,
       ap_mode: ap_mode,
@@ -60,9 +60,15 @@ defmodule VintageNet.WiFi.WPASupplicant do
 
   @impl true
   def handle_continue(:continue, state) do
-    :ok = wait_for_file(state.control_path)
+    # The control file paths depend whether the config uses AP mode and whether
+    # the driver has a separate P2P interface. We find out based on which
+    # control files appear.
+    control_paths = get_control_paths(state)
 
-    {:ok, ll} = WPASupplicantLL.start_link(state.control_path)
+    # Wait for the wpa_supplicant to create its control files.
+    {:ok, control_path} = wait_for_control_file(control_paths)
+
+    {:ok, ll} = WPASupplicantLL.start_link(control_path)
     :ok = WPASupplicantLL.subscribe(ll)
 
     {:ok, "OK\n"} = WPASupplicantLL.control_request(ll, "ATTACH")
@@ -233,18 +239,28 @@ defmodule VintageNet.WiFi.WPASupplicant do
     )
   end
 
-  defp wait_for_file(path, timeleft \\ 3000)
-
-  defp wait_for_file(path, timeleft) when timeleft <= 0 do
-    {:error, "#{path} not found"}
+  defp get_control_paths(%{control_dir: dir, ap_mode: true, ifname: ifname} = _state) do
+    [Path.join(dir, "p2p-dev-#{ifname}"), Path.join(dir, ifname)]
   end
 
-  defp wait_for_file(path, timeleft) do
-    if File.exists?(path) do
-      :ok
-    else
-      Process.sleep(250)
-      wait_for_file(path, timeleft - 250)
+  defp get_control_paths(%{control_dir: dir, ifname: ifname}) do
+    [Path.join(dir, ifname)]
+  end
+
+  defp wait_for_control_file(paths, time_left \\ 3000)
+
+  defp wait_for_control_file(paths, time_left) when time_left <= 0 do
+    {:error, "#{inspect(paths)} not found"}
+  end
+
+  defp wait_for_control_file(paths, time_left) do
+    case Enum.find(paths, &File.exists?/1) do
+      nil ->
+        Process.sleep(250)
+        wait_for_control_file(paths, time_left - 250)
+
+      path ->
+        {:ok, path}
     end
   end
 end

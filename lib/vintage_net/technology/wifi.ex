@@ -26,7 +26,7 @@ defmodule VintageNet.Technology.WiFi do
     network_interfaces_path = Path.join(tmpdir, "network_interfaces.#{ifname}")
     wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
     control_interface_dir = Path.join(tmpdir, "wpa_supplicant")
-    control_interface_path = ctrl_interface_path(ifname, control_interface_dir, config)
+    control_interface_paths = ctrl_interface_paths(ifname, control_interface_dir, config)
     ap_mode = ap_mode?(config)
 
     {:ok, normalized_config} = normalize(config)
@@ -62,11 +62,11 @@ defmodule VintageNet.Technology.WiFi do
            type: __MODULE__,
            source_config: normalized_config,
            files: files ++ udhcpd_files,
-           cleanup_files: [control_interface_path],
+           cleanup_files: control_interface_paths,
            child_specs: [
              {VintageNet.Interface.ConnectivityChecker, ifname},
              {WPASupplicant,
-              ifname: ifname, control_path: control_interface_path, ap_mode: ap_mode}
+              ifname: ifname, control_path: control_interface_dir, ap_mode: ap_mode}
            ],
            up_cmds: up_cmds ++ udhcpd_up_cmds,
            up_cmd_millis: 60_000,
@@ -80,11 +80,11 @@ defmodule VintageNet.Technology.WiFi do
            type: __MODULE__,
            source_config: normalized_config,
            files: files,
-           cleanup_files: [control_interface_path],
+           cleanup_files: control_interface_paths,
            child_specs: [
              {VintageNet.Interface.ConnectivityChecker, ifname},
              {WPASupplicant,
-              ifname: ifname, control_path: control_interface_path, ap_mode: ap_mode}
+              ifname: ifname, control_path: control_interface_dir, ap_mode: ap_mode}
            ],
            up_cmds: up_cmds,
            up_cmd_millis: 60_000,
@@ -100,7 +100,7 @@ defmodule VintageNet.Technology.WiFi do
 
     wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
     control_interface_dir = Path.join(tmpdir, "wpa_supplicant")
-    control_interface_path = ctrl_interface_path(ifname, control_interface_dir, config)
+    control_interface_paths = ctrl_interface_paths(ifname, control_interface_dir, config)
 
     files = [
       {wpa_supplicant_conf_path, "ctrl_interface=#{control_interface_dir}"}
@@ -122,11 +122,11 @@ defmodule VintageNet.Technology.WiFi do
        files: files,
        child_specs: [
          {VintageNet.Interface.ConnectivityChecker, ifname},
-         {WPASupplicant, ifname: ifname, control_path: control_interface_path, ap_mode: false}
+         {WPASupplicant, ifname: ifname, control_path: control_interface_dir, ap_mode: false}
        ],
        up_cmds: up_cmds,
        down_cmds: down_cmds,
-       cleanup_files: [control_interface_path]
+       cleanup_files: control_interface_paths
      }}
   end
 
@@ -448,9 +448,11 @@ defmodule VintageNet.Technology.WiFi do
   defp ap_mode?(%{wifi: %{mode: mode}}) when mode in [:host, 2], do: true
   defp ap_mode?(_config), do: false
 
-  defp ctrl_interface_path(ifname, dir, %{wifi: %{mode: mode}}) when mode in [:host, 2],
-    do: Path.join(dir, "p2p-dev-#{ifname}")
+  defp ctrl_interface_paths(ifname, dir, %{wifi: %{mode: mode}}) when mode in [:host, 2] do
+    # Some WiFi drivers expose P2P interfaces and those should be cleaned up too.
+    [Path.join(dir, "p2p-dev-#{ifname}"), Path.join(dir, ifname)]
+  end
 
-  defp ctrl_interface_path(ifname, dir, _),
-    do: Path.join(dir, ifname)
+  defp ctrl_interface_paths(ifname, dir, _),
+    do: [Path.join(dir, ifname)]
 end

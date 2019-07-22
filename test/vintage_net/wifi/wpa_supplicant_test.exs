@@ -6,11 +6,12 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
 
   setup do
     socket_path = "test_tmp/tmp_wpa_supplicant_socket"
-    mock = start_supervised!({MockWPASupplicant, socket_path})
+    File.mkdir!(socket_path)
+
+    mock = start_supervised!({MockWPASupplicant, Path.join(socket_path, "test_wlan0")})
 
     on_exit(fn ->
-      _ = File.rm(socket_path)
-      _ = File.rm(socket_path <> ".ex")
+      _ = File.rm_rf(socket_path)
     end)
 
     {:ok, socket_path: socket_path, mock: mock}
@@ -18,7 +19,9 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
 
   test "attaches to wpa_supplicant", context do
     MockWPASupplicant.set_responses(context.mock, %{"ATTACH" => ["OK\n"]})
-    _ = start_supervised!({WPASupplicant, ifname: "wlan0", control_path: context.socket_path})
+
+    _ =
+      start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
 
     Process.sleep(100)
 
@@ -32,7 +35,7 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     _ =
       start_supervised!(
         {WPASupplicant,
-         ifname: "wlan0", control_path: context.socket_path, keep_alive_interval: 10}
+         ifname: "test_wlan0", control_path: context.socket_path, keep_alive_interval: 10}
       )
 
     Process.sleep(100)
