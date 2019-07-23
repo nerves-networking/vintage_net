@@ -175,7 +175,7 @@ defmodule VintageNet.Technology.WiFi do
   defp wifi_to_supplicant_contents(wifi, control_interface_dir, regulatory_domain) do
     config = [
       "ctrl_interface=#{control_interface_dir}",
-      "country=#{regulatory_domain}",
+      "country=#{wifi[:regulatory_domain] || regulatory_domain}",
       into_config_string(wifi, :bgscan),
       into_config_string(wifi, :ap_scan)
     ]

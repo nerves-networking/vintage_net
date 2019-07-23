@@ -221,6 +221,8 @@ The `:wifi` key has the following common fields:
   * 1:  Do passive scans.
 * `:priority`: The priority to set for a network if you are using multiple network
  configurations
+* `:regulatory_domain`: Two character country code. Technology configuration
+ will take priority over Application configuration
 * `:networks` - A list of WiFi networks to configure, these configs have the same
  fields listed above
 
@@ -298,6 +300,21 @@ iex> VintageNet.configure("wlan0", %{
         start: "192.168.24.2",
         end: "192.168.24.10"
       }
+})
+```
+
+Example of setting regulatory domain:
+
+```elixir
+iex> VintageNet.configure("wlan0", %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        ssid: "testing",
+        key_mgmt: :wpa_psk,
+        psk: "super secret",
+        regulatory_domain: "US"
+      },
+      ipv4: %{method: :dhcp}
 })
 ```
 

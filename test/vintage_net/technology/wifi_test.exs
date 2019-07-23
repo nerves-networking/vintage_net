@@ -85,6 +85,54 @@ defmodule VintageNet.Technology.WiFiTest do
     assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
+  test "Set regulatory_domain at runtime" do
+    input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        regulatory_domain: "AU"
+      },
+      ipv4: %{method: :dhcp},
+      hostname: "unit_test"
+    }
+
+    output = %RawConfig{
+      ifname: "wlan0",
+      type: VintageNet.Technology.WiFi,
+      source_config: normalize_config(input),
+      child_specs: [
+        {VintageNet.Interface.ConnectivityChecker, "wlan0"},
+        {VintageNet.WiFi.WPASupplicant,
+         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+      ],
+      files: [
+        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+         """
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
+         country=AU
+         network={
+         }
+         """}
+      ],
+      up_cmd_millis: 60_000,
+      up_cmds: [
+        {:run_ignore_errors, "ifdown",
+         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
+        {:run, "wpa_supplicant",
+         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
+        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+      ],
+      down_cmds: [
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
+        {:run, "killall", ["-q", "wpa_supplicant"]}
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
+    }
+
+    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+  end
+
   test "create a WPA2 WiFi configuration with passphrase" do
     input = %{
       type: VintageNet.Technology.WiFi,
