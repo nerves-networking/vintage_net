@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.4.0
+
+Build note: The fix to support AP scanning when in AP-mode (see below) required
+pulling in libnl-3. All official Nerves systems have it installed since it is
+required by the wpa_supplicant. If you're doing host builds on Linux, you'll
+need to run `apt install libnl-genl-3-dev`.
+
+* New features
+  * Report IP addresses in the interface properties. It's now possible to listen
+    for IP address changes on interfaces. IPv4 and IPv6 addresses are reported.
+  * Support scanning for WiFi networks when an WiFi module is in AP mode. This
+    lets you make WiFi configuration wizards. See the vintage_net_wizard
+    project.
+  * Add interface MAC addresses to the interface properties
+
+* Bug fixes
+  * Some WiFi adapters didn't work in AP mode since their drivers didn't support
+    the P2P interface. Raspberry Pis all support the P2P interface, but some USB
+    WiFi dongles do not. The wpa_supplicant interface code was updated to use
+    fallback to the non-P2P interface in AP mode if it wasn't available.
+
 ## v0.3.1
 
 * New features
