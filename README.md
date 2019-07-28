@@ -4,11 +4,12 @@
 [![Coverage Status](https://coveralls.io/repos/github/nerves-networking/vintage_net/badge.svg?branch=master)](https://coveralls.io/github/nerves-networking/vintage_net?branch=master)
 [![Hex version](https://img.shields.io/hexpm/v/vintage_net.svg "Hex version")](https://hex.pm/packages/vintage_net)
 
-> **_NOTE:_**  This library is very much a work in progress without sufficient
+> **_NOTE:_**  This library is a work in progress without sufficient
 > documentation. It will get there, but the current Nerves networking libraries
 > are more stable, tested for what they do, and integrated into most other
-> Nerves libraries and examples. Most importantly, the official Nerves systems
-> do not contain kernel configuration needed to make this work.
+> Nerves libraries and examples. If your device is multi-homed (i.e., you use
+> two or more network interfaces) or if you want to configure the network in
+> a way that's not supported by nerves_network, then this is your library.
 
 `VintageNet` is network configuration library built specifically for [Nerves
 Project](https://nerves-project.org) devices. It has the following features:
