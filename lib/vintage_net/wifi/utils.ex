@@ -16,7 +16,8 @@ defmodule VintageNet.WiFi.Utils do
   like to show a number of bars or some kind of signal
   strength.
 
-  See https://web.archive.org/web/20141222024740/http://www.ces.clemson.edu/linux/nm-ipw2200.shtml
+  See [Displaying Associated and Scanned Signal
+  Levels](https://web.archive.org/web/20141222024740/http://www.ces.clemson.edu/linux/nm-ipw2200.shtml).
   """
   @spec dbm_to_percent(number(), number(), number()) :: 1..100
   def dbm_to_percent(dbm, best_dbm, _worst_dbm) when dbm >= best_dbm do
