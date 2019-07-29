@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.1
+
+* Improvements
+  * Support run-time configuration of regulatory domain
+  * Error message improvement if build system is missing pkg-config
+
 ## v0.4.0
 
 Build note: The fix to support AP scanning when in AP-mode (see below) required
