@@ -20,5 +20,5 @@ config :vintage_net,
   udhcpc_handler: VintageNetTest.CapturingUdhcpcHandler,
   udhcpd_handler: VintageNetTest.CapturingUdhcpdHandler,
   resolvconf: "/dev/null",
-  persistence_dir: "./persistence",
+  persistence_dir: "./test_tmp/persistence",
   bin_ip: "false"
