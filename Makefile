@@ -54,8 +54,14 @@ else
         # If pkg-config sysroot isn't set, then assume Nerves
         CFLAGS += -I$(NERVES_SDK_SYSROOT)/usr/include/libnl3
     else
+
         # Use pkg-config to find libnl
-        CFLAGS += $(shell pkg-config --cflags libnl-genl-3.0)
+        PKG_CONFIG = $(shell which pkg-config)
+        ifeq ($(PKG_CONFIG),)
+            $(error pkg-config required to build. Install by running "brew install pkg-config")
+        endif
+
+        CFLAGS += $(shell $(PKG_CONFIG) --cflags libnl-genl-3.0)
     endif
 endif
 DEFAULT_TARGETS ?= $(PREFIX) \
