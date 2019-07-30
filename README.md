@@ -502,7 +502,7 @@ No additional parameters
 ### WiFi status
 
 Property        | Values           | Description
---- ----------- | ---------------- | -----------
+ -------------- | ---------------- | -----------
 `access_points` | %{"11:22:33:44:55:66" => %AccessPoint{}} | A map of access points as found by the most recent scan
 `clients`       | ["11:22:33:44:55:66"] | A list of clients connected to the access point when using `mode: :ap`
 
