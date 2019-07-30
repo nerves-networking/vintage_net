@@ -83,7 +83,7 @@ defmodule VintageNet.MixProject do
 
   defp deps do
     [
-      {:elixir_make, "~> 0.5", runtime: false},
+      {:elixir_make, "~> 0.6", runtime: false},
       {:ex_doc, "~> 0.19", only: :docs, runtime: false},
       {:mix_test_watch, "~> 0.5", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.8", only: :test, runtime: false},
