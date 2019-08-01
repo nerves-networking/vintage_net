@@ -20,6 +20,9 @@ defmodule VintageNet.InterfacesMonitorTest do
   test "interfaces known to :inet are in property table" do
     names = get_interfaces()
 
+    # Avoid race on CircleCI
+    Process.sleep(10)
+
     for name <- names do
       assert true == VintageNet.get(["interface", name, "present"])
     end
