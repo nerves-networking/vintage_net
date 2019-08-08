@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.0
+
+Backwards incompatible change: The WiFi access point property (e.g.,
+["interfaces", "wlan0", "access_points"]) is now a simple list of access point
+structs. It was formerly a map and code using this property will need to be
+updated.
+
 ## v0.4.1
 
 * Improvements
