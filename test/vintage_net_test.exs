@@ -32,11 +32,13 @@ defmodule VintageNetTest do
 
   @tag :requires_interfaces_monitor
   test "interfaces exist" do
-    interfaces = VintageNet.all_interfaces()
+    # On CircleCI, sometimes the interfaces monitor process is slow to start. This is ok.
+    Process.sleep(100)
 
-    # The loopback interface always exists, so check for it
+    interfaces = VintageNet.all_interfaces()
     assert interfaces != []
 
+    # The loopback interface always exists, so check for it
     assert Enum.any?(interfaces, &String.starts_with?(&1, "lo"))
   end
 
