@@ -2,7 +2,7 @@ defmodule VintageNet.Technology.Ethernet do
   @behaviour VintageNet.Technology
 
   alias VintageNet.Interface.RawConfig
-  alias VintageNet.IP.IPv4Config
+  alias VintageNet.IP.{DhcpdConfig, IPv4Config}
 
   @moduledoc """
   Support for common wired Ethernet interface configurations
@@ -36,7 +36,9 @@ defmodule VintageNet.Technology.Ethernet do
 
   @impl true
   def normalize(%{type: __MODULE__} = config) do
-    IPv4Config.normalize(config)
+    config
+    |> IPv4Config.normalize()
+    |> DhcpdConfig.normalize()
   end
 
   @impl true
@@ -49,6 +51,7 @@ defmodule VintageNet.Technology.Ethernet do
       source_config: normalized_config
     }
     |> IPv4Config.add_config(normalized_config, opts)
+    |> DhcpdConfig.add_config(normalized_config, opts)
   end
 
   @impl true
