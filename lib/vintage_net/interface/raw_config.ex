@@ -13,6 +13,7 @@ defmodule VintageNet.Interface.RawConfig do
   * `require_interface` - require the interface to exist in the system before configuring
   * `retry_millis` - if bringing the interface up fails, wait this amount of time before retrying
   * `files` - a list of file path, content tuples
+  * `child_specs` - a set of child_specs for GenServers to start up and supervise
   * `up_cmd_millis` - the maximum amount of time to allow the up command list to take
   * `up_cmds` - a list of commands to run to configure the interface
   * `down_cmd_millis` - the maximum amount of time to allow the down command list to take
