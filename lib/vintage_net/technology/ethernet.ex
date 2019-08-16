@@ -2,39 +2,53 @@ defmodule VintageNet.Technology.Ethernet do
   @behaviour VintageNet.Technology
 
   alias VintageNet.Interface.RawConfig
-  alias VintageNet.IP.ConfigToInterfaces
+  alias VintageNet.IP.IPv4Config
+
+  @moduledoc """
+  Support for common wired Ethernet interface configurations
+
+  Configurations for this technology are maps with a `:type` field set
+  to `VintageNet.Technology.Ethernet`. The following additional fields
+  are supported:
+
+  * `:ipv4` - IPv4 options. See VintageNet.IP.IPv4Config.
+
+  An example DHCP configuration is:
+
+  ```elixir
+  %{type: VintageNet.Technology.Ethernet, ipv4: %{method: :dhcp}}
+  ```
+
+  An example static IP configuration is:
+
+  ```elixir
+  %{
+    type: VintageNet.Technology.Ethernet,
+    ipv4: %{
+      method: :static,
+      address: {192, 168, 0, 5},
+      prefix_length: 24,
+      gateway: {192, 168, 0, 1}
+    }
+  }
+  ```
+  """
 
   @impl true
-  def normalize(%{type: __MODULE__} = config), do: config
+  def normalize(%{type: __MODULE__} = config) do
+    IPv4Config.normalize(config)
+  end
 
   @impl true
   def to_raw_config(ifname, %{type: __MODULE__} = config, opts) do
     normalized_config = normalize(config)
 
-    ifup = Keyword.fetch!(opts, :bin_ifup)
-    ifdown = Keyword.fetch!(opts, :bin_ifdown)
-    tmpdir = Keyword.fetch!(opts, :tmpdir)
-
-    network_interfaces_path = Path.join(tmpdir, "network_interfaces.#{ifname}")
-
     %RawConfig{
       ifname: ifname,
       type: __MODULE__,
-      source_config: normalized_config,
-      files: [
-        {network_interfaces_path,
-         ConfigToInterfaces.config_to_interfaces_contents(ifname, config)}
-      ],
-      child_specs: [{VintageNet.Interface.InternetConnectivityChecker, ifname}],
-      # ifup hangs forever until Ethernet is plugged in
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, ifdown, ["-i", network_interfaces_path, ifname]},
-        {:run, ifup, ["-i", network_interfaces_path, ifname]}
-      ],
-      down_cmd_millis: 5_000,
-      down_cmds: [{:run, ifdown, ["-i", network_interfaces_path, ifname]}]
+      source_config: normalized_config
     }
+    |> IPv4Config.add_config(normalized_config, opts)
   end
 
   @impl true
