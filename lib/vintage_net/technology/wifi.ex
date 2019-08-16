@@ -1,43 +1,226 @@
 defmodule VintageNet.Technology.WiFi do
   @behaviour VintageNet.Technology
 
+  require Logger
+
   alias VintageNet.WiFi.{WPA2, WPASupplicant}
   alias VintageNet.Interface.RawConfig
-  alias VintageNet.IP.{ConfigToInterfaces, ConfigToUdhcpd}
+  alias VintageNet.IP.{IPv4Config, DhcpdConfig}
+
+  # These configuration keys are common to all network specifications
+  # and allowed to pass through network normalization.
+  @common_network_keys [
+    :mode,
+    :key_mgmt,
+    :ssid,
+    :bssid,
+    :bssid_whitelist,
+    :bssid_blacklist,
+    :priority,
+    :scan_ssid
+  ]
+
+  @moduledoc """
+  Support for common Wi-Fi interface configurations
+
+  Configurations for this technology are maps with a `:type` field set
+  to `VintageNet.Technology.WiFi`. The following additional fields
+  are supported:
+
+  * `:wifi` - WiFi options
+  * `:ipv4` - IPv4 options. See VintageNet.IP.IPv4Config.
+
+  To scan for WiFi networks it's sufficient to pass an empty configuration:
+
+  ```elixir
+  %{type: VintageNet.Technology.WiFi}
+  ```
+
+  Here's a typical configuration for connecting to a WPA2-protected Wi-Fi network:
+
+  ```elixir
+  %{
+    type: VintageNet.Technology.WiFi,
+    wifi: %{
+      mode: :client,
+      networks: [%{ssid: "my_network_ssid", key_mgmt: :wpa_psk, psk: "a_passphrase_or_psk"}]
+    },
+    ipv4: %{method: :dhcp}
+  }
+  ```
+
+  If your Wi-Fi adapter or module has support for running as an Access Point,
+  then the following configuration puts it in AP mode, assigns a static IP
+  address of 192.168.0.1 and gives clients IP addresses from 192.168.0.30
+  to 192.168.0.254.
+
+  ```elixir
+  %{
+    type: VintageNet.Technology.WiFi,
+    wifi: %{
+      mode: :host,
+      networks: [
+        %{
+          ssid: "test ssid",
+          key_mgmt: :none
+        }
+      ]
+    },
+    ipv4: %{
+      method: :static,
+      address: {192, 168, 0, 1},
+      prefix_length: 24
+    },
+    dhcpd: %{
+      start: {192, 168, 0, 30},
+      end: {192, 168, 0, 254}
+    }
+  }
+  ```
+  """
 
   @impl true
-  def normalize(%{type: __MODULE__, wifi: %{ssid: ssid, psk: psk}} = config) do
-    # If the user passes in a passphrase for the PSK, change it to a PSK
-    {:ok, real_psk} = WPA2.to_psk(ssid, psk)
-    put_in(config.wifi.psk, real_psk)
+  def normalize(%{type: __MODULE__} = config) do
+    config
+    |> normalize_wifi()
+    |> IPv4Config.normalize()
+    |> DhcpdConfig.normalize()
   end
 
-  def normalize(%{type: __MODULE__, wifi: %{networks: networks}} = config) do
-    # If the user passes in a passphrase for the PSK, change it to a PSK
-    networks =
-      Enum.map(networks, fn
-        %{ssid: ssid, psk: psk} = network ->
-          {:ok, real_psk} = WPA2.to_psk(ssid, psk)
-          %{network | psk: real_psk}
+  defp normalize_wifi(%{wifi: wifi} = config) do
+    new_wifi =
+      wifi
+      |> normalize_first_network()
+      |> normalize_networks()
+      |> Map.take([:ap_scan, :networks, :bgscan, :passive_scan, :regulatory_domain])
 
-        network ->
-          network
-      end)
-
-    put_in(config.wifi.networks, networks)
+    %{config | wifi: new_wifi}
   end
 
-  def normalize(%{type: __MODULE__} = config), do: config
+  defp normalize_wifi(_config) do
+    # If wifi isn't configured, then only scanning is allowed.
+    %{type: __MODULE__, wifi: %{networks: []}, ipv4: %{method: :disabled}}
+  end
+
+  defp normalize_first_network(%{ssid: ssid} = wifi) do
+    # If user specified a standalone ssid, move it to the first spot
+    # in the networks list so that networks are only stored in one place.
+
+    _ =
+      Logger.warn(
+        "Passing Wi-Fi network parameters outside of `:networks` for ssid '#{ssid}' is deprecated. See `VintageNet.info` for the fixed configuration."
+      )
+
+    # Rather than figure out which keys are relevant, move them all to
+    # the first place in networks and let the network normalization code
+    # figure it out.
+    first_network = Map.drop(wifi, [:mode, :networks])
+
+    Map.update(wifi, :networks, [first_network], &[first_network | &1])
+  end
+
+  defp normalize_first_network(wifi), do: wifi
+
+  defp normalize_networks(%{networks: networks} = wifi) do
+    # Normalize the networks and remove any dupes
+    new_networks =
+      networks
+      |> Enum.map(fn network -> network |> normalize_network() |> normalize_network_mode() end)
+      |> Enum.uniq()
+
+    %{wifi | networks: new_networks}
+  end
+
+  defp normalize_networks(wifi) do
+    # No networks specified so add an empty list
+    Map.put(wifi, :networks, [])
+  end
+
+  defp normalize_network_mode(%{mode: mode} = network_config) when mode in [:host, :client] do
+    network_config
+  end
+
+  defp normalize_network_mode(%{mode: other_mode}) do
+    raise ArgumentError, "invalid wifi mode #{inspect(other_mode)}. Specify :host or :client"
+  end
+
+  defp normalize_network_mode(network_config), do: Map.put(network_config, :mode, :client)
+
+  # WEP
+  defp normalize_network(
+         %{
+           key_mgmt: :none,
+           ssid: _ssid,
+           wep_tx_keyidx: _wep_tx_keyidx
+         } = network_config
+       ) do
+    Map.take(
+      network_config,
+      [:wep_key0, :wep_key1, :wep_key2, :wep_key3, :wep_tx_keyidx | @common_network_keys]
+    )
+  end
+
+  # No Security
+  defp normalize_network(%{key_mgmt: :none} = network_config) do
+    Map.take(network_config, @common_network_keys)
+  end
+
+  # WPA-PSK
+  defp normalize_network(%{key_mgmt: :wpa_psk, ssid: ssid, psk: psk} = network_config) do
+    case WPA2.to_psk(ssid, psk) do
+      {:ok, real_psk} ->
+        network_config
+        |> Map.take([:wpa_ptk_rekey, :pairwise | @common_network_keys])
+        |> Map.put(:psk, real_psk)
+
+      {:error, :invalid_characters} ->
+        raise ArgumentError, "Invalid characters in SSID #{inspect(ssid)} or its password"
+
+      {:error, :password_too_long} ->
+        raise ArgumentError, "Passphrase for SSID #{inspect(ssid)} is too long"
+
+      {:error, :ssid_too_long} ->
+        raise ArgumentError, "SSID #{inspect(ssid)} is too long"
+    end
+  end
+
+  # WPA-EAP or IEEE8021X (TODO)
+  defp normalize_network(%{key_mgmt: key_mgmt, ssid: _ssid} = network_config)
+       when key_mgmt in [:wpa_eap, :IEEE8021X] do
+    Map.take(network_config, [
+      :anonymous_identity,
+      :ca_cert,
+      :ca_cert2,
+      :client_cert,
+      :client_cert2,
+      :eap,
+      :eapol_flags,
+      :group,
+      :identity,
+      :pairwise,
+      :password,
+      :pcsc,
+      :phase1,
+      :phase2,
+      :pin,
+      :private_key,
+      :private_key_passwd,
+      :private_key2,
+      :private_key2_passwd
+      | @common_network_keys
+    ])
+  end
+
+  defp normalize_network(network) do
+    raise ArgumentError, "don't know how to process #{inspect(network)}"
+  end
 
   @impl true
-  def to_raw_config(ifname, %{type: __MODULE__, wifi: %{}} = config, opts) do
-    ifup = Keyword.fetch!(opts, :bin_ifup)
-    ifdown = Keyword.fetch!(opts, :bin_ifdown)
+  def to_raw_config(ifname, %{type: __MODULE__} = config, opts) do
     wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
     tmpdir = Keyword.fetch!(opts, :tmpdir)
     regulatory_domain = Keyword.fetch!(opts, :regulatory_domain)
 
-    network_interfaces_path = Path.join(tmpdir, "network_interfaces.#{ifname}")
     wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
     control_interface_dir = Path.join(tmpdir, "wpa_supplicant")
     control_interface_paths = ctrl_interface_paths(ifname, control_interface_dir, config)
@@ -46,8 +229,6 @@ defmodule VintageNet.Technology.WiFi do
     normalized_config = normalize(config)
 
     files = [
-      {network_interfaces_path,
-       ConfigToInterfaces.config_to_interfaces_contents(ifname, normalized_config)},
       {wpa_supplicant_conf_path,
        wifi_to_supplicant_contents(
          normalized_config.wifi,
@@ -56,112 +237,25 @@ defmodule VintageNet.Technology.WiFi do
        )}
     ]
 
-    up_cmds = [
-      {:run_ignore_errors, ifdown, ["-i", network_interfaces_path, ifname]},
-      {:run, ifup, ["-i", network_interfaces_path, ifname]}
-    ]
-
-    down_cmds = [
-      {:run, ifdown, ["-i", network_interfaces_path, ifname]}
-    ]
-
-    case maybe_add_udhcpd(ifname, normalized_config, opts) do
-      {udhcpd_files, udhcpd_up_cmds, udhcpd_down_cmds} ->
-        %RawConfig{
-          ifname: ifname,
-          type: __MODULE__,
-          source_config: normalized_config,
-          files: files ++ udhcpd_files,
-          cleanup_files: control_interface_paths,
-          child_specs: [
-            {VintageNet.Interface.LANConnectivityChecker, ifname},
-            {WPASupplicant,
-             wpa_supplicant: wpa_supplicant,
-             ifname: ifname,
-             wpa_supplicant_conf_path: wpa_supplicant_conf_path,
-             control_path: control_interface_dir,
-             ap_mode: ap_mode}
-          ],
-          up_cmds: up_cmds ++ udhcpd_up_cmds,
-          up_cmd_millis: 60_000,
-          down_cmds: down_cmds ++ udhcpd_down_cmds
-        }
-
-      nil ->
-        %RawConfig{
-          ifname: ifname,
-          type: __MODULE__,
-          source_config: normalized_config,
-          files: files,
-          cleanup_files: control_interface_paths,
-          child_specs: [
-            {VintageNet.Interface.InternetConnectivityChecker, ifname},
-            {WPASupplicant,
-             wpa_supplicant: wpa_supplicant,
-             ifname: ifname,
-             wpa_supplicant_conf_path: wpa_supplicant_conf_path,
-             control_path: control_interface_dir,
-             ap_mode: ap_mode}
-          ],
-          up_cmds: up_cmds,
-          up_cmd_millis: 60_000,
-          down_cmds: down_cmds
-        }
-    end
-  end
-
-  def to_raw_config(ifname, %{type: __MODULE__} = config, opts) do
-    wpa_supplicant = Keyword.fetch!(opts, :bin_wpa_supplicant)
-    tmpdir = Keyword.fetch!(opts, :tmpdir)
-
-    wpa_supplicant_conf_path = Path.join(tmpdir, "wpa_supplicant.conf.#{ifname}")
-    control_interface_dir = Path.join(tmpdir, "wpa_supplicant")
-    control_interface_paths = ctrl_interface_paths(ifname, control_interface_dir, config)
-
-    files = [
-      {wpa_supplicant_conf_path, "ctrl_interface=#{control_interface_dir}"}
-    ]
-
     %RawConfig{
       ifname: ifname,
       type: __MODULE__,
-      source_config: %{type: __MODULE__},
+      source_config: normalized_config,
       files: files,
+      cleanup_files: control_interface_paths,
+      restart_strategy: :rest_for_one,
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, ifname},
         {WPASupplicant,
          wpa_supplicant: wpa_supplicant,
          ifname: ifname,
          wpa_supplicant_conf_path: wpa_supplicant_conf_path,
          control_path: control_interface_dir,
-         ap_mode: false}
-      ],
-      cleanup_files: control_interface_paths
+         ap_mode: ap_mode}
+      ]
     }
+    |> IPv4Config.add_config(normalized_config, opts)
+    |> DhcpdConfig.add_config(normalized_config, opts)
   end
-
-  defp maybe_add_udhcpd(ifname, %{dhcpd: _dhcpd} = config, opts) do
-    tmpdir = Keyword.fetch!(opts, :tmpdir)
-    killall = Keyword.fetch!(opts, :bin_killall)
-    udhcpd = Keyword.fetch!(opts, :bin_udhcpd)
-    udhcpd_conf_path = Path.join(tmpdir, "udhcpd.conf.#{ifname}")
-
-    files = [
-      {udhcpd_conf_path, ConfigToUdhcpd.config_to_udhcpd_contents(ifname, config, tmpdir)}
-    ]
-
-    up_cmds = [
-      {:run, udhcpd, [udhcpd_conf_path]}
-    ]
-
-    down_cmds = [
-      {:run, killall, ["-q", "udhcpd"]}
-    ]
-
-    {files, up_cmds, down_cmds}
-  end
-
-  defp maybe_add_udhcpd(_, _, _), do: nil
 
   @impl true
   def ioctl(ifname, :scan, _args) do
@@ -451,10 +545,11 @@ defmodule VintageNet.Technology.WiFi do
     end)
   end
 
-  defp ap_mode?(%{wifi: %{mode: mode}}) when mode in [:host, 2], do: true
+  defp ap_mode?(%{wifi: %{networks: [%{mode: mode}]}}) when mode in [:host, 2], do: true
   defp ap_mode?(_config), do: false
 
-  defp ctrl_interface_paths(ifname, dir, %{wifi: %{mode: mode}}) when mode in [:host, 2] do
+  defp ctrl_interface_paths(ifname, dir, %{wifi: %{networks: [%{mode: mode}]}})
+       when mode in [:host, 2] do
     # Some WiFi drivers expose P2P interfaces and those should be cleaned up too.
     [Path.join(dir, "p2p-dev-#{ifname}"), Path.join(dir, ifname)]
   end

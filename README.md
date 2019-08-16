@@ -236,15 +236,6 @@ The `:ipv4` key is the same as in Wired Ethernet.
 
 The `:wifi` key has the following common fields:
 
-* `:key_mgmt` - WiFi security mode (`:wpa_psk` for WPA2, `:none` for no
-  password)
-* `:mode` -
-  * `:client` (default) - Normal operation. Associate with an AP
-  * `:adhoc` - peer to peer mode
-  * `:host` - access point mode
-* `:psk` - A WPA2 passphrase or the raw PSK. If a passphrase is passed in, it
-  will be converted to a PSK and discarded.
-* `:ssid` - The SSID for the network
 * `:ap_scan` -  See `wpa_supplicant` documentation. The default for this, 1,
   should work for nearly all users.
 * `:bgscan` - Periodic background scanning to support roaming within an ESS.
@@ -255,12 +246,25 @@ The `:wifi` key has the following common fields:
 * `:passive_scan`
   * 0:  Do normal scans (allow active scans) (default)
   * 1:  Do passive scans.
-* `:priority`: The priority to set for a network if you are using multiple network
- configurations
 * `:regulatory_domain`: Two character country code. Technology configuration
- will take priority over Application configuration
-* `:networks` - A list of WiFi networks to configure, these configs have the same
- fields listed above
+  will take priority over Application configuration
+* `:networks` - A list of Wi-Fi networks to configure. In client mode,
+  VintageNet connects to the first available network in the list. In host mode,
+  the list should have one entry with SSID and password information.
+  * `:mode` -
+    * `:client` (default) - Normal operation. Associate with an AP
+    * `:adhoc` - peer to peer mode (not supported)
+    * `:host` - access point mode
+  * `:ssid` - The SSID for the network
+  * `:key_mgmt` - WiFi security mode (`:wpa_psk` for WPA2, `:none` for no
+    password or WEP)
+  * `:psk` - A WPA2 passphrase or the raw PSK. If a passphrase is passed in, it
+    will be converted to a PSK and discarded.
+  * `:priority` - The priority to set for a network if you are using multiple
+    network configurations
+  * `:scan_ssid` - Scan with SSID-specific Probe Request frames (this can be
+    used to find APs that do not accept broadcast SSID or use multiple SSIDs;
+    this will add latency to scanning, so enable this only when needed)
 
 See the [official
 docs](https://w1.fi/cgit/hostap/plain/wpa_supplicant/wpa_supplicant.conf) for
@@ -272,10 +276,13 @@ Here's an example:
 iex> VintageNet.configure("wlan0", %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        key_mgmt: :wpa_psk,
-        mode: :client,
-        psk: "a_passphrase_or_psk",
-        ssid: "my_network_ssid"
+        networks: [
+          %{
+            key_mgmt: :wpa_psk,
+            psk: "a_passphrase_or_psk",
+            ssid: "my_network_ssid"
+          }
+        ]
       },
       ipv4: %{method: :dhcp}
     })
@@ -287,10 +294,14 @@ Example of WEP:
 iex> VintageNet.configure("wlan0", %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "my_network_ssid",
-        wep_key0: "42FEEDDEAFBABEDEAFBEEFAA55",
-        key_mgmt: :none,
-        wep_tx_keyidx: 0
+        networks: [
+          %{
+            ssid: "my_network_ssid",
+            wep_key0: "42FEEDDEAFBABEDEAFBEEFAA55",
+            key_mgmt: :none,
+            wep_tx_keyidx: 0
+          }
+        ]
       },
       ipv4: %{method: :dhcp}
     })
@@ -304,16 +315,19 @@ should map. For example:
 iex> VintageNet.configure("wlan0", %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "testing",
-        key_mgmt: :wpa_eap,
-        scan_ssid: 1,
-        pairwise: "CCMP TKIP",
-        group: "CCMP TKIP",
-        eap: "PEAP",
-        identity: "user1",
-        password: "supersecret",
-        phase1: "peapver=auto",
-        phase2: "MSCHAPV2"
+        networks: [
+          %{
+            ssid: "testing",
+            key_mgmt: :wpa_eap,
+            pairwise: "CCMP TKIP",
+            group: "CCMP TKIP",
+            eap: "PEAP",
+            identity: "user1",
+            password: "supersecret",
+            phase1: "peapver=auto",
+            phase2: "MSCHAPV2"
+          }
+        ]
       },
       ipv4: %{method: :dhcp}
 })
@@ -325,9 +339,13 @@ Network adapters that can run as an Access Point can be configured as follows:
 iex> VintageNet.configure("wlan0", %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        mode: :host,
-        ssid: "test ssid",
-        key_mgmt: :none
+        networks: [
+          %{
+            mode: :host,
+            ssid: "test ssid",
+            key_mgmt: :none
+          }
+        ]
       },
       ipv4: %{
         method: :static,
@@ -343,17 +361,21 @@ iex> VintageNet.configure("wlan0", %{
 
 If your device may be installed in different countries, you should override the
 default regulatory domain to the desired country at runtime.  VintageNet uses
-the global domain by default and that likely will restrict the set of available
-Wi-Fi frequencies in some countries. For example:
+the global domain by default and that will restrict the set of available Wi-Fi
+frequencies in some countries. For example:
 
 ```elixir
 iex> VintageNet.configure("wlan0", %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "testing",
-        key_mgmt: :wpa_psk,
-        psk: "super secret",
-        regulatory_domain: "US"
+        regulatory_domain: "US",
+        networks: [
+          %{
+            ssid: "testing",
+            key_mgmt: :wpa_psk,
+            psk: "super secret"
+          }
+        ]
       },
       ipv4: %{method: :dhcp}
 })

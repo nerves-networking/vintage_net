@@ -17,11 +17,48 @@ defmodule VintageNetTest.Utils do
     )
   end
 
-  def dhcp_interface(ifname, hostname) do
-    """
-    iface #{ifname} inet dhcp
-      script #{Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])}
-      hostname #{hostname}
-    """
+  @spec udhcpc_child_spec(VintageNet.ifname(), String.t()) :: Supervisor.child_spec()
+  def udhcpc_child_spec(ifname, hostname) do
+    %{
+      id: :udhcpc,
+      restart: :permanent,
+      shutdown: 500,
+      start:
+        {MuonTrap.Daemon, :start_link,
+         [
+           "udhcpc",
+           [
+             "-f",
+             "-i",
+             ifname,
+             "-x",
+             "hostname:#{hostname}",
+             "-s",
+             Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])
+           ],
+           [stderr_to_stdout: true, log_output: :debug]
+         ]},
+      type: :worker
+    }
+  end
+
+  @spec udhcpd_child_spec(VintageNet.ifname()) :: Supervisor.child_spec()
+  def udhcpd_child_spec(ifname) do
+    %{
+      id: :udhcpd,
+      restart: :permanent,
+      shutdown: 500,
+      start:
+        {MuonTrap.Daemon, :start_link,
+         [
+           "udhcpd",
+           [
+             "-f",
+             "/tmp/vintage_net/udhcpd.conf.#{ifname}"
+           ],
+           [stderr_to_stdout: true, log_output: :debug]
+         ]},
+      type: :worker
+    }
   end
 end

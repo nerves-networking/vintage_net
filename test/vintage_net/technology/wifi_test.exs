@@ -4,23 +4,107 @@ defmodule VintageNet.Technology.WiFiTest do
   alias VintageNet.Technology.WiFi
 
   import VintageNetTest.Utils
+  import ExUnit.CaptureLog
 
-  test "normalization converts passphrases to psks" do
+  test "normalizes old way of specifying ssid" do
+    input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{ssid: "guest", key_mgmt: :none}
+    }
+
+    normalized_input = %{
+      type: VintageNet.Technology.WiFi,
+      ipv4: %{method: :dhcp},
+      wifi: %{
+        networks: [
+          %{
+            ssid: "guest",
+            key_mgmt: :none,
+            mode: :client
+          }
+        ]
+      }
+    }
+
+    assert capture_log(fn ->
+             assert normalized_input == WiFi.normalize(input)
+           end) =~ "deprecated"
+  end
+
+  test "normalizing an empty config works" do
+    # An empty config should be normalized to a configuration that
+    # allows the user to scan for networks.
+    input = %{
+      type: VintageNet.Technology.WiFi
+    }
+
+    normalized = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{networks: []},
+      ipv4: %{method: :disabled}
+    }
+
+    assert normalized == WiFi.normalize(input)
+  end
+
+  test "an empty config enables wifi scanning" do
+    input = %{
+      type: VintageNet.Technology.WiFi
+    }
+
+    output = %RawConfig{
+      ifname: "wlan0",
+      type: VintageNet.Technology.WiFi,
+      source_config: WiFi.normalize(input),
+      child_specs: [
+        {VintageNet.WiFi.WPASupplicant,
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
+      ],
+      restart_strategy: :rest_for_one,
+      files: [
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+         """
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
+         country=00
+         """}
+      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
+      down_cmds: [
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
+    }
+
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
+  end
+
+  test "normalization converts passphrases to PSKs" do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "IEEE",
-        psk: "password",
-        key_mgmt: :wpa_psk
+        networks: [%{ssid: "IEEE", psk: "password", key_mgmt: :wpa_psk}]
       }
     }
 
     normalized_input = %{
       type: VintageNet.Technology.WiFi,
+      ipv4: %{method: :dhcp},
       wifi: %{
-        ssid: "IEEE",
-        psk: "F42C6FC52DF0EBEF9EBB4B90B38A5F902E83FE1B135A70E23AED762E9710A12E",
-        key_mgmt: :wpa_psk
+        networks: [
+          %{
+            ssid: "IEEE",
+            psk: "F42C6FC52DF0EBEF9EBB4B90B38A5F902E83FE1B135A70E23AED762E9710A12E",
+            key_mgmt: :wpa_psk,
+            mode: :client
+          }
+        ]
       }
     }
 
@@ -30,19 +114,18 @@ defmodule VintageNet.Technology.WiFiTest do
   test "normalization converts passphrases to psks for multiple networks" do
     input = %{
       type: VintageNet.Technology.WiFi,
+      ipv4: %{method: :dhcp},
       wifi: %{
         networks: [
           %{
             ssid: "IEEE",
             psk: "password",
-            key_mgmt: :wpa_psk,
-            priority: 20
+            key_mgmt: :wpa_psk
           },
           %{
             ssid: "IEEE2",
             psk: "password",
-            key_mgmt: :wpa_psk,
-            priority: 10
+            key_mgmt: :wpa_psk
           }
         ]
       }
@@ -50,19 +133,20 @@ defmodule VintageNet.Technology.WiFiTest do
 
     normalized_input = %{
       type: VintageNet.Technology.WiFi,
+      ipv4: %{method: :dhcp},
       wifi: %{
         networks: [
           %{
             ssid: "IEEE",
             psk: "F42C6FC52DF0EBEF9EBB4B90B38A5F902E83FE1B135A70E23AED762E9710A12E",
             key_mgmt: :wpa_psk,
-            priority: 20
+            mode: :client
           },
           %{
             ssid: "IEEE2",
             psk: "B06433395BD30B1455F538904B239D10A51964932A81D1407BAF2BA0767E22E9",
             key_mgmt: :wpa_psk,
-            priority: 10
+            mode: :client
           }
         ]
       }
@@ -75,9 +159,13 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "testing",
-        psk: "1234567890123456789012345678901234567890123456789012345678901234",
-        key_mgmt: :wpa_psk
+        networks: [
+          %{
+            ssid: "testing",
+            psk: "1234567890123456789012345678901234567890123456789012345678901234",
+            key_mgmt: :wpa_psk
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -88,7 +176,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -96,10 +183,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -107,18 +196,15 @@ defmodule VintageNet.Technology.WiFiTest do
          network={
          ssid="testing"
          key_mgmt=WPA-PSK
+         mode=0
          psk=1234567890123456789012345678901234567890123456789012345678901234
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -132,7 +218,7 @@ defmodule VintageNet.Technology.WiFiTest do
       wifi: %{
         regulatory_domain: "AU"
       },
-      ipv4: %{method: :dhcp},
+      ipv4: %{method: :disabled},
       hostname: "unit_test"
     }
 
@@ -141,7 +227,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -151,24 +236,18 @@ defmodule VintageNet.Technology.WiFiTest do
            ap_mode: false
          ]}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
          country=AU
-         network={
-         }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -180,9 +259,7 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "testing",
-        psk: "a_passphrase_and_not_a_psk",
-        key_mgmt: :wpa_psk
+        networks: [%{ssid: "testing", psk: "a_passphrase_and_not_a_psk", key_mgmt: :wpa_psk}]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -193,7 +270,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -201,10 +277,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -212,19 +290,16 @@ defmodule VintageNet.Technology.WiFiTest do
          network={
          ssid="testing"
          key_mgmt=WPA-PSK
+         mode=0
          psk=1EE0A473A954F61007E526365D4FDC056FE2A102ED2CE77D64492A9495B83030
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
@@ -234,10 +309,7 @@ defmodule VintageNet.Technology.WiFiTest do
   test "create a password-less WiFi configuration" do
     input = %{
       type: VintageNet.Technology.WiFi,
-      wifi: %{
-        ssid: "testing",
-        key_mgmt: :none
-      },
+      wifi: %{networks: [%{ssid: "testing", key_mgmt: :none}]},
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
     }
@@ -247,7 +319,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -255,10 +326,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -266,17 +339,14 @@ defmodule VintageNet.Technology.WiFiTest do
          network={
          ssid="testing"
          key_mgmt=NONE
+         mode=0
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -288,14 +358,18 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "testing",
-        bssid: "00:11:22:33:44:55",
-        wep_key0: "42FEEDDEAFBABEDEAFBEEFAA55",
-        wep_key1: "42FEEDDEAFBABEDEAFBEEFAA55",
-        wep_key2: "ABEDEA42FFBEEFAA55EEDDEAFB",
-        wep_key3: "EDEADEAFBABFBEEFAA5542FEED",
-        key_mgmt: :none,
-        wep_tx_keyidx: 0
+        networks: [
+          %{
+            ssid: "testing",
+            bssid: "00:11:22:33:44:55",
+            wep_key0: "42FEEDDEAFBABEDEAFBEEFAA55",
+            wep_key1: "42FEEDDEAFBABEDEAFBEEFAA55",
+            wep_key2: "ABEDEA42FFBEEFAA55EEDDEAFB",
+            wep_key3: "EDEADEAFBABFBEEFAA5542FEED",
+            key_mgmt: :none,
+            wep_tx_keyidx: 0
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -306,7 +380,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -314,10 +387,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -326,6 +401,7 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="testing"
          bssid=00:11:22:33:44:55
          key_mgmt=NONE
+         mode=0
          wep_key0=42FEEDDEAFBABEDEAFBEEFAA55
          wep_key1=42FEEDDEAFBABEDEAFBEEFAA55
          wep_key2=ABEDEA42FFBEEFAA55EEDDEAFB
@@ -334,14 +410,10 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -353,10 +425,14 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "testing",
-        psk: "1234567890123456789012345678901234567890123456789012345678901234",
-        key_mgmt: :wpa_psk,
-        scan_ssid: 1
+        networks: [
+          %{
+            ssid: "testing",
+            psk: "1234567890123456789012345678901234567890123456789012345678901234",
+            key_mgmt: :wpa_psk,
+            scan_ssid: 1
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -367,7 +443,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -375,10 +450,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -387,18 +464,15 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="testing"
          key_mgmt=WPA-PSK
          scan_ssid=1
+         mode=0
          psk=1234567890123456789012345678901234567890123456789012345678901234
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -410,16 +484,20 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "testing",
-        key_mgmt: :wpa_eap,
-        scan_ssid: 1,
-        pairwise: "CCMP TKIP",
-        group: "CCMP TKIP",
-        eap: "PEAP",
-        identity: "user1",
-        password: "supersecret",
-        phase1: "peapver=auto",
-        phase2: "MSCHAPV2"
+        networks: [
+          %{
+            ssid: "testing",
+            key_mgmt: :wpa_eap,
+            scan_ssid: 1,
+            pairwise: "CCMP TKIP",
+            group: "CCMP TKIP",
+            eap: "PEAP",
+            identity: "user1",
+            password: "supersecret",
+            phase1: "peapver=auto",
+            phase2: "MSCHAPV2"
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -430,7 +508,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -438,10 +515,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -450,6 +529,7 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="testing"
          key_mgmt=WPA-EAP
          scan_ssid=1
+         mode=0
          identity="user1"
          password="supersecret"
          pairwise=CCMP TKIP
@@ -460,14 +540,10 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -479,13 +555,17 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "example",
-        proto: "WPA",
-        key_mgmt: :wpa_psk,
-        scan_ssid: 1,
-        pairwise: "TKIP",
-        psk: "not so secure passphrase",
-        wpa_ptk_rekey: 600
+        networks: [
+          %{
+            ssid: "example",
+            proto: "WPA",
+            key_mgmt: :wpa_psk,
+            scan_ssid: 1,
+            pairwise: "TKIP",
+            psk: "not so secure passphrase",
+            wpa_ptk_rekey: 600
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -496,7 +576,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -504,10 +583,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -516,20 +597,17 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="example"
          key_mgmt=WPA-PSK
          scan_ssid=1
+         mode=0
          psk=F7C00EB4F1A1BF28F0C6D18C689DB6634FC85C894286A11DE979F2BA1C022988
          wpa_ptk_rekey=600
          pairwise=TKIP
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -541,17 +619,21 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "example",
-        proto: "RSN",
-        key_mgmt: :wpa_eap,
-        pairwise: "CCMP TKIP",
-        eap: "TLS",
-        identity: "user@example.com",
-        ca_cert: "/etc/cert/ca.pem",
-        client_cert: "/etc/cert/user.pem",
-        private_key: "/etc/cert/user.prv",
-        private_key_passwd: "password",
-        priority: 1
+        networks: [
+          %{
+            ssid: "example",
+            proto: "RSN",
+            key_mgmt: :wpa_eap,
+            pairwise: "CCMP TKIP",
+            eap: "TLS",
+            identity: "user@example.com",
+            ca_cert: "/etc/cert/ca.pem",
+            client_cert: "/etc/cert/user.pem",
+            private_key: "/etc/cert/user.prv",
+            private_key_passwd: "password",
+            priority: 1
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -562,7 +644,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -570,10 +651,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -582,6 +665,7 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="example"
          key_mgmt=WPA-EAP
          priority=1
+         mode=0
          identity="user@example.com"
          pairwise=CCMP TKIP
          eap=TLS
@@ -592,14 +676,10 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -611,15 +691,19 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "example",
-        key_mgmt: :wpa_eap,
-        eap: "PEAP",
-        identity: "user@example.com",
-        password: "foobar",
-        ca_cert: "/etc/cert/ca.pem",
-        phase1: "peaplabel=1",
-        phase2: "auth=MSCHAPV2",
-        priority: 10
+        networks: [
+          %{
+            ssid: "example",
+            key_mgmt: :wpa_eap,
+            eap: "PEAP",
+            identity: "user@example.com",
+            password: "foobar",
+            ca_cert: "/etc/cert/ca.pem",
+            phase1: "peaplabel=1",
+            phase2: "auth=MSCHAPV2",
+            priority: 10
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -630,7 +714,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -638,10 +721,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -650,6 +735,7 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="example"
          key_mgmt=WPA-EAP
          priority=10
+         mode=0
          identity="user@example.com"
          password="foobar"
          eap=PEAP
@@ -659,14 +745,10 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -678,14 +760,18 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "example",
-        key_mgmt: :wpa_eap,
-        eap: "TTLS",
-        identity: "user@example.com",
-        anonymous_identity: "anonymous@example.com",
-        password: "foobar",
-        ca_cert: "/etc/cert/ca.pem",
-        priority: 2
+        networks: [
+          %{
+            ssid: "example",
+            key_mgmt: :wpa_eap,
+            eap: "TTLS",
+            identity: "user@example.com",
+            anonymous_identity: "anonymous@example.com",
+            password: "foobar",
+            ca_cert: "/etc/cert/ca.pem",
+            priority: 2
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -696,7 +782,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -704,10 +789,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -716,6 +803,7 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="example"
          key_mgmt=WPA-EAP
          priority=2
+         mode=0
          identity="user@example.com"
          anonymous_identity="anonymous@example.com"
          password="foobar"
@@ -724,14 +812,10 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -743,17 +827,21 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "example",
-        key_mgmt: :wpa_eap,
-        eap: "TTLS",
-        anonymous_identity: "anonymous@example.com",
-        ca_cert: "/etc/cert/ca.pem",
-        phase2: "autheap=TLS",
-        ca_cert2: "/etc/cert/ca2.pem",
-        client_cert2: "/etc/cer/user.pem",
-        private_key2: "/etc/cer/user.prv",
-        private_key2_passwd: "password",
-        priority: 2
+        networks: [
+          %{
+            ssid: "example",
+            key_mgmt: :wpa_eap,
+            eap: "TTLS",
+            anonymous_identity: "anonymous@example.com",
+            ca_cert: "/etc/cert/ca.pem",
+            phase2: "autheap=TLS",
+            ca_cert2: "/etc/cert/ca2.pem",
+            client_cert2: "/etc/cer/user.pem",
+            private_key2: "/etc/cer/user.prv",
+            private_key2_passwd: "password",
+            priority: 2
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -764,7 +852,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -772,10 +859,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -784,6 +873,7 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="example"
          key_mgmt=WPA-EAP
          priority=2
+         mode=0
          anonymous_identity="anonymous@example.com"
          eap=TTLS
          phase2="autheap=TLS"
@@ -795,14 +885,10 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -814,11 +900,7 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "eap-sim-test",
-        key_mgmt: :wpa_eap,
-        eap: "SIM",
-        pin: "1234",
-        pcsc: ""
+        networks: [%{ssid: "eap-sim-test", key_mgmt: :wpa_eap, eap: "SIM", pin: "1234", pcsc: ""}]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -829,7 +911,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -837,10 +918,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -848,20 +931,17 @@ defmodule VintageNet.Technology.WiFiTest do
          network={
          ssid="eap-sim-test"
          key_mgmt=WPA-EAP
+         mode=0
          eap=SIM
          pin="1234"
          pcsc=""
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -873,12 +953,16 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "eap-psk-test",
-        key_mgmt: :wpa_eap,
-        eap: "PSK",
-        anonymous_identity: "eap_psk_user",
-        password: "06b4be19da289f475aa46a33cb793029",
-        identity: "eap_psk_user@example.com"
+        networks: [
+          %{
+            ssid: "eap-psk-test",
+            key_mgmt: :wpa_eap,
+            eap: "PSK",
+            anonymous_identity: "eap_psk_user",
+            password: "06b4be19da289f475aa46a33cb793029",
+            identity: "eap_psk_user@example.com"
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -889,7 +973,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -897,10 +980,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -908,6 +993,7 @@ defmodule VintageNet.Technology.WiFiTest do
          network={
          ssid="eap-psk-test"
          key_mgmt=WPA-EAP
+         mode=0
          identity="eap_psk_user@example.com"
          anonymous_identity="eap_psk_user"
          password="06b4be19da289f475aa46a33cb793029"
@@ -915,14 +1001,10 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -934,15 +1016,19 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "1x-test",
-        key_mgmt: :IEEE8021X,
-        eap: "TLS",
-        identity: "user@example.com",
-        ca_cert: "/etc/cert/ca.pem",
-        client_cert: "/etc/cert/user.pem",
-        private_key: "/etc/cert/user.prv",
-        private_key_passwd: "password",
-        eapol_flags: 3
+        networks: [
+          %{
+            ssid: "1x-test",
+            key_mgmt: :IEEE8021X,
+            eap: "TLS",
+            identity: "user@example.com",
+            ca_cert: "/etc/cert/ca.pem",
+            client_cert: "/etc/cert/user.pem",
+            private_key: "/etc/cert/user.prv",
+            private_key_passwd: "password",
+            eapol_flags: 3
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -953,7 +1039,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -961,10 +1046,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -972,6 +1059,7 @@ defmodule VintageNet.Technology.WiFiTest do
          network={
          ssid="1x-test"
          key_mgmt=IEEE8021X
+         mode=0
          identity="user@example.com"
          eap=TLS
          eapol_flags=3
@@ -982,14 +1070,10 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -1001,9 +1085,14 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "example",
-        psk: "very secret passphrase",
-        bssid_blacklist: "02:11:22:33:44:55 02:22:aa:44:55:66"
+        networks: [
+          %{
+            ssid: "example",
+            key_mgmt: :wpa_psk,
+            psk: "very secret passphrase",
+            bssid_blacklist: "02:11:22:33:44:55 02:22:aa:44:55:66"
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -1014,7 +1103,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -1022,29 +1110,29 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
          country=00
          network={
          ssid="example"
+         key_mgmt=WPA-PSK
          bssid_blacklist=02:11:22:33:44:55 02:22:aa:44:55:66
+         mode=0
          psk=3033345C1478F89E4BE9C4937401DEAFD58808CD3E63568DCBFBBD4A8D281175
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -1056,9 +1144,15 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "example",
-        psk: "very secret passphrase",
-        bssid_whitelist: "02:55:ae:bc:00:00/ff:ff:ff:ff:00:00 00:00:77:66:55:44/00:00:ff:ff:ff:ff"
+        networks: [
+          %{
+            ssid: "example",
+            key_mgmt: :wpa_psk,
+            psk: "very secret passphrase",
+            bssid_whitelist:
+              "02:55:ae:bc:00:00/ff:ff:ff:ff:00:00 00:00:77:66:55:44/00:00:ff:ff:ff:ff"
+          }
+        ]
       },
       ipv4: %{method: :dhcp},
       hostname: "unit_test"
@@ -1069,7 +1163,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -1077,29 +1170,29 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
          country=00
          network={
          ssid="example"
+         key_mgmt=WPA-PSK
          bssid_whitelist=02:55:ae:bc:00:00/ff:ff:ff:ff:00:00 00:00:77:66:55:44/00:00:ff:ff:ff:ff
+         mode=0
          psk=3033345C1478F89E4BE9C4937401DEAFD58808CD3E63568DCBFBBD4A8D281175
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -1111,12 +1204,11 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "example ap",
-        psk: "very secret passphrase",
-        key_mgmt: :wpa_psk,
-        mode: :host
+        networks: [
+          %{mode: :host, ssid: "example ap", psk: "very secret passphrase", key_mgmt: :wpa_psk}
+        ]
       },
-      ipv4: %{method: :dhcp},
+      ipv4: %{method: :disabled},
       hostname: "unit_test"
     }
 
@@ -1125,7 +1217,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -1135,8 +1226,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ap_mode: true
          ]}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -1149,14 +1240,10 @@ defmodule VintageNet.Technology.WiFiTest do
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: [
         "/tmp/vintage_net/wpa_supplicant/p2p-dev-wlan0",
@@ -1188,7 +1275,6 @@ defmodule VintageNet.Technology.WiFiTest do
           },
           %{
             ssid: "third_priority",
-            psk: "1234567890123456789012345678901234567890123456789012345678901234",
             key_mgmt: :none,
             priority: 0
           }
@@ -1203,7 +1289,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -1211,10 +1296,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -1223,30 +1310,28 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="first_priority"
          key_mgmt=WPA-PSK
          priority=100
+         mode=0
          psk=1234567890123456789012345678901234567890123456789012345678901234
          }
          network={
          ssid="second_priority"
          key_mgmt=WPA-PSK
          priority=1
+         mode=0
          psk=1234567890123456789012345678901234567890123456789012345678901234
          }
          network={
          ssid="third_priority"
          key_mgmt=NONE
          priority=0
-         psk=1234567890123456789012345678901234567890123456789012345678901234
+         mode=0
          }
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
-      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -1258,21 +1343,13 @@ defmodule VintageNet.Technology.WiFiTest do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "example ap",
-        psk: "very secret passphrase",
-        key_mgmt: :wpa_psk
+        networks: [%{ssid: "example ap", psk: "very secret passphrase", key_mgmt: :wpa_psk}]
       },
       ipv4: %{
         method: :static,
         address: "192.168.1.2",
         netmask: "255.255.0.0",
-        broadcast: "192.168.1.255",
-        metric: "1000",
-        gateway: "192.168.1.1",
-        pointopoint: "192.168.1.100",
-        hwaddress: "e8:6a:64:63:16:30",
-        mtu: "1500",
-        scope: "global"
+        gateway: "192.168.1.1"
       },
       hostname: "unit_test"
     }
@@ -1282,7 +1359,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -1290,23 +1366,11 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: false
-         ]}
+         ]},
+        {VintageNet.Interface.LANConnectivityChecker, "wlan0"}
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0",
-         """
-         iface wlan0 inet static
-           address 192.168.1.2
-           broadcast 192.168.1.255
-           gateway 192.168.1.1
-           hwaddress e8:6a:64:63:16:30
-           metric 1000
-           mtu 1500
-           netmask 255.255.0.0
-           pointopoint 192.168.1.100
-           scope global
-           hostname unit_test
-         """},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -1314,18 +1378,18 @@ defmodule VintageNet.Technology.WiFiTest do
          network={
          ssid="example ap"
          key_mgmt=WPA-PSK
+         mode=0
          psk=94A7360596213CEB96007A25A63FCBCF4D540314CEB636353C62A86632A6BD6E
          }
          """}
       ],
-      up_cmd_millis: 60_000,
       up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run, "ip", ["addr", "add", "192.168.1.2/16", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "up"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -1333,16 +1397,20 @@ defmodule VintageNet.Technology.WiFiTest do
     assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
-  test "create a dhcpd config" do
+  test "create an AP running dhcpd config" do
     input = %{
       type: VintageNet.Technology.WiFi,
       wifi: %{
-        ssid: "example ap",
-        key_mgmt: :none,
-        scan_ssid: 1,
+        networks: [
+          %{
+            mode: :host,
+            ssid: "example ap",
+            key_mgmt: :none,
+            scan_ssid: 1
+          }
+        ],
         ap_scan: 1,
-        bgscan: :simple,
-        mode: :host
+        bgscan: :simple
       },
       ipv4: %{
         method: :static,
@@ -1362,7 +1430,6 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       source_config: WiFi.normalize(input),
       child_specs: [
-        {VintageNet.Interface.LANConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
          [
            wpa_supplicant: "wpa_supplicant",
@@ -1370,17 +1437,12 @@ defmodule VintageNet.Technology.WiFiTest do
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
            ap_mode: true
-         ]}
+         ]},
+        {VintageNet.Interface.LANConnectivityChecker, "wlan0"},
+        udhcpd_child_spec("wlan0")
       ],
+      restart_strategy: :rest_for_one,
       files: [
-        {"/tmp/vintage_net/network_interfaces.wlan0",
-         """
-         iface wlan0 inet static
-           address 192.168.24.1
-           gateway 192.168.24.1
-           netmask 255.255.255.0
-           hostname unit_test
-         """},
         {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
          """
          ctrl_interface=/tmp/vintage_net/wpa_supplicant
@@ -1406,16 +1468,13 @@ defmodule VintageNet.Technology.WiFiTest do
 
          """}
       ],
-      up_cmd_millis: 60_000,
-      up_cmds: [
-        {:run_ignore_errors, "ifdown",
-         ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "udhcpd", ["/tmp/vintage_net/udhcpd.conf.wlan0"]}
-      ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "udhcpd"]}
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
+      ],
+      up_cmds: [
+        {:run, "ip", ["addr", "add", "192.168.24.1/24", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "up"]}
       ],
       cleanup_files: [
         "/tmp/vintage_net/wpa_supplicant/p2p-dev-wlan0",
