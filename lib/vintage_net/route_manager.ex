@@ -149,11 +149,15 @@ defmodule VintageNet.RouteManager do
 
   @impl true
   def handle_call({:clear_route, ifname}, _from, state) do
-    _ = Logger.info("RouteManager: clear_route #{ifname}")
-
     new_state =
-      %{state | interfaces: Map.delete(state.interfaces, ifname)}
-      |> update_route_tables()
+      if Map.has_key?(state.interfaces, ifname) do
+        _ = Logger.info("RouteManager: clear_route #{ifname}")
+
+        %{state | interfaces: Map.delete(state.interfaces, ifname)}
+        |> update_route_tables()
+      else
+        state
+      end
 
     {:reply, :ok, new_state}
   end
