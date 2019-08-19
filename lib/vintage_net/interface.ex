@@ -193,7 +193,11 @@ defmodule VintageNet.Interface do
 
     update_properties(:configured, new_data)
 
-    VintageNet.Interface.Supervisor.set_technology(data.ifname, data.config.child_specs)
+    VintageNet.Interface.Supervisor.set_technology(
+      data.ifname,
+      data.config.restart_strategy,
+      data.config.child_specs
+    )
 
     {:next_state, :configured, new_data, actions}
   end
