@@ -106,16 +106,17 @@ defmodule VintageNet.RouteManager do
 
   @impl true
   def init(_args) do
-    state = %State{
-      prioritization: Classification.default_prioritization(),
-      interfaces: %{},
-      route_state: Calculator.init()
-    }
-
     # Fresh slate
     IPRoute.clear_all_routes()
     IPRoute.clear_all_rules(100..200)
-    VintageNet.PropertyTable.put(VintageNet, ["available_interfaces"], [])
+
+    state =
+      %State{
+        prioritization: Classification.default_prioritization(),
+        interfaces: %{},
+        route_state: Calculator.init()
+      }
+      |> update_route_tables()
 
     {:ok, state}
   end
