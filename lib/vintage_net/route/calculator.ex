@@ -42,7 +42,7 @@ defmodule VintageNet.Route.Calculator do
   The entries are ordered so that List.myers_difference/2 can be used to
   minimize the routing table changes.
   """
-  @spec compute(table_indices(), interface_infos(), Classification.prioritization()) ::
+  @spec compute(table_indices(), interface_infos(), [Classification.prioritization()]) ::
           {table_indices(), entries()}
   def compute(table_indices, infos, prioritization) do
     {new_table_indices, entries} =
