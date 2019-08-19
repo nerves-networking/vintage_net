@@ -26,7 +26,13 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     MockWPASupplicant.set_responses(context.mock, %{"ATTACH" => ["OK\n"]})
 
     _ =
-      start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
+      start_supervised!(
+        {WPASupplicant,
+         wpa_supplicant: "",
+         wpa_supplicant_conf_path: "/dev/null",
+         ifname: "test_wlan0",
+         control_path: context.socket_path}
+      )
 
     Process.sleep(100)
 
@@ -40,7 +46,11 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     _ =
       start_supervised!(
         {WPASupplicant,
-         ifname: "test_wlan0", control_path: context.socket_path, keep_alive_interval: 10}
+         wpa_supplicant: "",
+         wpa_supplicant_conf_path: "/dev/null",
+         ifname: "test_wlan0",
+         control_path: context.socket_path,
+         keep_alive_interval: 10}
       )
 
     Process.sleep(100)
@@ -67,7 +77,13 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     })
 
     _supplicant =
-      start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
+      start_supervised!(
+        {WPASupplicant,
+         wpa_supplicant: "",
+         wpa_supplicant_conf_path: "/dev/null",
+         ifname: "test_wlan0",
+         control_path: context.socket_path}
+      )
 
     ap_property = ["interface", "test_wlan0", "wifi", "access_points"]
     VintageNet.PropertyTable.clear(VintageNet, ap_property)
@@ -103,7 +119,14 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     VintageNet.subscribe(clients_property)
 
     _supplicant =
-      start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
+      start_supervised!(
+        {WPASupplicant,
+         wpa_supplicant: "",
+         wpa_supplicant_conf_path: "/dev/null",
+         ifname: "test_wlan0",
+         control_path: context.socket_path,
+         ap_mode: true}
+      )
 
     # This serves two purposes:
     #  1. tests that the client property is initialized
@@ -129,7 +152,13 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     })
 
     _supplicant =
-      start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
+      start_supervised!(
+        {WPASupplicant,
+         wpa_supplicant: "",
+         wpa_supplicant_conf_path: "/dev/null",
+         ifname: "test_wlan0",
+         control_path: context.socket_path}
+      )
 
     assert {:error, "FAIL-BUSY"} == WPASupplicant.scan("test_wlan0")
   end
@@ -149,7 +178,13 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     })
 
     _supplicant =
-      start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
+      start_supervised!(
+        {WPASupplicant,
+         wpa_supplicant: "",
+         wpa_supplicant_conf_path: "/dev/null",
+         ifname: "test_wlan0",
+         control_path: context.socket_path}
+      )
 
     ap_property = ["interface", "test_wlan0", "wifi", "access_points"]
     VintageNet.PropertyTable.clear(VintageNet, ap_property)
@@ -185,7 +220,13 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     })
 
     _supplicant =
-      start_supervised!({WPASupplicant, ifname: "test_wlan0", control_path: context.socket_path})
+      start_supervised!(
+        {WPASupplicant,
+         wpa_supplicant: "",
+         wpa_supplicant_conf_path: "/dev/null",
+         ifname: "test_wlan0",
+         control_path: context.socket_path}
+      )
 
     ap_property = ["interface", "test_wlan0", "wifi", "access_points"]
     VintageNet.PropertyTable.clear(VintageNet, ap_property)

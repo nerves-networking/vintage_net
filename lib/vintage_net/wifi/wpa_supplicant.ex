@@ -13,6 +13,8 @@ defmodule VintageNet.WiFi.WPASupplicant do
 
   Arguments:
 
+  * `:wpa_supplicant - the path to the wpa_supplicant binary
+  * `:wpa_supplicant_conf_path - the path to the supplicant's conf file
   * `:ifname` - the network interface
   * `:control_path` - the path to the wpa_supplicant control file
   * `:keep_alive_interval` - how often to ping the wpa_supplicant to
@@ -20,7 +22,7 @@ defmodule VintageNet.WiFi.WPASupplicant do
   * `:ap_mode` - true if the WiFi module and wpa_supplicant are
     in access point mode
   """
-  @spec start_link(keyword) :: GenServer.on_start()
+  @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(args) do
     ifname = Keyword.fetch!(args, :ifname)
     GenServer.start_link(__MODULE__, args, name: via_name(ifname))
@@ -40,12 +42,17 @@ defmodule VintageNet.WiFi.WPASupplicant do
 
   @impl true
   def init(args) do
+    wpa_supplicant = Keyword.fetch!(args, :wpa_supplicant)
+    wpa_supplicant_conf_path = Keyword.fetch!(args, :wpa_supplicant_conf_path)
+
     control_dir = Keyword.fetch!(args, :control_path)
     ifname = Keyword.fetch!(args, :ifname)
     keep_alive_interval = Keyword.get(args, :keep_alive_interval, 60000)
     ap_mode = Keyword.get(args, :ap_mode, false)
 
     state = %{
+      wpa_supplicant: wpa_supplicant,
+      wpa_supplicant_conf_path: wpa_supplicant_conf_path,
       control_dir: control_dir,
       keep_alive_interval: keep_alive_interval,
       ifname: ifname,
@@ -64,6 +71,23 @@ defmodule VintageNet.WiFi.WPASupplicant do
     # the driver has a separate P2P interface. We find out based on which
     # control files appear.
     control_paths = get_control_paths(state)
+
+    # Start the supplicant
+    {:ok, _supplicant} =
+      if state.wpa_supplicant != "" do
+        # Erase old old control paths just in case they exist
+        Enum.each(control_paths, &File.rm/1)
+
+        MuonTrap.Daemon.start_link(
+          state.wpa_supplicant,
+          ["-i", state.ifname, "-c", state.wpa_supplicant_conf_path, "-dd"],
+          VintageNet.Command.add_muon_options([])
+        )
+      else
+        # No wpa_supplicant. The assumption is that someone else started it.
+        # Currently this is only for unit tests.
+        {:ok, nil}
+      end
 
     # Wait for the wpa_supplicant to create its control files.
     primary_path =

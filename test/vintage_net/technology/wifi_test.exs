@@ -95,7 +95,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -114,14 +120,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -146,7 +148,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -162,14 +170,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -196,7 +200,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -215,14 +225,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -248,7 +254,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -266,14 +278,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -305,7 +313,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -329,14 +343,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -364,7 +374,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -384,14 +400,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -425,7 +437,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -451,14 +469,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -489,7 +503,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -511,14 +531,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -553,7 +569,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -579,14 +601,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -619,7 +637,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -644,14 +668,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -683,7 +703,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -707,14 +733,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -749,7 +771,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -776,14 +804,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -812,7 +836,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -833,14 +863,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -870,7 +896,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -892,14 +924,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -932,7 +960,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -957,14 +991,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -991,7 +1021,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -1010,14 +1046,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -1044,7 +1076,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -1063,14 +1101,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -1098,7 +1132,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: true]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: true
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -1118,14 +1158,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: [
         "/tmp/vintage_net/wpa_supplicant/p2p-dev-wlan0",
@@ -1174,7 +1210,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0", dhcp_interface("wlan0", "unit_test")},
@@ -1206,14 +1248,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -1251,7 +1289,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: false]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0",
@@ -1283,14 +1327,10 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       down_cmds: [
-        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]}
+        {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]}
       ],
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
@@ -1329,7 +1369,13 @@ defmodule VintageNet.Technology.WiFiTest do
       child_specs: [
         {VintageNet.Interface.LANConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
-         [ifname: "wlan0", control_path: "/tmp/vintage_net/wpa_supplicant", ap_mode: true]}
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: true
+         ]}
       ],
       files: [
         {"/tmp/vintage_net/network_interfaces.wlan0",
@@ -1369,15 +1415,11 @@ defmodule VintageNet.Technology.WiFiTest do
       up_cmds: [
         {:run_ignore_errors, "ifdown",
          ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run_ignore_errors, "killall", ["-q", "wpa_supplicant"]},
-        {:run, "wpa_supplicant",
-         ["-B", "-i", "wlan0", "-c", "/tmp/vintage_net/wpa_supplicant.conf.wlan0", "-dd"]},
         {:run, "ifup", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
         {:run, "udhcpd", ["/tmp/vintage_net/udhcpd.conf.wlan0"]}
       ],
       down_cmds: [
         {:run, "ifdown", ["-i", "/tmp/vintage_net/network_interfaces.wlan0", "wlan0"]},
-        {:run, "killall", ["-q", "wpa_supplicant"]},
         {:run, "killall", ["-q", "udhcpd"]}
       ],
       cleanup_files: [
