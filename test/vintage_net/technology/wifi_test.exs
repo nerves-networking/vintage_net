@@ -62,7 +62,7 @@ defmodule VintageNet.Technology.WiFiTest do
          network={
          ssid="testing"
          key_mgmt=WPA-PSK
-         psk=1234567890123456789012345678901234567890123456789012345678901234
+         psk="1234567890123456789012345678901234567890123456789012345678901234"
          }
          """}
       ],
@@ -163,7 +163,7 @@ defmodule VintageNet.Technology.WiFiTest do
          network={
          ssid="testing"
          key_mgmt=WPA-PSK
-         psk=1EE0A473A954F61007E526365D4FDC056FE2A102ED2CE77D64492A9495B83030
+         psk="1EE0A473A954F61007E526365D4FDC056FE2A102ED2CE77D64492A9495B83030"
          }
          """}
       ],
@@ -332,7 +332,7 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="testing"
          key_mgmt=WPA-PSK
          scan_ssid=1
-         psk=1234567890123456789012345678901234567890123456789012345678901234
+         psk="1234567890123456789012345678901234567890123456789012345678901234"
          }
          """}
       ],
@@ -457,7 +457,7 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="example"
          key_mgmt=WPA-PSK
          scan_ssid=1
-         psk=F7C00EB4F1A1BF28F0C6D18C689DB6634FC85C894286A11DE979F2BA1C022988
+         psk="F7C00EB4F1A1BF28F0C6D18C689DB6634FC85C894286A11DE979F2BA1C022988"
          wpa_ptk_rekey=600
          pairwise=TKIP
          }
@@ -958,7 +958,7 @@ defmodule VintageNet.Technology.WiFiTest do
          network={
          ssid="example"
          bssid_blacklist=02:11:22:33:44:55 02:22:aa:44:55:66
-         psk=3033345C1478F89E4BE9C4937401DEAFD58808CD3E63568DCBFBBD4A8D281175
+         psk="3033345C1478F89E4BE9C4937401DEAFD58808CD3E63568DCBFBBD4A8D281175"
          }
          """}
       ],
@@ -1011,7 +1011,7 @@ defmodule VintageNet.Technology.WiFiTest do
          network={
          ssid="example"
          bssid_whitelist=02:55:ae:bc:00:00/ff:ff:ff:ff:00:00 00:00:77:66:55:44/00:00:ff:ff:ff:ff
-         psk=3033345C1478F89E4BE9C4937401DEAFD58808CD3E63568DCBFBBD4A8D281175
+         psk="3033345C1478F89E4BE9C4937401DEAFD58808CD3E63568DCBFBBD4A8D281175"
          }
          """}
       ],
@@ -1066,7 +1066,7 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="example ap"
          key_mgmt=WPA-PSK
          mode=2
-         psk=94A7360596213CEB96007A25A63FCBCF4D540314CEB636353C62A86632A6BD6E
+         psk="94A7360596213CEB96007A25A63FCBCF4D540314CEB636353C62A86632A6BD6E"
          }
          """}
       ],
@@ -1142,19 +1142,19 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="first_priority"
          key_mgmt=WPA-PSK
          priority=100
-         psk=1234567890123456789012345678901234567890123456789012345678901234
+         psk="1234567890123456789012345678901234567890123456789012345678901234"
          }
          network={
          ssid="second_priority"
          key_mgmt=WPA-PSK
          priority=1
-         psk=1234567890123456789012345678901234567890123456789012345678901234
+         psk="1234567890123456789012345678901234567890123456789012345678901234"
          }
          network={
          ssid="third_priority"
          key_mgmt=NONE
          priority=0
-         psk=1234567890123456789012345678901234567890123456789012345678901234
+         psk="1234567890123456789012345678901234567890123456789012345678901234"
          }
          """}
       ],
@@ -1231,7 +1231,7 @@ defmodule VintageNet.Technology.WiFiTest do
          network={
          ssid="example ap"
          key_mgmt=WPA-PSK
-         psk=94A7360596213CEB96007A25A63FCBCF4D540314CEB636353C62A86632A6BD6E
+         psk="94A7360596213CEB96007A25A63FCBCF4D540314CEB636353C62A86632A6BD6E"
          }
          """}
       ],

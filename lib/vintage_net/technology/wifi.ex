@@ -295,7 +295,7 @@ defmodule VintageNet.Technology.WiFi do
   end
 
   defp wifi_opt_to_config_string(_wifi, :psk, psk) do
-    "psk=#{psk}"
+    "psk=\"#{psk}\""
   end
 
   defp wifi_opt_to_config_string(_wifi, :wpa_ptk_rekey, wpa_ptk_rekey) do
