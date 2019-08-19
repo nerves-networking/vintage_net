@@ -13,6 +13,7 @@ defmodule VintageNet.Interface.RawConfig do
   * `require_interface` - require the interface to exist in the system before configuring
   * `retry_millis` - if bringing the interface up fails, wait this amount of time before retrying
   * `files` - a list of file path, content tuples
+  * `restart_strategy` - the restart strategy for the list of `child_specs`. I.e., `:one_for_one | :one_for_all | :rest_for_one
   * `child_specs` - a set of child_specs for GenServers to start up and supervise
   * `up_cmd_millis` - the maximum amount of time to allow the up command list to take
   * `up_cmds` - a list of commands to run to configure the interface
@@ -33,6 +34,7 @@ defmodule VintageNet.Interface.RawConfig do
             require_interface: true,
             retry_millis: 30_000,
             files: [],
+            restart_strategy: :one_for_all,
             child_specs: [],
             up_cmd_millis: 5_000,
             up_cmds: [],
@@ -47,6 +49,7 @@ defmodule VintageNet.Interface.RawConfig do
           require_interface: boolean(),
           retry_millis: non_neg_integer(),
           files: [file_contents()],
+          restart_strategy: Supervisor.strategy(),
           child_specs: [Supervisor.child_spec()],
           up_cmd_millis: non_neg_integer(),
           up_cmds: [command()],

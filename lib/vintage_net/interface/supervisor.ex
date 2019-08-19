@@ -25,20 +25,20 @@ defmodule VintageNet.Interface.Supervisor do
   @doc """
   Add child_specs provided by technologies to supervision
   """
-  @spec set_technology(VintageNet.ifname(), [
+  @spec set_technology(VintageNet.ifname(), Supervisor.strategy(), [
           :supervisor.child_spec() | {module(), term()} | module()
         ]) ::
           :ok
-  def set_technology(ifname, []) do
+  def set_technology(ifname, _restart_strategy, []) do
     clear_technology(ifname)
   end
 
-  def set_technology(ifname, child_specs) when is_list(child_specs) do
+  def set_technology(ifname, restart_strategy, child_specs) when is_list(child_specs) do
     clear_technology(ifname)
 
     supervisor_spec = %{
       id: :technology,
-      start: {Supervisor, :start_link, [child_specs, [strategy: :one_for_all]]}
+      start: {Supervisor, :start_link, [child_specs, [strategy: restart_strategy]]}
     }
 
     {:ok, _pid} = Supervisor.start_child(via_name(ifname), supervisor_spec)
