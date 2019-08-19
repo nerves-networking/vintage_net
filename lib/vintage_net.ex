@@ -75,6 +75,14 @@ defmodule VintageNet do
   end
 
   @doc """
+  Deconfigure settings for a specified interface.
+  """
+  @spec deconfigure(ifname()) :: :ok | {:error, any()}
+  def deconfigure(ifname) do
+    configure(ifname, %{type: VintageNet.Technology.Null})
+  end
+
+  @doc """
   Return the settings for the specified interface
   """
   @spec get_configuration(ifname()) :: map()
