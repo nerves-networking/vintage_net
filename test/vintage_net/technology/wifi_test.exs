@@ -32,6 +32,50 @@ defmodule VintageNet.Technology.WiFiTest do
     assert {:ok, normalized_input} == WiFi.normalize(input)
   end
 
+  test "normalization converts passphrases to psks for multiple networks" do
+    input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        networks: [
+          %{
+            ssid: "IEEE",
+            psk: "password",
+            key_mgmt: :wpa_psk,
+            priority: 20
+          },
+          %{
+            ssid: "IEEE2",
+            psk: "password",
+            key_mgmt: :wpa_psk,
+            priority: 10
+          }
+        ]
+      }
+    }
+
+    normalized_input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        networks: [
+          %{
+            ssid: "IEEE",
+            psk: "F42C6FC52DF0EBEF9EBB4B90B38A5F902E83FE1B135A70E23AED762E9710A12E",
+            key_mgmt: :wpa_psk,
+            priority: 20
+          },
+          %{
+            ssid: "IEEE2",
+            psk: "B06433395BD30B1455F538904B239D10A51964932A81D1407BAF2BA0767E22E9",
+            key_mgmt: :wpa_psk,
+            priority: 10
+          }
+        ]
+      }
+    }
+
+    assert {:ok, normalized_input} == WiFi.normalize(input)
+  end
+
   test "create a WPA2 WiFi configuration" do
     input = %{
       type: VintageNet.Technology.WiFi,

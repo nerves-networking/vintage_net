@@ -12,6 +12,21 @@ defmodule VintageNet.Technology.WiFi do
     {:ok, put_in(config.wifi.psk, real_psk)}
   end
 
+  def normalize(%{type: __MODULE__, wifi: %{networks: networks}} = config) do
+    # If the user passes in a passphrase for the PSK, change it to a PSK
+    networks =
+      Enum.map(networks, fn
+        %{ssid: ssid, psk: psk} = network ->
+          {:ok, real_psk} = WPA2.to_psk(ssid, psk)
+          %{network | psk: real_psk}
+
+        network ->
+          network
+      end)
+
+    {:ok, put_in(config.wifi.networks, networks)}
+  end
+
   def normalize(%{type: __MODULE__} = config), do: {:ok, config}
 
   @impl true
