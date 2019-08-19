@@ -61,6 +61,7 @@ defmodule VintageNet.WiFi.WPASupplicant do
       verbose: verbose,
       access_points: %{},
       clients: [],
+      current_ap: nil,
       ll: nil
     }
 
@@ -232,6 +233,39 @@ defmodule VintageNet.WiFi.WPASupplicant do
     new_state
   end
 
+  defp handle_notification({:event, "CTRL-EVENT-CONNECTED", bssid, "completed", _}, state) do
+    _ = Logger.info("Connected to AP: #{bssid}")
+
+    case get_access_point_info(state.ll, bssid) do
+      {:ok, ap} ->
+        new_state = %{state | current_ap: ap}
+        update_current_access_point_property(new_state)
+        new_state
+
+      _error ->
+        _ =
+          Logger.warn("Connected and disconnected to AP before we could get info on it: #{bssid}")
+
+        new_state = %{state | current_ap: nil}
+        update_current_access_point_property(new_state)
+        new_state
+    end
+  end
+
+  defp handle_notification({:event, "CTRL-EVENT-CONNECTED", bssid, status, _}, state) do
+    _ = Logger.warn("Unknown AP connection status: #{bssid} #{status}")
+    new_state = %{state | current_ap: nil}
+    update_current_access_point_property(new_state)
+    new_state
+  end
+
+  defp handle_notification({:event, "CTRL-EVENT-DISCONNECTED", bssid, _}, state) do
+    _ = Logger.warn("AP disconnected: #{bssid}")
+    new_state = %{state | current_ap: nil}
+    update_current_access_point_property(new_state)
+    new_state
+  end
+
   defp handle_notification({:event, "CTRL-EVENT-TERMINATING"}, _state) do
     # This really shouldn't happen. The only way I know how to cause this
     # is to send a SIGTERM to the wpa_supplicant.
@@ -296,6 +330,14 @@ defmodule VintageNet.WiFi.WPASupplicant do
       VintageNet,
       ["interface", state.ifname, "wifi", "clients"],
       state.clients
+    )
+  end
+
+  defp update_current_access_point_property(state) do
+    VintageNet.PropertyTable.put(
+      VintageNet,
+      ["interface", state.ifname, "wifi", "current_ap"],
+      state.current_ap
     )
   end
 
