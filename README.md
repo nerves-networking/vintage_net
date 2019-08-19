@@ -390,7 +390,16 @@ TBD
 
 ### USB gadget mode
 
-TBD
+VintageNet comes with a technology to setup usb gadget devices.
+This will use OneDHCPD to configure the ip address automatically.
+
+```elixir
+  config :vintage_net, [
+    config: [
+      {"usb0", %{type: VintageNet.Technology.Gadget}}},
+    ]
+  ]
+```
 
 ## Persistence
 
