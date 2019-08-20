@@ -48,7 +48,7 @@ defmodule VintageNet do
   """
   @spec configured_interfaces() :: [ifname()]
   def configured_interfaces() do
-    for {["interface", ifname, "type"], _value} <-
+    for {["interface", ifname, "type"], value} when value != VintageNet.Technology.Null <-
           get_by_prefix(["interface"]) do
       ifname
     end

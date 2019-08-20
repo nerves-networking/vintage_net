@@ -34,7 +34,7 @@ defmodule VintageNet.InterfaceTest do
       {:ok, raw_config} = VintageNet.Technology.Null.to_raw_config(@ifname)
       start_and_configure(raw_config)
 
-      assert [@ifname] == VintageNet.configured_interfaces()
+      refute @ifname in VintageNet.configured_interfaces()
     end)
   end
 
