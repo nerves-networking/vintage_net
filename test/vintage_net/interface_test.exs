@@ -38,6 +38,23 @@ defmodule VintageNet.InterfaceTest do
     end)
   end
 
+  test "deconfigure uses null type", context do
+    in_tmp(context.test, fn ->
+      raw_config = %RawConfig{
+        ifname: @ifname,
+        type: @interface_type,
+        source_config: %{},
+        files: []
+      }
+
+      start_and_configure(raw_config)
+      assert @ifname in VintageNet.configured_interfaces()
+      :ok = VintageNet.deconfigure(@ifname)
+      assert %{type: VintageNet.Technology.Null} == VintageNet.get_configuration(@ifname)
+      refute @ifname in VintageNet.configured_interfaces()
+    end)
+  end
+
   test "getting the configuration", context do
     in_tmp(context.test, fn ->
       {:ok, raw_config} = VintageNet.Technology.Null.to_raw_config(@ifname)
