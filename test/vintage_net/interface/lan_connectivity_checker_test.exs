@@ -4,10 +4,10 @@ defmodule VintageNet.Interface.LANConnectivityCheckerTest do
   alias VintageNet.Interface.LANConnectivityChecker
 
   test "disconnected interface" do
-    property = ["interface", "disconnected_interface", "connection"]
+    property = ["interface", "disconnected_interface2", "connection"]
     VintageNet.subscribe(property)
 
-    start_supervised!({LANConnectivityChecker, "disconnected_interface"})
+    start_supervised!({LANConnectivityChecker, "disconnected_interface2"})
 
     assert_receive {VintageNet, ^property, _old_value, :disconnected, _meta}, 1_000
   end
