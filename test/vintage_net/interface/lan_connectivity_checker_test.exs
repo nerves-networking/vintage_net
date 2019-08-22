@@ -1,26 +1,27 @@
-defmodule VintageNet.Interface.ConnectivityCheckerTest do
+defmodule VintageNet.Interface.LANConnectivityCheckerTest do
   use ExUnit.Case, async: true
 
-  alias VintageNet.Interface.ConnectivityChecker
+  alias VintageNet.Interface.LANConnectivityChecker
 
   test "disconnected interface" do
     property = ["interface", "disconnected_interface", "connection"]
     VintageNet.subscribe(property)
 
-    start_supervised!({ConnectivityChecker, "disconnected_interface"})
+    start_supervised!({LANConnectivityChecker, "disconnected_interface"})
 
-    assert_receive {VintageNet, property, _old_value, :disconnected, _meta}, 1_000
+    assert_receive {VintageNet, ^property, _old_value, :disconnected, _meta}, 1_000
   end
 
   @tag :requires_interfaces_monitor
-  test "internet connected interface" do
+  test "lan connected interface" do
     ifname = get_ifname()
     property = ["interface", ifname, "connection"]
     VintageNet.subscribe(property)
 
-    start_supervised!({ConnectivityChecker, ifname})
+    start_supervised!({LANConnectivityChecker, ifname})
 
-    assert_receive {VintageNet, property, _old_value, :internet, _meta}, 1_000
+    assert_receive {VintageNet, ^property, _old_value, :lan, _meta}, 1_000
+    refute_receive {VintageNet, ^property, _old_value, :internet, _meta}
   end
 
   defp get_ifname() do

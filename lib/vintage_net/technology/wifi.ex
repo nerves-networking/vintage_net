@@ -79,7 +79,7 @@ defmodule VintageNet.Technology.WiFi do
            files: files ++ udhcpd_files,
            cleanup_files: control_interface_paths,
            child_specs: [
-             {VintageNet.Interface.ConnectivityChecker, ifname},
+             {VintageNet.Interface.LANConnectivityChecker, ifname},
              {WPASupplicant,
               ifname: ifname, control_path: control_interface_dir, ap_mode: ap_mode}
            ],
@@ -97,7 +97,7 @@ defmodule VintageNet.Technology.WiFi do
            files: files,
            cleanup_files: control_interface_paths,
            child_specs: [
-             {VintageNet.Interface.ConnectivityChecker, ifname},
+             {VintageNet.Interface.InternetConnectivityChecker, ifname},
              {WPASupplicant,
               ifname: ifname, control_path: control_interface_dir, ap_mode: ap_mode}
            ],
@@ -136,7 +136,7 @@ defmodule VintageNet.Technology.WiFi do
        source_config: %{type: __MODULE__},
        files: files,
        child_specs: [
-         {VintageNet.Interface.ConnectivityChecker, ifname},
+         {VintageNet.Interface.InternetConnectivityChecker, ifname},
          {WPASupplicant, ifname: ifname, control_path: control_interface_dir, ap_mode: false}
        ],
        up_cmds: up_cmds,

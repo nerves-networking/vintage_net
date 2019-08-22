@@ -24,7 +24,7 @@ defmodule VintageNet.Technology.Ethernet do
          {network_interfaces_path,
           ConfigToInterfaces.config_to_interfaces_contents(ifname, config)}
        ],
-       child_specs: [{VintageNet.Interface.ConnectivityChecker, ifname}],
+       child_specs: [{VintageNet.Interface.InternetConnectivityChecker, ifname}],
        # ifup hangs forever until Ethernet is plugged in
        up_cmd_millis: 60_000,
        up_cmds: [

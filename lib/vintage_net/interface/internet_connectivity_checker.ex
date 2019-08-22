@@ -1,10 +1,18 @@
-defmodule VintageNet.Interface.ConnectivityChecker do
+defmodule VintageNet.Interface.InternetConnectivityChecker do
   use GenServer
   require Logger
 
   alias VintageNet.{PropertyTable, RouteManager}
   alias VintageNet.Interface.InternetTester
 
+  @moduledoc """
+  This GenServer monitors a network interface for Internet connectivity
+
+  Internet connectivity is determined by reachability to an IP address.
+  If that address is reachable then other this updates a property to
+  reflect that. Otherwise, the network interface is assumed to merely
+  have LAN connectivity if it's up.
+  """
   @min_interval 500
   @max_interval 30_000
   @max_fails_in_a_row 3
