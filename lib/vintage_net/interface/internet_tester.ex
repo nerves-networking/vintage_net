@@ -30,6 +30,9 @@ defmodule VintageNet.Interface.InternetTester do
          {:ok, tcp} <- :gen_tcp.connect(dest_ip, @ping_port, [ip: src_ip], @ping_timeout) do
       _ = :gen_tcp.close(tcp)
       :ok
+    else
+      {:error, reason} -> {:error, reason}
+      posix_error -> {:error, posix_error}
     end
   end
 
