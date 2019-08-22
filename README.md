@@ -37,16 +37,18 @@ The following network configurations are supported:
 
 `VintageNet` takes a different approach to networking from `nerves_network`. It
 supports calling "old school" Linux utilities like `ifup` and `ifdown` to
-configure networks. While this isn't ideal, some network configurations are only
-documented for Linux systems and this can be a huge timesaver for getting an
-unusual network configuration working. `VintageNet` supports a migration path to
-pulling configuration back into Elixir piecemeal.  Additionally, `VintageNet`
-doesn't attempt to make incremental modifications to configurations. It
-completely tears down an interface's connection and then brings up new
-configurations in a fresh state. Network reconfiguration is assumed to be an
-infrequent event so while this can cause a hiccup in the network connectivity,
-it removes most of the state machine code that made `nerves_network` hard to
-maintain.
+configure networks. While this has many limitations, it can be a timesaver for
+migrating a known working Linux setup to Nerves. After that you can change the setup
+to call the `ip` command directly and supervise the daemons that you may need
+with [MuonTrap](https://github.com/fhunleth/muontrap). And from there you can
+replace C implementations with Elixir and Erlang ones if you desire.
+
+Another important difference is that `VintageNet` doesn't attempt to make
+incremental modifications to configurations. It completely tears down an
+interface's connection and then brings up new configurations in a fresh state.
+Network reconfiguration is assumed to be an infrequent event so while this can
+cause a hiccup in the network connectivity, it removes state machine code that
+made `nerves_network` hard to maintain.
 
 ## Installation
 
@@ -71,6 +73,10 @@ If you have your own custom Nerves system, it's possible to modify that system's
 Busybox configuration to enable all of the networking tools used by
 `vintage_net`. See the end of this document for the needed settings. If you do
 that, delete the `:busybox` dependency above.
+
+See
+[vintage_net_example](https://github.com/nerves-networking/vintage_net_example)
+for a minimal example project.
 
 ## Configuration
 
