@@ -2,8 +2,8 @@ defmodule VintageNet.Interface.InternetTester do
   @moduledoc """
   This module contains functions for testing whether the Internet is available.
 
-  See the ConnectivityChecker for a GenServer that checks on regular intervals
-  and updates VintageNet properties as needed.
+  See the InternetConnectivityChecker for a GenServer that checks on regular
+  intervals and updates VintageNet properties as needed.
   """
   @ping_port 80
   @ping_timeout 5_000
