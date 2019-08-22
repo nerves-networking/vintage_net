@@ -41,6 +41,7 @@ defmodule VintageNet.MixProject do
         bin_killall: "killall",
         bin_wpa_supplicant: "/usr/sbin/wpa_supplicant",
         bin_ip: "ip",
+        bin_udhcpc: "udhcpc",
         bin_udhcpd: "udhcpd",
         path: "/usr/sbin:/usr/bin:/sbin:/bin",
         udhcpc_handler: VintageNet.Interface.Udhcpc,
