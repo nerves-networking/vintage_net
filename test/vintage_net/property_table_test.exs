@@ -10,6 +10,22 @@ defmodule VintageNet.PropertyTableTest do
     {:ok, %{table: config.test}}
   end
 
+  @tag timeout: :infinity
+  test "wildcard events", %{table: table} do
+    name = ["test", :_, "abc"]
+    PropertyTable.subscribe(table, name)
+    PropertyTable.put(table, ["test", "a", "abc"], 1)
+    PropertyTable.put(table, ["test", "b", "abc"], 2)
+    PropertyTable.put(table, ["test", "c", "abc"], 3)
+    # require IEx; IEx.pry
+
+    assert_receive {table, ["test", "a", "abc"], 1}
+    assert_receive {table, ["test", "b", "abc"], 2}
+    assert_receive {table, ["test", "c", "abc"], 3}
+    PropertyTable.unsubscribe(table, name)
+
+  end
+
   test "sending events", %{table: table} do
     name = ["test"]
     PropertyTable.subscribe(table, name)

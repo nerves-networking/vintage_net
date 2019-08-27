@@ -122,7 +122,11 @@ defmodule VintageNet.PropertyTable do
   defdelegate clear_prefix(table, name), to: Table
 
   defp assert_name(name) do
-    Enum.all?(name, &is_binary/1) ||
+    Enum.all?(name, fn
+      name when is_binary(name) -> true
+      :_ -> true
+      _ -> false
+    end) ||
       raise ArgumentError, "Expected name or prefix to be a list of strings"
   end
 end

@@ -143,10 +143,21 @@ defmodule VintageNet.PropertyTable.Table do
     |> Enum.each(fn prefix -> dispatch_exact(registry, prefix, message) end)
   end
 
-  defp dispatch_exact(registry, name, message) do
-    Registry.dispatch(registry, name, fn entries ->
-      for {pid, _} <- entries, do: send(pid, message)
-    end)
+  defp dispatch_exact(registry, dispatch_name, message) do
+    names =
+      registry
+      |> Registry.keys(self())
+      |> IO.inspect(label: "before map")
+      |> Enum.map(fn(keys) ->
+        Enum.filter(keys, &matches_registry?(&1, dispatch_name))
+      end)
+      |> IO.inspect(label: "keys")
+
+    for _name <- names do
+      Registry.dispatch(registry, dispatch_name, fn entries ->
+        for {pid, _} <- entries, do: send(pid, message)
+      end)
+    end
   end
 
   defp all_prefixes(name) do
@@ -157,7 +168,23 @@ defmodule VintageNet.PropertyTable.Table do
   defp all_suffixes(acc, []), do: acc
 
   defp all_suffixes(acc, [_h | t]) do
+    IO.inspect(t, label: "t")
     reversed_t = Enum.reverse(t)
     all_suffixes([reversed_t | acc], t)
+  end
+
+  defp matches_registry?([:_ | pattern_names], [_name | names]) do
+    matches_registry?(pattern_names, names)
+  end
+
+  defp matches_registry?([name | patterns], [name | names]) do
+    matches_registry?(patterns, names)
+  end
+
+  defp matches_registry?([:_], _rest), do: true
+  defp matches_registry?([], []), do: true
+
+  defp matches_registry?([_pattern_name | _pattern_names], [_name | _names]) do
+    false
   end
 end
