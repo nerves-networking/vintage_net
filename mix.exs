@@ -88,7 +88,7 @@ defmodule VintageNet.MixProject do
       {:mix_test_watch, "~> 0.5", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.8", only: :test, runtime: false},
       {:dialyxir, "~> 1.0.0-rc.6", only: [:dev, :test], runtime: false},
-      {:muontrap, "~> 0.4.1"},
+      {:muontrap, "~> 0.5.0"},
       {:gen_state_machine, "~> 2.0.0"},
       {:busybox, "~> 0.1", optional: true}
     ]
