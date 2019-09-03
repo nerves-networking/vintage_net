@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.5.1
+
+* Bug fixes
+  * Add missing PSK conversion when configuring multiple WiFi networks. This
+    fixes a bug where backup networks wouldn't connect.
+
+* Improvements
+  * Don't poll WiFi networks that are configured for AP mode for Internet. They
+    will never have it.
+  * Reduce the number of calls to update routing tables. Previously they were
+    unnecessarily updated on DHCP failures due to timeouts. This also removes
+    quite a bit of noise from the log.
+  * Filter out interfaces with "Null" technologies on them from the configured
+    list. They really aren't configured so it was confusing to see them.
+
 ## v0.5.0
 
 Backwards incompatible change: The WiFi access point property (e.g.,
