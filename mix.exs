@@ -2,6 +2,7 @@ defmodule VintageNet.MixProject do
   use Mix.Project
 
   @version "0.5.1"
+  @source_url "https://github.com/nerves-networking/vintage_net"
 
   def project do
     [
@@ -77,7 +78,7 @@ defmodule VintageNet.MixProject do
         "CHANGELOG.md"
       ],
       licenses: ["Apache-2.0"],
-      links: %{"GitHub" => "https://github.com/nerves-networking/vintage_net"}
+      links: %{"GitHub" => @source_url}
     }
   end
 
@@ -108,7 +109,7 @@ defmodule VintageNet.MixProject do
       extras: ["README.md"],
       main: "readme",
       source_ref: "v#{@version}",
-      source_url: "https://github.com/nerves-networking/vintage_net"
+      source_url: @source_url
     ]
   end
 end
