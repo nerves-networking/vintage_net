@@ -37,7 +37,7 @@ jobs:
     docker:
       - image: erlang:22.0
         environment:
-          ELIXIR_VERSION: 1.9.0-otp-22
+          ELIXIR_VERSION: 1.9.1-otp-22
           LC_ALL: C.UTF-8
           COVERALLS_REPO_TOKEN: sp50A1O1w2fIHf8c6ED6iMRQvtLCTJbeu
     <<: *defaults
