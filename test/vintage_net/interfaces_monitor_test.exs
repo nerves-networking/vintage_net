@@ -114,7 +114,8 @@ defmodule VintageNet.InterfacesMonitorTest do
       family: :inet,
       scope: :universe,
       address: {192, 168, 9, 5},
-      netmask: {255, 255, 255, 0}
+      netmask: {255, 255, 255, 0},
+      prefix_length: 24
     }
 
     assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _before,
@@ -140,13 +141,15 @@ defmodule VintageNet.InterfacesMonitorTest do
                         family: :inet,
                         scope: :universe,
                         address: {192, 168, 10, 10},
-                        netmask: {255, 255, 255, 0}
+                        netmask: {255, 255, 255, 0},
+                        prefix_length: 24
                       },
                       %{
                         family: :inet,
                         scope: :universe,
                         address: {192, 168, 9, 5},
-                        netmask: {255, 255, 255, 0}
+                        netmask: {255, 255, 255, 0},
+                        prefix_length: 24
                       }
                     ], %{}}
 
@@ -168,7 +171,8 @@ defmodule VintageNet.InterfacesMonitorTest do
       family: :inet,
       scope: :universe,
       address: {192, 168, 9, 5},
-      netmask: {255, 255, 255, 0}
+      netmask: {255, 255, 255, 0},
+      prefix_length: 24
     }
 
     assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _before,
@@ -191,15 +195,16 @@ defmodule VintageNet.InterfacesMonitorTest do
        }}
     )
 
+    expected_address_info = %{
+      family: :inet6,
+      scope: :link,
+      address: {65152, 0, 0, 0, 45461, 64234, 43649, 26057},
+      netmask: {65535, 65535, 65535, 65535, 0, 0, 0, 0},
+      prefix_length: 64
+    }
+
     assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _before,
-                    [
-                      %{
-                        family: :inet6,
-                        scope: :link,
-                        address: {65152, 0, 0, 0, 45461, 64234, 43649, 26057},
-                        netmask: {65535, 65535, 65535, 65535, 0, 0, 0, 0}
-                      }
-                    ], %{}}
+                    [^expected_address_info], %{}}
   end
 
   test "address report beats link report" do
@@ -231,7 +236,8 @@ defmodule VintageNet.InterfacesMonitorTest do
                         family: :inet,
                         scope: :universe,
                         address: {192, 168, 9, 5},
-                        netmask: {255, 255, 255, 0}
+                        netmask: {255, 255, 255, 0},
+                        prefix_length: 24
                       }
                     ], %{}}
   end
