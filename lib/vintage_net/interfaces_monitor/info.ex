@@ -153,6 +153,7 @@ defmodule VintageNet.InterfacesMonitor.Info do
         family: report.family,
         scope: report.scope,
         address: report.address,
+        prefix_length: report.prefixlen,
         netmask: IP.prefix_length_to_subnet_mask(report.family, report.prefixlen)
       }
     end
