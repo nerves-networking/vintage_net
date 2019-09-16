@@ -153,8 +153,7 @@ defmodule VintageNet.InterfacesMonitor.Info do
         family: report.family,
         scope: report.scope,
         address: report.address,
-        netmask: compute_netmask(report.family, report.prefixlen),
-        broadcast: Map.get(report, :broadcast)
+        netmask: compute_netmask(report.family, report.prefixlen)
       }
     end
   end
