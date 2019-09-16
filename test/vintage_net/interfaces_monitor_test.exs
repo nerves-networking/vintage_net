@@ -101,7 +101,6 @@ defmodule VintageNet.InterfacesMonitorTest do
       {:newaddr, 56,
        %{
          address: {192, 168, 9, 5},
-         broadcast: {192, 168, 9, 255},
          family: :inet,
          label: "bogus0",
          local: {192, 168, 9, 5},
@@ -111,23 +110,21 @@ defmodule VintageNet.InterfacesMonitorTest do
        }}
     )
 
+    expected_address_info = %{
+      family: :inet,
+      scope: :universe,
+      address: {192, 168, 9, 5},
+      netmask: {255, 255, 255, 0}
+    }
+
     assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _before,
-                    [
-                      %{
-                        family: :inet,
-                        scope: :universe,
-                        address: {192, 168, 9, 5},
-                        netmask: {255, 255, 255, 0},
-                        broadcast: {192, 168, 9, 255}
-                      }
-                    ], %{}}
+                    [^expected_address_info], %{}}
 
     # Send a second IP address
     send_report(
       {:newaddr, 56,
        %{
          address: {192, 168, 10, 10},
-         broadcast: {192, 168, 10, 255},
          family: :inet,
          label: "bogus0",
          local: {192, 168, 10, 10},
@@ -143,15 +140,13 @@ defmodule VintageNet.InterfacesMonitorTest do
                         family: :inet,
                         scope: :universe,
                         address: {192, 168, 10, 10},
-                        netmask: {255, 255, 255, 0},
-                        broadcast: {192, 168, 10, 255}
+                        netmask: {255, 255, 255, 0}
                       },
                       %{
                         family: :inet,
                         scope: :universe,
                         address: {192, 168, 9, 5},
-                        netmask: {255, 255, 255, 0},
-                        broadcast: {192, 168, 9, 255}
+                        netmask: {255, 255, 255, 0}
                       }
                     ], %{}}
 
@@ -160,7 +155,6 @@ defmodule VintageNet.InterfacesMonitorTest do
       {:deladdr, 56,
        %{
          address: {192, 168, 10, 10},
-         broadcast: {192, 168, 10, 255},
          family: :inet,
          label: "bogus0",
          local: {192, 168, 10, 10},
@@ -170,16 +164,15 @@ defmodule VintageNet.InterfacesMonitorTest do
        }}
     )
 
+    expected_address_info = %{
+      family: :inet,
+      scope: :universe,
+      address: {192, 168, 9, 5},
+      netmask: {255, 255, 255, 0}
+    }
+
     assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _before,
-                    [
-                      %{
-                        family: :inet,
-                        scope: :universe,
-                        address: {192, 168, 9, 5},
-                        netmask: {255, 255, 255, 0},
-                        broadcast: {192, 168, 9, 255}
-                      }
-                    ], %{}}
+                    [^expected_address_info], %{}}
   end
 
   test "ipv6 addresses get reported" do
@@ -219,7 +212,6 @@ defmodule VintageNet.InterfacesMonitorTest do
       {:newaddr, 56,
        %{
          address: {192, 168, 9, 5},
-         broadcast: {192, 168, 9, 255},
          family: :inet,
          label: "bogus0",
          local: {192, 168, 9, 5},
@@ -239,8 +231,7 @@ defmodule VintageNet.InterfacesMonitorTest do
                         family: :inet,
                         scope: :universe,
                         address: {192, 168, 9, 5},
-                        netmask: {255, 255, 255, 0},
-                        broadcast: {192, 168, 9, 255}
+                        netmask: {255, 255, 255, 0}
                       }
                     ], %{}}
   end
@@ -254,7 +245,6 @@ defmodule VintageNet.InterfacesMonitorTest do
       {:deladdr, 56,
        %{
          address: {192, 168, 9, 5},
-         broadcast: {192, 168, 9, 255},
          family: :inet,
          label: "bogus0",
          local: {192, 168, 9, 5},
