@@ -51,7 +51,10 @@ defmodule VintageNet.MixProject do
         persistence_dir: "/root/vintage_net",
         persistence_secret: "obfuscate_things",
         internet_host: {1, 1, 1, 1},
-        regulatory_domain: "00"
+        regulatory_domain: "00",
+        # Contain processes in cgroups by setting to:
+        #   [cgroup_base: "vintage_net", cgroup_controllers: ["cpu"]]
+        muontrap_options: []
       ],
       extra_applications: [:logger],
       mod: {VintageNet.Application, []}
