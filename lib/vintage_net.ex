@@ -32,6 +32,34 @@ defmodule VintageNet do
   """
   @type ifname :: String.t()
 
+  @typedoc """
+  IP addresses in VintageNet can be specified as strings or tuples
+
+  While VintageNet uses IP addresses in tuple form internally, it can be
+  cumbersome to always convert to tuple form in practice. The general rule is
+  that VintageNet is flexible in how it accepts IP addresses, but if you get an
+  address from a VintageNet API, it will be in tuple form.
+  """
+  @type any_ip_address :: String.t() | :inet.ip_address()
+
+  @typedoc """
+  The number of IP address bits for the subnet
+  """
+  @type prefix_length :: ipv4_prefix_length() | ipv6_prefix_length()
+
+  @typedoc """
+  The number of bits to use for an IPv4 subnet
+
+  For example, if you have a subnet mask of 255.255.255.0, then the prefix
+  length would be 24.
+  """
+  @type ipv4_prefix_length :: 0..32
+
+  @typedoc """
+  The number of bits to use for an IPv6 subnet
+  """
+  @type ipv6_prefix_length :: 0..128
+
   @doc """
   Return a list of all interfaces on the system
   """

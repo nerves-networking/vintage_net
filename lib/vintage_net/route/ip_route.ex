@@ -6,7 +6,7 @@ defmodule VintageNet.Route.IPRoute do
   require Logger
 
   alias VintageNet.Route.Calculator
-  alias VintageNet.Command
+  alias VintageNet.{Command, IP}
 
   @doc """
   Add a default route
@@ -30,7 +30,7 @@ defmodule VintageNet.Route.IPRoute do
       "metric",
       to_string(metric),
       "via",
-      ip_to_string(route),
+      IP.ip_to_string(route),
       "dev",
       ifname
     ])
@@ -42,14 +42,14 @@ defmodule VintageNet.Route.IPRoute do
   @spec add_local_route(
           VintageNet.ifname(),
           :inet.ip_address(),
-          Calculator.subnet_bits(),
+          VintageNet.prefix_length(),
           Calculator.metric(),
           Calculator.table_index()
         ) ::
           :ok | {:error, any()}
   def add_local_route(ifname, ip, subnet_bits, metric, table_index) when is_integer(metric) do
-    subnet = Calculator.to_subnet(ip, subnet_bits)
-    subnet_string = ip_to_string(subnet) <> "/" <> to_string(subnet_bits)
+    subnet = IP.to_subnet(ip, subnet_bits)
+    subnet_string = IP.cidr_to_string(subnet, subnet_bits)
     table_index_string = table_index_to_string(table_index)
 
     ip_cmd([
@@ -65,7 +65,7 @@ defmodule VintageNet.Route.IPRoute do
       "scope",
       "link",
       "src",
-      ip_to_string(ip)
+      IP.ip_to_string(ip)
     ])
   end
 
@@ -76,7 +76,7 @@ defmodule VintageNet.Route.IPRoute do
   def add_rule(ip_address, table_index) do
     table_index_string = table_index_to_string(table_index)
 
-    ip_cmd(["rule", "add", "from", ip_to_string(ip_address), "lookup", table_index_string])
+    ip_cmd(["rule", "add", "from", IP.ip_to_string(ip_address), "lookup", table_index_string])
   end
 
   @doc """
@@ -134,14 +134,14 @@ defmodule VintageNet.Route.IPRoute do
   @spec clear_a_local_route(
           VintageNet.ifname(),
           :inet.ip_address(),
-          Calculator.subnet_bits(),
+          VintageNet.prefix_length(),
           Calculator.metric(),
           Calculator.table_index()
         ) ::
           :ok | {:error, any()}
   def clear_a_local_route(ifname, ip, subnet_bits, metric, table_index) when is_integer(metric) do
-    subnet = Calculator.to_subnet(ip, subnet_bits)
-    subnet_string = ip_to_string(subnet) <> "/" <> to_string(subnet_bits)
+    subnet = IP.to_subnet(ip, subnet_bits)
+    subnet_string = IP.cidr_to_string(subnet, subnet_bits)
     table_index_string = table_index_to_string(table_index)
 
     ip_cmd([
@@ -190,9 +190,5 @@ defmodule VintageNet.Route.IPRoute do
       {_, 0} -> :ok
       {message, _error} -> {:error, message}
     end
-  end
-
-  defp ip_to_string(ipa) do
-    :inet.ntoa(ipa) |> to_string()
   end
 end

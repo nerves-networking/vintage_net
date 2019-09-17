@@ -64,7 +64,7 @@ defmodule VintageNet.RouteManager do
   """
   @spec set_route(
           VintageNet.ifname(),
-          [{:inet.ip_address(), Calculator.subnet_bits()}],
+          [{:inet.ip_address(), VintageNet.prefix_length()}],
           :inet.ip_address(),
           Classification.connection_status()
         ) ::

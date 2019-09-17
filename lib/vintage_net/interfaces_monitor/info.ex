@@ -1,7 +1,7 @@
 defmodule VintageNet.InterfacesMonitor.Info do
   @moduledoc false
 
-  alias VintageNet.PropertyTable
+  alias VintageNet.{IP, PropertyTable}
 
   @link_if_properties [:lower_up, :mac_address]
   @address_if_properties [:addresses]
@@ -153,23 +153,8 @@ defmodule VintageNet.InterfacesMonitor.Info do
         family: report.family,
         scope: report.scope,
         address: report.address,
-        netmask: compute_netmask(report.family, report.prefixlen)
+        netmask: IP.prefix_length_to_subnet_mask(report.family, report.prefixlen)
       }
     end
-  end
-
-  defp compute_netmask(:inet, len) do
-    rest = 32 - len
-    <<a, b, c, d>> = <<-1::size(len), 0::size(rest)>>
-    {a, b, c, d}
-  end
-
-  defp compute_netmask(:inet6, len) do
-    rest = 128 - len
-
-    <<a::size(16), b::size(16), c::size(16), d::size(16), e::size(16), f::size(16), g::size(16),
-      h::size(16)>> = <<-1::size(len), 0::size(rest)>>
-
-    {a, b, c, d, e, f, g, h}
   end
 end

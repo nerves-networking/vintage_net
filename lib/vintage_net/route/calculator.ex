@@ -14,7 +14,6 @@ defmodule VintageNet.Route.Calculator do
   alias VintageNet.Route.InterfaceInfo
   alias VintageNet.Interface.Classification
 
-  @type subnet_bits :: 8..30
   @type table_index :: 0..255 | :main | :local | :default
   @type metric :: 0..32767
   @type rule :: {:rule, table_index(), :inet.ip_address()}
@@ -74,25 +73,6 @@ defmodule VintageNet.Route.Calculator do
     priority_a = elem(a, 0) |> sort_priority()
     priority_b = elem(b, 0) |> sort_priority()
     priority_a <= priority_b
-  end
-
-  @doc """
-  Utility function to trim IP address to its subnet
-
-  Examples:
-
-      iex> Calculator.to_subnet({192, 168, 1, 50}, 24)
-      {192, 168, 1, 0}
-
-      iex> Calculator.to_subnet({192, 168, 255, 50}, 22)
-      {192, 168, 252, 0}
-  """
-  @spec to_subnet(:inet.ip_address(), subnet_bits()) :: :inet.ip_address()
-  def to_subnet({a, b, c, d}, subnet_bits) when subnet_bits >= 8 and subnet_bits < 32 do
-    not_subnet_bits = 32 - subnet_bits
-    <<subnet::size(subnet_bits), _::size(not_subnet_bits)>> = <<a, b, c, d>>
-    <<new_a, new_b, new_c, new_d>> = <<subnet::size(subnet_bits), 0::size(not_subnet_bits)>>
-    {new_a, new_b, new_c, new_d}
   end
 
   defp make_entries({ifname, info}, {table_indices, entries}, prioritization) do
