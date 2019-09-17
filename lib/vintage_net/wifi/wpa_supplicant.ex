@@ -66,11 +66,20 @@ defmodule VintageNet.WiFi.WPASupplicant do
     control_paths = get_control_paths(state)
 
     # Wait for the wpa_supplicant to create its control files.
-    {:ok, control_path} = wait_for_control_file(control_paths)
+    primary_path =
+      case wait_for_control_file(control_paths) do
+        {:ok, [primary_path, secondary_path]} ->
+          {:ok, secondary_ll} = WPASupplicantLL.start_link(secondary_path)
+          :ok = WPASupplicantLL.subscribe(secondary_ll)
+          {:ok, "OK\n"} = WPASupplicantLL.control_request(secondary_ll, "ATTACH")
+          primary_path
 
-    {:ok, ll} = WPASupplicantLL.start_link(control_path)
+        {:ok, [primary_path]} ->
+          primary_path
+      end
+
+    {:ok, ll} = WPASupplicantLL.start_link(primary_path)
     :ok = WPASupplicantLL.subscribe(ll)
-
     {:ok, "OK\n"} = WPASupplicantLL.control_request(ll, "ATTACH")
 
     # Refresh the AP list
@@ -256,13 +265,20 @@ defmodule VintageNet.WiFi.WPASupplicant do
   end
 
   defp wait_for_control_file(paths, time_left) do
-    case Enum.find(paths, &File.exists?/1) do
-      nil ->
+    case Enum.filter(paths, &File.exists?/1) do
+      [] ->
         Process.sleep(250)
         wait_for_control_file(paths, time_left - 250)
 
-      path ->
-        {:ok, path}
+      found_paths when length(found_paths) < length(paths) ->
+        # I don't think that it's guaranteed that all paths are always created,
+        # so all this to work, but with a penalty just in case the others show
+        # up momentarily.
+        Process.sleep(100)
+        Enum.filter(paths, &File.exists?/1)
+
+      paths ->
+        {:ok, paths}
     end
   end
 end

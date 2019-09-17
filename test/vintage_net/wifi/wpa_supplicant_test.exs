@@ -10,11 +10,16 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
 
     mock = start_supervised!({MockWPASupplicant, Path.join(socket_path, "test_wlan0")})
 
+    p2p_dev_mock =
+      start_supervised!({MockWPASupplicant, Path.join(socket_path, "p2p-dev-test_wlan0")},
+        id: :p2p_dev
+      )
+
     on_exit(fn ->
       _ = File.rm_rf(socket_path)
     end)
 
-    {:ok, socket_path: socket_path, mock: mock}
+    {:ok, socket_path: socket_path, mock: mock, p2p_dev_mock: p2p_dev_mock}
   end
 
   test "attaches to wpa_supplicant", context do
@@ -84,6 +89,11 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
 
   test "ap-mode station connect updates property", context do
     MockWPASupplicant.set_responses(context.mock, %{
+      "ATTACH" => "OK\n",
+      "PING" => "PONG\n"
+    })
+
+    MockWPASupplicant.set_responses(context.p2p_dev_mock, %{
       "ATTACH" => "OK\n",
       "PING" => "PONG\n"
     })
