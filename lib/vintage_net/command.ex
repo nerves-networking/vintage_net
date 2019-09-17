@@ -18,9 +18,20 @@ defmodule VintageNet.Command do
   @spec muon_cmd(binary(), [binary()], keyword()) ::
           {Collectable.t(), exit_status :: non_neg_integer()}
   def muon_cmd(command, args, opts \\ []) do
-    new_opts = force_path_env(opts)
+    new_opts = opts |> force_path_env() |> add_muon_options()
 
     MuonTrap.cmd(command, args, new_opts)
+  end
+
+  @doc """
+  Add common options for MuonTrap
+  """
+  @spec add_muon_options(keyword()) :: keyword()
+  def add_muon_options(opts) do
+    Keyword.merge(
+      opts,
+      Application.get_env(:vintage_net, :muontrap_options)
+    )
   end
 
   defp force_path_env(opts) do
