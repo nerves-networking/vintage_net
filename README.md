@@ -103,8 +103,10 @@ but not globally.
 
 The `config` section is a list of network configurations. The one shown above
 configures DHCP on wired Ethernet and minimally starts up a WiFi LAN so that
-it's possible to scan for networks. Details on network configuration are
-described later.
+it's possible to scan for networks. The typical setup is to provide generic
+defaults here. Static IP addresses, WiFi SSIDs and credentials are more
+appropriately configured at run-time. `VintageNet` persists configurations too.
+Details on network configuration are described later.
 
 The following table describes the other application config keys.
 
@@ -165,18 +167,39 @@ The following sections describe the types in more detail.
 Wired Ethernet interfaces typically have names like `"eth0"`, `"eth1"`, etc.
 when using Nerves.
 
-Currently only IPv4 support using DHCP is supported:
+An example configuration for enabling an Ethernet interface that dynamically
+gets an IP address is:
 
 ```elixir
-%{type: VintageNet.Technology.Ethernet, ipv4: %{method: :dhcp}}
+config :vintage_net,
+  config: [
+    {"eth0",
+     %{
+       type: VintageNet.Technology.Ethernet,
+       ipv4: %{
+         method: :dhcp
+       }
+     }}
+  ]
 ```
 
-For example, to set the configuration at runtime:
+You can also set the configuration at runtime:
 
 ```elixir
 iex> VintageNet.configure("eth0", %{type: VintageNet.Technology.Ethernet, ipv4: %{method: :dhcp}})
 :ok
 ```
+
+The following fields are supported:
+
+* `:method` - Set to `:dhcp`, `:static`, or `:disabled`. If `:static`, then at
+  least an IP address and mask need to be set. `:disabled` enables the interface
+  and doesn't apply an IP configuration
+* `:address` - the IP address for static IP addresses
+* `:prefix_length` - the number of bits in the IP address to use for the subnet
+  (e.g., 24)
+* `:netmask` - either this or `prefix_length` is used to determine the subnet.
+* `:gateway` - the default gateway for this interface (optional)
 
 Wired Ethernet connections are monitored for Internet connectivity. When
 internet-connected, they are preferred over all other network technologies even
@@ -189,23 +212,27 @@ using Nerves. Most of the time, there's only one WiFi interface and its
 `"wlan0"`. Some WiFi adapters expose separate interfaces for 2.4 GHz and 5 GHz
 and they can be configured independently.
 
-WiFi configuration looks like this:
+An example WiFi configuration looks like this:
 
 ```elixir
-%{
-  type: VintageNet.Technology.WiFi,
-  wifi: %{
-    key_mgmt: :wpa_psk,
-    mode: :client,
-    psk: "a_passphrase_or_psk",
-    ssid: "my_network_ssid"
-  },
-  ipv4: %{method: :dhcp}
-}
+config :vintage_net,
+  config: [
+    {"wlan0",
+     %{
+       type: VintageNet.Technology.WiFi,
+       wifi: %{
+         key_mgmt: :wpa_psk,
+         psk: "a_passphrase_or_psk",
+         ssid: "my_network_ssid"
+       },
+       ipv4: %{
+         method: :dhcp
+       }
+     }}
+  ]
 ```
 
-The `:ipv4` key is the same as in Wired Ethernet and only DHCP is currently
-supported.
+The `:ipv4` key is the same as in Wired Ethernet.
 
 The `:wifi` key has the following common fields:
 
@@ -218,7 +245,9 @@ The `:wifi` key has the following common fields:
 * `:psk` - A WPA2 passphrase or the raw PSK. If a passphrase is passed in, it
   will be converted to a PSK and discarded.
 * `:ssid` - The SSID for the network
-* `:bgscan` - Periodic background scanning. See the link below for more information.
+* `:ap_scan` -  See `wpa_supplicant` documentation. The default for this, 1,
+  should work for nearly all users.
+* `:bgscan` - Periodic background scanning to support roaming within an ESS.
   * `:simple`
   * `{:simple, args}` - args is a string to be passed to the `simple` wpa module
   * `:learn`
@@ -267,7 +296,9 @@ iex> VintageNet.configure("wlan0", %{
     })
 ```
 
-Example of WPA-EAP:
+Enterprise Wi-Fi (WPA-EAP) support mostly passes through to the
+`wpa_supplicant`. Instructions for enterprise network for Linux
+should map. For example:
 
 ```elixir
 iex> VintageNet.configure("wlan0", %{
@@ -288,7 +319,7 @@ iex> VintageNet.configure("wlan0", %{
 })
 ```
 
-Example of access point mode:
+Network adapters that can run as an Access Point can be configured as follows:
 
 ```elixir
 iex> VintageNet.configure("wlan0", %{
@@ -310,7 +341,10 @@ iex> VintageNet.configure("wlan0", %{
 })
 ```
 
-Example of setting regulatory domain:
+If your device may be installed in different countries, you should override the
+default regulatory domain to the desired country at runtime.  VintageNet uses
+the global domain by default and that likely will restrict the set of available
+Wi-Fi frequencies in some countries. For example:
 
 ```elixir
 iex> VintageNet.configure("wlan0", %{
