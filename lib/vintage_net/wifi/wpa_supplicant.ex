@@ -299,7 +299,7 @@ defmodule VintageNet.WiFi.WPASupplicant do
         # so all this to work, but with a penalty just in case the others show
         # up momentarily.
         Process.sleep(100)
-        Enum.filter(paths, &File.exists?/1)
+        {:ok, Enum.filter(paths, &File.exists?/1)}
 
       paths ->
         {:ok, paths}
