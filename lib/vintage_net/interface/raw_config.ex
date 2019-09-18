@@ -50,7 +50,7 @@ defmodule VintageNet.Interface.RawConfig do
           retry_millis: non_neg_integer(),
           files: [file_contents()],
           restart_strategy: Supervisor.strategy(),
-          child_specs: [Supervisor.child_spec()],
+          child_specs: [Supervisor.child_spec() | {module(), term()} | module()],
           up_cmd_millis: non_neg_integer(),
           up_cmds: [command()],
           down_cmd_millis: non_neg_integer(),
