@@ -61,29 +61,30 @@ defmodule VintageNet.Interface do
   def to_raw_config(ifname, config) do
     opts = Application.get_all_env(:vintage_net)
 
-    with {:ok, technology} <- Map.fetch(config, :type),
-         {:ok, raw_config} <- technology.to_raw_config(ifname, config, opts) do
+    try do
+      technology = technology_from_config(config)
+      raw_config = technology.to_raw_config(ifname, config, opts)
       {:ok, raw_config}
-    else
-      :error -> {:error, :type_missing}
-      {:error, reason} -> {:error, reason}
+    rescue
+      error in ArgumentError -> {:error, error.message}
     end
   end
 
   @doc """
   Set a configuration on an interface
+
+  Configurations with invalid parameters raise exceptions. It's
+  still possible that network configurations won't work even if they
+  don't raise, but it should be due to something in the environment.
+  For example, a network cable isn't plugged in or a WiFi access point
+  is out of range.
   """
-  @spec configure(VintageNet.ifname(), map()) :: :ok | {:error, any()}
+  @spec configure(VintageNet.ifname(), map()) :: :ok
   def configure(ifname, config) do
     opts = Application.get_all_env(:vintage_net)
-
-    with {:ok, technology} <- Map.fetch(config, :type),
-         {:ok, raw_config} <- technology.to_raw_config(ifname, config, opts) do
-      configure(raw_config)
-    else
-      :error -> {:error, :type_missing}
-      {:error, reason} -> {:error, reason}
-    end
+    technology = technology_from_config(config)
+    raw_config = technology.to_raw_config(ifname, config, opts)
+    configure(raw_config)
   end
 
   @doc """
@@ -93,6 +94,17 @@ defmodule VintageNet.Interface do
   def configure(raw_config) do
     GenStateMachine.call(via_name(raw_config.ifname), {:configure, raw_config})
   end
+
+  defp technology_from_config(%{type: type}), do: type
+
+  defp technology_from_config(_missing),
+    do:
+      raise(ArgumentError, """
+      Missing :type field.
+
+      See the help for VintageNet.Technology.Ethernet and VintageNet.Technology.WiFi for
+      example configurations.
+      """)
 
   @doc """
   Return the current configuration
@@ -658,8 +670,7 @@ defmodule VintageNet.Interface do
   end
 
   defp null_raw_config(ifname) do
-    {:ok, config} = VintageNet.Technology.Null.to_raw_config(ifname)
-    config
+    VintageNet.Technology.Null.to_raw_config(ifname)
   end
 
   defp cleanup_interface(ifname) do

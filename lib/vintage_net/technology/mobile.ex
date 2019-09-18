@@ -4,7 +4,7 @@ defmodule VintageNet.Technology.Mobile do
   alias VintageNet.Interface.RawConfig
 
   @impl true
-  def normalize(%{type: __MODULE__} = config), do: {:ok, config}
+  def normalize(%{type: __MODULE__} = config), do: config
 
   @impl true
   def to_raw_config(ifname, %{type: __MODULE__, pppd: pppd_config} = config, opts) do
@@ -24,15 +24,14 @@ defmodule VintageNet.Technology.Mobile do
       {:run, killall, ["-q", "pppd"]}
     ]
 
-    {:ok,
-     %RawConfig{
-       ifname: ifname,
-       type: __MODULE__,
-       source_config: config,
-       files: files,
-       up_cmds: up_cmds,
-       down_cmds: down_cmds
-     }}
+    %RawConfig{
+      ifname: ifname,
+      type: __MODULE__,
+      source_config: config,
+      files: files,
+      up_cmds: up_cmds,
+      down_cmds: down_cmds
+    }
   end
 
   def to_raw_config(_ifname, _config, _opts) do

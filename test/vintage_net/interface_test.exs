@@ -31,7 +31,7 @@ defmodule VintageNet.InterfaceTest do
 
   test "starting null interface", context do
     in_tmp(context.test, fn ->
-      {:ok, raw_config} = VintageNet.Technology.Null.to_raw_config(@ifname)
+      raw_config = VintageNet.Technology.Null.to_raw_config(@ifname)
       start_and_configure(raw_config)
 
       refute @ifname in VintageNet.configured_interfaces()
@@ -57,7 +57,7 @@ defmodule VintageNet.InterfaceTest do
 
   test "getting the configuration", context do
     in_tmp(context.test, fn ->
-      {:ok, raw_config} = VintageNet.Technology.Null.to_raw_config(@ifname)
+      raw_config = VintageNet.Technology.Null.to_raw_config(@ifname)
       start_and_configure(raw_config)
 
       assert %{type: VintageNet.Technology.Null} == VintageNet.get_configuration(@ifname)

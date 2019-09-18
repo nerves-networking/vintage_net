@@ -27,7 +27,9 @@ defmodule VintageNetTest do
   end
 
   test "configure fails on bad technologies" do
-    assert {:error, :type_missing} == VintageNet.configure("eth0", %{})
+    assert {:error,
+            "Missing :type field.\n\nSee the help for VintageNet.Technology.Ethernet and VintageNet.Technology.WiFi for\nexample configurations.\n"} ==
+             VintageNet.configure("eth0", %{})
   end
 
   @tag :requires_interfaces_monitor

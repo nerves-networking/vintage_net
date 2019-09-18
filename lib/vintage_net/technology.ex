@@ -11,16 +11,22 @@ defmodule VintageNet.Technology do
   @doc """
   Normalize a configuration
 
-  Technologies can use this to update provided configurations so that same configurations that could
-  be specified in multiple ways have a single representation.
+  Technologies use this to update input configurations to a canonical
+  representation. This includes things like inserting default fields, converting
+  IP addresses passed in as strings to tuples, and deriving parameters so
+  that they need not be derived again in the future.
+
+  Configuration errors raise exceptions.
   """
-  @callback normalize(config :: map()) :: {:ok, map()} | {:error, any()}
+  @callback normalize(config :: map()) :: map()
 
   @doc """
   Convert a technology-specific configuration to one for VintageNet
+
+  Configuration errors raise exceptions.
   """
   @callback to_raw_config(VintageNet.ifname(), config :: map(), opts :: keyword()) ::
-              {:ok, RawConfig.t()} | {:error, any()}
+              RawConfig.t()
 
   @doc """
   Handle an ioctl that has been requested on the network interface

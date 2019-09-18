@@ -84,6 +84,17 @@ defmodule VintageNet do
 
   @doc """
   Update the settings for the specified interface
+
+  Configurations are validated and normalized before being applied.  This means
+  that type errors and missing required fields will be caught and old or
+  redundant ways of specifying configurations will be fixed.  Call
+  `get_configuration/1` to see how what changes, if any, were made as part of
+  the normalization process.
+
+  After validation, the configuration is persisted and applied.
+
+  See the `VintageNet` documentation for configuration examples or your
+  `VintageNet.Technology` provider's docs.
   """
   @spec configure(ifname(), map()) :: :ok | {:error, any()}
   def configure(ifname, config) do
@@ -92,9 +103,9 @@ defmodule VintageNet do
     # next step is to persist the config. This is important since if the
     # Interface GenServer ever crashes and restarts, we want it to use this new
     # config. `maybe_start_interface` might start up an Interface GenServer. If
-    # it does, then it will reach into reach into Persistence for the config
-    # and it would be bad for it to get an old config. If a GenServer isn't
-    # started, configure the running one.
+    # it does, then it will reach into Persistence for the config and it would
+    # be bad for it to get an old config. If a GenServer isn't started,
+    # configure the running one.
     with {:ok, raw_config} <- Interface.to_raw_config(ifname, config),
          :ok <- Persistence.call(:save, [ifname, config]),
          {:error, :already_started} <- maybe_start_interface(ifname) do
@@ -126,9 +137,11 @@ defmodule VintageNet do
   """
   @spec configuration_valid?(ifname(), map()) :: boolean()
   def configuration_valid?(ifname, config) do
-    case Interface.to_raw_config(ifname, config) do
-      {:ok, _raw_config} -> true
-      _ -> false
+    try do
+      _raw_config = Interface.to_raw_config(ifname, config)
+      true
+    rescue
+      ArgumentError -> false
     end
   end
 

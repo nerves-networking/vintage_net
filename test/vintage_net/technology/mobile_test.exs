@@ -82,6 +82,6 @@ defmodule VintageNet.Technology.MobileTest do
 
     output = ppp_output(input)
 
-    assert {:ok, output} == Mobile.to_raw_config("ppp0", input, default_opts())
+    assert output == Mobile.to_raw_config("ppp0", input, default_opts())
   end
 end

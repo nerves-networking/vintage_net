@@ -10,17 +10,16 @@ defmodule VintageNet.Technology.Null do
   """
 
   @impl true
-  def normalize(_config), do: {:ok, @null_config}
+  def normalize(_config), do: @null_config
 
   @impl true
   def to_raw_config(ifname, _config \\ %{}, _opts \\ []) do
-    {:ok,
-     %RawConfig{
-       ifname: ifname,
-       type: __MODULE__,
-       source_config: @null_config,
-       require_interface: false
-     }}
+    %RawConfig{
+      ifname: ifname,
+      type: __MODULE__,
+      source_config: @null_config,
+      require_interface: false
+    }
   end
 
   @impl true

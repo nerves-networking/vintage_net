@@ -5,11 +5,6 @@ defmodule VintageNet.Technology.WiFiTest do
 
   import VintageNetTest.Utils
 
-  defp normalize_config(config) do
-    {:ok, normalized} = WiFi.normalize(config)
-    normalized
-  end
-
   test "normalization converts passphrases to psks" do
     input = %{
       type: VintageNet.Technology.WiFi,
@@ -29,7 +24,7 @@ defmodule VintageNet.Technology.WiFiTest do
       }
     }
 
-    assert {:ok, normalized_input} == WiFi.normalize(input)
+    assert normalized_input == WiFi.normalize(input)
   end
 
   test "normalization converts passphrases to psks for multiple networks" do
@@ -73,7 +68,7 @@ defmodule VintageNet.Technology.WiFiTest do
       }
     }
 
-    assert {:ok, normalized_input} == WiFi.normalize(input)
+    assert normalized_input == WiFi.normalize(input)
   end
 
   test "create a WPA2 WiFi configuration" do
@@ -91,7 +86,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -128,7 +123,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "Set regulatory_domain at runtime" do
@@ -144,7 +139,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -178,7 +173,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "create a WPA2 WiFi configuration with passphrase" do
@@ -196,7 +191,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -233,7 +228,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "create a password-less WiFi configuration" do
@@ -250,7 +245,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -286,7 +281,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "create a WEP WiFi configuration" do
@@ -309,7 +304,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -351,7 +346,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "create a hidden WiFi configuration" do
@@ -370,7 +365,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -408,7 +403,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "create a basic EAP network" do
@@ -433,7 +428,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -477,7 +472,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "WPA-Personal(PSK) with TKIP and enforcement for frequent PTK rekeying" do
@@ -499,7 +494,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -539,7 +534,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "Only WPA-EAP is used. Both CCMP and TKIP is accepted" do
@@ -565,7 +560,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -609,7 +604,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "EAP-PEAP/MSCHAPv2 configuration for RADIUS servers that use the new peaplabel" do
@@ -633,7 +628,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -676,7 +671,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "EAP-TTLS/EAP-MD5-Challenge configuration with anonymous identity" do
@@ -699,7 +694,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -741,7 +736,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "WPA-EAP, EAP-TTLS with different CA certificate used for outer and inner authentication" do
@@ -767,7 +762,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -812,7 +807,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "EAP-SIM with a GSM SIM or USIM" do
@@ -832,7 +827,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -871,7 +866,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "EAP PSK" do
@@ -892,7 +887,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -932,7 +927,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "IEEE 802.1X/EAPOL with dynamically generated WEP keys" do
@@ -956,7 +951,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -999,7 +994,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "configuration blacklisting two APs" do
@@ -1017,7 +1012,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -1054,7 +1049,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "configuration limiting AP selection to a specific set of APs" do
@@ -1072,7 +1067,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -1109,7 +1104,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "host AP mode" do
@@ -1128,7 +1123,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -1169,7 +1164,7 @@ defmodule VintageNet.Technology.WiFiTest do
       ]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "create a multi-network WiFi configuration" do
@@ -1206,7 +1201,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -1256,7 +1251,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "creates a static ip config" do
@@ -1285,7 +1280,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -1335,7 +1330,7 @@ defmodule VintageNet.Technology.WiFiTest do
       cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
   test "create a dhcpd config" do
@@ -1365,7 +1360,7 @@ defmodule VintageNet.Technology.WiFiTest do
     output = %RawConfig{
       ifname: "wlan0",
       type: VintageNet.Technology.WiFi,
-      source_config: normalize_config(input),
+      source_config: WiFi.normalize(input),
       child_specs: [
         {VintageNet.Interface.LANConnectivityChecker, "wlan0"},
         {VintageNet.WiFi.WPASupplicant,
@@ -1428,6 +1423,6 @@ defmodule VintageNet.Technology.WiFiTest do
       ]
     }
 
-    assert {:ok, output} == WiFi.to_raw_config("wlan0", input, default_opts())
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 end

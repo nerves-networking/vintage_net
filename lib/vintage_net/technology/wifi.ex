@@ -9,7 +9,7 @@ defmodule VintageNet.Technology.WiFi do
   def normalize(%{type: __MODULE__, wifi: %{ssid: ssid, psk: psk}} = config) do
     # If the user passes in a passphrase for the PSK, change it to a PSK
     {:ok, real_psk} = WPA2.to_psk(ssid, psk)
-    {:ok, put_in(config.wifi.psk, real_psk)}
+    put_in(config.wifi.psk, real_psk)
   end
 
   def normalize(%{type: __MODULE__, wifi: %{networks: networks}} = config) do
@@ -24,10 +24,10 @@ defmodule VintageNet.Technology.WiFi do
           network
       end)
 
-    {:ok, put_in(config.wifi.networks, networks)}
+    put_in(config.wifi.networks, networks)
   end
 
-  def normalize(%{type: __MODULE__} = config), do: {:ok, config}
+  def normalize(%{type: __MODULE__} = config), do: config
 
   @impl true
   def to_raw_config(ifname, %{type: __MODULE__, wifi: %{}} = config, opts) do
@@ -43,7 +43,7 @@ defmodule VintageNet.Technology.WiFi do
     control_interface_paths = ctrl_interface_paths(ifname, control_interface_dir, config)
     ap_mode = ap_mode?(config)
 
-    {:ok, normalized_config} = normalize(config)
+    normalized_config = normalize(config)
 
     files = [
       {network_interfaces_path,
@@ -67,48 +67,46 @@ defmodule VintageNet.Technology.WiFi do
 
     case maybe_add_udhcpd(ifname, normalized_config, opts) do
       {udhcpd_files, udhcpd_up_cmds, udhcpd_down_cmds} ->
-        {:ok,
-         %RawConfig{
-           ifname: ifname,
-           type: __MODULE__,
-           source_config: normalized_config,
-           files: files ++ udhcpd_files,
-           cleanup_files: control_interface_paths,
-           child_specs: [
-             {VintageNet.Interface.LANConnectivityChecker, ifname},
-             {WPASupplicant,
-              wpa_supplicant: wpa_supplicant,
-              ifname: ifname,
-              wpa_supplicant_conf_path: wpa_supplicant_conf_path,
-              control_path: control_interface_dir,
-              ap_mode: ap_mode}
-           ],
-           up_cmds: up_cmds ++ udhcpd_up_cmds,
-           up_cmd_millis: 60_000,
-           down_cmds: down_cmds ++ udhcpd_down_cmds
-         }}
+        %RawConfig{
+          ifname: ifname,
+          type: __MODULE__,
+          source_config: normalized_config,
+          files: files ++ udhcpd_files,
+          cleanup_files: control_interface_paths,
+          child_specs: [
+            {VintageNet.Interface.LANConnectivityChecker, ifname},
+            {WPASupplicant,
+             wpa_supplicant: wpa_supplicant,
+             ifname: ifname,
+             wpa_supplicant_conf_path: wpa_supplicant_conf_path,
+             control_path: control_interface_dir,
+             ap_mode: ap_mode}
+          ],
+          up_cmds: up_cmds ++ udhcpd_up_cmds,
+          up_cmd_millis: 60_000,
+          down_cmds: down_cmds ++ udhcpd_down_cmds
+        }
 
       nil ->
-        {:ok,
-         %RawConfig{
-           ifname: ifname,
-           type: __MODULE__,
-           source_config: normalized_config,
-           files: files,
-           cleanup_files: control_interface_paths,
-           child_specs: [
-             {VintageNet.Interface.InternetConnectivityChecker, ifname},
-             {WPASupplicant,
-              wpa_supplicant: wpa_supplicant,
-              ifname: ifname,
-              wpa_supplicant_conf_path: wpa_supplicant_conf_path,
-              control_path: control_interface_dir,
-              ap_mode: ap_mode}
-           ],
-           up_cmds: up_cmds,
-           up_cmd_millis: 60_000,
-           down_cmds: down_cmds
-         }}
+        %RawConfig{
+          ifname: ifname,
+          type: __MODULE__,
+          source_config: normalized_config,
+          files: files,
+          cleanup_files: control_interface_paths,
+          child_specs: [
+            {VintageNet.Interface.InternetConnectivityChecker, ifname},
+            {WPASupplicant,
+             wpa_supplicant: wpa_supplicant,
+             ifname: ifname,
+             wpa_supplicant_conf_path: wpa_supplicant_conf_path,
+             control_path: control_interface_dir,
+             ap_mode: ap_mode}
+          ],
+          up_cmds: up_cmds,
+          up_cmd_millis: 60_000,
+          down_cmds: down_cmds
+        }
     end
   end
 
@@ -124,27 +122,22 @@ defmodule VintageNet.Technology.WiFi do
       {wpa_supplicant_conf_path, "ctrl_interface=#{control_interface_dir}"}
     ]
 
-    {:ok,
-     %RawConfig{
-       ifname: ifname,
-       type: __MODULE__,
-       source_config: %{type: __MODULE__},
-       files: files,
-       child_specs: [
-         {VintageNet.Interface.InternetConnectivityChecker, ifname},
-         {WPASupplicant,
-          wpa_supplicant: wpa_supplicant,
-          ifname: ifname,
-          wpa_supplicant_conf_path: wpa_supplicant_conf_path,
-          control_path: control_interface_dir,
-          ap_mode: false}
-       ],
-       cleanup_files: control_interface_paths
-     }}
-  end
-
-  def to_raw_config(_ifname, _config, _opts) do
-    {:error, :bad_configuration}
+    %RawConfig{
+      ifname: ifname,
+      type: __MODULE__,
+      source_config: %{type: __MODULE__},
+      files: files,
+      child_specs: [
+        {VintageNet.Interface.InternetConnectivityChecker, ifname},
+        {WPASupplicant,
+         wpa_supplicant: wpa_supplicant,
+         ifname: ifname,
+         wpa_supplicant_conf_path: wpa_supplicant_conf_path,
+         control_path: control_interface_dir,
+         ap_mode: false}
+      ],
+      cleanup_files: control_interface_paths
+    }
   end
 
   defp maybe_add_udhcpd(ifname, %{dhcpd: _dhcpd} = config, opts) do

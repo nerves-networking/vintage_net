@@ -26,7 +26,7 @@ defmodule VintageNet.Technology.EthernetTest do
       ]
     }
 
-    assert {:ok, output} == Ethernet.to_raw_config("eth0", input, default_opts())
+    assert output == Ethernet.to_raw_config("eth0", input, default_opts())
   end
 
   test "create a wired ethernet configuration with static IP" do
@@ -66,6 +66,6 @@ defmodule VintageNet.Technology.EthernetTest do
       ]
     }
 
-    assert {:ok, output} == Ethernet.to_raw_config("eth0", input, default_opts())
+    assert output == Ethernet.to_raw_config("eth0", input, default_opts())
   end
 end

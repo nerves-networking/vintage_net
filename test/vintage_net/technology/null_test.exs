@@ -5,7 +5,7 @@ defmodule VintageNet.Technology.NullTest do
 
   test "normalizing null" do
     # Normalizing anything to Null should be Null
-    assert {:ok, %{type: VintageNet.Technology.Null} == Null.normalize(%{})}
+    assert %{type: VintageNet.Technology.Null} == Null.normalize(%{})
   end
 
   test "converting to raw config" do
@@ -22,6 +22,6 @@ defmodule VintageNet.Technology.NullTest do
       require_interface: false
     }
 
-    assert {:ok, output} == Null.to_raw_config("eth0", input, [])
+    assert output == Null.to_raw_config("eth0", input, [])
   end
 end
