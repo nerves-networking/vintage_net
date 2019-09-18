@@ -224,6 +224,11 @@ defmodule VintageNet.WiFi.WPASupplicant do
     exit(:wpa_supplicant_terminated)
   end
 
+  defp handle_notification({:info, message}, state) do
+    _ = Logger.info("wpa_supplicant(#{state.ifname}): #{message}")
+    state
+  end
+
   defp handle_notification(unhandled, state) do
     _ = Logger.info("WPASupplicant ignoring #{inspect(unhandled)}")
     state
