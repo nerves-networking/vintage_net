@@ -6,7 +6,7 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
 
   setup do
     socket_path = "test_tmp/tmp_wpa_supplicant_socket"
-    File.mkdir!(socket_path)
+    File.mkdir_p!(socket_path)
 
     mock = start_supervised!({MockWPASupplicant, Path.join(socket_path, "test_wlan0")})
 
