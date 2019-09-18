@@ -218,6 +218,12 @@ defmodule VintageNet.WiFi.WPASupplicant do
     new_state
   end
 
+  defp handle_notification({:event, "CTRL-EVENT-TERMINATING"}, _state) do
+    # This really shouldn't happen. The only way I know how to cause this
+    # is to send a SIGTERM to the wpa_supplicant.
+    exit(:wpa_supplicant_terminated)
+  end
+
   defp handle_notification(unhandled, state) do
     _ = Logger.info("WPASupplicant ignoring #{inspect(unhandled)}")
     state
