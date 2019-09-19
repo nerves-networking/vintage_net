@@ -19,7 +19,8 @@ defmodule VintageNet.WiFi.WPA2 do
 
   See IEEE Std 802.11i-2004 Appendix H.4 for the algorithm.
   """
-  @spec to_psk(String.t(), psk() | String.t()) :: {:ok, psk()} | {:error, atom()}
+  @spec to_psk(String.t(), psk() | String.t()) ::
+          {:ok, psk()} | {:error, :ssid_too_long | :password_too_long | :invalid_characters}
   def to_psk(ssid, psk) when byte_size(psk) == 64 do
     with :ok <- psk_ok(psk),
          :ok <- ssid_ok(ssid) do
@@ -82,7 +83,7 @@ defmodule VintageNet.WiFi.WPA2 do
   end
 
   defp ssid_ok(ssid) when byte_size(ssid) <= 32, do: :ok
-  defp ssid_ok(_password), do: {:error, :ssid_too_long}
+  defp ssid_ok(_ssid), do: {:error, :ssid_too_long}
 
   defp all_ascii(<<c, rest::binary>>) when c >= 32 and c <= 126 do
     all_ascii(rest)
