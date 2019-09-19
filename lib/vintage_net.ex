@@ -137,11 +137,9 @@ defmodule VintageNet do
   """
   @spec configuration_valid?(ifname(), map()) :: boolean()
   def configuration_valid?(ifname, config) do
-    try do
-      _raw_config = Interface.to_raw_config(ifname, config)
-      true
-    rescue
-      ArgumentError -> false
+    case Interface.to_raw_config(ifname, config) do
+      {:ok, _raw_config} -> true
+      _ -> false
     end
   end
 
