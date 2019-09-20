@@ -186,7 +186,7 @@ defmodule VintageNet.Technology.WiFi do
       into_config_string(wifi, :ap_scan)
     ]
 
-    iodata = into_newlines(config) ++ into_wifi_network_config(wifi)
+    iodata = [into_newlines(config), into_wifi_network_config(wifi)]
     IO.iodata_to_binary(iodata)
   end
 
