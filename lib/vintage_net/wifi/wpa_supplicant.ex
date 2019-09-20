@@ -81,7 +81,7 @@ defmodule VintageNet.WiFi.WPASupplicant do
         MuonTrap.Daemon.start_link(
           state.wpa_supplicant,
           ["-i", state.ifname, "-c", state.wpa_supplicant_conf_path, "-dd"],
-          VintageNet.Command.add_muon_options([])
+          VintageNet.Command.add_muon_options(stderr_to_stdout: true, log_output: :debug)
         )
       else
         # No wpa_supplicant. The assumption is that someone else started it.
