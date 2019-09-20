@@ -31,6 +31,31 @@ defmodule VintageNet.Technology.WiFiTest do
            end) =~ "deprecated"
   end
 
+  test "normalizes old way of specifying ap mode" do
+    input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{mode: :host, ssid: "my_ap", key_mgmt: :none}
+    }
+
+    normalized_input = %{
+      type: VintageNet.Technology.WiFi,
+      ipv4: %{method: :dhcp},
+      wifi: %{
+        networks: [
+          %{
+            ssid: "my_ap",
+            key_mgmt: :none,
+            mode: :host
+          }
+        ]
+      }
+    }
+
+    assert capture_log(fn ->
+             assert normalized_input == WiFi.normalize(input)
+           end) =~ "deprecated"
+  end
+
   test "normalizing an empty config works" do
     # An empty config should be normalized to a configuration that
     # allows the user to scan for networks.

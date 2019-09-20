@@ -114,7 +114,7 @@ defmodule VintageNet.Technology.WiFi do
     # Rather than figure out which keys are relevant, move them all to
     # the first place in networks and let the network normalization code
     # figure it out.
-    first_network = Map.drop(wifi, [:mode, :networks])
+    first_network = Map.drop(wifi, [:networks])
 
     Map.update(wifi, :networks, [first_network], &[first_network | &1])
   end
