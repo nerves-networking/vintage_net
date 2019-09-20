@@ -237,6 +237,59 @@ defmodule VintageNet.Technology.WiFiTest do
     assert output == WiFi.to_raw_config("wlan0", input, default_opts())
   end
 
+  test "create an open WiFi configuration" do
+    input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        networks: [
+          %{
+            ssid: "guest"
+          }
+        ]
+      },
+      hostname: "unit_test"
+    }
+
+    output = %RawConfig{
+      ifname: "wlan0",
+      type: VintageNet.Technology.WiFi,
+      source_config: WiFi.normalize(input),
+      child_specs: [
+        {VintageNet.WiFi.WPASupplicant,
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false
+         ]},
+        udhcpc_child_spec("wlan0", "unit_test"),
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
+      ],
+      restart_strategy: :rest_for_one,
+      files: [
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+         """
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
+         country=00
+         network={
+         ssid="guest"
+         key_mgmt=NONE
+         mode=0
+         }
+         """}
+      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
+      down_cmds: [
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
+    }
+
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
+  end
+
   test "Set regulatory_domain at runtime" do
     input = %{
       type: VintageNet.Technology.WiFi,

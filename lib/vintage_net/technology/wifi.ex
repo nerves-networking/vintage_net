@@ -211,6 +211,13 @@ defmodule VintageNet.Technology.WiFi do
     ])
   end
 
+  defp normalize_network(%{ssid: _ssid} = network) do
+    # Default to no security and try again.
+    network
+    |> Map.put(:key_mgmt, :none)
+    |> normalize_network()
+  end
+
   defp normalize_network(network) do
     raise ArgumentError, "don't know how to process #{inspect(network)}"
   end
