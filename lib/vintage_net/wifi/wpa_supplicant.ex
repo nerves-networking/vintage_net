@@ -75,6 +75,12 @@ defmodule VintageNet.WiFi.WPASupplicant do
     # Start the supplicant
     {:ok, _supplicant} =
       if state.wpa_supplicant != "" do
+        # FIXME: This appears to be needed when restarting the wpa_supplicant.
+        # It is an imperfect fix to an issue when running AP mode. Sometimes
+        # AP mode would look like it came up, but you couldn't connect to it.
+        # VintageNet.info reports that the interface is disconnected.
+        Process.sleep(1000)
+
         # Erase old old control paths just in case they exist
         Enum.each(control_paths, &File.rm/1)
 
