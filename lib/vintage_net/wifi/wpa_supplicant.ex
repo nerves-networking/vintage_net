@@ -49,6 +49,7 @@ defmodule VintageNet.WiFi.WPASupplicant do
     ifname = Keyword.fetch!(args, :ifname)
     keep_alive_interval = Keyword.get(args, :keep_alive_interval, 60000)
     ap_mode = Keyword.get(args, :ap_mode, false)
+    verbose = Keyword.get(args, :verbose, false)
 
     state = %{
       wpa_supplicant: wpa_supplicant,
@@ -57,6 +58,7 @@ defmodule VintageNet.WiFi.WPASupplicant do
       keep_alive_interval: keep_alive_interval,
       ifname: ifname,
       ap_mode: ap_mode,
+      verbose: verbose,
       access_points: %{},
       clients: [],
       ll: nil
@@ -84,9 +86,11 @@ defmodule VintageNet.WiFi.WPASupplicant do
         # Erase old old control paths just in case they exist
         Enum.each(control_paths, &File.rm/1)
 
+        verbose_flag = if state.verbose, do: ["-dd"], else: []
+
         MuonTrap.Daemon.start_link(
           state.wpa_supplicant,
-          ["-i", state.ifname, "-c", state.wpa_supplicant_conf_path, "-dd"],
+          ["-i", state.ifname, "-c", state.wpa_supplicant_conf_path | verbose_flag],
           VintageNet.Command.add_muon_options(stderr_to_stdout: true, log_output: :debug)
         )
       else

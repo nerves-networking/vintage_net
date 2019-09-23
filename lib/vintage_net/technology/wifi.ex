@@ -77,6 +77,9 @@ defmodule VintageNet.Technology.WiFi do
     }
   }
   ```
+
+  To enable verbose log messages from the `wpa_supplicant`, add `verbose: true` to the
+  configuration.
   """
 
   @impl true
@@ -232,6 +235,7 @@ defmodule VintageNet.Technology.WiFi do
     control_interface_dir = Path.join(tmpdir, "wpa_supplicant")
     control_interface_paths = ctrl_interface_paths(ifname, control_interface_dir, config)
     ap_mode = ap_mode?(config)
+    verbose = Map.get(config, :verbose, false)
 
     normalized_config = normalize(config)
 
@@ -244,6 +248,15 @@ defmodule VintageNet.Technology.WiFi do
        )}
     ]
 
+    wpa_supplicant_options = [
+      wpa_supplicant: wpa_supplicant,
+      ifname: ifname,
+      wpa_supplicant_conf_path: wpa_supplicant_conf_path,
+      control_path: control_interface_dir,
+      ap_mode: ap_mode,
+      verbose: verbose
+    ]
+
     %RawConfig{
       ifname: ifname,
       type: __MODULE__,
@@ -252,12 +265,7 @@ defmodule VintageNet.Technology.WiFi do
       cleanup_files: control_interface_paths,
       restart_strategy: :rest_for_one,
       child_specs: [
-        {WPASupplicant,
-         wpa_supplicant: wpa_supplicant,
-         ifname: ifname,
-         wpa_supplicant_conf_path: wpa_supplicant_conf_path,
-         control_path: control_interface_dir,
-         ap_mode: ap_mode}
+        {WPASupplicant, wpa_supplicant_options}
       ]
     }
     |> IPv4Config.add_config(normalized_config, opts)
