@@ -88,7 +88,48 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
+         ]}
+      ],
+      restart_strategy: :rest_for_one,
+      files: [
+        {"/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+         """
+         ctrl_interface=/tmp/vintage_net/wpa_supplicant
+         country=00
+         """}
+      ],
+      up_cmds: [{:run, "ip", ["link", "set", "wlan0", "up"]}],
+      down_cmds: [
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
+        {:run, "ip", ["link", "set", "wlan0", "down"]}
+      ],
+      cleanup_files: ["/tmp/vintage_net/wpa_supplicant/wlan0"]
+    }
+
+    assert output == WiFi.to_raw_config("wlan0", input, default_opts())
+  end
+
+  test "verbose flag turns on wpa_supplicant debug" do
+    input = %{
+      type: VintageNet.Technology.WiFi,
+      verbose: true
+    }
+
+    output = %RawConfig{
+      ifname: "wlan0",
+      type: VintageNet.Technology.WiFi,
+      source_config: WiFi.normalize(input),
+      child_specs: [
+        {VintageNet.WiFi.WPASupplicant,
+         [
+           wpa_supplicant: "wpa_supplicant",
+           ifname: "wlan0",
+           wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
+           control_path: "/tmp/vintage_net/wpa_supplicant",
+           ap_mode: false,
+           verbose: true
          ]}
       ],
       restart_strategy: :rest_for_one,
@@ -207,7 +248,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -261,7 +303,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -311,7 +354,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]}
       ],
       restart_strategy: :rest_for_one,
@@ -354,7 +398,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -403,7 +448,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -464,7 +510,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -527,7 +574,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -592,7 +640,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -660,7 +709,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -728,7 +778,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -798,7 +849,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -866,7 +918,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -936,7 +989,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -995,7 +1049,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -1057,7 +1112,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -1123,7 +1179,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -1187,7 +1244,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -1247,7 +1305,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -1301,7 +1360,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: true
+           ap_mode: true,
+           verbose: false
          ]}
       ],
       restart_strategy: :rest_for_one,
@@ -1373,7 +1433,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         udhcpc_child_spec("wlan0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
@@ -1443,7 +1504,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: false
+           ap_mode: false,
+           verbose: false
          ]},
         {VintageNet.Interface.LANConnectivityChecker, "wlan0"}
       ],
@@ -1514,7 +1576,8 @@ defmodule VintageNet.Technology.WiFiTest do
            ifname: "wlan0",
            wpa_supplicant_conf_path: "/tmp/vintage_net/wpa_supplicant.conf.wlan0",
            control_path: "/tmp/vintage_net/wpa_supplicant",
-           ap_mode: true
+           ap_mode: true,
+           verbose: false
          ]},
         {VintageNet.Interface.LANConnectivityChecker, "wlan0"},
         udhcpd_child_spec("wlan0")
