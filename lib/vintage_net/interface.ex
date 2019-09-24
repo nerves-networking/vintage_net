@@ -67,6 +67,10 @@ defmodule VintageNet.Interface do
       {:ok, raw_config}
     rescue
       error in ArgumentError -> {:error, error.message}
+      error in FunctionClauseError -> {:error, error.message}
+    catch
+      _kind, what ->
+        {:error, "Configuration has unrecoverable error that caused: #{inspect(what)}"}
     end
   end
 
