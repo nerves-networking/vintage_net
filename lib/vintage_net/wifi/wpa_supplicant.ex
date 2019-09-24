@@ -102,14 +102,18 @@ defmodule VintageNet.WiFi.WPASupplicant do
     # Wait for the wpa_supplicant to create its control files.
     primary_path =
       case wait_for_control_file(control_paths) do
-        {:ok, [primary_path, secondary_path]} ->
+        [primary_path, secondary_path] ->
           {:ok, secondary_ll} = WPASupplicantLL.start_link(secondary_path)
           :ok = WPASupplicantLL.subscribe(secondary_ll)
           {:ok, "OK\n"} = WPASupplicantLL.control_request(secondary_ll, "ATTACH")
           primary_path
 
-        {:ok, [primary_path]} ->
+        [primary_path] ->
           primary_path
+
+        _ ->
+          raise RuntimeError,
+                "Couldn't find wpa_supplicant control files: #{inspect(control_paths)}"
       end
 
     {:ok, ll} = WPASupplicantLL.start_link(primary_path)
@@ -305,8 +309,8 @@ defmodule VintageNet.WiFi.WPASupplicant do
 
   defp wait_for_control_file(paths, time_left \\ 3000)
 
-  defp wait_for_control_file(paths, time_left) when time_left <= 0 do
-    {:error, "#{inspect(paths)} not found"}
+  defp wait_for_control_file(_paths, time_left) when time_left <= 0 do
+    []
   end
 
   defp wait_for_control_file(paths, time_left) do
@@ -320,10 +324,10 @@ defmodule VintageNet.WiFi.WPASupplicant do
         # so all this to work, but with a penalty just in case the others show
         # up momentarily.
         Process.sleep(100)
-        {:ok, Enum.filter(paths, &File.exists?/1)}
+        Enum.filter(paths, &File.exists?/1)
 
-      paths ->
-        {:ok, paths}
+      found_paths ->
+        found_paths
     end
   end
 end
