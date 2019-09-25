@@ -1,5 +1,54 @@
 # Changelog
 
+## v0.6.0
+
+IMPORTANT: This release contains a LOT of changes. VintageNet is still pre-1.0
+and we're actively making API changes as we gain real world experience with it.
+Please upgrade carefully.
+
+* Incompatible changes
+  * All IP addresses are represented as tuples. You can still specify IP
+    addresses as strings, like "192.168.1.1", but it will be converted to tuple
+    form. When you `get` the configuration, you'll see IP addresses as tuples.
+    This means that if you save your configuration and revert to a previous
+    version of VintageNet, the settings won't work.
+  * WiFi network configuration is always under the `:networks` key. This was
+    inconsistent. Configuration normalization will update old saved
+    configurations.
+  * Support for the IPv4 broadcast IP address has been removed. Existing support
+    was incomplete and slightly confusing, so we decided to remove it for now.
+  * All IP address subnets are represented by their prefix length. For example,
+    255.255.255.0 is recorded as a subnet with prefix length 24. Configuration
+    normalization converts subnet masks to prefix length now.
+
+* New features
+  * USB gadget support - See `VintageNet.Technology.Gadget`. It is highly likely
+    that we'll refactor USB gadget support to its own project in the future.
+  * Add `:verbose` key to configs for enabling debug messages from third party
+    applications. Currently `:verbose` controls debug output from
+    `wpa_supplicant`.
+  * Allow users to pass additional options to `MuonTrap` so that it's possible
+    to run network daemons in cgroups (among other things)
+
+* Bug fixes
+  * Networking daemons should all be supervised now. For example, `udhcpc`
+    previously was started by `ifup` and under many conditions, it was possible
+    to get numerous instances started simultaneously. Plus failures weren't
+    detected.
+  * No more `killall` calls to cleanup state. This had prevented network
+    technologies from being used on multiple interfaces.
+  * No more `ifupdown`. This was very convenient for getting started, but has
+    numerous flaws. Search the Internet for rants. This was replaced with direct
+    calls to `ip link` and `ip addr` and adding network daemons to supervision
+    trees.
+
+* Known issues
+  * Static IP addressing is still not implemented. It's only implemented enough
+    for WiFi AP mode and USB gadget mode to work. We hope to fix this soon.
+  * It's not possible to temporarily configure network settings. At the moment,
+    if persistence is enabled (the default), configuration updates are always
+    saved.
+
 ## v0.5.1
 
 * Bug fixes
