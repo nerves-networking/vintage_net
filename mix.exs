@@ -16,6 +16,7 @@ defmodule VintageNet.MixProject do
       compilers: [:elixir_make | Mix.compilers()],
       make_targets: ["all"],
       make_clean: ["clean"],
+      make_error_message: "",
       deps: deps(),
       dialyzer: dialyzer(),
       docs: docs(),
