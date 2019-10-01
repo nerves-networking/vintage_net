@@ -10,7 +10,9 @@ defmodule VintageNet.WiFi.WPA2Test do
              "12345678901234567890123456789012345678901234567890123456789012345"
            ) == {:error, :password_too_long}
 
-    assert WPA2.to_psk("SSID", <<1, 2, 3>>) == {:error, :invalid_characters}
+    assert WPA2.to_psk("SSID", <<1, 2, 3, 4, 5, 6, 7, 8>>) == {:error, :invalid_characters}
+
+    assert WPA2.to_psk("SSID", "0123456") === {:error, :password_too_short}
   end
 
   test "returns error on bad SSIDs" do

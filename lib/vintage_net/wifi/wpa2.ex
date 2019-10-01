@@ -11,6 +11,8 @@ defmodule VintageNet.WiFi.WPA2 do
   @typedoc "A WPA2 preshared key"
   @type psk :: <<_::512>>
 
+  @type invalid_passphrase_error :: :password_too_short | :password_too_long | :invalid_characters
+
   @doc """
   Convert a WiFi WPA2 passphrase into a PSK
 
@@ -20,7 +22,8 @@ defmodule VintageNet.WiFi.WPA2 do
   See IEEE Std 802.11i-2004 Appendix H.4 for the algorithm.
   """
   @spec to_psk(String.t(), psk() | String.t()) ::
-          {:ok, psk()} | {:error, :ssid_too_long | :password_too_long | :invalid_characters}
+          {:ok, psk()}
+          | {:error, :ssid_too_long | invalid_passphrase_error()}
   def to_psk(ssid, psk) when byte_size(psk) == 64 do
     with :ok <- psk_ok(psk),
          :ok <- ssid_ok(ssid) do
@@ -29,10 +32,29 @@ defmodule VintageNet.WiFi.WPA2 do
   end
 
   def to_psk(ssid, passphrase) when is_binary(passphrase) do
-    with :ok <- password_ok(passphrase),
+    with :ok <- validate_passphrase(passphrase),
          :ok <- ssid_ok(ssid) do
       {:ok, compute_psk(ssid, passphrase)}
     end
+  end
+
+  @doc """
+  Validate the length and characters of a passphrase
+
+  A valid passphrase is between 8 and 63 characters long, and
+  only contains ASCII characters (values between 32 and 126, inclusive).
+  """
+  @spec validate_passphrase(String.t()) :: :ok | {:error, invalid_passphrase_error()}
+  def validate_passphrase(password) when byte_size(password) < 8 do
+    {:error, :password_too_short}
+  end
+
+  def validate_passphrase(password) when byte_size(password) >= 64 do
+    {:error, :password_too_long}
+  end
+
+  def validate_passphrase(password) do
+    all_ascii(password)
   end
 
   defp compute_psk(ssid, passphrase) do
@@ -71,12 +93,6 @@ defmodule VintageNet.WiFi.WPA2 do
   defp sha1_hmac(digest, password) do
     :crypto.hmac(:sha, password, digest)
   end
-
-  defp password_ok(password) when byte_size(password) <= 63 do
-    all_ascii(password)
-  end
-
-  defp password_ok(_password), do: {:error, :password_too_long}
 
   defp psk_ok(psk) when byte_size(psk) == 64 do
     all_hex_digits(psk)
