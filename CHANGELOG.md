@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.6.1
+
+* New features
+  * Add a `current_ap` property for WiFi interfaces so that programs can get
+    information about the currently associated access point
+  * Support running a DHCP server on wired Ethernet interfaces
+  * Expose `VintageNet.WiFi.WPA2.validate_passphrase/1` so that applications can
+    reuse the WiFI passphrase validation logic. This logic follows IEEE Std
+    802.11i-2004 and validates things like proper length and character set
+
 ## v0.6.0
 
 IMPORTANT: This release contains a LOT of changes. VintageNet is still pre-1.0
