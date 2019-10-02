@@ -277,22 +277,61 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     VintageNet.PropertyTable.clear(VintageNet, current_ap_property)
     VintageNet.subscribe(current_ap_property)
 
+    ap = %VintageNet.WiFi.AccessPoint{
+      band: :wifi_2_4_ghz,
+      bssid: "78:8a:20:87:7a:50",
+      channel: 6,
+      flags: [:wpa2_psk_ccmp, :ess],
+      frequency: 2437,
+      signal_dbm: -71,
+      signal_percent: 48,
+      ssid: "TestLAN"
+    }
+
+    # Try connecting
     :ok =
       MockWPASupplicant.send_message(
         context.mock,
         "<1>CTRL-EVENT-CONNECTED - Connection to 78:8a:20:87:7a:50 completed (reauth) [id=0 id_str=]"
       )
 
-    assert_receive {VintageNet, ^current_ap_property, _,
-                    %VintageNet.WiFi.AccessPoint{
-                      band: :wifi_2_4_ghz,
-                      bssid: "78:8a:20:87:7a:50",
-                      channel: 6,
-                      flags: [:wpa2_psk_ccmp, :ess],
-                      frequency: 2437,
-                      signal_dbm: -71,
-                      signal_percent: 48,
-                      ssid: "TestLAN"
-                    }, _}
+    assert_receive {VintageNet, ^current_ap_property, nil, ^ap, _}
+
+    # Try some weird status
+    :ok =
+      MockWPASupplicant.send_message(
+        context.mock,
+        "<1>CTRL-EVENT-CONNECTED - Connection to 78:8a:20:87:7a:50 other (reauth) [id=0 id_str=]"
+      )
+
+    assert_receive {VintageNet, ^current_ap_property, ^ap, nil, _}
+
+    # Connect again
+    :ok =
+      MockWPASupplicant.send_message(
+        context.mock,
+        "<1>CTRL-EVENT-CONNECTED - Connection to 78:8a:20:87:7a:50 completed (reauth) [id=0 id_str=]"
+      )
+
+    assert_receive {VintageNet, ^current_ap_property, nil, ^ap, _}
+
+    # Disconnect properly
+    :ok =
+      MockWPASupplicant.send_message(
+        context.mock,
+        "<1>CTRL-EVENT-DISCONNECTED bssid=78:8a:20:87:7a:50 reason=0 locally_generated=1"
+      )
+
+    assert_receive {VintageNet, ^current_ap_property, ^ap, nil, _}
+
+    # Test race condition where AP connects and disconnects before we get around to
+    # asking about it.
+    :ok =
+      MockWPASupplicant.send_message(
+        context.mock,
+        "<1>CTRL-EVENT-CONNECTED - Connection to 11:22:33:44:55:66 completed (reauth) [id=0 id_str=]"
+      )
+
+    refute_receive {VintageNet, ^current_ap_property, _, _, _}
   end
 end
