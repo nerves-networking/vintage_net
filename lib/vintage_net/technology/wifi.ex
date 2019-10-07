@@ -5,7 +5,7 @@ defmodule VintageNet.Technology.WiFi do
 
   alias VintageNet.WiFi.{WPA2, WPASupplicant}
   alias VintageNet.Interface.RawConfig
-  alias VintageNet.IP.{IPv4Config, DhcpdConfig}
+  alias VintageNet.IP.{IPv4Config, DhcpdConfig, DnsdConfig}
 
   # These configuration keys are common to all network specifications
   # and allowed to pass through network normalization.
@@ -88,6 +88,7 @@ defmodule VintageNet.Technology.WiFi do
     |> normalize_wifi()
     |> IPv4Config.normalize()
     |> DhcpdConfig.normalize()
+    |> DnsdConfig.normalize()
   end
 
   defp normalize_wifi(%{wifi: wifi} = config) do
@@ -270,6 +271,7 @@ defmodule VintageNet.Technology.WiFi do
     }
     |> IPv4Config.add_config(normalized_config, opts)
     |> DhcpdConfig.add_config(normalized_config, opts)
+    |> DnsdConfig.add_config(normalized_config, opts)
   end
 
   @impl true
