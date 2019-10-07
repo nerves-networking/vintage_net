@@ -2,13 +2,6 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
-config :mix_test_watch,
-  clear: true,
-  tasks: [
-    "dialyzer --format dialyxir",
-    "test --stale --no-start"
-  ]
-
 # Overrides for unit tests:
 #
 # * udhcpc_handler: capture whatever happens with udhcpc
