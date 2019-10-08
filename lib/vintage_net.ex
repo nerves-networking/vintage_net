@@ -107,7 +107,8 @@ defmodule VintageNet do
     # be bad for it to get an old config. If a GenServer isn't started,
     # configure the running one.
     with {:ok, raw_config} <- Interface.to_raw_config(ifname, config),
-         :ok <- Persistence.call(:save, [ifname, config]),
+         normalized_config = raw_config.source_config,
+         :ok <- Persistence.call(:save, [ifname, normalized_config]),
          {:error, :already_started} <- maybe_start_interface(ifname) do
       Interface.configure(raw_config)
     end
