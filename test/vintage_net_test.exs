@@ -96,6 +96,14 @@ defmodule VintageNetTest do
     refute File.exists?(path)
   end
 
+  test "can turn off configuration persistence" do
+    path = Path.join(Application.get_env(:vintage_net, :persistence_dir), "eth0")
+
+    :ok = VintageNet.configure("eth0", %{type: VintageNet.Technology.Ethernet}, persist: false)
+
+    refute File.exists?(path)
+  end
+
   test "configuration_valid? works" do
     assert VintageNet.configuration_valid?("eth0", %{type: VintageNet.Technology.Ethernet})
     refute VintageNet.configuration_valid?("eth0", %{this_totally_should_not_work: 1})
