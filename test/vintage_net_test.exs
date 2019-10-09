@@ -40,7 +40,7 @@ defmodule VintageNetTest do
   @tag :requires_interfaces_monitor
   test "interfaces exist" do
     # On CircleCI, sometimes the interfaces monitor process is slow to start. This is ok.
-    Process.sleep(100)
+    Process.sleep(500)
 
     interfaces = VintageNet.all_interfaces()
     assert interfaces != []
