@@ -5,11 +5,16 @@ defmodule VintageNetTest do
   import ExUnit.CaptureIO
   import ExUnit.CaptureLog
 
-  setup_all do
+  setup do
     # Capture Application exited logs
     capture_log(fn ->
       Application.stop(:vintage_net)
       Application.start(:vintage_net)
+    end)
+
+    # Remove persisted files if anything hung around
+    on_exit(fn ->
+      File.rm(Path.join(Application.get_env(:vintage_net, :persistence_dir), "eth0"))
     end)
 
     :ok
@@ -48,11 +53,52 @@ defmodule VintageNetTest do
     assert [] == VintageNet.configured_interfaces()
   end
 
-  test "info does something" do
+  test "info works with nothing configured" do
     output = capture_io(&VintageNet.info/0)
 
     assert output =~ "All interfaces"
     assert output =~ "Available interfaces"
+    assert output =~ "No configured interfaces"
+  end
+
+  test "info works with a configure interface" do
+    :ok = VintageNet.configure("eth0", %{type: VintageNet.Technology.Ethernet})
+
+    # configure/2 is asynchronous, so wait for the interface to appear.
+    Process.sleep(100)
+    assert ["eth0"] == VintageNet.configured_interfaces()
+
+    output = capture_io(&VintageNet.info/0)
+
+    assert output =~ "All interfaces"
+    assert output =~ "Available interfaces"
+    assert output =~ "Interface eth0"
+    assert output =~ "Type: VintageNet.Technology.Ethernet"
+  end
+
+  test "configure returns error on bad configurations" do
+    assert match?({:error, _}, VintageNet.configure("eth0", %{this_totally_should_not_work: 1}))
+  end
+
+  test "configure persists by default" do
+    path = Path.join(Application.get_env(:vintage_net, :persistence_dir), "eth0")
+
+    :ok = VintageNet.configure("eth0", %{type: VintageNet.Technology.Ethernet})
+
+    assert File.exists?(path)
+  end
+
+  test "configure does not persist on bad configurations" do
+    path = Path.join(Application.get_env(:vintage_net, :persistence_dir), "eth0")
+
+    {:error, _} = VintageNet.configure("eth0", %{this_totally_should_not_work: 1})
+
+    refute File.exists?(path)
+  end
+
+  test "configuration_valid? works" do
+    assert VintageNet.configuration_valid?("eth0", %{type: VintageNet.Technology.Ethernet})
+    refute VintageNet.configuration_valid?("eth0", %{this_totally_should_not_work: 1})
   end
 
   test "verify system works", context do
