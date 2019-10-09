@@ -60,6 +60,11 @@ defmodule VintageNet do
   """
   @type ipv6_prefix_length :: 0..128
 
+  @typedoc """
+  Valid options for `VintageNet.configure/3`
+  """
+  @type configure_options :: [persist: boolean]
+
   @doc """
   Return a list of all interfaces on the system
   """
@@ -83,7 +88,7 @@ defmodule VintageNet do
   end
 
   @doc """
-  Update the settings for the specified interface
+  Update the configuration of a network interface
 
   Configurations are validated and normalized before being applied.  This means
   that type errors and missing required fields will be caught and old or
@@ -91,13 +96,18 @@ defmodule VintageNet do
   `get_configuration/1` to see how what changes, if any, were made as part of
   the normalization process.
 
-  After validation, the configuration is persisted and applied.
+  After validation, the configuration is optionally persisted and applied.
 
   See the `VintageNet` documentation for configuration examples or your
   `VintageNet.Technology` provider's docs.
+
+  Options:
+
+  * `:persist` - set to `false` to avoid persisting this configuration. System
+    restarts will revert to the previous configuration.
   """
-  @spec configure(ifname(), map()) :: :ok | {:error, any()}
-  def configure(ifname, config) do
+  @spec configure(ifname(), map(), configure_options()) :: :ok | {:error, any()}
+  def configure(ifname, config, options \\ []) do
     # The logic here is to validate the config by converting it to a
     # raw_config. We'd need to do that anyway, so just get it over with.  The
     # next step is to persist the config. This is important since if the
@@ -108,7 +118,7 @@ defmodule VintageNet do
     # configure the running one.
     with {:ok, raw_config} <- Interface.to_raw_config(ifname, config),
          normalized_config = raw_config.source_config,
-         :ok <- Persistence.call(:save, [ifname, normalized_config]),
+         :ok <- persist_configuration(ifname, normalized_config, options),
          {:error, :already_started} <- maybe_start_interface(ifname) do
       Interface.configure(raw_config)
     end
@@ -274,6 +284,16 @@ defmodule VintageNet do
       apply(type, :check_system, [opts])
     end
     |> Enum.find(:ok, fn rc -> rc != :ok end)
+  end
+
+  defp persist_configuration(ifname, normalized_config, options) do
+    case Keyword.get(options, :persist, true) do
+      true ->
+        Persistence.call(:save, [ifname, normalized_config])
+
+      false ->
+        :ok
+    end
   end
 
   defp maybe_start_interface(ifname) do
