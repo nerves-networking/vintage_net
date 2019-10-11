@@ -65,14 +65,17 @@ defmodule VintageNet.Interface.CommandRunner do
   end
 
   @doc """
-  Run an arbitrary function
+  Call a function
 
-  In general, try to avoid using this. VintageNet's unit test strategy is
-  to verify configurations rather than verify the execution of the configurations.
-  Functions can't be checked that they were created correctly.
+  In general, prefer the `module, function_name, args` form since it's easier to
+  check in unit tests.
 
   Functions must return `:ok` or `{:error, reason}`.
   """
+  def run({:fun, module, function_name, args}) do
+    apply(module, function_name, args)
+  end
+
   def run({:fun, fun}) do
     fun.()
   end

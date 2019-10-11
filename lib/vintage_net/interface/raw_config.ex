@@ -23,8 +23,15 @@ defmodule VintageNet.Interface.RawConfig do
 
   """
 
-  # Should this just be a function??? The down side is that it's less testable since functions are opaque.
-  @type command :: {:run | :run_ignore_errors, String.t(), [String.t()]} | {:fun, function()}
+  @typedoc """
+  A command to run for RawConfig.up_cmds or RawConfig.down_cmds
+  """
+  @type command ::
+          {:run, String.t(), [String.t()]}
+          | {:run_ignore_errors, String.t(), [String.t()]}
+          | {:fun, (() -> :ok | {:error, any()})}
+          | {:fun, module(), atom(), list()}
+
   @type file_contents :: {Path.t(), String.t()}
 
   @enforce_keys [:ifname, :type, :source_config]
