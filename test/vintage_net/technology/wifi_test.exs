@@ -1538,7 +1538,7 @@ defmodule VintageNet.Technology.WiFiTest do
            ap_mode: false,
            verbose: false
          ]},
-        {VintageNet.Interface.LANConnectivityChecker, "wlan0"}
+        {VintageNet.Interface.InternetConnectivityChecker, "wlan0"}
       ],
       restart_strategy: :rest_for_one,
       files: [
@@ -1555,10 +1555,16 @@ defmodule VintageNet.Technology.WiFiTest do
          """}
       ],
       up_cmds: [
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
         {:run, "ip", ["addr", "add", "192.168.1.2/16", "dev", "wlan0", "label", "wlan0"]},
-        {:run, "ip", ["link", "set", "wlan0", "up"]}
+        {:run, "ip", ["link", "set", "wlan0", "up"]},
+        {:fun, VintageNet.RouteManager, :set_route,
+         ["wlan0", [{{192, 168, 1, 2}, 16}], {192, 168, 1, 1}, :lan]},
+        {:fun, VintageNet.NameResolver, :clear, ["wlan0"]}
       ],
       down_cmds: [
+        {:fun, VintageNet.RouteManager, :clear_route, ["wlan0"]},
+        {:fun, VintageNet.NameResolver, :clear, ["wlan0"]},
         {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
         {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
@@ -1586,12 +1592,18 @@ defmodule VintageNet.Technology.WiFiTest do
       ipv4: %{
         method: :static,
         address: "192.168.24.1",
-        netmask: "255.255.255.0",
-        gateway: "192.168.24.1"
+        netmask: "255.255.255.0"
       },
       dhcpd: %{
         start: "192.168.24.2",
-        end: "192.168.24.100"
+        end: "192.168.24.100",
+        options: %{
+          dns: ["192.168.24.1"],
+          subnet: {255, 255, 255, 0},
+          router: ["192.168.24.1"],
+          domain: "example.com",
+          search: ["example.com"]
+        }
       },
       hostname: "unit_test"
     }
@@ -1636,17 +1648,27 @@ defmodule VintageNet.Technology.WiFiTest do
          notify_file #{Application.app_dir(:vintage_net, ["priv", "udhcpd_handler"])}
 
          end 192.168.24.100
+         opt dns 192.168.24.1
+         opt domain example.com
+         opt router 192.168.24.1
+         opt search example.com
+         opt subnet 255.255.255.0
          start 192.168.24.2
 
          """}
       ],
       down_cmds: [
+        {:fun, VintageNet.RouteManager, :clear_route, ["wlan0"]},
+        {:fun, VintageNet.NameResolver, :clear, ["wlan0"]},
         {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
         {:run, "ip", ["link", "set", "wlan0", "down"]}
       ],
       up_cmds: [
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "wlan0", "label", "wlan0"]},
         {:run, "ip", ["addr", "add", "192.168.24.1/24", "dev", "wlan0", "label", "wlan0"]},
-        {:run, "ip", ["link", "set", "wlan0", "up"]}
+        {:run, "ip", ["link", "set", "wlan0", "up"]},
+        {:fun, VintageNet.RouteManager, :clear_route, ["wlan0"]},
+        {:fun, VintageNet.NameResolver, :clear, ["wlan0"]}
       ],
       cleanup_files: [
         "/tmp/vintage_net/wpa_supplicant/p2p-dev-wlan0",

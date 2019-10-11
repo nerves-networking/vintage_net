@@ -31,30 +31,36 @@ defmodule VintageNet.Technology.EthernetTest do
       ipv4: %{
         method: :static,
         address: "192.168.0.2",
-        netmask: "255.255.255.0",
-        gateway: "192.168.0.1"
+        netmask: "255.255.255.0"
       },
       hostname: "unit_test"
     }
 
-    # Static IP support is not implemented. This is what is currently produced,
-    # but it is incomplete.
     output = %RawConfig{
       type: VintageNet.Technology.Ethernet,
       ifname: "eth0",
       source_config: %{
         hostname: "unit_test",
         type: VintageNet.Technology.Ethernet,
-        ipv4: %{method: :static, address: {192, 168, 0, 2}, prefix_length: 24}
+        ipv4: %{
+          method: :static,
+          address: {192, 168, 0, 2},
+          prefix_length: 24
+        }
       },
       child_specs: [{VintageNet.Interface.LANConnectivityChecker, "eth0"}],
       down_cmds: [
+        {:fun, VintageNet.RouteManager, :clear_route, ["eth0"]},
+        {:fun, VintageNet.NameResolver, :clear, ["eth0"]},
         {:run_ignore_errors, "ip", ["addr", "flush", "dev", "eth0", "label", "eth0"]},
         {:run, "ip", ["link", "set", "eth0", "down"]}
       ],
       up_cmds: [
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "eth0", "label", "eth0"]},
         {:run, "ip", ["addr", "add", "192.168.0.2/24", "dev", "eth0", "label", "eth0"]},
-        {:run, "ip", ["link", "set", "eth0", "up"]}
+        {:run, "ip", ["link", "set", "eth0", "up"]},
+        {:fun, VintageNet.RouteManager, :clear_route, ["eth0"]},
+        {:fun, VintageNet.NameResolver, :clear, ["eth0"]}
       ]
     }
 
@@ -82,7 +88,11 @@ defmodule VintageNet.Technology.EthernetTest do
       source_config: %{
         hostname: "unit_test",
         type: VintageNet.Technology.Ethernet,
-        ipv4: %{method: :static, address: {192, 168, 24, 1}, prefix_length: 24},
+        ipv4: %{
+          method: :static,
+          address: {192, 168, 24, 1},
+          prefix_length: 24
+        },
         dhcpd: %{start: {192, 168, 24, 2}, end: {192, 168, 24, 100}}
       },
       child_specs: [
@@ -115,12 +125,17 @@ defmodule VintageNet.Technology.EthernetTest do
          """}
       ],
       down_cmds: [
+        {:fun, VintageNet.RouteManager, :clear_route, ["eth0"]},
+        {:fun, VintageNet.NameResolver, :clear, ["eth0"]},
         {:run_ignore_errors, "ip", ["addr", "flush", "dev", "eth0", "label", "eth0"]},
         {:run, "ip", ["link", "set", "eth0", "down"]}
       ],
       up_cmds: [
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "eth0", "label", "eth0"]},
         {:run, "ip", ["addr", "add", "192.168.24.1/24", "dev", "eth0", "label", "eth0"]},
-        {:run, "ip", ["link", "set", "eth0", "up"]}
+        {:run, "ip", ["link", "set", "eth0", "up"]},
+        {:fun, VintageNet.RouteManager, :clear_route, ["eth0"]},
+        {:fun, VintageNet.NameResolver, :clear, ["eth0"]}
       ]
     }
 

@@ -17,6 +17,8 @@ defmodule VintageNet.IP.IPv4Config do
   * `:netmask` - either this or `prefix_length` is used to determine the subnet. If you
     have a choice, use `prefix_length`
   * `:gateway` - the default gateway for this interface (optional)
+  * `:name_servers` - a list of DNS servers (optional)
+  * `:domain` - DNS search domain (optional)
 
   Configuration normalization converts `:netmask` to `:prefix_length`.
   """
@@ -42,24 +44,47 @@ defmodule VintageNet.IP.IPv4Config do
   defp normalize_by_method(%{method: :disabled}), do: %{method: :disabled}
 
   defp normalize_by_method(%{method: :static} = ipv4) do
-    new_address = normalize_address(ipv4[:address])
     new_prefix_length = get_prefix_length(ipv4)
-    %{method: :static, address: new_address, prefix_length: new_prefix_length}
+
+    ipv4
+    |> normalize_address()
+    |> Map.put(:prefix_length, new_prefix_length)
+    |> normalize_gateway()
+    |> normalize_name_servers()
+    |> Map.take([
+      :method,
+      :address,
+      :prefix_length,
+      :gateway,
+      :domain,
+      :name_servers
+    ])
   end
 
   defp normalize_by_method(_other) do
     raise ArgumentError, "specify an IPv4 address method (:disabled, :dhcp, or :static)"
   end
 
-  defp normalize_address(address) do
-    case IP.ip_to_tuple(address) do
-      {:ok, ipa} ->
-        ipa
+  defp normalize_address(%{address: address} = config),
+    do: %{config | address: IP.ip_to_tuple!(address)}
 
-      {:error, _error} ->
-        raise ArgumentError, "cannot parse IP address #{inspect(address)}"
-    end
+  defp normalize_address(_config),
+    do: raise(ArgumentError, "IPv4 :address key missing in static config")
+
+  defp normalize_gateway(%{gateway: gateway} = config),
+    do: %{config | gateway: IP.ip_to_tuple!(gateway)}
+
+  defp normalize_gateway(config), do: config
+
+  defp normalize_name_servers(%{name_servers: servers} = config) when is_list(servers) do
+    %{config | name_servers: Enum.map(servers, &IP.ip_to_tuple!/1)}
   end
+
+  defp normalize_name_servers(%{name_servers: one_server} = config) do
+    %{config | name_servers: [IP.ip_to_tuple!(one_server)]}
+  end
+
+  defp normalize_name_servers(config), do: config
 
   defp get_prefix_length(%{prefix_length: prefix_length}), do: prefix_length
 
@@ -174,22 +199,50 @@ defmodule VintageNet.IP.IPv4Config do
     ip = Keyword.fetch!(opts, :bin_ip)
     addr_subnet = IP.cidr_to_string(ipv4.address, ipv4.prefix_length)
 
+    route_manager_up =
+      case ipv4[:gateway] do
+        nil ->
+          {:fun, VintageNet.RouteManager, :clear_route, [ifname]}
+
+        gateway ->
+          {:fun, VintageNet.RouteManager, :set_route,
+           [ifname, [{ipv4.address, ipv4.prefix_length}], gateway, :lan]}
+      end
+
+    resolver_up =
+      case ipv4[:name_servers] do
+        nil -> {:fun, VintageNet.NameResolver, :clear, [ifname]}
+        [] -> {:fun, VintageNet.NameResolver, :clear, [ifname]}
+        servers -> {:fun, VintageNet.NameResolver, :setup, [ifname, ipv4[:domain], servers]}
+      end
+
     new_up_cmds =
       up_cmds ++
         [
+          {:run_ignore_errors, ip, ["addr", "flush", "dev", ifname, "label", ifname]},
           {:run, ip, ["addr", "add", addr_subnet, "dev", ifname, "label", ifname]},
-          {:run, ip, ["link", "set", ifname, "up"]}
+          {:run, ip, ["link", "set", ifname, "up"]},
+          route_manager_up,
+          resolver_up
         ]
 
     new_down_cmds =
       down_cmds ++
         [
+          {:fun, VintageNet.RouteManager, :clear_route, [ifname]},
+          {:fun, VintageNet.NameResolver, :clear, [ifname]},
           {:run_ignore_errors, ip, ["addr", "flush", "dev", ifname, "label", ifname]},
           {:run, ip, ["link", "set", ifname, "down"]}
         ]
 
-    # TODO: When the default gateway is set, switch this to the InternetConnectivityChecker
-    new_child_specs = child_specs ++ [{VintageNet.Interface.LANConnectivityChecker, ifname}]
+    # If there's a default gateway, then check for internet connectivity.
+    checker =
+      case ipv4[:gateway] do
+        nil -> {VintageNet.Interface.LANConnectivityChecker, ifname}
+        _exists -> {VintageNet.Interface.InternetConnectivityChecker, ifname}
+      end
+
+    new_child_specs = child_specs ++ [checker]
 
     %RawConfig{
       raw_config

@@ -27,7 +27,7 @@ Project](https://nerves-project.org) devices. It has the following features:
 The following network configurations are supported:
 
 * [x] Wired Ethernet, IPv4 DHCP
-* [ ] Wired Ethernet, IPv4 static IP
+* [x] Wired Ethernet, IPv4 static IP
 * [x] WiFi password-less and WEP
 * [x] WPA2 PSK and EAP
 * [ ] USB gadget mode Ethernet, IPv4 DHCP server to supply host IP address
@@ -190,6 +190,26 @@ iex> VintageNet.configure("eth0", %{type: VintageNet.Technology.Ethernet, ipv4: 
 :ok
 ```
 
+Here's a static IP configuration:
+
+```elixir
+iex>   VintageNet.configure("eth0", %{
+    type: VintageNet.Technology.Ethernet,
+    ipv4: %{
+      method: :static,
+      address: "192.168.9.232",
+      prefix_length: 24,
+      gateway: "192.168.9.1",
+      name_servers: ["1.1.1.1"]
+    }
+  })
+:ok
+```
+
+In the above, IP addresses were passed as strings for convenience, but it's also
+possible to pass tuples like `{192, 168, 9, 232}` as is more typical in Elixir
+and Erlang. VintageNet internally works with tuples.
+
 The following fields are supported:
 
 * `:method` - Set to `:dhcp`, `:static`, or `:disabled`. If `:static`, then at
@@ -200,10 +220,12 @@ The following fields are supported:
   (e.g., 24)
 * `:netmask` - either this or `prefix_length` is used to determine the subnet.
 * `:gateway` - the default gateway for this interface (optional)
+* `:name_servers` - a list of name servers for static configurations (optional)
+* `:domain` - a search domain for DNS
 
-Wired Ethernet connections are monitored for Internet connectivity. When
-internet-connected, they are preferred over all other network technologies even
-when the others provide default gateways.
+Wired Ethernet connections are monitored for Internet connectivity if a default
+gateway is available. When internet-connected, they are preferred over all other
+network technologies even when the others provide default gateways.
 
 ### WiFi
 
