@@ -1,5 +1,6 @@
 defmodule VintageNet.NameResolver do
   use GenServer
+  alias VintageNet.IP
 
   @moduledoc """
   This module manages the contents of "/etc/resolv.conf". This file is used
@@ -12,7 +13,7 @@ defmodule VintageNet.NameResolver do
   @typedoc "Settings for NameResolver"
   @type ifmap :: %{
           domain: String.t(),
-          nameservers: [String.t()]
+          name_servers: [String.t()]
         }
 
   @doc """
@@ -33,13 +34,13 @@ defmodule VintageNet.NameResolver do
   end
 
   @doc """
-  Set the search domain and nameserver list for the specified interface.
+  Set the search domain and name server list for the specified interface.
 
   This replaces any entries in the `/etc/resolv.conf` for this interface.
   """
-  @spec setup(String.t(), String.t(), [String.t()]) :: :ok
-  def setup(ifname, domain, nameservers) do
-    GenServer.call(__MODULE__, {:setup, ifname, domain, nameservers})
+  @spec setup(String.t(), String.t(), [VintageNet.any_ip_address()]) :: :ok
+  def setup(ifname, domain, name_servers) do
+    GenServer.call(__MODULE__, {:setup, ifname, domain, name_servers})
   end
 
   @doc """
@@ -72,8 +73,10 @@ defmodule VintageNet.NameResolver do
   end
 
   @impl true
-  def handle_call({:setup, ifname, domain, nameservers}, _from, state) do
-    ifentry = %{domain: domain, nameservers: nameservers}
+  def handle_call({:setup, ifname, domain, name_servers}, _from, state) do
+    servers = Enum.map(name_servers, &IP.ip_to_string/1)
+    ifentry = %{domain: domain, name_servers: servers}
+
     state = %{state | ifmap: Map.put(state.ifmap, ifname, ifentry)}
     write_resolvconf(state)
     {:reply, :ok, state}
@@ -93,18 +96,22 @@ defmodule VintageNet.NameResolver do
     {:reply, :ok, state}
   end
 
-  defp domain_text({_ifname, %{:domain => domain}}) when domain != "", do: "search #{domain}\n"
-  defp domain_text(_), do: ""
+  defp domain_text({_ifname, %{domain: domain}}) when domain != "", do: ["search ", domain, "\n"]
 
-  defp nameserver_text({_ifname, %{:nameservers => nslist}}) do
-    for ns <- nslist, do: "nameserver #{ns}\n"
+  defp domain_text(_), do: []
+
+  defp nameserver_text({_ifname, %{name_servers: servers}}) do
+    for server <- servers, do: ["nameserver ", server, "\n"]
   end
 
-  defp nameserver_text(_), do: ""
+  defp nameserver_text(_), do: []
+
+  defp resolvconf(ifmap) do
+    # Return contents of resolv.conf as iodata
+    [Enum.map(ifmap, &domain_text/1), Enum.map(ifmap, &nameserver_text/1)]
+  end
 
   defp write_resolvconf(state) do
-    domains = Enum.map(state.ifmap, &domain_text/1)
-    nameservers = Enum.map(state.ifmap, &nameserver_text/1)
-    File.write!(state.filename, domains ++ nameservers)
+    File.write!(state.filename, resolvconf(state.ifmap))
   end
 end
