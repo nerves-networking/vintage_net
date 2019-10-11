@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.6.2
+
+* New features
+  * Support running a simple DNS server on an interface. This was added for WiFi
+    AP mode configuration and could be useful for other scenarios.
+  * Support DHCP server response options
+  * Support disabling configuration persistence on a per-call basis. This is for
+    temporary configurations where a reboot should not preserve the setting. For
+    example, `VintageNet.configure("wlan0", config, persist: false)`
+
 ## v0.6.1
 
 * New features
