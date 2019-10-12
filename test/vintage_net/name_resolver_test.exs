@@ -105,4 +105,23 @@ defmodule VintageNet.Interface.NameResolverTest do
       NameResolver.stop()
     end)
   end
+
+  test "no search domain", context do
+    in_tmp(context.test, fn ->
+      NameResolver.start_link(resolvconf: @resolvconf_path)
+      NameResolver.setup("eth0", nil, [{1, 1, 1, 1}])
+
+      contents = File.read!(@resolvconf_path)
+
+      assert contents == """
+             nameserver 1.1.1.1
+             """
+
+      NameResolver.clear("eth0")
+      contents = File.read!(@resolvconf_path)
+      assert contents == ""
+
+      NameResolver.stop()
+    end)
+  end
 end

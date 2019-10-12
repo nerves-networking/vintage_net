@@ -38,7 +38,7 @@ defmodule VintageNet.NameResolver do
 
   This replaces any entries in the `/etc/resolv.conf` for this interface.
   """
-  @spec setup(String.t(), String.t(), [VintageNet.any_ip_address()]) :: :ok
+  @spec setup(String.t(), String.t() | nil, [VintageNet.any_ip_address()]) :: :ok
   def setup(ifname, domain, name_servers) do
     GenServer.call(__MODULE__, {:setup, ifname, domain, name_servers})
   end
@@ -96,7 +96,8 @@ defmodule VintageNet.NameResolver do
     {:reply, :ok, state}
   end
 
-  defp domain_text({_ifname, %{domain: domain}}) when domain != "", do: ["search ", domain, "\n"]
+  defp domain_text({_ifname, %{domain: domain}}) when is_binary(domain) and domain != "",
+    do: ["search ", domain, "\n"]
 
   defp domain_text(_), do: []
 
