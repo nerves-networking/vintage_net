@@ -78,6 +78,7 @@ defmodule VintageNet.MixProject do
         "mix.exs",
         "Makefile",
         "README.md",
+        "docs/cookbook.md",
         "src/*.[ch]",
         "src/test-c99.sh",
         "LICENSE",
@@ -112,7 +113,7 @@ defmodule VintageNet.MixProject do
 
   defp docs do
     [
-      extras: ["README.md"],
+      extras: ["README.md", "docs/cookbook.md"],
       main: "readme",
       source_ref: "v#{@version}",
       source_url: @source_url
