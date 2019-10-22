@@ -567,10 +567,11 @@ defmodule VintageNet.Technology.WiFi do
     end)
   end
 
-  defp ap_mode?(%{wifi: %{networks: [%{mode: :ap}]}}), do: true
+  defp ap_mode?(%{wifi: %{networks: [%{mode: mode}]}}) when mode in [:ap, :ibss], do: true
   defp ap_mode?(_config), do: false
 
-  defp ctrl_interface_paths(ifname, dir, %{wifi: %{networks: [%{mode: :ap}]}}) do
+  defp ctrl_interface_paths(ifname, dir, %{wifi: %{networks: [%{mode: mode}]}})
+       when mode in [:ap, :ibss] do
     # Some WiFi drivers expose P2P interfaces and those should be cleaned up too.
     [Path.join(dir, "p2p-dev-#{ifname}"), Path.join(dir, ifname)]
   end
