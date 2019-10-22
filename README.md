@@ -252,9 +252,9 @@ The `:wifi` key has the following common fields:
   VintageNet connects to the first available network in the list. In host mode,
   the list should have one entry with SSID and password information.
   * `:mode` -
-    * `:client` (default) - Normal operation. Associate with an AP
-    * `:adhoc` - peer to peer mode (not supported)
-    * `:host` - access point mode
+    * `:infrastructure` (default) - Normal operation. Associate with an AP
+    * `:ap` - access point mode
+    * `:ibss` - peer to peer mode (not supported)
   * `:ssid` - The SSID for the network
   * `:key_mgmt` - WiFi security mode (`:wpa_psk` for WPA2, `:none` for no
     password or WEP)
@@ -341,7 +341,7 @@ iex> VintageNet.configure("wlan0", %{
       wifi: %{
         networks: [
           %{
-            mode: :host,
+            mode: :ap,
             ssid: "test ssid",
             key_mgmt: :none
           }
@@ -449,7 +449,7 @@ Interface wlan0
       type: VintageNet.Technology.WiFi,
       wifi: %{
         key_mgmt: :wpa_psk,
-        mode: :client,
+        mode: :infrastructure,
         psk: "******",
         ssid: "MyLAN"
       }

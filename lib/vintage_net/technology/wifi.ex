@@ -42,7 +42,7 @@ defmodule VintageNet.Technology.WiFi do
   %{
     type: VintageNet.Technology.WiFi,
     wifi: %{
-      mode: :client,
+      mode: :infrastructure,
       networks: [%{ssid: "my_network_ssid", key_mgmt: :wpa_psk, psk: "a_passphrase_or_psk"}]
     },
     ipv4: %{method: :dhcp}
@@ -58,7 +58,7 @@ defmodule VintageNet.Technology.WiFi do
   %{
     type: VintageNet.Technology.WiFi,
     wifi: %{
-      mode: :host,
+      mode: :ap,
       networks: [
         %{
           ssid: "test ssid",
@@ -140,15 +140,24 @@ defmodule VintageNet.Technology.WiFi do
     Map.put(wifi, :networks, [])
   end
 
-  defp normalize_network_mode(%{mode: mode} = network_config) when mode in [:host, :client] do
-    network_config
+  defp normalize_network_mode(%{mode: mode} = network_config) do
+    Map.put(network_config, :mode, normalized_mode_name(mode))
   end
 
-  defp normalize_network_mode(%{mode: other_mode}) do
-    raise ArgumentError, "invalid wifi mode #{inspect(other_mode)}. Specify :host or :client"
-  end
+  defp normalize_network_mode(network_config), do: Map.put(network_config, :mode, :infrastructure)
 
-  defp normalize_network_mode(network_config), do: Map.put(network_config, :mode, :client)
+  # Convert mode names to their 802.11 operation mode name
+  # :infrastructure and :host were used in vintage_net 0.6.2 and earlier
+  defp normalized_mode_name(:client), do: :infrastructure
+  defp normalized_mode_name(:infrastructure), do: :infrastructure
+  defp normalized_mode_name(:host), do: :ap
+  defp normalized_mode_name(:ap), do: :ap
+  defp normalized_mode_name(:ibss), do: :ibss
+
+  defp normalized_mode_name(other_mode) do
+    raise ArgumentError,
+          "invalid wifi mode #{inspect(other_mode)}. Specify :infrastructure, :ap, or :ibss"
+  end
 
   # WEP
   defp normalize_network(
@@ -308,9 +317,9 @@ defmodule VintageNet.Technology.WiFi do
   # This is to allow passing multi mgmts
   defp key_mgmt_to_string(string) when is_binary(string), do: string
 
-  defp mode_to_string(:client), do: "0"
-  defp mode_to_string(:adhoc), do: "1"
-  defp mode_to_string(:host), do: "2"
+  defp mode_to_string(:infrastructure), do: "0"
+  defp mode_to_string(:ibss), do: "1"
+  defp mode_to_string(:ap), do: "2"
   # In case the user supplies data as the integer type
   defp mode_to_string(mode) when is_integer(mode), do: mode
 
@@ -562,11 +571,11 @@ defmodule VintageNet.Technology.WiFi do
     end)
   end
 
-  defp ap_mode?(%{wifi: %{networks: [%{mode: mode}]}}) when mode in [:host, 2], do: true
+  defp ap_mode?(%{wifi: %{networks: [%{mode: mode}]}}) when mode in [:ap, 2], do: true
   defp ap_mode?(_config), do: false
 
   defp ctrl_interface_paths(ifname, dir, %{wifi: %{networks: [%{mode: mode}]}})
-       when mode in [:host, 2] do
+       when mode in [:ap, 2] do
     # Some WiFi drivers expose P2P interfaces and those should be cleaned up too.
     [Path.join(dir, "p2p-dev-#{ifname}"), Path.join(dir, ifname)]
   end

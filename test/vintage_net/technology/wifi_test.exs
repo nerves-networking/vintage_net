@@ -20,7 +20,7 @@ defmodule VintageNet.Technology.WiFiTest do
           %{
             ssid: "guest",
             key_mgmt: :none,
-            mode: :client
+            mode: :infrastructure
           }
         ]
       }
@@ -45,7 +45,7 @@ defmodule VintageNet.Technology.WiFiTest do
           %{
             ssid: "my_ap",
             key_mgmt: :none,
-            mode: :host
+            mode: :ap
           }
         ]
       }
@@ -54,6 +54,37 @@ defmodule VintageNet.Technology.WiFiTest do
     assert capture_log(fn ->
              assert normalized_input == WiFi.normalize(input)
            end) =~ "deprecated"
+  end
+
+  test "normalizes old way of specifying infrastructure mode" do
+    input = %{
+      type: VintageNet.Technology.WiFi,
+      wifi: %{
+        networks: [
+          %{
+            ssid: "guest",
+            key_mgmt: :none,
+            mode: :client
+          }
+        ]
+      }
+    }
+
+    normalized_input = %{
+      type: VintageNet.Technology.WiFi,
+      ipv4: %{method: :dhcp},
+      wifi: %{
+        networks: [
+          %{
+            ssid: "guest",
+            key_mgmt: :none,
+            mode: :infrastructure
+          }
+        ]
+      }
+    }
+
+    assert normalized_input == WiFi.normalize(input)
   end
 
   test "normalizing an empty config works" do
@@ -168,7 +199,7 @@ defmodule VintageNet.Technology.WiFiTest do
             ssid: "IEEE",
             psk: "F42C6FC52DF0EBEF9EBB4B90B38A5F902E83FE1B135A70E23AED762E9710A12E",
             key_mgmt: :wpa_psk,
-            mode: :client
+            mode: :infrastructure
           }
         ]
       }
@@ -206,13 +237,13 @@ defmodule VintageNet.Technology.WiFiTest do
             ssid: "IEEE",
             psk: "F42C6FC52DF0EBEF9EBB4B90B38A5F902E83FE1B135A70E23AED762E9710A12E",
             key_mgmt: :wpa_psk,
-            mode: :client
+            mode: :infrastructure
           },
           %{
             ssid: "IEEE2",
             psk: "B06433395BD30B1455F538904B239D10A51964932A81D1407BAF2BA0767E22E9",
             key_mgmt: :wpa_psk,
-            mode: :client
+            mode: :infrastructure
           }
         ]
       }
@@ -1342,7 +1373,7 @@ defmodule VintageNet.Technology.WiFiTest do
       type: VintageNet.Technology.WiFi,
       wifi: %{
         networks: [
-          %{mode: :host, ssid: "example ap", psk: "very secret passphrase", key_mgmt: :wpa_psk}
+          %{mode: :ap, ssid: "example ap", psk: "very secret passphrase", key_mgmt: :wpa_psk}
         ]
       },
       ipv4: %{method: :disabled},
@@ -1543,7 +1574,7 @@ defmodule VintageNet.Technology.WiFiTest do
       wifi: %{
         networks: [
           %{
-            mode: :host,
+            mode: :ap,
             ssid: "example ap",
             key_mgmt: :none,
             scan_ssid: 1
