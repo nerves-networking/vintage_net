@@ -314,8 +314,6 @@ defmodule VintageNet.Technology.WiFi do
   defp key_mgmt_to_string(:wpa_psk), do: "WPA-PSK"
   defp key_mgmt_to_string(:wpa_eap), do: "WPA-EAP"
   defp key_mgmt_to_string(:IEEE8021X), do: "IEEE8021X"
-  # This is to allow passing multi mgmts
-  defp key_mgmt_to_string(string) when is_binary(string), do: string
 
   defp mode_to_string(:infrastructure), do: "0"
   defp mode_to_string(:ibss), do: "1"
