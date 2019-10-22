@@ -287,6 +287,8 @@ The `:wifi` key has the following common fields:
   * `:scan_ssid` - Scan with SSID-specific Probe Request frames (this can be
     used to find APs that do not accept broadcast SSID or use multiple SSIDs;
     this will add latency to scanning, so enable this only when needed)
+  * `:frequency` - When in `:ibss` mode, use this channel frequency (in MHz).
+    For example, specify 2412 for channel 1.
 
 See the [official
 docs](https://w1.fi/cgit/hostap/plain/wpa_supplicant/wpa_supplicant.conf) for

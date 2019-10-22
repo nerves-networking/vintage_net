@@ -1687,7 +1687,8 @@ defmodule VintageNet.Technology.WiFiTest do
           %{
             mode: :ibss,
             ssid: "my_mesh",
-            key_mgmt: :none
+            key_mgmt: :none,
+            frequency: 2412
           }
         ]
       },
@@ -1725,6 +1726,7 @@ defmodule VintageNet.Technology.WiFiTest do
          ssid="my_mesh"
          key_mgmt=NONE
          mode=1
+         frequency=2412
          }
          """}
       ],

@@ -17,7 +17,8 @@ defmodule VintageNet.Technology.WiFi do
     :bssid_whitelist,
     :bssid_blacklist,
     :priority,
-    :scan_ssid
+    :scan_ssid,
+    :frequency
   ]
 
   @moduledoc """
@@ -340,6 +341,7 @@ defmodule VintageNet.Technology.WiFi do
       into_config_string(wifi, :bssid_blacklist),
       into_config_string(wifi, :wps_disabled),
       into_config_string(wifi, :mode),
+      into_config_string(wifi, :frequency),
 
       # WPA-PSK settings
       into_config_string(wifi, :psk),
@@ -442,6 +444,10 @@ defmodule VintageNet.Technology.WiFi do
 
   defp wifi_opt_to_config_string(_wifi, :priority, value) do
     "priority=#{value}"
+  end
+
+  defp wifi_opt_to_config_string(_wifi, :frequency, value) do
+    "frequency=#{value}"
   end
 
   defp wifi_opt_to_config_string(_wifi, :identity, value) do
