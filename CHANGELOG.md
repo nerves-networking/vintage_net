@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.6.3
+
+This release renames the WiFi mode names. The old names still work so it's a
+backwards compatible update. The new names are `:ap` and `:infrastructure`
+instead of `:host` and `:client`. These names match the mode names in the IEEE
+specifications and usage elsewhere.
+
+* New features
+  * Support static IPv4 configurations for a default gateway and list of name
+    resolvers. See `:gateway` and `:name_servers` parameters.
+  * Support ad-hoc WiFi networking (IBSS mode)
+
 ## v0.6.2
 
 * New features
