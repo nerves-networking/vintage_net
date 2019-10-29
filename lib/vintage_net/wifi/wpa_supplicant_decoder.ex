@@ -60,16 +60,9 @@ defmodule VintageNet.WiFi.WPASupplicantDecoder do
     decode_kv_notification("CTRL-EVENT-SSID-REENABLED", rest)
   end
 
-  def decode_notification(<<"CTRL-EVENT-EAP-PEER-CERT", rest::binary>>) do
-    info =
-      rest
-      |> String.trim()
-      |> String.split(" ")
-      |> Map.new(fn str ->
-        [key, val] = String.split(str, "=", parts: 2)
-        {key, unquote_string(val)}
-      end)
-
+  # "CTRL-EVENT-EAP-PEER-CERT depth=0 subject='/C=US/ST=California/L=San Luis Obispo/O=FarmBot Inc/CN=Connor Rigby/emailAddress=connor@farmbot.io' hash=ae7b11dc19b0ed3497540ac551d9730fd86380b3da9d494bb27cb8f2bda8fbd6"
+  def decode_notification(<<"CTRL-EVENT-EAP-PEER-CERT ", rest::binary>>) do
+    info = eap_peer_cert_decode(rest)
     {:event, "CTRL-EVENT-EAP-PEER-CERT", info}
   end
 
@@ -114,6 +107,44 @@ defmodule VintageNet.WiFi.WPASupplicantDecoder do
 
   def decode_notification(string) do
     {:info, String.trim_trailing(string)}
+  end
+
+  defp eap_peer_cert_decode(
+         binary,
+         state \\ %{key?: true, in_quote?: false, key: <<>>, value: <<>>},
+         acc \\ %{}
+       )
+
+  defp eap_peer_cert_decode(<<"=", rest::binary>>, %{key?: true} = state, acc) do
+    eap_peer_cert_decode(rest, %{state | key?: false}, acc)
+  end
+
+  defp eap_peer_cert_decode(<<"\'", rest::binary>>, %{key?: false, in_quote?: false} = state, acc) do
+    eap_peer_cert_decode(rest, %{state | in_quote?: true, value: state.value}, acc)
+  end
+
+  defp eap_peer_cert_decode(<<"\'", rest::binary>>, %{key?: false, in_quote?: true} = state, acc) do
+    eap_peer_cert_decode(rest, %{state | in_quote?: false, value: state.value}, acc)
+  end
+
+  defp eap_peer_cert_decode(<<" ", rest::binary>>, %{key?: false, in_quote?: false} = state, acc) do
+    eap_peer_cert_decode(
+      rest,
+      %{key?: true, in_quote?: false, key: <<>>, value: <<>>},
+      Map.put(acc, state.key, String.trim(state.value))
+    )
+  end
+
+  defp eap_peer_cert_decode(<<char::size(1)-binary, rest::binary>>, %{key?: true} = state, acc) do
+    eap_peer_cert_decode(rest, %{state | key: state.key <> char}, acc)
+  end
+
+  defp eap_peer_cert_decode(<<char::size(1)-binary, rest::binary>>, %{key?: false} = state, acc) do
+    eap_peer_cert_decode(rest, %{state | value: state.value <> char}, acc)
+  end
+
+  defp eap_peer_cert_decode(<<>>, state, acc) do
+    Map.put(acc, state.key, String.trim(state.value))
   end
 
   defp decode_kv_notification(event, rest) do
