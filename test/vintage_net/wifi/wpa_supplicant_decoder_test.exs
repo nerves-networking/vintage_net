@@ -463,4 +463,17 @@ defmodule VintageNet.WiFi.WPASupplicantDecoderTest do
 
     assert [] = WPASupplicantDecoder.parse_flags("[something random]")
   end
+
+  test "decodes eap cert" do
+    assert WPASupplicantDecoder.decode_notification(
+             "CTRL-EVENT-EAP-PEER-CERT depth=0 subject='/C=US/ST=California/L=San Luis Obispo/O=FarmBot Inc/CN=Connor Rigby/emailAddress=connor@farmbot.io' hash=ae7b11dc19b0ed3497540ac551d9730fd86380b3da9d494bb27cb8f2bda8fbd6"
+           ) ==
+             {:event, "CTRL-EVENT-EAP-PEER-CERT",
+              %{
+                "depth" => "0",
+                "hash" => "ae7b11dc19b0ed3497540ac551d9730fd86380b3da9d494bb27cb8f2bda8fbd6",
+                "subject" =>
+                  "/C=US/ST=California/L=San Luis Obispo/O=FarmBot Inc/CN=Connor Rigby/emailAddress=connor@farmbot.io"
+              }}
+  end
 end
