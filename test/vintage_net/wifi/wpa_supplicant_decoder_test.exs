@@ -459,6 +459,8 @@ defmodule VintageNet.WiFi.WPASupplicantDecoderTest do
     assert [:wpa2_psk_ccmp_tkip, :wps] =
              WPASupplicantDecoder.parse_flags("[WPA2-PSK-CCMP+TKIP][WPS]")
 
+    assert [:wpa_eap_ccmp_tkip] = WPASupplicantDecoder.parse_flags("[WPA-EAP-CCMP+TKIP]")
+
     assert [] = WPASupplicantDecoder.parse_flags("[something random]")
   end
 end
