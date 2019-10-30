@@ -2,6 +2,7 @@ defmodule VintageNet.WiFi.WPASupplicant do
   use GenServer
 
   alias VintageNet.WiFi.{WPASupplicantDecoder, WPASupplicantLL}
+  alias VintageNet.Interface.EAPStatus
   require Logger
 
   @moduledoc """
@@ -62,6 +63,7 @@ defmodule VintageNet.WiFi.WPASupplicant do
       access_points: %{},
       clients: [],
       current_ap: nil,
+      eap_status: %EAPStatus{},
       ll: nil
     }
 
@@ -266,6 +268,78 @@ defmodule VintageNet.WiFi.WPASupplicant do
     new_state
   end
 
+  defp handle_notification({:event, "CTRL-EVENT-EAP-STATUS", %{"status" => "started"}}, state) do
+    new_state = %{state | eap_status: %{state.eap_status | status: :started}}
+    update_eap_status_property(new_state)
+    new_state
+  end
+
+  defp handle_notification(
+         {:event, "CTRL-EVENT-EAP-STATUS",
+          %{"parameter" => method, "status" => "accept proposed method"}},
+         state
+       ) do
+    new_state = %{state | eap_status: %{state.eap_status | method: method}}
+    update_eap_status_property(new_state)
+    new_state
+  end
+
+  defp handle_notification(
+         {:event, "CTRL-EVENT-EAP-STATUS",
+          %{"parameter" => "success", "status" => "remote certificate verification"}},
+         state
+       ) do
+    new_state = %{state | eap_status: %{state.eap_status | remote_certificate_verified?: true}}
+    update_eap_status_property(new_state)
+    new_state
+  end
+
+  defp handle_notification(
+         {:event, "CTRL-EVENT-EAP-STATUS",
+          %{"parameter" => "failure", "status" => "remote certificate verification"}},
+         state
+       ) do
+    new_state = %{state | eap_status: %{state.eap_status | remote_certificate_verified?: false}}
+    update_eap_status_property(new_state)
+    new_state
+  end
+
+  defp handle_notification(
+         {:event, "CTRL-EVENT-EAP-STATUS", %{"parameter" => "failure", "status" => "completion"}},
+         state
+       ) do
+    new_state = %{state | eap_status: %{state.eap_status | status: :failure}}
+    update_eap_status_property(new_state)
+    new_state
+  end
+
+  defp handle_notification(
+         {:event, "CTRL-EVENT-EAP-STATUS", %{"parameter" => "success", "status" => "completion"}},
+         state
+       ) do
+    new_state = %{state | eap_status: %{state.eap_status | status: :success}}
+    update_eap_status_property(new_state)
+    new_state
+  end
+
+  defp handle_notification(
+         {:event, "CTRL-EVENT-EAP-PEER-CERT",
+          %{"cert" => _cert, "depth" => _depth, "subject" => _subject}},
+         state
+       ) do
+    # TODO(Connor) - store cert on the eap-status
+    state
+  end
+
+  defp handle_notification(
+         {:event, "CTRL-EVENT-EAP-PEER-CERT",
+          %{"hash" => _hash, "depth" => _depth, "subject" => _subject}},
+         state
+       ) do
+    # TODO(Connor) - store cert on the eap-status
+    state
+  end
+
   defp handle_notification({:event, "CTRL-EVENT-TERMINATING"}, _state) do
     # This really shouldn't happen. The only way I know how to cause this
     # is to send a SIGTERM to the wpa_supplicant.
@@ -338,6 +412,14 @@ defmodule VintageNet.WiFi.WPASupplicant do
       VintageNet,
       ["interface", state.ifname, "wifi", "current_ap"],
       state.current_ap
+    )
+  end
+
+  defp update_eap_status_property(state) do
+    VintageNet.PropertyTable.put(
+      VintageNet,
+      ["interface", state.ifname, "eap_status"],
+      state.eap_status
     )
   end
 
