@@ -254,6 +254,79 @@ defmodule VintageNet.WiFi.WPASupplicantTest do
     assert_receive {VintageNet, ^ap_property, ^ap_list, [], _metadata}
   end
 
+  test "eap status is set", context do
+    MockWPASupplicant.set_responses(context.mock, %{
+      "ATTACH" => "OK\n",
+      "PING" => "PONG\n",
+      "BSS 78:8a:20:87:7a:50" =>
+        "id=0\nbssid=78:8a:20:87:7a:50\nfreq=2437\nbeacon_int=100\ncapabilities=0x0431\nqual=0\nnoise=-89\nlevel=-71\ntsf=0000333220048880\nage=14\nie=0008426f7062654c414e010882848b968c1298240301062a01003204b048606c0b0504000a00002d1aac011bffffff00000000000000000001000000000000000000003d1606080c000000000000000000000000000000000000007f080000000000000040dd180050f2020101000003a4000027a4000042435e0062322f00dd0900037f01010000ff7fdd1300156d00010100010237e58106788a20867a5030140100000fac040100000fac040100000fac020000\nflags=[WPA-EAP-CCMP+TKIP][ESS]\nssid=TestLAN\nsnr=18\nest_throughput=48000\nupdate_idx=1\nbeacon_ie=0008426f7062654c414e010882848b968c1298240301060504010300002a01003204b048606c0b0504000a00002d1aac011bffffff00000000000000000001000000000000000000003d1606080c000000000000000000000000000000000000007f080000000000000040dd180050f2020101000003a4000027a4000042435e0062322f00dd0900037f01010000ff7fdd1300156d00010100010237e58106788a20867a5030140100000fac040100000fac040100000fac020000\n"
+    })
+
+    _supplicant =
+      start_supervised!(
+        {WPASupplicant,
+         wpa_supplicant: "",
+         wpa_supplicant_conf_path: "/dev/null",
+         ifname: "test_wlan0",
+         control_path: context.socket_path}
+      )
+
+    Process.sleep(100)
+
+    eap_status_property = ["interface", "test_wlan0", "eap_status"]
+    VintageNet.PropertyTable.clear(VintageNet, eap_status_property)
+    VintageNet.subscribe(eap_status_property)
+
+    :ok =
+      MockWPASupplicant.send_message(
+        context.mock,
+        "<1>CTRL-EVENT-EAP-STATUS parameter=\"\" status=\"started\""
+      )
+
+    assert_receive {VintageNet, ^eap_status_property, nil, %{status: :started}, _}
+
+    :ok =
+      MockWPASupplicant.send_message(
+        context.mock,
+        "<2>CTRL-EVENT-EAP-STATUS parameter=\"PEAP\" status=\"accept proposed method\""
+      )
+
+    assert_receive {VintageNet, ^eap_status_property, _, %{method: "PEAP"}, _}
+
+    :ok =
+      MockWPASupplicant.send_message(
+        context.mock,
+        "<3>CTRL-EVENT-EAP-STATUS parameter=\"success\" status=\"remote certificate verification\""
+      )
+
+    assert_receive {VintageNet, ^eap_status_property, _, %{remote_certificate_verified?: true}, _}
+
+    :ok =
+      MockWPASupplicant.send_message(
+        context.mock,
+        "<3>CTRL-EVENT-EAP-STATUS parameter=\"failure\" status=\"remote certificate verification\""
+      )
+
+    assert_receive {VintageNet, ^eap_status_property, _, %{remote_certificate_verified?: false},
+                    _}
+
+    :ok =
+      MockWPASupplicant.send_message(
+        context.mock,
+        "<3>CTRL-EVENT-EAP-STATUS parameter=\"failure\" status=\"completion\""
+      )
+
+    assert_receive {VintageNet, ^eap_status_property, _, %{status: :failure}, _}
+
+    :ok =
+      MockWPASupplicant.send_message(
+        context.mock,
+        "<3>CTRL-EVENT-EAP-STATUS parameter=\"success\" status=\"completion\""
+      )
+
+    assert_receive {VintageNet, ^eap_status_property, _, %{status: :success}, _}
+  end
+
   test "current_ap property is set", context do
     MockWPASupplicant.set_responses(context.mock, %{
       "ATTACH" => "OK\n",
