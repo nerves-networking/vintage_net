@@ -1,4 +1,15 @@
 defmodule VintageNet.Interface.EAPStatus do
+  @moduledoc """
+  Status of an EAP connection.
+
+  ## Keys
+  * `status` Status of the connection.
+    * `:started` - the AP was assosiated and EAP is started.
+    * `:success` - the EAP connection was successful
+    * `:failure` - the EAP connection failed.
+  * `method` - EAP method used to authenticate. See the typespec for available values.
+  * `remote_certificate_verified?` - if the cert was verified by the EAP server.
+  """
   defstruct [
     :status,
     :method,
