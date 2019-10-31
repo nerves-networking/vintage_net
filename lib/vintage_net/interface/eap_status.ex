@@ -8,11 +8,13 @@ defmodule VintageNet.Interface.EAPStatus do
     * `:success` - the EAP connection was successful
     * `:failure` - the EAP connection failed.
   * `method` - EAP method used to authenticate. See the typespec for available values.
+  * `timestamp` - DateTime of the most recent EAP event.
   * `remote_certificate_verified?` - if the cert was verified by the EAP server.
   """
   defstruct [
     :status,
     :method,
+    :timestamp,
     remote_certificate_verified?: false
   ]
 
@@ -51,6 +53,7 @@ defmodule VintageNet.Interface.EAPStatus do
   @type t() :: %VintageNet.Interface.EAPStatus{
           status: nil | :started | :failure | :success,
           method: nil | method(),
+          timestamp: nil | DateTime.t(),
           remote_certificate_verified?: boolean()
         }
 end

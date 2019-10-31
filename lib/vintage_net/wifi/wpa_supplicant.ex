@@ -269,7 +269,11 @@ defmodule VintageNet.WiFi.WPASupplicant do
   end
 
   defp handle_notification({:event, "CTRL-EVENT-EAP-STATUS", %{"status" => "started"}}, state) do
-    new_state = %{state | eap_status: %{state.eap_status | status: :started}}
+    new_state = %{
+      state
+      | eap_status: %{state.eap_status | status: :started, timestamp: DateTime.utc_now()}
+    }
+
     update_eap_status_property(new_state)
     new_state
   end
@@ -279,7 +283,11 @@ defmodule VintageNet.WiFi.WPASupplicant do
           %{"parameter" => method, "status" => "accept proposed method"}},
          state
        ) do
-    new_state = %{state | eap_status: %{state.eap_status | method: method}}
+    new_state = %{
+      state
+      | eap_status: %{state.eap_status | method: method, timestamp: DateTime.utc_now()}
+    }
+
     update_eap_status_property(new_state)
     new_state
   end
@@ -289,7 +297,15 @@ defmodule VintageNet.WiFi.WPASupplicant do
           %{"parameter" => "success", "status" => "remote certificate verification"}},
          state
        ) do
-    new_state = %{state | eap_status: %{state.eap_status | remote_certificate_verified?: true}}
+    new_state = %{
+      state
+      | eap_status: %{
+          state.eap_status
+          | remote_certificate_verified?: true,
+            timestamp: DateTime.utc_now()
+        }
+    }
+
     update_eap_status_property(new_state)
     new_state
   end
@@ -299,7 +315,15 @@ defmodule VintageNet.WiFi.WPASupplicant do
           %{"parameter" => "failure", "status" => "remote certificate verification"}},
          state
        ) do
-    new_state = %{state | eap_status: %{state.eap_status | remote_certificate_verified?: false}}
+    new_state = %{
+      state
+      | eap_status: %{
+          state.eap_status
+          | remote_certificate_verified?: false,
+            timestamp: DateTime.utc_now()
+        }
+    }
+
     update_eap_status_property(new_state)
     new_state
   end
@@ -308,7 +332,11 @@ defmodule VintageNet.WiFi.WPASupplicant do
          {:event, "CTRL-EVENT-EAP-STATUS", %{"parameter" => "failure", "status" => "completion"}},
          state
        ) do
-    new_state = %{state | eap_status: %{state.eap_status | status: :failure}}
+    new_state = %{
+      state
+      | eap_status: %{state.eap_status | status: :failure, timestamp: DateTime.utc_now()}
+    }
+
     update_eap_status_property(new_state)
     new_state
   end
@@ -317,7 +345,11 @@ defmodule VintageNet.WiFi.WPASupplicant do
          {:event, "CTRL-EVENT-EAP-STATUS", %{"parameter" => "success", "status" => "completion"}},
          state
        ) do
-    new_state = %{state | eap_status: %{state.eap_status | status: :success}}
+    new_state = %{
+      state
+      | eap_status: %{state.eap_status | status: :success, timestamp: DateTime.utc_now()}
+    }
+
     update_eap_status_property(new_state)
     new_state
   end
