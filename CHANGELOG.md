@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.4
+
+* Improvements
+  * Added the `["interface", ifname, "eap_status"]` property for EAP
+    events. EAP is currently only supported on WiFi, but is anticipated for
+    wired Ethernet too.
+
 ## v0.6.3
 
 This release renames the WiFi mode names. The old names still work so it's a
