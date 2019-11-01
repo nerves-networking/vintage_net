@@ -10,6 +10,32 @@ defmodule VintageNet.PropertyTableTest do
     {:ok, %{table: config.test}}
   end
 
+  test "wildcard subscription", %{table: table} do
+    PropertyTable.subscribe(table, [:_])
+    PropertyTable.put(table, ["a", "b"], 100)
+    PropertyTable.put(table, ["a", "b", "c"], 99)
+    PropertyTable.put(table, ["x", "y", "z"], 1)
+
+    assert_receive {table, ["a", "b"], nil, 100, _}
+    assert_receive {table, ["a", "b", "c"], nil, 99, _}
+    assert_receive {table, ["x", "y", "z"], nil, 1, _}
+
+    PropertyTable.put(table, ["x", "y", "z"], 2)
+    assert_receive {table, ["x", "y", "z"], 1, 2, _}
+  end
+
+  test "wildcard subscription inside other match", %{table: table} do
+    PropertyTable.subscribe(table, ["a", :_, "c"])
+    PropertyTable.put(table, ["a", "b", "c"], 88)
+    assert_receive {^table, ["a", "b", "c"], nil, 88, _}
+  end
+
+  test "wildcard subscription inside partial match", %{table: table} do
+    PropertyTable.subscribe(table, ["a", :_, "c"])
+    PropertyTable.put(table, ["a", "b", "c", "d", "e", "f"], 66)
+    assert_receive {^table, ["a", "b", "c", "d", "e", "f"], nil, 66, _}
+  end
+
   test "sending events", %{table: table} do
     name = ["test"]
     PropertyTable.subscribe(table, name)
