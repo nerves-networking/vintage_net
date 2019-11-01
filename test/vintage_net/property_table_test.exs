@@ -11,29 +11,22 @@ defmodule VintageNet.PropertyTableTest do
   end
 
   test "wildcard subscription", %{table: table} do
-    PropertyTable.subscribe(table, [:_])
-    PropertyTable.put(table, ["a", "b"], 100)
-    PropertyTable.put(table, ["a", "b", "c"], 99)
-    PropertyTable.put(table, ["x", "y", "z"], 1)
-
-    assert_receive {table, ["a", "b"], nil, 100, _}
-    assert_receive {table, ["a", "b", "c"], nil, 99, _}
-    assert_receive {table, ["x", "y", "z"], nil, 1, _}
-
-    PropertyTable.put(table, ["x", "y", "z"], 2)
-    assert_receive {table, ["x", "y", "z"], 1, 2, _}
-  end
-
-  test "wildcard subscription inside other match", %{table: table} do
     PropertyTable.subscribe(table, ["a", :_, "c"])
+
+    # Exact match
     PropertyTable.put(table, ["a", "b", "c"], 88)
     assert_receive {^table, ["a", "b", "c"], nil, 88, _}
-  end
 
-  test "wildcard subscription inside partial match", %{table: table} do
-    PropertyTable.subscribe(table, ["a", :_, "c"])
-    PropertyTable.put(table, ["a", "b", "c", "d", "e", "f"], 66)
-    assert_receive {^table, ["a", "b", "c", "d", "e", "f"], nil, 66, _}
+    # Prefix match
+    PropertyTable.put(table, ["a", "b", "c", "d"], 88)
+    assert_receive {^table, ["a", "b", "c", "d"], nil, 88, _}
+
+    # No match
+    PropertyTable.put(table, ["x", "b", "c"], 88)
+    refute_receive {^table, ["x", "b", "c"], _, _, _}
+
+    PropertyTable.put(table, ["a", "b", "d"], 88)
+    refute_receive {^table, ["a", "b", "d"], _, _, _}
   end
 
   test "sending events", %{table: table} do

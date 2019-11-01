@@ -137,27 +137,20 @@ defmodule VintageNet.PropertyTable.Table do
     message = {state.table, name, old_value, new_value, metadata}
 
     Registry.match(state.registry, :property_registry, :_)
-    |> Enum.each(fn
-      {pid, []} ->
-        send(pid, message)
-
-      {pid, ^name} ->
-        send(pid, message)
-
-      {pid, match} ->
-        is_property_match?(match, name) && send(pid, message)
+    |> Enum.each(fn {pid, match} ->
+      is_property_match?(match, name) && send(pid, message)
     end)
   end
 
-  defp is_property_match?([:_ | _], _), do: true
+  defp is_property_match?([], _name), do: true
 
   defp is_property_match?([value | match_rest], [value | name_rest]) do
     is_property_match?(match_rest, name_rest)
   end
 
-  defp is_property_match?([_match_value | _], [_name_value | _]) do
-    false
+  defp is_property_match?([:_ | match_rest], [_any | name_rest]) do
+    is_property_match?(match_rest, name_rest)
   end
 
-  defp is_property_match?([], _), do: false
+  defp is_property_match?(_match, _name), do: false
 end

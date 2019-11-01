@@ -178,7 +178,7 @@ defmodule VintageNet do
   end
 
   @doc """
-  Subscribe to receive property change messages
+  Subscribe to property change messages
 
   Messages have the form:
 
@@ -186,16 +186,19 @@ defmodule VintageNet do
   {VintageNet, property_name, old_value, new_value, metadata}
   ```
 
-  ## Examples
+  Subscriptions are prefix matches. For example, to get notified whenever a property
+  changes on "wlan0", run this:
 
-  iex()> VintageNet.subscribe(["interface", "wlan0", "some_property"])
-  iex()> flush()
-  {VintageNet, ["interface", "wlan0", "some_property"], nil, "some value"}
+  ```
+  VintageNet.subscribe(["interface", "wlan0"])
+  ```
 
-  iex()> VintageNet.subscribe(["interface", :_, "some_property"])
-  iex()> flush()
-  {VintageNet, ["interface", "wlan0", "some_property"], nil, "some value"}
-  {VintageNet, ["interface", "eth0", "some_property"], nil, "some value"}
+  It's also possible to match with wildcards using `:_`. For example, to
+  get notified whenever an IP address in the system changes, do this:
+
+  ```
+  VintageNet.subscribe(["interface", :_, "addresses"])
+  ```
   """
   @spec subscribe(PropertyTable.property()) :: :ok
   def subscribe(name) do
