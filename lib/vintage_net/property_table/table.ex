@@ -135,29 +135,29 @@ defmodule VintageNet.PropertyTable.Table do
 
   defp dispatch(state, name, old_value, new_value, metadata) do
     message = {state.table, name, old_value, new_value, metadata}
-    dispatch_all_prefixes(state.registry, name, message)
-  end
 
-  defp dispatch_all_prefixes(registry, name, message) do
-    all_prefixes(name)
-    |> Enum.each(fn prefix -> dispatch_exact(registry, prefix, message) end)
-  end
+    Registry.match(state.registry, :property_registry, :_)
+    |> Enum.each(fn
+      {pid, []} ->
+        send(pid, message)
 
-  defp dispatch_exact(registry, name, message) do
-    Registry.dispatch(registry, name, fn entries ->
-      for {pid, _} <- entries, do: send(pid, message)
+      {pid, ^name} ->
+        send(pid, message)
+
+      {pid, match} ->
+        is_property_match?(match, name) && send(pid, message)
     end)
   end
 
-  defp all_prefixes(name) do
-    reversed = Enum.reverse(name)
-    all_suffixes([name], reversed)
+  defp is_property_match?([:_ | _], _), do: true
+
+  defp is_property_match?([value | match_rest], [value | name_rest]) do
+    is_property_match?(match_rest, name_rest)
   end
 
-  defp all_suffixes(acc, []), do: acc
-
-  defp all_suffixes(acc, [_h | t]) do
-    reversed_t = Enum.reverse(t)
-    all_suffixes([reversed_t | acc], t)
+  defp is_property_match?([_match_value | _], [_name_value | _]) do
+    false
   end
+
+  defp is_property_match?([], _), do: false
 end

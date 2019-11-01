@@ -185,6 +185,17 @@ defmodule VintageNet do
   ```
   {VintageNet, property_name, old_value, new_value, metadata}
   ```
+
+  ## Examples
+
+  iex()> VintageNet.subscribe(["interface", "wlan0", "some_property"])
+  iex()> flush()
+  {VintageNet, ["interface", "wlan0", "some_property"], nil, "some value"}
+
+  iex()> VintageNet.subscribe(["interface", :_, "some_property"])
+  iex()> flush()
+  {VintageNet, ["interface", "wlan0", "some_property"], nil, "some value"}
+  {VintageNet, ["interface", "eth0", "some_property"], nil, "some value"}
   """
   @spec subscribe(PropertyTable.property()) :: :ok
   def subscribe(name) do

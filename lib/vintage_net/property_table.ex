@@ -71,7 +71,7 @@ defmodule VintageNet.PropertyTable do
     assert_name(name)
 
     registry = VintageNet.PropertyTable.Supervisor.registry_name(table)
-    {:ok, _} = Registry.register(registry, name, nil)
+    {:ok, _} = Registry.register(registry, :property_registry, name)
 
     :ok
   end
@@ -82,7 +82,7 @@ defmodule VintageNet.PropertyTable do
   @spec unsubscribe(table_id(), property()) :: :ok
   def unsubscribe(table, name) when is_list(name) do
     registry = VintageNet.PropertyTable.Supervisor.registry_name(table)
-    Registry.unregister(registry, name)
+    Registry.unregister(registry, :property_registry)
   end
 
   @doc """
@@ -122,7 +122,11 @@ defmodule VintageNet.PropertyTable do
   defdelegate clear_prefix(table, name), to: Table
 
   defp assert_name(name) do
-    Enum.all?(name, &is_binary/1) ||
+    Enum.all?(name, fn
+      v when is_binary(v) -> true
+      :_ -> true
+      _ -> false
+    end) ||
       raise ArgumentError, "Expected name or prefix to be a list of strings"
   end
 end
