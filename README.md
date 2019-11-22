@@ -1,8 +1,9 @@
 # 🍇 VintageNet
 
+[![Hex version](https://img.shields.io/hexpm/v/vintage_net.svg "Hex version")](https://hex.pm/packages/vintage_net)
+[![API docs](https://img.shields.io/hexpm/v/vintage_net.svg?label=hexdocs "API docs")](https://hexdocs.pm/vintage_net/VintageNet.html)
 [![CircleCI](https://circleci.com/gh/nerves-networking/vintage_net.svg?style=svg)](https://circleci.com/gh/nerves-networking/vintage_net)
 [![Coverage Status](https://coveralls.io/repos/github/nerves-networking/vintage_net/badge.svg?branch=master)](https://coveralls.io/github/nerves-networking/vintage_net?branch=master)
-[![Hex version](https://img.shields.io/hexpm/v/vintage_net.svg "Hex version")](https://hex.pm/packages/vintage_net)
 
 > **_NOTE:_**  This library is a work in progress without sufficient
 > documentation. It will get there, but the current Nerves networking libraries
@@ -30,7 +31,7 @@ The following network configurations are supported:
 * [x] Wired Ethernet, IPv4 static IP
 * [x] WiFi password-less and WEP
 * [x] WPA2 PSK and EAP
-* [ ] USB gadget mode Ethernet, IPv4 DHCP server to supply host IP address
+* [x] USB gadget mode Ethernet, IPv4 DHCP server to supply host IP address
 * [ ] Cellular networks
 * [x] WiFi AP mode
 * [ ] IPv6
