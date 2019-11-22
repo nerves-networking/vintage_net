@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.6.5
+
+* New features
+  * Support wild card subscriptions to properties. This makes it possible to
+    subscribe to things like `["interface", :_, "addresses"]` where the `:_`
+    indicates that any value in the second position should match. That
+    particular subscription would send a message whenever an IP address anywhere
+    gets added, changed, or removed.
+
 ## v0.6.4
 
 * Improvements
