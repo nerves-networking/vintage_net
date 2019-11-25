@@ -98,8 +98,7 @@ defmodule VintageNet.MixProject do
       {:dialyxir, "~> 1.0.0-rc.6", only: [:dev, :test], runtime: false},
       {:muontrap, "~> 0.5.0"},
       {:gen_state_machine, "~> 2.0.0"},
-      {:busybox, "~> 0.1.4", optional: true},
-      {:one_dhcpd, "~> 0.2.3"}
+      {:busybox, "~> 0.1.4", optional: true}
     ]
   end
 
