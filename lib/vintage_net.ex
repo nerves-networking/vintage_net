@@ -200,7 +200,7 @@ defmodule VintageNet do
   VintageNet.subscribe(["interface", :_, "addresses"])
   ```
   """
-  @spec subscribe(PropertyTable.property()) :: :ok
+  @spec subscribe(PropertyTable.property_with_wildcards()) :: :ok
   def subscribe(name) do
     PropertyTable.subscribe(VintageNet, name)
   end
@@ -208,7 +208,7 @@ defmodule VintageNet do
   @doc """
   Stop subscribing to property change messages
   """
-  @spec unsubscribe(PropertyTable.property()) :: :ok
+  @spec unsubscribe(PropertyTable.property_with_wildcards()) :: :ok
   def unsubscribe(name) do
     PropertyTable.unsubscribe(VintageNet, name)
   end

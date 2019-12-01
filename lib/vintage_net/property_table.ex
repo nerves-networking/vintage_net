@@ -37,6 +37,7 @@ defmodule VintageNet.PropertyTable do
   Properties
   """
   @type property :: [String.t()]
+  @type property_with_wildcards :: [String.t() | :_]
   @type value :: any()
   @type metadata :: map()
 
@@ -66,9 +67,9 @@ defmodule VintageNet.PropertyTable do
   @doc """
   Subscribe to receive events
   """
-  @spec subscribe(table_id(), property()) :: :ok
+  @spec subscribe(table_id(), property_with_wildcards()) :: :ok
   def subscribe(table, name) when is_list(name) do
-    assert_name(name)
+    assert_property_with_wildcards(name)
 
     registry = VintageNet.PropertyTable.Supervisor.registry_name(table)
     {:ok, _} = Registry.register(registry, :property_registry, name)
@@ -79,7 +80,7 @@ defmodule VintageNet.PropertyTable do
   @doc """
   Stop subscribing to a property
   """
-  @spec unsubscribe(table_id(), property()) :: :ok
+  @spec unsubscribe(table_id(), property_with_wildcards()) :: :ok
   def unsubscribe(table, name) when is_list(name) do
     registry = VintageNet.PropertyTable.Supervisor.registry_name(table)
     Registry.unregister(registry, :property_registry)
@@ -90,6 +91,7 @@ defmodule VintageNet.PropertyTable do
   """
   @spec get(table_id(), property(), value()) :: value()
   def get(table, name, default \\ nil) when is_list(name) do
+    assert_property(name)
     Table.get(table, name, default)
   end
 
@@ -98,7 +100,7 @@ defmodule VintageNet.PropertyTable do
   """
   @spec get_by_prefix(table_id(), property()) :: [{property(), value()}]
   def get_by_prefix(table, prefix) when is_list(prefix) do
-    assert_name(prefix)
+    assert_property(prefix)
 
     Table.get_by_prefix(table, prefix)
   end
@@ -121,12 +123,19 @@ defmodule VintageNet.PropertyTable do
   """
   defdelegate clear_prefix(table, name), to: Table
 
-  defp assert_name(name) do
-    Enum.all?(name, fn
-      v when is_binary(v) -> true
-      :_ -> true
-      _ -> false
-    end) ||
-      raise ArgumentError, "Expected name or prefix to be a list of strings"
+  defp assert_property(name) do
+    Enum.each(name, fn
+      v when is_binary(v) -> :ok
+      :_ -> raise ArgumentError, "Wildcards not allowed in this property"
+      _ -> raise ArgumentError, "Property should be a list of strings"
+    end)
+  end
+
+  defp assert_property_with_wildcards(name) do
+    Enum.each(name, fn
+      v when is_binary(v) -> :ok
+      :_ -> :ok
+      _ -> raise ArgumentError, "Property should be a list of strings"
+    end)
   end
 end

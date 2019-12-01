@@ -29,6 +29,16 @@ defmodule VintageNet.PropertyTableTest do
     refute_receive {^table, ["a", "b", "d"], _, _, _}
   end
 
+  test "getting invalid properties raises", %{table: table} do
+    # Wildcards aren't allowed
+    assert_raise ArgumentError, fn -> PropertyTable.get(table, [:_, "a"]) end
+    assert_raise ArgumentError, fn -> PropertyTable.get(table, [:_]) end
+
+    # Non-string lists aren't allowed
+    assert_raise ArgumentError, fn -> PropertyTable.get(table, ['nope']) end
+    assert_raise ArgumentError, fn -> PropertyTable.get(table, ["a", 5]) end
+  end
+
   test "sending events", %{table: table} do
     name = ["test"]
     PropertyTable.subscribe(table, name)
