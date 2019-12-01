@@ -61,7 +61,7 @@ defmodule VintageNetTest do
     assert output =~ "No configured interfaces"
   end
 
-  test "info works with a configure interface" do
+  test "info works with a configured interface" do
     :ok = VintageNet.configure("eth0", %{type: VintageNet.Technology.Ethernet})
 
     # configure/2 is asynchronous, so wait for the interface to appear.
@@ -107,6 +107,30 @@ defmodule VintageNetTest do
   test "configuration_valid? works" do
     assert VintageNet.configuration_valid?("eth0", %{type: VintageNet.Technology.Ethernet})
     refute VintageNet.configuration_valid?("eth0", %{this_totally_should_not_work: 1})
+  end
+
+  # Check that get, get_by_prefix, and match are available in the public
+  # interface. Better tests should be else.
+  test "get" do
+    # These properties should always exist
+    assert [] == VintageNet.get(["available_interfaces"])
+    assert :disconnected == VintageNet.get(["connection"])
+  end
+
+  test "get_by_prefix" do
+    results = VintageNet.get_by_prefix([])
+
+    # There may or may not be "interfaces", so don't check for those.
+    assert {["available_interfaces"], []} in results
+    assert {["connection"], :disconnected} in results
+  end
+
+  test "match" do
+    assert [{["available_interfaces"], []}] ==
+             VintageNet.match(["available_interfaces"])
+
+    assert [{["available_interfaces"], []}, {["connection"], :disconnected}] ==
+             VintageNet.match([:_])
   end
 
   test "verify system works", context do

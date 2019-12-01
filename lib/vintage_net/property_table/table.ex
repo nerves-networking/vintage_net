@@ -30,6 +30,18 @@ defmodule VintageNet.PropertyTable.Table do
     |> Enum.sort()
   end
 
+  @spec match(PropertyTable.table_id(), PropertyTable.property_with_wildcards()) :: [
+          {PropertyTable.property(), PropertyTable.value()}
+        ]
+  def match(table, pattern) do
+    :ets.match(table, {:"$1", :"$2"})
+    |> Enum.filter(fn [k, _v] ->
+      is_property_match?(pattern, k)
+    end)
+    |> Enum.map(fn [k, v] -> {k, v} end)
+    |> Enum.sort()
+  end
+
   defp append([]), do: :"$1"
   defp append([h]), do: [h | :"$1"]
   defp append([h | t]), do: [h | append(t)]
@@ -138,11 +150,26 @@ defmodule VintageNet.PropertyTable.Table do
 
     Registry.match(state.registry, :property_registry, :_)
     |> Enum.each(fn {pid, match} ->
-      is_property_match?(match, name) && send(pid, message)
+      is_property_prefix_match?(match, name) && send(pid, message)
     end)
   end
 
-  defp is_property_match?([], _name), do: true
+  # Check if the first parameter is a prefix of the second parameter with
+  # wildcards
+  defp is_property_prefix_match?([], _name), do: true
+
+  defp is_property_prefix_match?([value | match_rest], [value | name_rest]) do
+    is_property_prefix_match?(match_rest, name_rest)
+  end
+
+  defp is_property_prefix_match?([:_ | match_rest], [_any | name_rest]) do
+    is_property_prefix_match?(match_rest, name_rest)
+  end
+
+  defp is_property_prefix_match?(_match, _name), do: false
+
+  # Check if the first parameter matches the second parameter with wildcards
+  defp is_property_match?([], []), do: true
 
   defp is_property_match?([value | match_rest], [value | name_rest]) do
     is_property_match?(match_rest, name_rest)

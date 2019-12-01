@@ -106,6 +106,16 @@ defmodule VintageNet.PropertyTable do
   end
 
   @doc """
+  Get a list of all properties matching the specified prefix
+  """
+  @spec match(table_id(), property_with_wildcards()) :: [{property(), value()}]
+  def match(table, pattern) when is_list(pattern) do
+    assert_property_with_wildcards(pattern)
+
+    Table.match(table, pattern)
+  end
+
+  @doc """
   Update a property and notify listeners
   """
   @spec put(table_id(), property(), value(), metadata()) :: :ok

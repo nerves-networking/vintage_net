@@ -123,4 +123,55 @@ defmodule VintageNet.PropertyTableTest do
     PropertyTable.clear_prefix(table, ["a"])
     assert PropertyTable.get_by_prefix(table, []) == [{["f", "g"], 4}]
   end
+
+  test "match using wildcards", %{table: table} do
+    PropertyTable.put(table, ["a", "b", "c"], 1)
+    PropertyTable.put(table, ["A", "b", "c"], 2)
+    PropertyTable.put(table, ["a", "B", "c"], 3)
+    PropertyTable.put(table, ["a", "b", "C"], 4)
+
+    # These next properties should never match since we only match on 3 elements below
+    PropertyTable.put(table, ["a", "b"], 5)
+    PropertyTable.put(table, ["a", "b", "c", "d"], 6)
+
+    # Exact match
+    assert PropertyTable.match(table, ["a", "b", "c"]) == [{["a", "b", "c"], 1}]
+
+    # Wildcard one place
+    assert PropertyTable.match(table, [:_, "b", "c"]) == [
+             {["A", "b", "c"], 2},
+             {["a", "b", "c"], 1}
+           ]
+
+    assert PropertyTable.match(table, ["a", :_, "c"]) == [
+             {["a", "B", "c"], 3},
+             {["a", "b", "c"], 1}
+           ]
+
+    assert PropertyTable.match(table, ["a", "b", :_]) == [
+             {["a", "b", "C"], 4},
+             {["a", "b", "c"], 1}
+           ]
+
+    # Wildcard two places
+    assert PropertyTable.match(table, [:_, :_, "c"]) == [
+             {["A", "b", "c"], 2},
+             {["a", "B", "c"], 3},
+             {["a", "b", "c"], 1}
+           ]
+
+    assert PropertyTable.match(table, ["a", :_, :_]) == [
+             {["a", "B", "c"], 3},
+             {["a", "b", "C"], 4},
+             {["a", "b", "c"], 1}
+           ]
+
+    # Wildcard three places
+    assert PropertyTable.match(table, [:_, :_, :_]) == [
+             {["A", "b", "c"], 2},
+             {["a", "B", "c"], 3},
+             {["a", "b", "C"], 4},
+             {["a", "b", "c"], 1}
+           ]
+  end
 end

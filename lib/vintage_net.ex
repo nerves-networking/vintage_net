@@ -157,11 +157,26 @@ defmodule VintageNet do
   @doc """
   Get the current value of a network property
 
-  See `get_by_prefix/1` to get some or all properties.
+  See `get_by_prefix/1` for exact prefix matches (i.e., get all properties for one
+  interface) and `match/1` to run wildcard matches (i.e., get a specific
+  property for all interfaces).
   """
   @spec get(PropertyTable.property(), PropertyTable.value()) :: PropertyTable.value()
   def get(name, default \\ nil) do
     PropertyTable.get(VintageNet, name, default)
+  end
+
+  @doc """
+  Get a list of all properties matching a pattern
+
+  Patterns are list of strings that optionally specify `:_` at
+  a position in the list to match any value.
+  """
+  @spec match(PropertyTable.property_with_wildcards()) :: [
+          {PropertyTable.property(), PropertyTable.value()}
+        ]
+  def match(pattern) do
+    PropertyTable.match(VintageNet, pattern)
   end
 
   @doc """
