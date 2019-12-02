@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.6.6
+
+* Bug fixes
+  * Fix warning from Dialyzer when making wild card subscriptions. Code was also
+    added to more thoroughly validate properties paths to raise on subtle issues
+    that won't do what the programmer intends.
+
+* New features
+  * Added `VintageNet.match/1` to support "gets" on properties using wildcards.
+
 ## v0.6.5
 
 * New features
