@@ -148,7 +148,7 @@ defmodule VintageNet.Technology.WiFi do
   defp normalize_network_mode(network_config), do: Map.put(network_config, :mode, :infrastructure)
 
   # Convert mode names to their 802.11 operation mode name
-  # :infrastructure and :host were used in vintage_net 0.6.2 and earlier
+  # :client and :host were used in vintage_net 0.6.2 and earlier
   defp normalized_mode_name(:client), do: :infrastructure
   defp normalized_mode_name(:infrastructure), do: :infrastructure
   defp normalized_mode_name(:host), do: :ap
