@@ -99,15 +99,26 @@ defmodule VintageNet.Interface do
     GenStateMachine.call(via_name(raw_config.ifname), {:configure, raw_config})
   end
 
-  defp technology_from_config(%{type: type}), do: type
+  defp technology_from_config(%{type: type}) do
+    unless Code.ensure_compiled?(type) do
+      raise(ArgumentError, """
+      Invalid technology #{inspect(type)}.
+
+      Check the spelling and that you have the dependency that provides it in your mix.exs.
+      See the `vintage_net` docs for examples.
+      """)
+    end
+
+    type
+  end
 
   defp technology_from_config(_missing),
     do:
       raise(ArgumentError, """
       Missing :type field.
 
-      See the help for VintageNet.Technology.Ethernet and VintageNet.Technology.WiFi for
-      example configurations.
+      This should be set to a network technology. These are provided in other libraries.
+      See the `vintage_net` docs and cookbook for examples.
       """)
 
   @doc """

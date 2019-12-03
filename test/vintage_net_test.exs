@@ -31,10 +31,16 @@ defmodule VintageNetTest do
     assert Application.get_env(:vintage_net, :bin_udhcpd) =~ ~r"busybox.*priv.*/sbin/udhcpd"
   end
 
-  test "configure fails on bad technologies" do
+  test "configure fails on a missing type field" do
     assert {:error,
-            "Missing :type field.\n\nSee the help for VintageNet.Technology.Ethernet and VintageNet.Technology.WiFi for\nexample configurations.\n"} ==
+            "Missing :type field.\n\nThis should be set to a network technology. These are provided in other libraries.\nSee the `vintage_net` docs and cookbook for examples.\n"} ==
              VintageNet.configure("eth0", %{})
+  end
+
+  test "configure fails if technology isn't available" do
+    assert {:error,
+            "Invalid technology VintageNetWifi.\n\nCheck the spelling and that you have the dependency that provides it in your mix.exs.\nSee the `vintage_net` docs for examples.\n"} ==
+             VintageNet.configure("eth0", %{type: VintageNetWifi})
   end
 
   @tag :requires_interfaces_monitor
