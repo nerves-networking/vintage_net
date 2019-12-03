@@ -14,7 +14,7 @@ For compile-time, add something like the following to your `config.exs`:
 ```elixir
 config :vintage_net,
   config: [
-    {"eth0", %{type: VintageNet.Technology.Ethernet, ipv4: %{method: :dhcp}}},
+    {"eth0", %{type: VintageNetEthernet, ipv4: %{method: :dhcp}}},
   ]
 ```
 
@@ -26,7 +26,7 @@ For run-time, call
 like this:
 
 ```elixir
-VintageNet.configure("eth0", %{type: VintageNet.Technology.Ethernet, ipv4: %{method: :dhcp}}})
+VintageNet.configure("eth0", %{type: VintageNetEthernet, ipv4: %{method: :dhcp}}})
 ```
 
 To see the current configuration at an IEx prompt, type:
@@ -52,21 +52,31 @@ where the `p6` and `s0` indicate where the adapter and Ethernet connector
 location. Running `ifconfig` on Linux and Nerves can help find these if you are
 unsure.
 
-## Wired Ethernet with DHCP
+## Wired Ethernet
+
+To use, make sure that you're either using
+[`nerves_pack`](https://hex.pm/packages/nerves_pack) or have
+`:vintage_net_ethernet` in your deps:
+
+```elixir
+  {:vintage_net_ethernet, "~> 0.7"}
+```
+
+### Wired Ethernet with DHCP
 
 This is regular wired Ethernet - nothing fancy:
 
 ```elixir
-%{type: VintageNet.Technology.Ethernet, ipv4: %{method: :dhcp}}}
+%{type: VintageNetEthernet, ipv4: %{method: :dhcp}}}
 ```
 
-## Wired Ethernet with a static IP
+### Wired Ethernet with a static IP
 
 Update the parameters below as appropriate:
 
 ```elixir
 %{
-  type: VintageNet.Technology.Ethernet,
+  type: VintageNetEthernet,
   ipv4: %{
     method: :static,
     address: "192.168.9.232",
@@ -83,14 +93,25 @@ for other options. If you're interfacing with other Erlang and Elixir libraries,
 you may find passing IP tuples more convenient than passing strings. That works
 too.
 
-## Normal password-protected WiFi (WPA2 PSK)
+## WiFi
+
+To use, make sure that you're either using
+[`nerves_pack`](https://hex.pm/packages/nerves_pack) or have
+`:vintage_net_wifi` in your deps:
+
+```elixir
+  {:vintage_net_wifi, "~> 0.7"}
+```
+
+
+### Normal password-protected WiFi (WPA2 PSK)
 
 Most password-protected home networks use WPA2 authentication and pre-shared
 keys.
 
 ```elixir
 %{
-  type: VintageNet.Technology.WiFi,
+  type: VintageNetWiFi,
   wifi: %{
     key_mgmt: :wpa_psk,
     ssid: "my_network_ssid"
@@ -102,13 +123,13 @@ keys.
 }
 ```
 
-## Enterprise WiFi (PEAPv0/EAP-MSCHAPV2)
+### Enterprise WiFi (PEAPv0/EAP-MSCHAPV2)
 
 Protected EAP (PEAP) is a common authentication protocol for enterprise WiFi networks.
 
 ```elixir
 %{
-  type: VintageNet.Technology.WiFi,
+  type: VintageNetWiFi,
   wifi: %{
     networks: [
       %{
@@ -125,6 +146,6 @@ Protected EAP (PEAP) is a common authentication protocol for enterprise WiFi net
 }
 ```
 
-## Enterprise WiFi (EAP-TLS)
+### Enterprise WiFi (EAP-TLS)
 
 TBD

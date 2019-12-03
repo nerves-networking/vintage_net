@@ -92,8 +92,8 @@ domain if using WiFi. In your main `config.exs`, add the following:
 config :vintage_net,
   regulatory_domain: "US",
   config: [
-    {"eth0", %{type: VintageNet.Technology.Ethernet, ipv4: %{method: :dhcp}}},
-    {"wlan0", %{type: VintageNet.Technology.WiFi}}
+    {"eth0", %{type: VintageNetEthernet, ipv4: %{method: :dhcp}}},
+    {"wlan0", %{type: VintageNetWiFi}}
   ]
 ```
 
@@ -155,279 +155,16 @@ config.
 
 The only required key in the configuration maps is `:type`. All other keys
 follow from the type. `:type` should be set to a module that implements the
-`VintageNet.Technology` behaviour. The following are included:
+`VintageNet.Technology` behaviour. The following are common technologies:
 
-* `VintageNet.Technology.Ethernet` - Standard wired Ethernet
-* `VintageNet.Technology.WiFi` - Client configurations for 802.11 WiFi
-* `VintageNet.Technology.Mobile` - Cellular configurations (likely to be
-  refactored to a separate library)
+* [`VintageNetEthernet`](https://github.com/nerves-networking/vintage_net_ethernet) - Standard wired Ethernet
+* [`VintageNetWiFi`](https://github.com/nerves-networking/vintage_net_wifi) - Client configurations for 802.11 WiFi
+* [`VintageNetDirect`](https://github.com/nerves-networking/vintage_net_direct) - Direct connections like those used for USB gadget
+  connections
 * `VintageNet.Technology.Null` - An empty configuration useful for turning off a
   configuration
 
-The following sections describe the types in more detail.
-
-### Wired Ethernet
-
-Wired Ethernet interfaces typically have names like `"eth0"`, `"eth1"`, etc.
-when using Nerves.
-
-An example configuration for enabling an Ethernet interface that dynamically
-gets an IP address is:
-
-```elixir
-config :vintage_net,
-  config: [
-    {"eth0",
-     %{
-       type: VintageNet.Technology.Ethernet,
-       ipv4: %{
-         method: :dhcp
-       }
-     }}
-  ]
-```
-
-You can also set the configuration at runtime:
-
-```elixir
-iex> VintageNet.configure("eth0", %{type: VintageNet.Technology.Ethernet, ipv4: %{method: :dhcp}})
-:ok
-```
-
-Here's a static IP configuration:
-
-```elixir
-iex>   VintageNet.configure("eth0", %{
-    type: VintageNet.Technology.Ethernet,
-    ipv4: %{
-      method: :static,
-      address: "192.168.9.232",
-      prefix_length: 24,
-      gateway: "192.168.9.1",
-      name_servers: ["1.1.1.1"]
-    }
-  })
-:ok
-```
-
-In the above, IP addresses were passed as strings for convenience, but it's also
-possible to pass tuples like `{192, 168, 9, 232}` as is more typical in Elixir
-and Erlang. VintageNet internally works with tuples.
-
-The following fields are supported:
-
-* `:method` - Set to `:dhcp`, `:static`, or `:disabled`. If `:static`, then at
-  least an IP address and mask need to be set. `:disabled` enables the interface
-  and doesn't apply an IP configuration
-* `:address` - the IP address for static IP addresses
-* `:prefix_length` - the number of bits in the IP address to use for the subnet
-  (e.g., 24)
-* `:netmask` - either this or `prefix_length` is used to determine the subnet.
-* `:gateway` - the default gateway for this interface (optional)
-* `:name_servers` - a list of name servers for static configurations (optional)
-* `:domain` - a search domain for DNS
-
-Wired Ethernet connections are monitored for Internet connectivity if a default
-gateway is available. When internet-connected, they are preferred over all other
-network technologies even when the others provide default gateways.
-
-### WiFi
-
-WiFi network interfaces typically have names like `"wlan0"` or `"wlan1"` when
-using Nerves. Most of the time, there's only one WiFi interface and its
-`"wlan0"`. Some WiFi adapters expose separate interfaces for 2.4 GHz and 5 GHz
-and they can be configured independently.
-
-An example WiFi configuration looks like this:
-
-```elixir
-config :vintage_net,
-  config: [
-    {"wlan0",
-     %{
-       type: VintageNet.Technology.WiFi,
-       wifi: %{
-         key_mgmt: :wpa_psk,
-         psk: "a_passphrase_or_psk",
-         ssid: "my_network_ssid"
-       },
-       ipv4: %{
-         method: :dhcp
-       }
-     }}
-  ]
-```
-
-The `:ipv4` key is the same as in Wired Ethernet.
-
-The `:wifi` key has the following common fields:
-
-* `:ap_scan` -  See `wpa_supplicant` documentation. The default for this, 1,
-  should work for nearly all users.
-* `:bgscan` - Periodic background scanning to support roaming within an ESS.
-  * `:simple`
-  * `{:simple, args}` - args is a string to be passed to the `simple` wpa module
-  * `:learn`
-  * `{:learn, args}` args is a string to be passed to the `learn` wpa module
-* `:passive_scan`
-  * 0:  Do normal scans (allow active scans) (default)
-  * 1:  Do passive scans.
-* `:regulatory_domain`: Two character country code. Technology configuration
-  will take priority over Application configuration
-* `:networks` - A list of Wi-Fi networks to configure. In client mode,
-  VintageNet connects to the first available network in the list. In host mode,
-  the list should have one entry with SSID and password information.
-  * `:mode` -
-    * `:infrastructure` (default) - Normal operation. Associate with an AP
-    * `:ap` - access point mode
-    * `:ibss` - peer to peer mode (not supported)
-  * `:ssid` - The SSID for the network
-  * `:key_mgmt` - WiFi security mode (`:wpa_psk` for WPA2, `:none` for no
-    password or WEP)
-  * `:psk` - A WPA2 passphrase or the raw PSK. If a passphrase is passed in, it
-    will be converted to a PSK and discarded.
-  * `:priority` - The priority to set for a network if you are using multiple
-    network configurations
-  * `:scan_ssid` - Scan with SSID-specific Probe Request frames (this can be
-    used to find APs that do not accept broadcast SSID or use multiple SSIDs;
-    this will add latency to scanning, so enable this only when needed)
-  * `:frequency` - When in `:ibss` mode, use this channel frequency (in MHz).
-    For example, specify 2412 for channel 1.
-
-See the [official
-docs](https://w1.fi/cgit/hostap/plain/wpa_supplicant/wpa_supplicant.conf) for
-the complete list of options.
-
-Here's an example:
-
-```elixir
-iex> VintageNet.configure("wlan0", %{
-      type: VintageNet.Technology.WiFi,
-      wifi: %{
-        networks: [
-          %{
-            key_mgmt: :wpa_psk,
-            psk: "a_passphrase_or_psk",
-            ssid: "my_network_ssid"
-          }
-        ]
-      },
-      ipv4: %{method: :dhcp}
-    })
-```
-
-Example of WEP:
-
-```elixir
-iex> VintageNet.configure("wlan0", %{
-      type: VintageNet.Technology.WiFi,
-      wifi: %{
-        networks: [
-          %{
-            ssid: "my_network_ssid",
-            wep_key0: "42FEEDDEAFBABEDEAFBEEFAA55",
-            key_mgmt: :none,
-            wep_tx_keyidx: 0
-          }
-        ]
-      },
-      ipv4: %{method: :dhcp}
-    })
-```
-
-Enterprise Wi-Fi (WPA-EAP) support mostly passes through to the
-`wpa_supplicant`. Instructions for enterprise network for Linux
-should map. For example:
-
-```elixir
-iex> VintageNet.configure("wlan0", %{
-      type: VintageNet.Technology.WiFi,
-      wifi: %{
-        networks: [
-          %{
-            ssid: "testing",
-            key_mgmt: :wpa_eap,
-            pairwise: "CCMP TKIP",
-            group: "CCMP TKIP",
-            eap: "PEAP",
-            identity: "user1",
-            password: "supersecret",
-            phase1: "peapver=auto",
-            phase2: "MSCHAPV2"
-          }
-        ]
-      },
-      ipv4: %{method: :dhcp}
-})
-```
-
-Network adapters that can run as an Access Point can be configured as follows:
-
-```elixir
-iex> VintageNet.configure("wlan0", %{
-      type: VintageNet.Technology.WiFi,
-      wifi: %{
-        networks: [
-          %{
-            mode: :ap,
-            ssid: "test ssid",
-            key_mgmt: :none
-          }
-        ]
-      },
-      ipv4: %{
-        method: :static,
-        address: "192.168.24.1",
-        netmask: "255.255.255.0"
-      },
-      dhcpd: %{
-        start: "192.168.24.2",
-        end: "192.168.24.10"
-      }
-})
-```
-
-If your device may be installed in different countries, you should override the
-default regulatory domain to the desired country at runtime.  VintageNet uses
-the global domain by default and that will restrict the set of available Wi-Fi
-frequencies in some countries. For example:
-
-```elixir
-iex> VintageNet.configure("wlan0", %{
-      type: VintageNet.Technology.WiFi,
-      wifi: %{
-        regulatory_domain: "US",
-        networks: [
-          %{
-            ssid: "testing",
-            key_mgmt: :wpa_psk,
-            psk: "super secret"
-          }
-        ]
-      },
-      ipv4: %{method: :dhcp}
-})
-```
-
-### LTE
-
-TBD
-
-```elixir
-```
-
-### USB gadget mode
-
-VintageNet comes with a technology to setup usb gadget devices.
-This will use OneDHCPD to configure the ip address automatically.
-
-```elixir
-  config :vintage_net, [
-    config: [
-      {"usb0", %{type: VintageNet.Technology.Gadget}}},
-    ]
-  ]
-```
+See the links above for specific documentation.
 
 ## Persistence
 
@@ -459,22 +196,22 @@ All interfaces:       ["eth0", "lo", "tap0", "wlan0"]
 Available interfaces: ["eth0", "wlan0"]
 
 Interface eth0
-  Type: VintageNet.Technology.Ethernet
+  Type: VintageNetEthernet
   Present: true
   State: :configured
   Connection: :internet
   Configuration:
-    %{ipv4: %{method: :dhcp}, type: VintageNet.Technology.Ethernet}
+    %{ipv4: %{method: :dhcp}, type: VintageNetEthernet}
 
 Interface wlan0
-  Type: VintageNet.Technology.WiFi
+  Type: VintageNetWiFi
   Present: true
   State: :configured
   Connection: :internet
   Configuration:
     %{
       ipv4: %{method: :dhcp},
-      type: VintageNet.Technology.WiFi,
+      type: VintageNetWiFi,
       wifi: %{
         key_mgmt: :wpa_psk,
         mode: :infrastructure,
@@ -550,10 +287,10 @@ iex> VintageNet.get_by_prefix([])
 [
   {["interface", "eth0", "connection"], :internet},
   {["interface", "eth0", "state"], :configured},
-  {["interface", "eth0", "type"], VintageNet.Technology.Ethernet},
+  {["interface", "eth0", "type"], VintageNetEthernet},
   {["interface", "wlan0", "connection"], :internet},
   {["interface", "wlan0", "state"], :configured},
-  {["interface", "wlan0", "type"], VintageNet.Technology.WiFi}
+  {["interface", "wlan0", "type"], VintageNetWiFi}
 ]
 ```
 
@@ -585,7 +322,7 @@ interfaces:
 
 Property      | Values              | Description
  ------------ | ------------------- | -----------
-`type`        | `VintageNet.Technology.Ethernet`, etc. | The type of the interface
+`type`        | `VintageNetEthernet`, etc. | The type of the interface
 `state`       | `:configured`, `:configuring`, etc. | The state of the interface from `VintageNet`'s point of view.
 `connection`  | `:disconnected`, `:lan`, `:internet` | This provides a determination of the Internet connection status
 `lower_up`    | `true` or `false`   | This indicates whether the physical layer is "up". E.g., a cable is connected or WiFi associated
@@ -594,49 +331,10 @@ Property      | Values              | Description
 
 Specific types of interfaces provide more parameters.
 
-### Wired Ethernet status
-
-No additional parameters
-
-### WiFi status
-
-Property        | Values           | Description
- -------------- | ---------------- | -----------
-`access_points` | [%AccessPoint{}] | A list of access points as found by the most recent scan
-`clients`       | ["11:22:33:44:55:66"] | A list of clients connected to the access point when using `mode: :ap`
-`current_ap`    | %AccessPoint{}   | The currently associated access point
-
-Access points are identified by their BSSID. Information about an access point
-has the following form:
-
-```elixir
-%VintageNet.WiFi.AccessPoint{
-  band: :wifi_5_ghz,
-  bssid: "8a:8a:20:88:7a:50",
-  channel: 149,
-  flags: [:wpa2_psk_ccmp, :ess],
-  frequency: 5745,
-  signal_dbm: -76,
-  signal_percent: 57,
-  ssid: "MyNetwork"
-}
-```
-
-Applications can scan for access points in a couple ways. The first is to call
-`VintageNet.scan("wlan0")`, wait for a second, and then call
-`VintageNet.get(["interface", "wlan0", "access_points"])`. This works for
-scanning networks once or twice. A better way is to subscribe to the
-`"access_points"` property and then call `VintageNet.scan("wlan0")` on a timer.
-The `"access_points"` property updates as soon as the WiFi module notifies that
-it is complete so applications don't need to guess how long to wait.
-
-### LTE status
-
-Property         | Values           | Description
- --------------- | ---------------- | -----------
-`signal_percent` | 0 - 100          | This is a rough measure of signal strength from 0 (none) to 100 (all bars)
-
 ## System Requirements
+
+All official Nerves systems support `vintage_net`. If you have customized
+a Nerves system, you may need to check it's configuration.
 
 ### Kernel Requirements
 
@@ -653,33 +351,3 @@ To avoid enabling these, add `{:busybox, "~> 0.1"}` to your `mix` dependencies.
 
 * `CONFIG_UDHCPC=y` - `udhcpc` DHCP Client
 * `CONFIG_UDHCPD=y` - `udhcpd` DHCP Server (optional)
-* `CONFIG_IFUP=y` - `ifup`
-* `CONFIG_IFDOWN=y` `ifdown`
-* `CONFIG_RUN_PARTS=y`
-* `CONFIG_MKTEMP=y`
-
-### Buildroot Requirements
-
-* `BR2_PACKAGE_WPA_SUPPLICANT`
-
-### Additional Requirements for Access Point Mode
-
-* `CONFIG_UDHCPD` (in busybox)
-* `BR2_PACKAGE_WPA_SUPPLICANT_HOTSPOT`
-
-### Additional Requirements for LTE
-
-#### Kernel modules (defconfig)
-
-* `CONFIG_PPP=m`
-* `CONFIG_PPP_BSDCOMP=m`
-* `CONFIG_PPP_DEFLATE=m`
-* `CONFIG_PPP_ASYNC=m`
-* `CONFIG_PPP_SYNC_TTY=m`
-* `CONFIG_USB_NET_CDC_NCM=m`
-* `CONFIG_USB_SERIAL_OPTION=m`
-
-#### System deps
-
-* `pppd`
-* `mknod`
