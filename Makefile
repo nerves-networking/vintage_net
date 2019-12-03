@@ -17,8 +17,6 @@
 # ERL_EI_LIBDIR path to libei.a (Required for crosscompile)
 # LDFLAGS	linker flags for linking all binaries
 # ERL_LDFLAGS	additional linker flags for projects referencing Erlang libraries
-# PKG_CONFIG_SYSROOT_DIR sysroot for pkg-config (for finding libnl-3)
-# PKG_CONFIG_PATH pkg-config metadata
 #
 ifeq ($(MIX_APP_PATH),)
 calling_from_make:
@@ -37,9 +35,7 @@ CFLAGS ?= -O2 -Wall -Wextra -Wno-unused-parameter -pedantic
 # Check that we're on a supported build platform
 ifeq ($(CROSSCOMPILE),)
     # Not crosscompiling, so check that we're on Linux.
-    ifeq ($(shell uname -s),Linux)
-        CFLAGS += $(shell pkg-config --cflags libnl-genl-3.0)
-    else
+    ifneq ($(shell uname -s),Linux)
         $(warning vintage_net only works on Linux, but crosscompilation)
         $(warning is supported by defining $$CROSSCOMPILE, $$ERL_EI_INCLUDE_DIR,)
         $(warning and $$ERL_EI_LIBDIR. See Makefile for details. If using Nerves,)
@@ -48,28 +44,12 @@ ifeq ($(CROSSCOMPILE),)
         $(warning Skipping some C compilation unless targets explicitly passed to make.)
         DEFAULT_TARGETS ?= $(PREFIX) $(PREFIX)/to_elixir $(PREFIX)/udhcpc_handler $(PREFIX)/udhcpd_handler
     endif
-else
-    # Crosscompiling
-    ifeq ($(PKG_CONFIG_SYSROOT_DIR),)
-        # If pkg-config sysroot isn't set, then assume Nerves
-        CFLAGS += -I$(NERVES_SDK_SYSROOT)/usr/include/libnl3
-    else
-
-        # Use pkg-config to find libnl
-        PKG_CONFIG = $(shell which pkg-config)
-        ifeq ($(PKG_CONFIG),)
-            $(error pkg-config required to build. Install by running "brew install pkg-config")
-        endif
-
-        CFLAGS += $(shell $(PKG_CONFIG) --cflags libnl-genl-3.0)
-    endif
 endif
 DEFAULT_TARGETS ?= $(PREFIX) \
 		   $(PREFIX)/to_elixir \
 		   $(PREFIX)/udhcpc_handler \
 		   $(PREFIX)/udhcpd_handler \
-		   $(PREFIX)/if_monitor \
-		   $(PREFIX)/force_ap_scan
+		   $(PREFIX)/if_monitor
 
 # Enable for debug messages
 # CFLAGS += -DDEBUG
@@ -101,9 +81,6 @@ $(PREFIX)/udhcpd_handler $(PREFIX)/udhcpc_handler: $(PREFIX)/to_elixir
 $(PREFIX)/if_monitor: $(BUILD)/if_monitor.o
 	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -lmnl -o $@
 
-$(PREFIX)/force_ap_scan: $(BUILD)/force_ap_scan.o
-	$(CC) $^ $(LDFLAGS) -lnl-3 -lnl-genl-3 -o $@
-
 $(PREFIX) $(BUILD):
 	mkdir -p $@
 
@@ -112,7 +89,6 @@ clean:
 	    $(PREFIX)/udhcpc_handler \
 	    $(PREFIX)/udhcpd_handler \
 	    $(PREFIX)/if_monitor \
-	    $(PREFIX)/force_ap_scan \
 	    $(BUILD)/*.o
 
 format:
