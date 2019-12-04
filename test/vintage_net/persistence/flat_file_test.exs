@@ -5,7 +5,7 @@ defmodule VintageNet.Persistence.FlatFileTest do
   @persistence_dir Application.get_env(:vintage_net, :persistence_dir)
 
   @config %{
-    type: VintageNet.Technology.Ethernet,
+    type: VintageNetTest.TestTechnology,
     ipv4: %{method: :dhcp},
     hostname: "unit_test"
   }

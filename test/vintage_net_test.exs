@@ -68,7 +68,7 @@ defmodule VintageNetTest do
   end
 
   test "info works with a configured interface" do
-    :ok = VintageNet.configure("eth0", %{type: VintageNet.Technology.Ethernet})
+    :ok = VintageNet.configure("eth0", %{type: VintageNetTest.TestTechnology})
 
     # configure/2 is asynchronous, so wait for the interface to appear.
     Process.sleep(100)
@@ -79,7 +79,7 @@ defmodule VintageNetTest do
     assert output =~ "All interfaces"
     assert output =~ "Available interfaces"
     assert output =~ "Interface eth0"
-    assert output =~ "Type: VintageNet.Technology.Ethernet"
+    assert output =~ "Type: VintageNetTest.TestTechnology"
   end
 
   test "configure returns error on bad configurations" do
@@ -89,7 +89,7 @@ defmodule VintageNetTest do
   test "configure persists by default" do
     path = Path.join(Application.get_env(:vintage_net, :persistence_dir), "eth0")
 
-    :ok = VintageNet.configure("eth0", %{type: VintageNet.Technology.Ethernet})
+    :ok = VintageNet.configure("eth0", %{type: VintageNetTest.TestTechnology})
 
     assert File.exists?(path)
   end
@@ -105,13 +105,13 @@ defmodule VintageNetTest do
   test "can turn off configuration persistence" do
     path = Path.join(Application.get_env(:vintage_net, :persistence_dir), "eth0")
 
-    :ok = VintageNet.configure("eth0", %{type: VintageNet.Technology.Ethernet}, persist: false)
+    :ok = VintageNet.configure("eth0", %{type: VintageNetTest.TestTechnology}, persist: false)
 
     refute File.exists?(path)
   end
 
   test "configuration_valid? works" do
-    assert VintageNet.configuration_valid?("eth0", %{type: VintageNet.Technology.Ethernet})
+    assert VintageNet.configuration_valid?("eth0", %{type: VintageNetTest.TestTechnology})
     refute VintageNet.configuration_valid?("eth0", %{this_totally_should_not_work: 1})
   end
 
