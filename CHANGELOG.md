@@ -1,5 +1,43 @@
 # Changelog
 
+## v0.7.0
+
+This release moves network technology implementations (WiFi, wired Ethernet,
+etc.) into their own projects. This means that they can evolve at their own
+pace. It also means that we're finally ready to support the
+`VintageNet.Technology` behaviour as part of the public API so that VintageNet
+users can add support for network technologies that we haven't gotten to yet.
+
+IMPORTANT: This change is not backwards compatible. You will need to update
+existing projects to bring in a new dependency. The runtime is backwards
+compatible. I.e., If you have a networking configuration saved in VintageNet, it
+will be updated on load. It won't be re-saved, so if you need to revert an
+update, it will still work. The next save, though, will use the new naming.
+
+If you're using `VintageNet.Technology.Gadget`, do the following:
+
+1. Add `{:vintage_net_direct, "~> 0.7.0"}` to your `mix.exs` dependencies.
+   You'll notice that references to "gadget" have been replaced with the word
+   "direct". We think the new naming is more accurate.
+2. Replace all references to `VintageNet.Technology.Gadget` in your code to
+   `VintageNetDirect`. Be aware of aliases and configuration.
+3. If you passed options when configurating the network, the `:gadget` key is
+   now `:vintage_net_direct`. Most users don't pass options.
+
+If you're using `VintageNet.Technology.Ethernet`, do the following:
+
+1. Add `{:vintage_net_ethernet, "~> 0.7.0"}` to your `mix.exs` dependencies.
+2. Replace all references to `VintageNet.Technology.Ethernet` in your code to
+   `VintageNetEthernet`. Be aware of aliases and configuration.
+
+If you're using `VintageNet.Technology.WiFi`, do the following:
+
+1. Add `{:vintage_net_wifi, "~> 0.7.0"}` to your `mix.exs` dependencies.
+2. Replace all references to `VintageNet.Technology.WiFi` in your code to
+   `VintageNetWiFi`. Be aware of aliases and configuration. Also, the "F" is
+   capital.
+3. The `:wifi` key in the network configuration is now `:vintage_net_wifi`.
+
 ## v0.6.6
 
 * Bug fixes
