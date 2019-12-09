@@ -36,6 +36,14 @@ defmodule VintageNet.Route.Calculator do
   end
 
   @doc """
+  Return the table indices used for routing based on source IP.
+  """
+  def rule_table_index_range() do
+    max_index = 100 + VintageNet.max_interface_count() - 1
+    100..max_index
+  end
+
+  @doc """
   Compute a Linux routing table configuration
 
   The entries are ordered so that List.myers_difference/2 can be used to
@@ -148,9 +156,9 @@ defmodule VintageNet.Route.Calculator do
     # matter...
     used = Map.values(table_indices)
 
-    case Enum.find(100..200, fn n -> not Enum.member?(used, n) end) do
+    case Enum.find(rule_table_index_range(), fn n -> not Enum.member?(used, n) end) do
       nil ->
-        raise "VintageNet.Route.Calculator ran out of table indices???"
+        raise "VintageNet.Route.Calculator ran out of table indices. This is probably due to more than `:max_interface_count` in use simultaneously."
 
       picked ->
         picked

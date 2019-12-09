@@ -108,7 +108,7 @@ defmodule VintageNet.RouteManager do
   def init(_args) do
     # Fresh slate
     IPRoute.clear_all_routes()
-    IPRoute.clear_all_rules(100..200)
+    IPRoute.clear_all_rules(Calculator.rule_table_index_range())
 
     state =
       %State{

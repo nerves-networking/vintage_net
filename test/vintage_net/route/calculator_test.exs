@@ -188,4 +188,8 @@ defmodule VintageNet.Route.CalculatorTest do
               {:default_route, "eth0", {192, 168, 1, 1}, 10, :main}
             ]} == Calculator.compute(state, interfaces, prioritization)
   end
+
+  test "rule table index range is as expected" do
+    assert 100..107 == Calculator.rule_table_index_range()
+  end
 end

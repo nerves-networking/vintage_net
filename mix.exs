@@ -31,6 +31,7 @@ defmodule VintageNet.MixProject do
       # Program names are found at application start and converted to absolute.
       env: [
         config: [],
+        max_interface_count: 8,
         tmpdir: "/tmp/vintage_net",
         to_elixir_socket: "comms",
         bin_dnsd: "dnsd",

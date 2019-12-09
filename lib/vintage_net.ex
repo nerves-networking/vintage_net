@@ -88,6 +88,20 @@ defmodule VintageNet do
   end
 
   @doc """
+  Return the maximum number of interfaces controlled by VintageNet
+
+  Internal constraints mean that VintageNet can't manage an arbitrary number of
+  interfaces and knowing the max can reduce some processing. The limit is set
+  by the application config. Unless you need over 100 network interfaces,
+  VintageNet's use of the Linux networking API is not likely to be an issue,
+  though.
+  """
+  @spec max_interface_count() :: 1..100
+  def max_interface_count() do
+    Application.get_env(:vintage_net, :max_interface_count)
+  end
+
+  @doc """
   Update the configuration of a network interface
 
   Configurations are validated and normalized before being applied.  This means

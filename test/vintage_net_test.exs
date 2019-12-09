@@ -146,6 +146,10 @@ defmodule VintageNetTest do
     end)
   end
 
+  test "max interface count works" do
+    assert 8 == VintageNet.max_interface_count()
+  end
+
   defp prefix_paths(opts, prefix) do
     Enum.map(opts, fn kv -> prefix_path(kv, prefix) end)
   end
