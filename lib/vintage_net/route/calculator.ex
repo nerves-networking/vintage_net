@@ -89,13 +89,18 @@ defmodule VintageNet.Route.Calculator do
   end
 
   defp routing_table_entries(metric, ifname, table_index, info) do
-    # Every package with a source IP address of this interface needs to using
-    # routing table "table_index"
+    # Every packet with a source IP address of this interface should use the
+    # routing table "table_index" instead of the "main" one. That lets users
+    # communicate bidirectionally on interfaces that wouldn't be used by default.
+    # For example, consider a WiFi/Ethernet case: without this, responses to a
+    # TCP connection initiated over WiFi could be sent via Ethernet since
+    # Ethernet is generally preferred over WiFi. However, that would be strange
+    # to have packets received over WiFi be responded to via Ethernet.
     rules = for {ip, _subnet} <- info.ip_subnets, do: {:rule, table_index, ip}
 
-    # Local routes are needed so that any packets sent to the LAN goes out
-    # the appropriate interface. These need to be ordered by metric so that
-    # if two or more interfaces connect to the same LAN, they're prioritized.
+    # The local routes ensure that any packets sent to a LAN go out the
+    # appropriate interface. These need to be ordered by metric so that if two
+    # or more interfaces connect to the same LAN, they're prioritized.
     local_routes =
       if info.ip_subnets != [] do
         {ip, subnet_bits} = hd(info.ip_subnets)
