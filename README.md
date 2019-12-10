@@ -5,12 +5,13 @@
 [![CircleCI](https://circleci.com/gh/nerves-networking/vintage_net.svg?style=svg)](https://circleci.com/gh/nerves-networking/vintage_net)
 [![Coverage Status](https://coveralls.io/repos/github/nerves-networking/vintage_net/badge.svg?branch=master)](https://coveralls.io/github/nerves-networking/vintage_net?branch=master)
 
-> **_NOTE:_**  This library is a work in progress without sufficient
-> documentation. It will get there, but the current Nerves networking libraries
-> are more stable, tested for what they do, and integrated into most other
-> Nerves libraries and examples. If your device is multi-homed (i.e., you use
-> two or more network interfaces) or if you want to configure the network in
-> a way that's not supported by nerves_network, then this is your library.
+> **_NOTE:_**  If you've been using `vintage_net` `v0.6.x` or earlier, we split
+> out network technology support out to separate libraries in `v0.7.0`. You'll
+> need to add those libraries to your `mix` dependency list and rename some
+> atoms.  Configurations stored on deployed devices will be automatically
+> updated.  See the [v0.7.0 release
+> notes](https://github.com/nerves-networking/vintage_net/releases/tag/v0.7.0)
+> for details.
 
 `VintageNet` is network configuration library built specifically for [Nerves
 Project](https://nerves-project.org) devices. It has the following features:
@@ -22,8 +23,7 @@ Project](https://nerves-project.org) devices. It has the following features:
 * Simple subscription to network status change events
 * Connect to multiple networks at a time and prioritize which interfaces are
   used (Ethernet over WiFi over cellular)
-* Internet connection monitoring and failure detection (currently slow and
-  simplistic)
+* Internet connection monitoring and failure detection
 
 > **TLDR:** Don't care about any of this and just want the string to copy/paste to set up
 > networking? See the [VintageNet Cookbook](cookbook.html).
@@ -39,13 +39,17 @@ The following network configurations are supported:
 * [x] WiFi AP mode
 * [ ] IPv6
 
-`VintageNet` takes a different approach to networking from `nerves_network`. It
-supports calling "old school" Linux utilities like `ifup` and `ifdown` to
-configure networks. While this has many limitations, it can be a timesaver for
-migrating a known working Linux setup to Nerves. After that you can change the setup
-to call the `ip` command directly and supervise the daemons that you may need
-with [MuonTrap](https://github.com/fhunleth/muontrap). And from there you can
-replace C implementations with Elixir and Erlang ones if you desire.
+`vintage_net` takes a different approach to networking from `nerves_network`.
+Its focus is on building and applying network configurations. Where
+`nerves_network` provided configurable statemachines, `vintage_net` turns
+human-readible configurations into everything from configuration files and calls
+to [`ip`](https://linux.die.net/man/8/ip) to starting up networking `GenServers`
+and routing table updates. This makes it easier to add support for new network
+technologies and features. While Elixir and Erlang were great to implement
+network protocols in, it was frequently more practical to reuse embedded Linux
+implementations. Importantly, though, `vintage_net` monitors Linux daemons under
+its OTP supervision tree so failures on both the "C" and Elixir sides propogate
+in the expected ways.
 
 Another important difference is that `VintageNet` doesn't attempt to make
 incremental modifications to configurations. It completely tears down an
