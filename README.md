@@ -25,8 +25,8 @@ Project](https://nerves-project.org) devices. It has the following features:
   used (Ethernet over WiFi over cellular)
 * Internet connection monitoring and failure detection
 
-> **TLDR:** Don't care about any of this and just want the string to copy/paste to set up
-> networking? See the [VintageNet Cookbook](cookbook.html).
+> **TL;DR:** Don't care about any of this and just want the string to copy/paste
+> to set up networking? See the [VintageNet Cookbook](cookbook.html).
 
 The following network configurations are supported:
 
@@ -41,14 +41,14 @@ The following network configurations are supported:
 
 `vintage_net` takes a different approach to networking from `nerves_network`.
 Its focus is on building and applying network configurations. Where
-`nerves_network` provided configurable statemachines, `vintage_net` turns
-human-readible configurations into everything from configuration files and calls
+`nerves_network` provided configurable state machines, `vintage_net` turns
+human-readable configurations into everything from configuration files and calls
 to [`ip`](https://linux.die.net/man/8/ip) to starting up networking `GenServers`
 and routing table updates. This makes it easier to add support for new network
 technologies and features. While Elixir and Erlang were great to implement
 network protocols in, it was frequently more practical to reuse embedded Linux
 implementations. Importantly, though, `vintage_net` monitors Linux daemons under
-its OTP supervision tree so failures on both the "C" and Elixir sides propogate
+its OTP supervision tree so failures on both the "C" and Elixir sides propagate
 in the expected ways.
 
 Another important difference is that `VintageNet` doesn't attempt to make
