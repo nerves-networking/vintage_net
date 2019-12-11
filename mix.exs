@@ -21,7 +21,8 @@ defmodule VintageNet.MixProject do
       dialyzer: dialyzer(),
       docs: docs(),
       package: package(),
-      description: description()
+      description: description(),
+      aliases: [compile: [&check_deps/1, "compile"]]
     ]
   end
 
@@ -118,5 +119,20 @@ defmodule VintageNet.MixProject do
       source_ref: "v#{@version}",
       source_url: @source_url
     ]
+  end
+
+  defp check_deps(_) do
+    for bad_dep <- [:nerves_init_gadget, :nerves_network] do
+      Mix.Project.in_project(bad_dep, "/tmp", fn module ->
+        if module do
+          Mix.raise("""
+          vintage_net is incompatible with #{inspect(bad_dep)}.
+
+          Please remove #{inspect(bad_dep)} from your project's mix dependencies. See
+          https://hexdocs.pm/vintage_net/readme.html#installation for help.
+          """)
+        end
+      end)
+    end
   end
 end
