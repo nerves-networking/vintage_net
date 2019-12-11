@@ -60,31 +60,45 @@ made `nerves_network` hard to maintain.
 
 ## Installation
 
-The `vintage_net` and `nerves_init_gadget` packages are not compatible. If you
-are using `nerves_init_gadget`, you will need to remove it from your dependency
-list and add back in things it supplies like `nerves_runtime` and
-`nerves_firmware_ssh`.
+First, if you're modifying an existing project, you will need to remove
+`nerves_network` and `nerves_init_gadget`. `vintage_net` doesn't work with
+either of them. You'll get an error if any project references those packages.
 
-The package can be installed by adding `vintage_net` to your list of
-dependencies in `mix.exs`:
+There are two routes to integrating `vintage_net`:
+
+1. Use [nerves_pack](https://hex.pm/packages/nerves_pack). `nerves_pack` is like
+   `nerves_init_gadget`, but for `vintage_net`.
+2. Copy and paste from
+   [vintage_net_example](https://github.com/nerves-networking/vintage_net_example)
+
+The next step is to make sure that your Nerves system is compatible. The
+official Nerves systems released after 12/11/2019 work without modification. If
+rolling your own Nerves port, you will need the following Linux kernel options
+enabled:
+
+* `CONFIG_IP_ADVANCED_ROUTER=y`
+* `CONFIG_IP_MULTIPLE_TABLES=y`
+
+Then make sure that you have the following Busybox options enabled:
+
+* `CONFIG_UDHCPC=y` - `udhcpc` DHCP Client
+* `CONFIG_UDHCPD=y` - `udhcpd` DHCP Server (optional)
+
+You can avoid making the Busybox changes by adding `:busybox` to your project's
+mix dependencies:
 
 ```elixir
-def deps do
-  [
-    {:vintage_net, "~> 0.3", targets: @all_targets},
     {:busybox, "~> 0.1", targets: @all_targets}
-  ]
-end
 ```
 
-If you have your own custom Nerves system, it's possible to modify that system's
-Busybox configuration to enable all of the networking tools used by
-`vintage_net`. See the end of this document for the needed settings. If you do
-that, delete the `:busybox` dependency above.
+Finally, you'll need to choose what network connection technologies that you
+want available in your firmware. If using `nerves_pack`, you'll get support for
+wired Ethernet, WiFi, and USB gadget networking automatically. Otherwise, add
+one or more of the following to your dependency list:
 
-See
-[vintage_net_example](https://github.com/nerves-networking/vintage_net_example)
-for a minimal example project.
+* [`vintage_net_ethernet`](https://github.com/nerves-networking/vintage_net_ethernet) - Standard wired Ethernet
+* [`vintage_net_wifi`](https://github.com/nerves-networking/vintage_net_wifi) - Client configurations for 802.11 WiFi
+* [`vintage_net_direct`](https://github.com/nerves-networking/vintage_net_direct) - Direct connections like those used for USB gadget
 
 ## Configuration
 
@@ -335,23 +349,3 @@ Property      | Values              | Description
 
 Specific types of interfaces provide more parameters.
 
-## System Requirements
-
-All official Nerves systems support `vintage_net`. If you have customized
-a Nerves system, you may need to check it's configuration.
-
-### Kernel Requirements
-
-IMPORTANT: `CONFIG_IP_MULTIPLE_TABLES=y` is critical. VintageNet is completely
-depended on source IP-based routing to work.
-
-* `CONFIG_IP_ADVANCED_ROUTER=y`
-* `CONFIG_IP_MULTIPLE_TABLES=y`
-* `CONFIG_IP_ROUTE_VERBOSE=y` - (optional)
-
-### Busybox Requirements
-
-To avoid enabling these, add `{:busybox, "~> 0.1"}` to your `mix` dependencies.
-
-* `CONFIG_UDHCPC=y` - `udhcpc` DHCP Client
-* `CONFIG_UDHCPD=y` - `udhcpd` DHCP Server (optional)
