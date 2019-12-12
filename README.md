@@ -26,7 +26,7 @@ Project](https://nerves-project.org) devices. It has the following features:
 * Internet connection monitoring and failure detection
 
 > **TL;DR:** Don't care about any of this and just want the string to copy/paste
-> to set up networking? See the [VintageNet Cookbook](cookbook.html).
+> to set up networking? See the [VintageNet Cookbook](https://github.com/nerves-networking/vintage_net/blob/master/docs/cookbook.md).
 
 The following network configurations are supported:
 
