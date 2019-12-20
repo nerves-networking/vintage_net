@@ -1,14 +1,22 @@
 defmodule VintageNet.Interface.Udhcpc do
   @behaviour VintageNet.ToElixir.UdhcpcHandler
 
-  alias VintageNet.{Command, NameResolver, RouteManager}
+  alias VintageNet.{Command, InterfacesMonitor, NameResolver, RouteManager}
 
   require Logger
 
   @doc """
   """
   @impl true
-  def deconfig(ifname, _info) do
+  def deconfig(ifname, info) do
+    _ = Logger.info("#{ifname} dhcp deconfig: #{inspect(info)}")
+
+    # If there were any IPv4 addresses reported on this interface, remove them
+    # now. They may not be reported by the normal mechanism from the
+    # `InterfacesMonitor` and were observed to no tbe reported when the
+    # GenServer running `udhcpc` was restarted.
+    InterfacesMonitor.force_clear_ipv4_addresses(ifname)
+
     RouteManager.clear_route(ifname)
 
     # /sbin/ifconfig $interface up
@@ -34,7 +42,8 @@ defmodule VintageNet.Interface.Udhcpc do
   @doc """
   """
   @impl true
-  def leasefail(ifname, _info) do
+  def leasefail(ifname, info) do
+    _ = Logger.info("#{ifname} dhcp leasefail: #{inspect(info)}")
     RouteManager.clear_route(ifname)
     # if [ -x /usr/sbin/avahi-autoipd ]; then
     # 	/usr/sbin/avahi-autoipd -wD $interface --no-chroot

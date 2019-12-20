@@ -22,6 +22,18 @@ defmodule VintageNet.InterfacesMonitor do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
   end
 
+  @doc """
+  Force clear all addresses
+
+  This is useful to notify everyone that an address should not be used
+  immediately. This can be used to fix a race condition where the blip
+  for an address going away to coming back isn't reported.
+  """
+  @spec force_clear_ipv4_addresses(VintageNet.ifname()) :: :ok
+  def force_clear_ipv4_addresses(ifname) do
+    GenServer.call(__MODULE__, {:force_clear_ipv4_addresses, ifname})
+  end
+
   @impl true
   def init(_args) do
     executable = :code.priv_dir(:vintage_net) ++ '/if_monitor'
@@ -35,6 +47,21 @@ defmodule VintageNet.InterfacesMonitor do
       false ->
         # This is only done for testing on OSX
         {:ok, %State{}}
+    end
+  end
+
+  @impl true
+  def handle_call({:force_clear_ipv4_addresses, ifname}, _from, state) do
+    {ifindex, old_info} = get_by_ifname(state, ifname)
+    new_info = Info.delete_ipv4_addresses(old_info)
+
+    if old_info != new_info do
+      new_info = Info.update_address_properties(new_info)
+
+      new_state = %{state | interface_info: Map.put(state.interface_info, ifindex, new_info)}
+      {:reply, :ok, new_state}
+    else
+      {:reply, :ok, state}
     end
   end
 
@@ -79,6 +106,15 @@ defmodule VintageNet.InterfacesMonitor do
       |> Info.update_address_properties()
 
     %{state | interface_info: Map.put(state.interface_info, ifindex, new_info)}
+  end
+
+  defp get_by_ifname(state, ifname) do
+    Enum.find_value(state.interface_info, fn {ifindex, info} ->
+      case info do
+        %{ifname: ^ifname} -> {ifindex, info}
+        _ -> nil
+      end
+    end)
   end
 
   defp get_or_create_info(state, ifindex, ifname) do
