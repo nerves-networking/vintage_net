@@ -185,6 +185,9 @@ defmodule VintageNet.RouteManager do
 
       ifentry ->
         if ifentry.status != new_status do
+          _ =
+            Logger.info("RouteManager: set_connection_status #{ifname} -> #{inspect(new_status)}")
+
           put_in(state.interfaces[ifname].status, new_status)
           |> update_route_tables()
         else
