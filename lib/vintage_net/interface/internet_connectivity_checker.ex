@@ -149,7 +149,7 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
 
   # If a ping fails, retry, but don't wait as long as when everything is working
   defp next_interval(:internet, _interval, strikes) do
-    max(@min_interval, @max_interval / (strikes + 1))
+    max(@min_interval, div(@max_interval, strikes + 1))
   end
 
   # Back off of checks if they're not working
