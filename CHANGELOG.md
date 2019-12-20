@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.7.1
+
+This release fixes an issue where the Internet-connectivity checking code could
+crash. It was automatically restarted, but that had a side effect of delaying a
+report that the device was connected AND breaking `mdns_lite`. Both the crash
+and the restart issue were fixed. The `mdns_lite` side effect was due to its
+multicast group membership being lost so this would affect other multicast-using
+code.
+
+* Bug fixes
+  * Fix `:timeout_value` crash in the `InternetConnectivityChecker`
+  * Force clear IPv4 addresses when the DHCP notifies a deconfig event. This
+    occurs on a restart and is quickly followed by a renew. However, if
+    applications don't see this bounce and don't reregister their multicast
+    listeners on affected IPv4 address, they'll lose the subscription.
+
+* Improvements
+  * Added check for `nerves_network` and `nerves_init_gadget`. If your project
+    pulls these in, it will get a moderately friendly notice to remove them.
+
 ## v0.7.0
 
 This release moves network technology implementations (WiFi, wired Ethernet,
