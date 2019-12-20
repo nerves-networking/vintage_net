@@ -159,6 +159,14 @@ defmodule VintageNet.Interface do
     GenStateMachine.call(via_name(ifname), {:ioctl, command, args})
   end
 
+  defp debug(data, message), do: log(:debug, data, message)
+  defp info(data, message), do: log(:info, data, message)
+
+  defp log(level, data, message) do
+    _ = Logger.log(level, ["VintageNet(", data.ifname, "): ", message])
+    :ok
+  end
+
   @impl true
   def init(ifname) do
     Process.flag(:trap_exit, true)
@@ -176,7 +184,7 @@ defmodule VintageNet.Interface do
           [{:next_event, :internal, {:configure, saved_raw_config}}]
 
         {:error, reason} ->
-          _ = Logger.info("VintageNet: no starting config for #{ifname} (#{inspect(reason)})")
+          info(initial_data, "starting with default config (#{inspect(reason)})")
           []
       end
 
@@ -214,7 +222,7 @@ defmodule VintageNet.Interface do
 
   @impl true
   def handle_event(:info, {:commands_done, :ok}, :configuring, %State{} = data) do
-    # _ = Logger.debug(":configuring -> done success")
+    # debug(data, ":configuring -> done success")
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
 
@@ -236,7 +244,7 @@ defmodule VintageNet.Interface do
         :configuring,
         %State{config: config} = data
       ) do
-    _ = Logger.debug(":configuring -> done error: retrying after #{config.retry_millis} ms")
+    debug(data, ":configuring -> done error: retrying after #{config.retry_millis} ms")
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
     actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
@@ -251,10 +259,10 @@ defmodule VintageNet.Interface do
         :configuring,
         %State{command_runner: pid, config: config} = data
       ) do
-    _ =
-      Logger.debug(
-        ":configuring -> done crash (#{inspect(reason)}): retrying after #{config.retry_millis} ms"
-      )
+    debug(
+      data,
+      ":configuring -> done crash (#{inspect(reason)}): retrying after #{config.retry_millis} ms"
+    )
 
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
@@ -270,10 +278,7 @@ defmodule VintageNet.Interface do
         :configuring,
         %State{command_runner: pid, config: config} = data
       ) do
-    _ =
-      Logger.debug(
-        ":configuring -> recovering from hang: retrying after #{config.retry_millis} ms"
-      )
+    debug(data, ":configuring -> recovering from hang: retrying after #{config.retry_millis} ms")
 
     Process.exit(pid, :kill)
     {new_data, actions} = reply_to_waiters(data)
@@ -290,7 +295,7 @@ defmodule VintageNet.Interface do
         :configuring,
         %State{command_runner: pid, config: old_config} = data
       ) do
-    _ = Logger.debug(":configuring -> configuring (stopping the old configuration)")
+    debug(data, ":configuring -> configuring (stopping the old configuration)")
     Process.exit(pid, :kill)
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
@@ -310,10 +315,7 @@ defmodule VintageNet.Interface do
         :configuring,
         %State{ifname: ifname, command_runner: pid, config: config} = data
       ) do
-    _ =
-      Logger.debug(
-        ":configuring -> interface disappeared: retrying after #{config.retry_millis} ms"
-      )
+    debug(data, ":configuring -> interface disappeared: retrying after #{config.retry_millis} ms")
 
     Process.exit(pid, :kill)
     {new_data, actions} = reply_to_waiters(data)
@@ -326,7 +328,7 @@ defmodule VintageNet.Interface do
   # :configured
 
   def handle_event({:call, from}, :wait, :configured, %State{} = data) do
-    # _ = Logger.debug(":configured -> wait (return immediately)")
+    # debug(data, ":configured -> wait (return immediately)")
     {:keep_state, data, {:reply, from, :ok}}
   end
 
@@ -337,7 +339,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{config: old_config} = data
       ) do
-    # _ = Logger.debug(":configured -> internal configure")
+    debug(data, ":configured -> internal configure")
 
     {new_data, actions} = cancel_ioctls(data)
 
@@ -358,7 +360,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{config: old_config} = data
       ) do
-    # _ = Logger.debug(":configured -> configure")
+    debug(data, ":configured -> configure")
 
     {new_data, actions} = cancel_ioctls(data)
     new_data = run_commands(new_data, old_config.down_cmds)
@@ -379,7 +381,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{} = data
       ) do
-    # _ = Logger.debug(":configured -> run ioctl")
+    # debug(data, ":configured -> run ioctl")
 
     # Delegate the ioctl to the technology
     mfa = {data.config.type, :ioctl, [data.ifname, command, args]}
@@ -395,7 +397,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{inflight_ioctls: inflight} = data
       ) do
-    # _ = Logger.debug(":configured -> ioctl done")
+    # debug(data, ":configured -> ioctl done")
 
     {{from, _mfa}, new_inflight} = Map.pop(inflight, ioctl_pid)
     action = {:reply, from, result}
@@ -415,17 +417,14 @@ defmodule VintageNet.Interface do
     # Otherwise, it's a latent exit from something that exited normally.
     case Map.pop(inflight, pid) do
       {{from, mfa}, new_inflight} ->
-        _ =
-          Logger.debug(
-            ":configured -> unexpected ioctl(#{inspect(mfa)}) exit (#{inspect(reason)})"
-          )
+        debug(data, ":configured -> unexpected ioctl(#{inspect(mfa)}) exit (#{inspect(reason)})")
 
         action = {:reply, from, {:error, {:exit, reason}}}
         new_data = %{data | inflight_ioctls: new_inflight}
         {:keep_state, new_data, action}
 
       {nil, _} ->
-        # _ = Logger.debug(":configured -> ignoring process exit")
+        # debug(data, ":configured -> ignoring process exit")
         {:keep_state, data}
     end
   end
@@ -437,7 +436,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{ifname: ifname, config: config} = data
       ) do
-    _ = Logger.debug(":configured -> interface disappeared")
+    debug(data, ":configured -> interface disappeared")
 
     {new_data, actions} = cancel_ioctls(data)
 
@@ -461,7 +460,7 @@ defmodule VintageNet.Interface do
         %State{config: old_config, next_config: new_config} = data
       ) do
     # TODO
-    # _ = Logger.debug("#{data.ifname}:reconfiguring -> cleanup success")
+    # debug(data, "#{data.ifname}:reconfiguring -> cleanup success")
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
 
@@ -486,7 +485,7 @@ defmodule VintageNet.Interface do
         %State{config: old_config, next_config: new_config} = data
       ) do
     # TODO
-    _ = Logger.debug(":reconfiguring -> done error")
+    debug(data, ":reconfiguring -> done error")
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
 
@@ -511,7 +510,7 @@ defmodule VintageNet.Interface do
         %State{config: old_config, command_runner: pid, next_config: new_config} = data
       ) do
     # TODO
-    _ = Logger.debug(":reconfiguring -> done crash (#{inspect(reason)})")
+    debug(data, ":reconfiguring -> done crash (#{inspect(reason)})")
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
     data = %{data | config: new_config, next_config: nil}
@@ -534,7 +533,7 @@ defmodule VintageNet.Interface do
         :reconfiguring,
         %State{command_runner: pid, config: old_config, next_config: new_config} = data
       ) do
-    _ = Logger.debug(":reconfiguring -> recovering from hang")
+    debug(data, ":reconfiguring -> recovering from hang")
     Process.exit(pid, :kill)
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
@@ -590,7 +589,7 @@ defmodule VintageNet.Interface do
         :retrying,
         data
       ) do
-    # _ = Logger.debug(":retrying -> configure")
+    debug(data, ":retrying -> configure")
 
     data = %{data | config: new_config}
     actions = [{:reply, from, :ok}]
@@ -606,7 +605,7 @@ defmodule VintageNet.Interface do
   @impl true
   def handle_event(:info, {:EXIT, _pid, _reason}, _state, data) do
     # Ignore latent or expected command runner and ioctl exits
-    # _ = Logger.debug("#{inspect(state)} -> process exit (ignoring)")
+    # debug(data, "#{inspect(state)} -> process exit (ignoring)")
     {:keep_state, data}
   end
 
@@ -617,7 +616,7 @@ defmodule VintageNet.Interface do
         _other_state,
         %State{waiters: waiters} = data
       ) do
-    # _ = Logger.debug("#{inspect(other_state)} -> wait")
+    # debug(data, "#{inspect(other_state)} -> wait")
     {:keep_state, %{data | waiters: [from | waiters]}}
   end
 
@@ -628,7 +627,7 @@ defmodule VintageNet.Interface do
         other_state,
         data
       ) do
-    _ = Logger.debug("#{inspect(other_state)} -> call ioctl (returning error)")
+    debug(data, "#{inspect(other_state)} -> call ioctl (returning error)")
     {:keep_state, data, {:reply, from, {:error, :unconfigured}}}
   end
 
@@ -644,7 +643,7 @@ defmodule VintageNet.Interface do
         other_state,
         %State{ifname: ifname} = data
       ) do
-    _ = Logger.debug("#{inspect(other_state)} -> interface #{ifname} is now #{inspect(present)}")
+    debug(data, "#{inspect(other_state)} -> interface #{ifname} is now #{inspect(present)}")
     {:keep_state, data}
   end
 
