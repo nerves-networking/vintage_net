@@ -265,6 +265,53 @@ defmodule VintageNet.InterfacesMonitorTest do
     assert before_delete == after_delete
   end
 
+  test "force clearing ipv4 addresses" do
+    VintageNet.subscribe(["interface", "bogus0", "addresses"])
+    send_report({:newlink, "bogus0", 56, %{}})
+
+    send_report(
+      {:newaddr, 56,
+       %{
+         address: {192, 168, 9, 5},
+         family: :inet,
+         label: "bogus0",
+         local: {192, 168, 9, 5},
+         permanent: false,
+         prefixlen: 24,
+         scope: :universe
+       }}
+    )
+
+    send_report(
+      {:newaddr, 56,
+       %{
+         address: {192, 168, 10, 10},
+         family: :inet,
+         label: "bogus0",
+         local: {192, 168, 10, 10},
+         permanent: false,
+         prefixlen: 24,
+         scope: :universe
+       }}
+    )
+
+    # Clear out the mailbox for the above two reports (they're tested above)
+    assert_receive {VintageNet, ["interface", "bogus0", "addresses"], nil, _one_address, %{}}
+
+    assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _one_address,
+                    _two_addresses, %{}}
+
+    # The real test
+    InterfacesMonitor.force_clear_ipv4_addresses("bogus0")
+
+    assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _two_addresses, [], %{}}
+
+    # Nothing should happen this time
+    InterfacesMonitor.force_clear_ipv4_addresses("bogus0")
+
+    refute_receive {VintageNet, ["interface", "bogus0", "addresses"], _anything, _anything2, %{}}
+  end
+
   defp get_interfaces() do
     {:ok, interface_infos} = :inet.getifaddrs()
     for {name, _info} <- interface_infos, do: to_string(name)

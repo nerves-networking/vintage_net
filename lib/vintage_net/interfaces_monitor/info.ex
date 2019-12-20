@@ -99,6 +99,18 @@ defmodule VintageNet.InterfacesMonitor.Info do
   end
 
   @doc """
+  Remove all IPv4 addresses
+  """
+  @spec delete_ipv4_addresses(t()) :: t()
+  def delete_ipv4_addresses(info) do
+    new_addresses =
+      info.addresses
+      |> Enum.filter(fn entry -> tuple_size(entry.address) != 4 end)
+
+    %{info | addresses: new_addresses}
+  end
+
+  @doc """
   Clear out all properties exported by this module
   """
   @spec clear_properties(VintageNet.ifname()) :: :ok
