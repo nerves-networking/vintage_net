@@ -43,7 +43,9 @@ defmodule VintageNet.Interface.Udhcpc do
   """
   @impl true
   def leasefail(ifname, info) do
-    _ = Logger.info("#{ifname} dhcp leasefail: #{inspect(info)}")
+    # NOTE: This message tends to clog up logs, so be careful when enabling it.
+
+    # _ = Logger.info("#{ifname} dhcp leasefail: #{inspect(info)}")
     RouteManager.clear_route(ifname)
     # if [ -x /usr/sbin/avahi-autoipd ]; then
     # 	/usr/sbin/avahi-autoipd -wD $interface --no-chroot
