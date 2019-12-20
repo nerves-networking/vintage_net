@@ -87,7 +87,7 @@ defmodule VintageNet.InterfacesMonitor.Info do
   end
 
   @doc """
-  Remove and address from the interface info
+  Handle the deladdr report
   """
   @spec deladdr(t(), map()) :: t()
   def deladdr(info, address_report) do
