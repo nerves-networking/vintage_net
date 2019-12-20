@@ -19,18 +19,21 @@ defmodule VintageNet.Interface.Udhcpd do
     end
   end
 
-  @doc "Parse the leases file from udhcpd"
+  @doc """
+  Parse the leases file from udhcpd
+  """
+  @spec parse_leases(Path.t()) :: {:ok, [map()]} | {:error, File.posix()}
   def parse_leases(path) do
     with {:ok, <<_timestamp::binary-size(8), rest::binary>>} <- File.read(path) do
       do_parse_leases(rest, [])
     end
   end
 
-  def do_parse_leases(
-        <<leasetime::unsigned-integer-size(32), ip1, ip2, ip3, ip4, mac1, mac2, mac3, mac4, mac5,
-          mac6, hostname::binary-size(20), _pad::binary-size(2), rest::binary>>,
-        acc
-      ) do
+  defp do_parse_leases(
+         <<leasetime::unsigned-integer-size(32), ip1, ip2, ip3, ip4, mac1, mac2, mac3, mac4, mac5,
+           mac6, hostname::binary-size(20), _pad::binary-size(2), rest::binary>>,
+         acc
+       ) do
     lease = %{
       leasetime: leasetime,
       lease_nip: Enum.join([ip1, ip2, ip3, ip4], "."),
@@ -52,5 +55,5 @@ defmodule VintageNet.Interface.Udhcpd do
     do_parse_leases(rest, [lease | acc])
   end
 
-  def do_parse_leases(<<>>, acc), do: {:ok, acc}
+  defp do_parse_leases(<<>>, acc), do: {:ok, acc}
 end

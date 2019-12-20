@@ -6,6 +6,7 @@ defmodule VintageNet.Interface.Udhcpc do
   require Logger
 
   @doc """
+  Handle deconfig reports from udhcpc
   """
   @impl true
   def deconfig(ifname, info) do
@@ -40,6 +41,7 @@ defmodule VintageNet.Interface.Udhcpc do
   end
 
   @doc """
+  Handle leasefail reports from udhcpc
   """
   @impl true
   def leasefail(ifname, _info) do
@@ -54,6 +56,7 @@ defmodule VintageNet.Interface.Udhcpc do
   end
 
   @doc """
+  Handle nak reports from udhcpc
   """
   @impl true
   def nak(ifname, info) do
@@ -77,6 +80,7 @@ defmodule VintageNet.Interface.Udhcpc do
   end
 
   @doc """
+  Handle renew reports from udhcpc
   """
   @impl true
   def renew(ifname, info) do
@@ -145,6 +149,7 @@ defmodule VintageNet.Interface.Udhcpc do
   end
 
   @doc """
+  Handle bound reports from udhcpc
   """
   @impl true
   def bound(ifname, info) do
