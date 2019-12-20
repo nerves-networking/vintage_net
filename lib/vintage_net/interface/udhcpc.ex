@@ -42,7 +42,7 @@ defmodule VintageNet.Interface.Udhcpc do
   @doc """
   """
   @impl true
-  def leasefail(ifname, info) do
+  def leasefail(ifname, _info) do
     # NOTE: This message tends to clog up logs, so be careful when enabling it.
 
     # _ = Logger.info("#{ifname} dhcp leasefail: #{inspect(info)}")
