@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.7.2
+
+* Bug fix
+  * Remove noisy log message introduced in v0.7.1
+
 ## v0.7.1
 
 This release fixes an issue where the Internet-connectivity checking code could
