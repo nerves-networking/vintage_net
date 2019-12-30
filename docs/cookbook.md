@@ -112,7 +112,7 @@ keys.
 ```elixir
 %{
   type: VintageNetWiFi,
-  wifi: %{
+  vintage_net_wifi: %{
     key_mgmt: :wpa_psk,
     ssid: "my_network_ssid",
     psk: "secret_password",
@@ -130,7 +130,7 @@ Protected EAP (PEAP) is a common authentication protocol for enterprise WiFi net
 ```elixir
 %{
   type: VintageNetWiFi,
-  wifi: %{
+  vintage_net_wifi: %{
     networks: [
       %{
         key_mgmt: :wpa_eap,
