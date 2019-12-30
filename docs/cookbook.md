@@ -114,7 +114,7 @@ keys.
   type: VintageNetWiFi,
   wifi: %{
     key_mgmt: :wpa_psk,
-    ssid: "my_network_ssid"
+    ssid: "my_network_ssid",
     psk: "secret_password",
   },
   ipv4: %{
