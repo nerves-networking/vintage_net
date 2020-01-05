@@ -81,6 +81,7 @@ enabled:
 
 Then make sure that you have the following Busybox options enabled:
 
+* `CONFIG_IFCONFIG=y` - `ifconfig` ifconfig
 * `CONFIG_UDHCPC=y` - `udhcpc` DHCP Client
 * `CONFIG_UDHCPD=y` - `udhcpd` DHCP Server (optional)
 
