@@ -59,6 +59,64 @@ defmodule VintageNetTest do
     assert [] == VintageNet.configured_interfaces()
   end
 
+  test "info sanitizes psk and password fields" do
+    :ok =
+      VintageNet.configure("eth0", %{
+        type: VintageNetTest.TestTechnology,
+        arbitrary_config_name: %{
+          psk: "psk1",
+          password: "password1"
+        },
+        list_of_arbitrary_configuration: [
+          %{psk: "psk2", password: "password2"},
+          %{psk: "psk3", password: "password3"}
+        ]
+      })
+
+    # configure/2 is asynchronous, so wait for the interface to appear.
+    Process.sleep(100)
+    assert ["eth0"] == VintageNet.configured_interfaces()
+
+    output = capture_io(&VintageNet.info/0)
+    refute output =~ "psk1"
+    refute output =~ "psk2"
+    refute output =~ "psk3"
+    refute output =~ "password1"
+    refute output =~ "password2"
+    refute output =~ "password3"
+  end
+
+  test "info allows for not redacting" do
+    :ok =
+      VintageNet.configure("eth0", %{
+        type: VintageNetTest.TestTechnology,
+        arbitrary_config_name: %{
+          psk: "psk1",
+          password: "password1"
+        },
+        list_of_arbitrary_configuration: [
+          %{psk: "psk2", password: "password2"},
+          %{psk: "psk3", password: "password3"}
+        ]
+      })
+
+    # configure/2 is asynchronous, so wait for the interface to appear.
+    Process.sleep(100)
+    assert ["eth0"] == VintageNet.configured_interfaces()
+
+    output =
+      capture_io(fn ->
+        VintageNet.info(redact: false)
+      end)
+
+    assert output =~ "psk1"
+    assert output =~ "psk2"
+    assert output =~ "psk3"
+    assert output =~ "password1"
+    assert output =~ "password2"
+    assert output =~ "password3"
+  end
+
   test "info works with nothing configured" do
     output = capture_io(&VintageNet.info/0)
 
