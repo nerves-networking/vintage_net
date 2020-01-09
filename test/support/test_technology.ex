@@ -11,11 +11,11 @@ defmodule VintageNetTest.TestTechnology do
   def normalize(config), do: config
 
   @impl true
-  def to_raw_config(ifname, _config \\ %{}, _opts \\ []) do
+  def to_raw_config(ifname, config \\ %{}, _opts \\ []) do
     %RawConfig{
       ifname: ifname,
       type: __MODULE__,
-      source_config: %{type: __MODULE__}
+      source_config: %{type: __MODULE__, test_config: config}
     }
   end
 
