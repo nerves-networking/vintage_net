@@ -80,6 +80,8 @@ defmodule VintageNetTest do
     assert output =~ "Available interfaces"
     assert output =~ "Interface eth0"
     assert output =~ "Type: VintageNetTest.TestTechnology"
+    assert output =~ "Ifconfig:"
+    assert output =~ "lo:"
   end
 
   test "configure returns error on bad configurations" do

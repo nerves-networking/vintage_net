@@ -295,6 +295,7 @@ defmodule VintageNet do
         print_if_attribute(ifname, "connection", "Connection")
         IO.puts("  Configuration:")
         print_config(ifname, "    ")
+        maybe_ifconfig()
       end)
     end
   end
@@ -311,6 +312,14 @@ defmodule VintageNet do
   defp print_if_attribute(ifname, name, print_name) do
     value = get(["interface", ifname, name])
     IO.puts("  #{print_name}: #{inspect(value)}")
+  end
+
+  defp maybe_ifconfig() do
+    if Code.ensure_loaded?(Toolshed) do
+      IO.puts("\nIfconfig:")
+      # use apply here to satisfy dialyzer
+      apply(Toolshed.Net, :ifconfig, [])
+    end
   end
 
   @doc """
