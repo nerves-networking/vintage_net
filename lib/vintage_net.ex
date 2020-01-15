@@ -17,7 +17,7 @@ defmodule VintageNet do
   [github.com/nerves-networking/vintage_net](https://github.com/nerves-networking/vintage_net)
   for more information.
   """
-  alias VintageNet.{Interface, Persistence, PropertyTable}
+  alias VintageNet.{Info, Interface, Persistence, PropertyTable}
 
   @typedoc """
   A name for the network interface
@@ -62,8 +62,17 @@ defmodule VintageNet do
 
   @typedoc """
   Valid options for `VintageNet.configure/3`
+
+  * `:persist` - Whether or not to save the configuration (defaults to `true`)
   """
   @type configure_options :: [persist: boolean]
+
+  @typedoc """
+  Valid options for `VintageNet.info/1`
+
+  * `:redact` - Whether to hide passwords and similar information from the output (defaults to `true`)
+  """
+  @type info_options :: {:redact, boolean()}
 
   @doc """
   Return a list of all interfaces on the system
@@ -268,96 +277,15 @@ defmodule VintageNet do
     ioctl(ifname, :scan)
   end
 
-  @type info_opt :: {:redact, boolean()}
-
   @doc """
   Print the current network status
+
+  Options include:
+
+  * `:redact` - Set to `false` to print out passwords
   """
-  @spec info([info_opt]) :: :ok
-  def info(opts \\ []) do
-    version = :application.loaded_applications() |> List.keyfind(:vintage_net, 0) |> elem(2)
-
-    IO.write("""
-    VintageNet #{version}
-
-    All interfaces:       #{inspect(all_interfaces())}
-    Available interfaces: #{inspect(get(["available_interfaces"]))}
-    """)
-
-    ifnames = configured_interfaces()
-
-    if ifnames == [] do
-      IO.puts("\nNo configured interfaces")
-    else
-      Enum.each(ifnames, fn ifname ->
-        IO.puts("\nInterface #{ifname}")
-        print_if_attribute(ifname, "type", "Type")
-        print_if_attribute(ifname, "present", "Present")
-        print_if_attribute(ifname, "state", "State")
-        print_if_attribute(ifname, "connection", "Connection")
-        IO.puts("  Configuration:")
-        print_config(ifname, "    ", opts)
-      end)
-    end
-  end
-
-  defp print_config(ifname, prefix, opts) do
-    configuration = VintageNet.get_configuration(ifname)
-
-    sanitized =
-      if Keyword.get(opts, :redact, true) do
-        sanitize_configuration(configuration)
-      else
-        configuration
-      end
-
-    sanitized
-    |> inspect(pretty: true, width: 80 - String.length(prefix))
-    |> String.split("\n")
-    |> Enum.map(fn s -> prefix <> s end)
-    |> Enum.intersperse("\n")
-    |> IO.puts()
-  end
-
-  defp sanitize_configuration(input) when is_map(input) do
-    Map.new(input, &sanitize_configuration/1)
-  end
-
-  # redact sensitive data
-  defp sanitize_configuration({key, _})
-       when key in [
-              :psk,
-              :password
-            ] do
-    {key, "...."}
-  end
-
-  defp sanitize_configuration({key, data}) when is_map(data) do
-    {key, sanitize_configuration(data)}
-  end
-
-  defp sanitize_configuration({key, data}) when is_list(data) do
-    {key, sanitize_configuration(data)}
-  end
-
-  defp sanitize_configuration({key, value}) do
-    {key, value}
-  end
-
-  defp sanitize_configuration(data) when is_list(data) do
-    Enum.reduce(data, [], fn
-      list_data, acc when is_list(list_data) ->
-        acc ++ sanitize_configuration(list_data)
-
-      other_data, acc ->
-        acc ++ [sanitize_configuration(other_data)]
-    end)
-  end
-
-  defp print_if_attribute(ifname, name, print_name) do
-    value = get(["interface", ifname, name])
-    IO.puts("  #{print_name}: #{inspect(value)}")
-  end
+  @spec info([info_options()]) :: :ok
+  defdelegate info(options \\ []), to: Info
 
   @doc """
   Check that the system has the required programs installed
