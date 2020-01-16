@@ -171,7 +171,11 @@ defmodule VintageNet.IP.IPv4Config do
                  "-s",
                  udhcpc_handler_path()
                ],
-               Command.add_muon_options(stderr_to_stdout: true, log_output: :debug)
+               Command.add_muon_options(
+                 stderr_to_stdout: true,
+                 log_output: :debug,
+                 log_prefix: "udhcpc(#{ifname}): "
+               )
              ]},
             id: :udhcpc
           ),

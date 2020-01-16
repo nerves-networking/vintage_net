@@ -37,7 +37,7 @@ defmodule VintageNetTest.Utils do
              "-s",
              Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])
            ],
-           [stderr_to_stdout: true, log_output: :debug]
+           [stderr_to_stdout: true, log_output: :debug, log_prefix: "udhcpc(eth0): "]
          ]},
       type: :worker
     }
