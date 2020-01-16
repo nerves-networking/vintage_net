@@ -11,6 +11,16 @@ defmodule VintageNet.IPTest do
     end
   end
 
+  test "all IPv4 subnets convert" do
+    for prefix_length <- 0..32 do
+      subnet = IP.to_subnet({255, 255, 255, 255}, prefix_length)
+
+      {:ok, computed_prefix_length} = IP.subnet_mask_to_prefix_length(subnet)
+
+      assert prefix_length == computed_prefix_length
+    end
+  end
+
   test "ip_to_tuple catches bad IP addresses" do
     assert {:error, "Invalid IP address: hostname.com"} == IP.ip_to_tuple("hostname.com")
     assert {:error, "Invalid IP address: 1.2.3.4.5"} == IP.ip_to_tuple("1.2.3.4.5")
