@@ -167,7 +167,7 @@ defmodule VintageNet.IP do
       {192, 168, 252, 0}
   """
   @spec to_subnet(:inet.ip_address(), VintageNet.prefix_length()) :: :inet.ip_address()
-  def to_subnet({a, b, c, d}, subnet_bits) when subnet_bits >= 0 and subnet_bits < 32 do
+  def to_subnet({a, b, c, d}, subnet_bits) when subnet_bits >= 0 and subnet_bits <= 32 do
     not_subnet_bits = 32 - subnet_bits
     <<subnet::size(subnet_bits), _::size(not_subnet_bits)>> = <<a, b, c, d>>
     <<new_a, new_b, new_c, new_d>> = <<subnet::size(subnet_bits), 0::size(not_subnet_bits)>>
