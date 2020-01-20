@@ -152,3 +152,38 @@ Protected EAP (PEAP) is a common authentication protocol for enterprise WiFi net
 ### Enterprise WiFi (EAP-TLS)
 
 TBD
+
+### Access point WiFi
+
+Some WiFi modules can be run in access point mode. This makes it possible to
+create configuration wizards and captive portals. Configuration of this is more
+involved. Here is a basic configuration:
+
+```elixir
+%{
+  type: VintageNetWiFi,
+  vintage_net_wifi: %{
+    networks: [
+      %{
+        mode: :ap,
+        ssid: "test ssid",
+        key_mgmt: :none
+      }
+    ]
+  },
+  ipv4: %{
+    method: :static,
+    address: "192.168.24.1",
+    netmask: "255.255.255.0"
+  },
+  dhcpd: %{
+    start: "192.168.24.2",
+    end: "192.168.24.10"
+  }
+}
+```
+
+See the
+[vintage_net_wizard](https://github.com/nerves-networking/vintage_net_wizard)
+for an example of a project that uses AP mode and a web server for WiFi
+configuration.
