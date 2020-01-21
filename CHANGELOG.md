@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.7.3
+
+* Improvements
+  * Scrub `VintageNet.info/0` output to avoid accidental disclosure of WiFi
+    credentials
+  * Support options to `deconfigure/2` to mirror those on `configure/2`
+  * Prefix `udhcpc` logs with interface to more easily blame problematic
+    networks
+  * Support IPv4 /32 subnets
+  * Various documentation fixes and improvements
+
 ## v0.7.2
 
 * Bug fix
