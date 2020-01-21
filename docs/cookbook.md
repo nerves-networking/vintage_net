@@ -187,3 +187,17 @@ See the
 [vintage_net_wizard](https://github.com/nerves-networking/vintage_net_wizard)
 for an example of a project that uses AP mode and a web server for WiFi
 configuration.
+
+## Network interaction
+
+### Share WAN with other networks
+
+For sharing your WANs connection (e.g. internet access) with other networks `iptables` must be installed. Currently this means building a [custom nerves system](https://hexdocs.pm/nerves/customizing-systems.html). Once this is done the following commands need to be called on each boot:
+
+```elixir
+wan = "eth0"
+cmd "sysctl -w net.ipv4.ip_forward=1"
+cmd "iptables -t nat -A POSTROUTING -o #{wan} -j MASQUERADE"
+# Only needed if the connection is blocked otherwise (like a default policy of DROP)
+cmd "iptables -A INPUT -i #{wan} -m state --state RELATED,ESTABLISHED -j ACCEPT"
+```
