@@ -149,10 +149,12 @@ defmodule VintageNet do
 
   @doc """
   Deconfigure settings for a specified interface.
+
+  Supports same options as `configure/3`
   """
-  @spec deconfigure(ifname()) :: :ok | {:error, any()}
-  def deconfigure(ifname) do
-    configure(ifname, %{type: VintageNet.Technology.Null})
+  @spec deconfigure(ifname(), configure_options()) :: :ok | {:error, any()}
+  def deconfigure(ifname, options \\ []) do
+    configure(ifname, %{type: VintageNet.Technology.Null}, options)
   end
 
   @doc """
