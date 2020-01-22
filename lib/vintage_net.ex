@@ -267,7 +267,7 @@ defmodule VintageNet do
   @doc """
   Initiate an access point scan on a wireless interface
 
-  The scan results are posted asynchronously to the `["interfaces", ifname, "access_points"]`
+  The scan results are posted asynchronously to the `["interface", ifname, "wifi", "access_points"]`
   property as they come in. It appears that there's some variation in how scanning
   is implemented on WiFi adapters. One strategy that seems to work is to call `scan/1` every
   10 seconds or so while prompting a user to pick a WiFi network.
