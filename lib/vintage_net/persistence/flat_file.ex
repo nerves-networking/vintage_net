@@ -24,7 +24,7 @@ defmodule VintageNet.Persistence.FlatFile do
     File.mkdir_p!(persistence_dir)
 
     Path.join(persistence_dir, ifname)
-    |> File.write(serialize_config(config))
+    |> File.write(serialize_config(config), [:sync])
   end
 
   @impl true
