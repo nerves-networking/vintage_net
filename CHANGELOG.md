@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.7.4
+
+* Bug fixes
+  * Fix `VintageNet.info` crash when displaying AP mode configurations
+  * Save configurations using the `:sync` flag to reduce the chance that they're
+    lost on ungraceful power offs. I.e., people pulling the power cable after
+    device configuration.
+
 ## v0.7.3
 
 * Improvements
