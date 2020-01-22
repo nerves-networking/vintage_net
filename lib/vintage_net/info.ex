@@ -85,6 +85,8 @@ defmodule VintageNet.Info do
     end)
   end
 
+  defp sanitize_configuration(data), do: data
+
   defp print_if_attribute(ifname, name, print_name) do
     value = VintageNet.get(["interface", ifname, name])
     IO.puts("  #{print_name}: #{inspect(value)}")

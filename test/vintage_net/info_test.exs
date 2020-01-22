@@ -17,6 +17,7 @@ defmodule VintageNet.InfoTest do
     # Remove persisted files if anything hung around
     on_exit(fn ->
       File.rm(Path.join(Application.get_env(:vintage_net, :persistence_dir), "eth0"))
+      File.rm(Path.join(Application.get_env(:vintage_net, :persistence_dir), "wlan0"))
     end)
 
     :ok
@@ -101,5 +102,41 @@ defmodule VintageNet.InfoTest do
     assert output =~ "Available interfaces"
     assert output =~ "Interface eth0"
     assert output =~ "Type: VintageNetTest.TestTechnology"
+  end
+
+  test "info works with ap configuration" do
+    ap_config = %{
+      dhcpd: %{
+        end: {192, 168, 0, 254},
+        max_leases: 235,
+        options: %{
+          dns: [{192, 168, 0, 1}],
+          domain: "mydomain.com",
+          router: [{192, 168, 0, 1}],
+          search: ["mydomain.com"],
+          subnet: {255, 255, 255, 0}
+        },
+        start: {192, 168, 0, 20}
+      },
+      dnsd: %{records: [{"mydomain.com", {192, 168, 0, 1}}]},
+      ipv4: %{address: {192, 168, 0, 1}, method: :static, prefix_length: 24},
+      type: VintageNetTest.TestTechnology,
+      vintage_net_wifi: %{
+        networks: [%{key_mgmt: :wpa_psk, mode: :ap, ssid: "my-network", psk: "my-psk"}]
+      }
+    }
+
+    :ok = VintageNet.configure("wlan0", ap_config)
+
+    # configure/2 is asynchronous, so wait for the interface to appear.
+    Process.sleep(100)
+    assert ["wlan0"] == VintageNet.configured_interfaces()
+
+    output = capture_io(&Info.info/0)
+
+    assert output =~ "Interface wlan0"
+    assert output =~ "mode: :ap"
+    assert output =~ "mydomain.com"
+    assert output =~ "psk: \"....\""
   end
 end
