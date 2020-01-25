@@ -1,4 +1,4 @@
-# 🍇 VintageNet
+![vintage net logo](assets/logo.png)
 
 [![Hex version](https://img.shields.io/hexpm/v/vintage_net.svg "Hex version")](https://hex.pm/packages/vintage_net)
 [![API docs](https://img.shields.io/hexpm/v/vintage_net.svg?label=hexdocs "API docs")](https://hexdocs.pm/vintage_net/VintageNet.html)
