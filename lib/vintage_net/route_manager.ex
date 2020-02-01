@@ -125,8 +125,21 @@ defmodule VintageNet.RouteManager do
   def handle_call({:set_route, ifname, ip_subnets, default_gateway, status}, _from, state) do
     _ = Logger.info("RouteManager: set_route #{ifname} -> #{inspect(status)}")
 
+    # The weight parameter prioritizes interfaces of the same type and connectivity.
+    # All weights for interfaces of the same time must be different. I.e., we don't
+    # leave it to chance which one is used. Also, bandwidth sharing of interfaces
+    # can't be accomplished by giving interfaces the same low level priority with
+    # how things are set up anyway.
+    #
+    # It will likely be necessary to expose this to users who have more than one
+    # of the same interface type available. For now, lower numbered interfaces
+    # have priority. For example, eth0 is used over eth1, etc. The 10 is hardcoded
+    # to correspond to the calculation in classification.ex.
+    weight = rem(Classification.to_instance(ifname), 10)
+
     ifentry = %InterfaceInfo{
       interface_type: Classification.to_type(ifname),
+      weight: weight,
       ip_subnets: ip_subnets,
       default_gateway: default_gateway,
       status: status

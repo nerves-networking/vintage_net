@@ -63,12 +63,14 @@ defmodule VintageNet.Route.PropertiesTest do
         "eth0" => %InterfaceInfo{
           interface_type: :ethernet,
           status: :disconnected,
+          weight: 0,
           ip_subnets: [{{192, 168, 1, 50}, 24}],
           default_gateway: {192, 168, 1, 1}
         },
         "wlan0" => %InterfaceInfo{
           interface_type: :wifi,
           status: status,
+          weight: 0,
           ip_subnets: [{{192, 168, 1, 60}, 24}],
           default_gateway: {192, 168, 1, 1}
         }

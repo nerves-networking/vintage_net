@@ -30,6 +30,13 @@ defmodule VintageNet.Interface.Classification do
   """
   @type prioritization :: {interface_type() | :_, connection_status() | :_}
 
+  @typedoc """
+  A weight used to disambiguate interfaces that would otherwise have the same priority
+
+  Low weights are higher priority.
+  """
+  @type weight :: 0..9
+
   @doc """
   Classify a network type based on its name
 
@@ -57,6 +64,30 @@ defmodule VintageNet.Interface.Classification do
   def to_type(_other), do: :unknown
 
   @doc """
+  Extract a number out of an interface name
+
+  The result is the interface index for most interfaces seen
+  on Nerves (eth0, eth1, ...), and something quite imperfect when using predictable
+  interface naming (enp6s0, enp6s1).
+
+  This is currently used to order priorities when there are two
+  interfaces available of the same type that cannot be differentiated
+  by other means. It has the one property of being easy to explain.
+  """
+  @spec to_instance(VintageNet.ifname()) :: non_neg_integer()
+  def to_instance(ifname) do
+    ifname
+    |> String.to_charlist()
+    |> Enum.reduce(0, &add_numbers/2)
+  end
+
+  defp add_numbers(c, sum) when c >= ?0 and c <= ?9 do
+    sum * 10 + c - ?0
+  end
+
+  defp add_numbers(_c, sum), do: sum
+
+  @doc """
   Compute the routing metric for an interface with a status
 
   This uses the prioritization list to figure out what number should
@@ -64,11 +95,11 @@ defmodule VintageNet.Interface.Classification do
   to indicate that a route shouldn't be added to the Linux routing tables
   at all.
   """
-  @spec compute_metric(interface_type(), connection_status(), [prioritization()]) ::
+  @spec compute_metric(interface_type(), connection_status(), weight(), [prioritization()]) ::
           pos_integer() | :disabled
-  def compute_metric(_type, :disconnected, _prioritization), do: :disabled
+  def compute_metric(_type, :disconnected, _weight, _prioritization), do: :disabled
 
-  def compute_metric(type, status, prioritization) when status in [:lan, :internet] do
+  def compute_metric(type, status, weight, prioritization) when status in [:lan, :internet] do
     case Enum.find_index(prioritization, fn option -> matches_option?(option, type, status) end) do
       nil ->
         :disabled
@@ -76,7 +107,7 @@ defmodule VintageNet.Interface.Classification do
       value ->
         # Don't return 0, since that looks like the metric wasn't set. Also space out the numbers.
         # (Lower numbers are higher priority)
-        (value + 1) * 10
+        (value + 1) * 10 + weight
     end
   end
 
