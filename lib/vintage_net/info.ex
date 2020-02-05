@@ -6,11 +6,19 @@ defmodule VintageNet.Info do
   """
   @spec info([VintageNet.info_options()]) :: :ok
   def info(opts \\ []) do
-    version = :application.loaded_applications() |> List.keyfind(:vintage_net, 0) |> elem(2)
+    case version() do
+      :not_loaded ->
+        IO.puts("VintageNet hasn't been loaded yet. Try again soon.")
 
+      version ->
+        IO.write(["VintageNet ", version, "\n\n"])
+
+        do_info(opts)
+    end
+  end
+
+  defp do_info(opts) do
     IO.write("""
-    VintageNet #{version}
-
     All interfaces:       #{inspect(VintageNet.all_interfaces())}
     Available interfaces: #{inspect(VintageNet.get(["available_interfaces"]))}
     """)
@@ -29,6 +37,15 @@ defmodule VintageNet.Info do
         IO.puts("  Configuration:")
         print_config(ifname, "    ", opts)
       end)
+    end
+  end
+
+  defp version() do
+    Application.loaded_applications()
+    |> List.keyfind(:vintage_net, 0)
+    |> case do
+      {:vintage_net, _description, version} -> version
+      _ -> :not_loaded
     end
   end
 
