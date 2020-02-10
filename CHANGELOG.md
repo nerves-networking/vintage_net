@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.5
+
+* Bug fixes
+  * Fix routing table error when configuring multiple interfaces of the same
+    type.
+  * Fix `VintageNet.info` for when it's called before `vintage_net` is loaded.
+
 ## v0.7.4
 
 * Bug fixes
