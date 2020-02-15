@@ -27,7 +27,7 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     assert to_resolvconf(input) == output
   end
 
-  test "two interface" do
+  test "two interfaces" do
     input = %{
       "eth0" => %{domain: "example.com", name_servers: [{1, 1, 1, 1}, {8, 8, 8, 8}]},
       "wlan0" => %{domain: "example2.com", name_servers: [{1, 1, 1, 2}, {8, 8, 8, 9}]}
@@ -51,6 +51,23 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     }
 
     output = """
+    nameserver 1.1.1.1
+    nameserver 8.8.8.8
+    """
+
+    assert to_resolvconf(input) == output
+  end
+
+  test "pruning redundant entries" do
+    input = %{
+      "eth0" => %{domain: "example.com", name_servers: [{1, 1, 1, 1}, {8, 8, 8, 8}]},
+      "eth1" => %{domain: "aaa-in-between.com", name_servers: [{1, 1, 1, 1}, {8, 8, 8, 8}]},
+      "wlan0" => %{domain: "example.com", name_servers: [{1, 1, 1, 1}, {8, 8, 8, 8}]}
+    }
+
+    output = """
+    search example.com
+    search aaa-in-between.com
     nameserver 1.1.1.1
     nameserver 8.8.8.8
     """
