@@ -1,9 +1,13 @@
-defmodule VintageNet.Interface.NameResolverTest do
+defmodule VintageNet.NameResolverTest do
   use VintageNetTest.Case
   alias VintageNet.NameResolver
   import ExUnit.CaptureLog
 
-  @resolvconf_path "resolv.conf"
+  @resolvconf_path "fake_resolv.conf"
+
+  # See resolv_conf_test.exs for more involved testing of the configuration file
+  # The purpose of this set of tests is to exercise the GenServer and file writing
+  # aspects of NameResolver.
 
   setup do
     # Run the tests with the application stopped.

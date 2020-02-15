@@ -1,20 +1,30 @@
 defmodule VintageNet.NameResolver do
   use GenServer
   alias VintageNet.IP
+  alias VintageNet.Resolver.ResolvConf
 
   @moduledoc """
-  This module manages the contents of "/etc/resolv.conf". This file is used
-  by the C library for resolving domain names and must be kept up-to-date
-  as links go up and down. This module assumes exclusive ownership on
-  "/etc/resolv.conf", so if any other code in the system tries to modify the
-  file, their changes will be lost on the next update.
+  This module manages the contents of "/etc/resolv.conf".
+
+  This file is used by the C standard library and by Erlang for resolving
+  domain names.  Since both C programs and Erlang can do resolution, debugging
+  problems in this area can be confusing due to varying behavior based on who's
+  resolving at the time. See the `/etc/erl_inetrc` file on the target to review
+  Erlang's configuration.
+
+  This module assumes exclusive ownership on "/etc/resolv.conf", so if any
+  other code in the system tries to modify the file, their changes will be lost
+  on the next update.
+
+  It is expected that each network interface provides a configuration. This
+  module will track configurations to network interfaces so that it can reflect
+  which resolvers are around. Resolver order isn't handled.
   """
 
-  @typedoc "Settings for NameResolver"
-  @type ifmap :: %{
-          domain: String.t(),
-          name_servers: [String.t()]
-        }
+  defmodule State do
+    @moduledoc false
+    defstruct [:path, :entries]
+  end
 
   @doc """
   Start the resolv.conf manager.
@@ -62,57 +72,38 @@ defmodule VintageNet.NameResolver do
 
   ## GenServer
 
-  @typedoc "State of the server."
-  @type state :: %{ifname: String.t(), ifmap: ifmap()}
-
   @impl true
   def init(resolvconf_path) do
-    state = %{filename: resolvconf_path, ifmap: %{}}
+    state = %State{path: resolvconf_path, entries: %{}}
     write_resolvconf(state)
     {:ok, state}
   end
 
   @impl true
   def handle_call({:setup, ifname, domain, name_servers}, _from, state) do
-    servers = Enum.map(name_servers, &IP.ip_to_string/1)
+    servers = Enum.map(name_servers, &IP.ip_to_tuple!/1)
     ifentry = %{domain: domain, name_servers: servers}
 
-    state = %{state | ifmap: Map.put(state.ifmap, ifname, ifentry)}
+    state = %{state | entries: Map.put(state.entries, ifname, ifentry)}
     write_resolvconf(state)
     {:reply, :ok, state}
   end
 
   @impl true
   def handle_call({:clear, ifname}, _from, state) do
-    state = %{state | ifmap: Map.delete(state.ifmap, ifname)}
+    state = %{state | entries: Map.delete(state.entries, ifname)}
     write_resolvconf(state)
     {:reply, :ok, state}
   end
 
   @impl true
   def handle_call(:clear_all, _from, state) do
-    state = %{state | ifmap: %{}}
+    state = %{state | entries: %{}}
     write_resolvconf(state)
     {:reply, :ok, state}
   end
 
-  defp domain_text({_ifname, %{domain: domain}}) when is_binary(domain) and domain != "",
-    do: ["search ", domain, "\n"]
-
-  defp domain_text(_), do: []
-
-  defp nameserver_text({_ifname, %{name_servers: servers}}) do
-    for server <- servers, do: ["nameserver ", server, "\n"]
-  end
-
-  defp nameserver_text(_), do: []
-
-  defp resolvconf(ifmap) do
-    # Return contents of resolv.conf as iodata
-    [Enum.map(ifmap, &domain_text/1), Enum.map(ifmap, &nameserver_text/1)]
-  end
-
-  defp write_resolvconf(state) do
-    File.write!(state.filename, resolvconf(state.ifmap))
+  defp write_resolvconf(%State{path: path, entries: entries}) do
+    File.write!(path, ResolvConf.to_config(entries))
   end
 end
