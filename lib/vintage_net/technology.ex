@@ -12,9 +12,9 @@ defmodule VintageNet.Technology do
   Normalize a configuration
 
   Technologies use this to update input configurations to a canonical
-  representation. This includes things like inserting default fields, converting
-  IP addresses passed in as strings to tuples, and deriving parameters so
-  that they need not be derived again in the future.
+  representation. This includes things like inserting default fields,
+  converting IP addresses passed in as strings to tuples, and deriving
+  parameters so that they need not be derived again in the future.
 
   Configuration errors raise exceptions.
   """
@@ -23,7 +23,15 @@ defmodule VintageNet.Technology do
   @doc """
   Convert a technology-specific configuration to one for VintageNet
 
-  Configuration errors raise exceptions.
+  The `config` is the normalized configuration map (`normalize/1` will have
+  been called at some point so the technology does not need to call it again).
+
+  The `opts` parameter contains VintageNet's application environment. This
+  contains potentially useful file paths and other information.
+
+  Configuration errors raise exceptions. Errors should be infrequent, though,
+  since VintageNet will call `normalize/1` first and expects most errors to be
+  caught by it.
   """
   @callback to_raw_config(VintageNet.ifname(), config :: map(), opts :: keyword()) ::
               RawConfig.t()
@@ -31,9 +39,10 @@ defmodule VintageNet.Technology do
   @doc """
   Handle an ioctl that has been requested on the network interface
 
-  The function runs isolated in its own process and only one ioctl is guaranteed
-  to be running at a time. `VintageNet` will handle crashes and hangs and unceremoniously
-  kill the ioctl if the user changes their mind and reconfigures the network interface.
+  The function runs isolated in its own process and only one ioctl is
+  guaranteed to be running at a time. `VintageNet` will handle crashes and
+  hangs and unceremoniously kill the ioctl if the user changes their mind and
+  reconfigures the network interface.
 
   Ioctl support is optional. Examples of `ioctl`s include:
 
@@ -46,8 +55,8 @@ defmodule VintageNet.Technology do
   @doc """
   Check that the system has all of the required programs for this technology
 
-  This is intended to help identify missing programs without configuring
-  a network.
+  This is intended to help identify missing programs without configuring a
+  network.
   """
   @callback check_system(opts :: keyword()) :: :ok | {:error, String.t()}
 end
