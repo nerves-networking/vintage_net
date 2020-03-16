@@ -2,7 +2,6 @@ defmodule VintageNetTest do
   use VintageNetTest.Case
   doctest VintageNet
 
-  import ExUnit.CaptureIO
   import ExUnit.CaptureLog
 
   setup do
