@@ -100,7 +100,9 @@ defmodule VintageNet.Interface do
   end
 
   defp technology_from_config(%{type: type}) do
-    unless Code.ensure_compiled?(type) do
+    if Code.ensure_loaded?(type) do
+      type
+    else
       raise(ArgumentError, """
       Invalid technology #{inspect(type)}.
 
@@ -108,18 +110,19 @@ defmodule VintageNet.Interface do
       See the `vintage_net` docs for examples.
       """)
     end
-
-    type
   end
 
-  defp technology_from_config(_missing),
-    do:
-      raise(ArgumentError, """
+  defp technology_from_config(_missing) do
+    raise(
+      ArgumentError,
+      """
       Missing :type field.
 
       This should be set to a network technology. These are provided in other libraries.
       See the `vintage_net` docs and cookbook for examples.
-      """)
+      """
+    )
+  end
 
   @doc """
   Return the current configuration
