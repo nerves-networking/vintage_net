@@ -62,6 +62,17 @@ defmodule VintageNetTest do
     assert match?({:error, _}, VintageNet.configure("eth0", %{this_totally_should_not_work: 1}))
   end
 
+  test "calls normalize" do
+    :ok = VintageNet.configure("eth0", %{type: VintageNetTest.TestTechnology})
+
+    VintageNet.Interface.wait_until_configured("eth0")
+
+    applied_config = VintageNet.get_configuration("eth0")
+
+    # See TestTechnology's normalize/1 method
+    assert Map.get(applied_config, :normalize_was_called)
+  end
+
   test "configure persists by default" do
     path = Path.join(Application.get_env(:vintage_net, :persistence_dir), "eth0")
 

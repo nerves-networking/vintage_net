@@ -63,7 +63,8 @@ defmodule VintageNet.Interface do
 
     try do
       technology = technology_from_config(config)
-      raw_config = technology.to_raw_config(ifname, config, opts)
+      normalized_config = technology.normalize(config)
+      raw_config = technology.to_raw_config(ifname, normalized_config, opts)
       {:ok, raw_config}
     rescue
       error in ArgumentError -> {:error, error.message}
@@ -87,7 +88,8 @@ defmodule VintageNet.Interface do
   def configure(ifname, config) do
     opts = Application.get_all_env(:vintage_net)
     technology = technology_from_config(config)
-    raw_config = technology.to_raw_config(ifname, config, opts)
+    normalized_config = technology.normalize(config)
+    raw_config = technology.to_raw_config(ifname, normalized_config, opts)
     configure(raw_config)
   end
 
