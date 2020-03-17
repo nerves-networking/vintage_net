@@ -8,14 +8,16 @@ defmodule VintageNetTest.TestTechnology do
   """
 
   @impl true
-  def normalize(config), do: config
+  def normalize(config) do
+    Map.put(config, :normalize_was_called, true)
+  end
 
   @impl true
   def to_raw_config(ifname, config \\ %{}, _opts \\ []) do
     %RawConfig{
       ifname: ifname,
       type: __MODULE__,
-      source_config: %{type: __MODULE__, test_config: config}
+      source_config: config
     }
   end
 
