@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.7.6
+
+* Bug fixes
+  * Ensure that `Technology.normalize/1` is always called. Previously, this
+    wasn't guaranteed, and it could result in a surprise when an unnormalized
+    configuration got saved.
+  * Remove duplicate resolv.conf entries on multi-homed devices
+  * Fix warnings found by Elixir 1.10
+
 ## v0.7.5
 
 * Bug fixes
