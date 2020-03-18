@@ -65,7 +65,9 @@ defmodule VintageNetTest do
   test "calls normalize" do
     :ok = VintageNet.configure("eth0", %{type: VintageNetTest.TestTechnology})
 
-    VintageNet.Interface.wait_until_configured("eth0")
+    # "Temporary" fix - investigate why this is flaky
+    # VintageNet.Interface.wait_until_configured("eth0")
+    Process.sleep(500)
 
     applied_config = VintageNet.get_configuration("eth0")
 
