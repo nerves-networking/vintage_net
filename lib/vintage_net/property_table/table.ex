@@ -14,8 +14,17 @@ defmodule VintageNet.PropertyTable.Table do
           PropertyTable.value()
   def get(table, name, default) do
     case :ets.lookup(table, name) do
-      [{^name, value}] -> value
+      [{^name, value, _timestamp}] -> value
       [] -> default
+    end
+  end
+
+  @spec fetch_with_timestamp(PropertyTable.table_id(), PropertyTable.property()) ::
+          {:ok, PropertyTable.value(), integer()} | :error
+  def fetch_with_timestamp(table, name) do
+    case :ets.lookup(table, name) do
+      [{^name, value, timestamp}] -> {:ok, value, timestamp}
+      [] -> :error
     end
   end
 
@@ -23,7 +32,7 @@ defmodule VintageNet.PropertyTable.Table do
           {PropertyTable.property(), PropertyTable.value()}
         ]
   def get_by_prefix(table, prefix) do
-    matchspec = {append(prefix), :"$2"}
+    matchspec = {append(prefix), :"$2", :_}
 
     :ets.match(table, matchspec)
     |> Enum.map(fn [k, v] -> {prefix ++ k, v} end)
@@ -34,7 +43,7 @@ defmodule VintageNet.PropertyTable.Table do
           {PropertyTable.property(), PropertyTable.value()}
         ]
   def match(table, pattern) do
-    :ets.match(table, {:"$1", :"$2"})
+    :ets.match(table, {:"$1", :"$2", :_})
     |> Enum.filter(fn [k, _v] ->
       is_property_match?(pattern, k)
     end)
@@ -64,7 +73,7 @@ defmodule VintageNet.PropertyTable.Table do
   end
 
   def put(table, name, value, metadata) do
-    GenServer.call(table, {:put, name, value, metadata})
+    GenServer.call(table, {:put, name, value, :erlang.monotonic_time(), metadata})
   end
 
   @doc """
@@ -94,18 +103,18 @@ defmodule VintageNet.PropertyTable.Table do
   end
 
   @impl true
-  def handle_call({:put, name, value, metadata}, _from, state) do
+  def handle_call({:put, name, value, timestamp, metadata}, _from, state) do
     case :ets.lookup(state.table, name) do
-      [{^name, ^value}] ->
+      [{^name, ^value, _last_change}] ->
         # No change, so no notifications
         :ok
 
-      [{^name, old_value}] ->
-        :ets.insert(state.table, {name, value})
+      [{^name, old_value, _last_change}] ->
+        :ets.insert(state.table, {name, value, timestamp})
         dispatch(state, name, old_value, value, metadata)
 
       [] ->
-        :ets.insert(state.table, {name, value})
+        :ets.insert(state.table, {name, value, timestamp})
         dispatch(state, name, nil, value, metadata)
     end
 
@@ -115,7 +124,7 @@ defmodule VintageNet.PropertyTable.Table do
   @impl true
   def handle_call({:clear, name}, _from, state) do
     case :ets.lookup(state.table, name) do
-      [{^name, old_value}] ->
+      [{^name, old_value, _timestamp}] ->
         :ets.delete(state.table, name)
         dispatch(state, name, old_value, nil, %{})
 

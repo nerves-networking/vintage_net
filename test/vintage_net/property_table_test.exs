@@ -97,6 +97,23 @@ defmodule VintageNet.PropertyTableTest do
     assert PropertyTable.get(table, name) == 106
   end
 
+  test "fetching data with timestamps", %{table: table} do
+    name = ["test", "a", "b"]
+    assert :error == PropertyTable.fetch_with_timestamp(table, name)
+
+    PropertyTable.put(table, name, 105)
+    now = :erlang.monotonic_time()
+    assert {:ok, value, timestamp} = PropertyTable.fetch_with_timestamp(table, name)
+    assert value == 105
+
+    # Check that PropertyTable takes the timestamp synchronously.
+    # If it doesn't, then this will fail randomly.
+    assert now > timestamp
+
+    # Check that it didn't take too long to capture the time
+    assert now - timestamp < 1_000_000
+  end
+
   test "getting a subtree", %{table: table} do
     name = ["test", "a", "b"]
     name2 = ["test", "a", "c"]

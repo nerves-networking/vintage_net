@@ -96,6 +96,17 @@ defmodule VintageNet.PropertyTable do
   end
 
   @doc """
+  Fetch a property with the time that it was set
+
+  Timestamps come from `:erlang.monotonic_time()`
+  """
+  @spec fetch_with_timestamp(table_id(), property()) :: {:ok, value(), integer()} | :error
+  def fetch_with_timestamp(table, name) when is_list(name) do
+    assert_property(name)
+    Table.fetch_with_timestamp(table, name)
+  end
+
+  @doc """
   Get a list of all properties matching the specified prefix
   """
   @spec get_by_prefix(table_id(), property()) :: [{property(), value()}]
