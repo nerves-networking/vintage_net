@@ -28,15 +28,19 @@ defmodule VintageNet.Info do
     if ifnames == [] do
       IO.puts("\nNo configured interfaces")
     else
-      Enum.each(ifnames, fn ifname ->
-        IO.puts("\nInterface #{ifname}")
-        print_if_attribute(ifname, "type", "Type")
-        print_if_attribute(ifname, "present", "Present")
-        print_if_attribute(ifname, "state", "State")
-        print_if_attribute(ifname, "connection", "Connection")
-        IO.puts("  Configuration:")
-        print_config(ifname, "    ", opts)
+      ifnames
+      |> Enum.map(fn ifname ->
+        [
+          "\nInterface #{ifname}\n",
+          format_if_attribute(ifname, "type", "Type"),
+          format_if_attribute(ifname, "present", "Present"),
+          format_if_attribute(ifname, "state", "State", true),
+          format_if_attribute(ifname, "connection", "Connection", true),
+          "  Configuration:\n",
+          format_config(ifname, "    ", opts)
+        ]
       end)
+      |> IO.puts()
     end
   end
 
@@ -49,7 +53,7 @@ defmodule VintageNet.Info do
     end
   end
 
-  defp print_config(ifname, prefix, opts) do
+  defp format_config(ifname, prefix, opts) do
     configuration = VintageNet.get_configuration(ifname)
 
     sanitized =
@@ -62,9 +66,7 @@ defmodule VintageNet.Info do
     sanitized
     |> inspect(pretty: true, width: 80 - String.length(prefix))
     |> String.split("\n")
-    |> Enum.map(fn s -> prefix <> s end)
-    |> Enum.intersperse("\n")
-    |> IO.puts()
+    |> Enum.map(fn s -> [prefix, s, "\n"] end)
   end
 
   defp sanitize_configuration(input) when is_map(input) do
@@ -104,8 +106,56 @@ defmodule VintageNet.Info do
 
   defp sanitize_configuration(data), do: data
 
-  defp print_if_attribute(ifname, name, print_name) do
-    value = VintageNet.get(["interface", ifname, name])
-    IO.puts("  #{print_name}: #{inspect(value)}")
+  defp format_if_attribute(ifname, name, print_name, print_since? \\ false) do
+    case VintageNet.PropertyTable.fetch_with_timestamp(VintageNet, ["interface", ifname, name]) do
+      {:ok, value, timestamp} ->
+        [
+          "  ",
+          print_name,
+          ": ",
+          inspect(value),
+          if(print_since?,
+            do: [
+              " (",
+              friendly_time(:erlang.monotonic_time() - timestamp),
+              ")\n"
+            ],
+            else: "\n"
+          )
+        ]
+
+      :error ->
+        # Mirror previous behavior (i.e., print nil for unset attributes)
+        ["  ", print_name, ": nil\n"]
+    end
   end
+
+  @spec friendly_time(integer()) :: iodata()
+  def friendly_time(delta_ns) when is_integer(delta_ns) do
+    cond do
+      delta_ns < 1000 -> "#{delta_ns} ns"
+      delta_ns < 1_000_000 -> :io_lib.format('~.1f μs', [delta_ns / 1000])
+      delta_ns < 1_000_000_000 -> :io_lib.format('~.1f ms', [delta_ns / 1_000_000])
+      delta_ns < 60_000_000_000 -> :io_lib.format('~.1f s', [delta_ns / 1_000_000_000])
+      true -> format_seconds(div(delta_ns, 1_000_000_000))
+    end
+  end
+
+  defp format_seconds(seconds) do
+    days = seconds |> div(86400)
+    h = seconds |> div(3600) |> rem(24)
+    m = seconds |> div(60) |> rem(60)
+    s = seconds |> rem(60)
+
+    [
+      if(days > 0, do: [Integer.to_string(days), " days, "], else: []),
+      Integer.to_string(h),
+      ":",
+      zero_pad(m),
+      ":",
+      zero_pad(s)
+    ]
+  end
+
+  defp zero_pad(x), do: String.pad_leading(Integer.to_string(x), 2, "0")
 end

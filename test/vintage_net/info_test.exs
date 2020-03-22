@@ -139,4 +139,15 @@ defmodule VintageNet.InfoTest do
     assert output =~ "mydomain.com"
     assert output =~ "psk: \"....\""
   end
+
+  test "friendly_time formatting" do
+    ns = 1_000_000_000
+    assert Info.friendly_time(123) |> to_string() == "123 ns"
+    assert Info.friendly_time(123_456) |> to_string() == "123.5 μs"
+    assert Info.friendly_time(123_456_789) |> to_string() == "123.5 ms"
+    assert Info.friendly_time(12 * ns) |> to_string() == "12.0 s"
+    assert Info.friendly_time(72 * ns) |> to_string() == "0:01:12"
+    assert Info.friendly_time(60 * 60 * ns) |> to_string() == "1:00:00"
+    assert Info.friendly_time(2 * 86400 * ns + 60 * ns) |> to_string() == "2 days, 0:01:00"
+  end
 end
