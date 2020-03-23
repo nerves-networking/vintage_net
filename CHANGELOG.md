@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.7.7
+
+* Improvments
+  * Added time-in-state to `VintageNet.info`. This lets you see if a connection
+    has bounced at a glance without digging through the logs.
+
 ## v0.7.6
 
 * Bug fixes
