@@ -35,7 +35,7 @@ The following network configurations are supported:
 * [x] WiFi password-less and WEP
 * [x] WPA2 PSK and EAP
 * [x] USB gadget mode Ethernet, IPv4 DHCP server to supply host IP address
-* [x] Cellular networks (see `vintage_net_mobile` for details)`
+* [x] Cellular networks (see `vintage_net_mobile` for details)
 * [x] WiFi AP mode
 * [ ] IPv6
 
