@@ -69,7 +69,7 @@ defmodule VintageNet.MixProject do
   defp elixirc_paths(_), do: ["lib"]
 
   defp description do
-    "Alternative network management for Nerves"
+    "Network configuration and management for Nerves"
   end
 
   defp package do
