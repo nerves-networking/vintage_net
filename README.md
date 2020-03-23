@@ -35,7 +35,7 @@ The following network configurations are supported:
 * [x] WiFi password-less and WEP
 * [x] WPA2 PSK and EAP
 * [x] USB gadget mode Ethernet, IPv4 DHCP server to supply host IP address
-* [ ] Cellular networks
+* [x] Cellular networks (see `vintage_net_mobile` for details)`
 * [x] WiFi AP mode
 * [ ] IPv6
 
@@ -100,6 +100,7 @@ one or more of the following to your dependency list:
 * [`vintage_net_ethernet`](https://github.com/nerves-networking/vintage_net_ethernet) - Standard wired Ethernet
 * [`vintage_net_wifi`](https://github.com/nerves-networking/vintage_net_wifi) - Client configurations for 802.11 WiFi
 * [`vintage_net_direct`](https://github.com/nerves-networking/vintage_net_direct) - Direct connections like those used for USB gadget
+* [`vintage_net_mobile`](https://github.com/nerves-networking/vintage_net_mobile) - Support for a few cellular modems
 
 ## Configuration
 
