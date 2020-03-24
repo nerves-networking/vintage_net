@@ -2,7 +2,7 @@
 
 ## v0.7.7
 
-* Improvments
+* Improvements
   * Added time-in-state to `VintageNet.info`. This lets you see if a connection
     has bounced at a glance without digging through the logs.
 
@@ -59,8 +59,8 @@ code.
   * Fix `:timeout_value` crash in the `InternetConnectivityChecker`
   * Force clear IPv4 addresses when the DHCP notifies a deconfig event. This
     occurs on a restart and is quickly followed by a renew. However, if
-    applications don't see this bounce and don't reregister their multicast
-    listeners on affected IPv4 address, they'll lose the subscription.
+    applications don't see this, bounce and don't register their multicast
+    listeners on affected IPv4 address again, they'll lose the subscription.
 
 * Improvements
   * Added check for `nerves_network` and `nerves_init_gadget`. If your project
@@ -87,7 +87,7 @@ If you're using `VintageNet.Technology.Gadget`, do the following:
    "direct". We think the new naming is more accurate.
 2. Replace all references to `VintageNet.Technology.Gadget` in your code to
    `VintageNetDirect`. Be aware of aliases and configuration.
-3. If you passed options when configurating the network, the `:gadget` key is
+3. If you passed options when configuring the network, the `:gadget` key is
    now `:vintage_net_direct`. Most users don't pass options.
 
 If you're using `VintageNet.Technology.Ethernet`, do the following:
@@ -325,7 +325,7 @@ need to run `apt install libnl-genl-3-dev`.
 
 * Bug fixes
   * Alway update local routes before default routes to avoid getting errors when
-    Linux detects an unroutable table entry
+    Linux detects a table entry that cannot be routed
 
 ## v0.1.0
 
