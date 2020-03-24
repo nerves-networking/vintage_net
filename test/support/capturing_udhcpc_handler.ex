@@ -1,4 +1,6 @@
 defmodule VintageNetTest.CapturingUdhcpcHandler do
+  @moduledoc false
+
   @behaviour VintageNet.ToElixir.UdhcpcHandler
 
   require Logger

@@ -1,5 +1,6 @@
 defmodule VintageNet.Interface.Supervisor do
   use Supervisor
+  @moduledoc false
 
   @doc """
   Start the interface supervisor

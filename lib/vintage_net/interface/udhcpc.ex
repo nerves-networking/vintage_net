@@ -1,6 +1,8 @@
 defmodule VintageNet.Interface.Udhcpc do
   @behaviour VintageNet.ToElixir.UdhcpcHandler
 
+  @moduledoc false
+
   alias VintageNet.{Command, InterfacesMonitor, NameResolver, RouteManager}
 
   require Logger

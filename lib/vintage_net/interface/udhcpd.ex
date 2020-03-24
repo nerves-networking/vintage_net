@@ -1,4 +1,6 @@
 defmodule VintageNet.Interface.Udhcpd do
+  @moduledoc false
+
   @behaviour VintageNet.ToElixir.UdhcpdHandler
   require Logger
 
