@@ -1,4 +1,6 @@
 defmodule VintageNetTest.Case do
+  @moduledoc false
+
   use ExUnit.CaseTemplate
 
   using do
@@ -15,7 +17,7 @@ defmodule VintageNetTest.Case do
     File.cd!(path, function)
   end
 
-  def tmp_path do
+  def tmp_path() do
     Path.expand("../../test_tmp", __DIR__)
   end
 

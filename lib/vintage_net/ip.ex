@@ -10,6 +10,9 @@ defmodule VintageNet.IP do
   form.
   """
 
+  defguardp is_ipv4_octet(v) when v >= 0 and v <= 255
+  defguardp is_ipv6_hextet(v) when v >= 0 and v <= 65535
+
   @doc """
   Convert an IP address to a string
 
@@ -67,15 +70,18 @@ defmodule VintageNet.IP do
   @spec ip_to_tuple(VintageNet.any_ip_address()) ::
           {:ok, :inet.ip_address()} | {:error, String.t()}
   def ip_to_tuple({a, b, c, d} = ipa)
-      when a >= 0 and a <= 255 and b >= 0 and b <= 255 and c >= 0 and c <= 255 and d >= 0 and
-             d <= 255,
+      when is_ipv4_octet(a) and is_ipv4_octet(b) and is_ipv4_octet(c) and is_ipv4_octet(d),
       do: {:ok, ipa}
 
   def ip_to_tuple({a, b, c, d, e, f, g, h} = ipa)
-      when a >= 0 and a <= 65535 and b >= 0 and b <= 65535 and c >= 0 and c <= 65535 and d >= 0 and
-             d <= 65535 and
-             e >= 0 and e <= 65535 and f >= 0 and f <= 65535 and g >= 0 and g <= 65535 and h >= 0 and
-             h <= 65535,
+      when is_ipv6_hextet(a) and
+             is_ipv6_hextet(b) and
+             is_ipv6_hextet(c) and
+             is_ipv6_hextet(d) and
+             is_ipv6_hextet(e) and
+             is_ipv6_hextet(f) and
+             is_ipv6_hextet(g) and
+             is_ipv6_hextet(h),
       do: {:ok, ipa}
 
   def ip_to_tuple(ipa) when is_binary(ipa) do

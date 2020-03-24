@@ -79,11 +79,9 @@ defmodule VintageNet.Persistence.FlatFile do
   defp deserialize_config(_anything_else), do: {:error, :corrupt}
 
   defp non_raising_binary_to_term(bin) do
-    try do
-      {:ok, :erlang.binary_to_term(bin)}
-    catch
-      _, _ -> {:error, :corrupt}
-    end
+    {:ok, :erlang.binary_to_term(bin)}
+  catch
+    _, _ -> {:error, :corrupt}
   end
 
   defp persistence_dir() do

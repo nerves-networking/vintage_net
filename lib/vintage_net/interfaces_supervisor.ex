@@ -1,6 +1,8 @@
 defmodule VintageNet.InterfacesSupervisor do
   use DynamicSupervisor
 
+  @moduledoc false
+
   alias VintageNet.Persistence
 
   @spec start_link(any()) :: GenServer.on_start()
