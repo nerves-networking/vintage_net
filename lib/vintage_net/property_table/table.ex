@@ -5,8 +5,10 @@ defmodule VintageNet.PropertyTable.Table do
 
   @moduledoc false
 
-  @spec start_link({PropertyTable.table_id(), Registry.registry()}) :: GenServer.on_start()
-  def start_link({table, _registry_name} = args) do
+  @spec start_link(
+          {PropertyTable.table_id(), Registry.registry(), [PropertyTable.property_value()]}
+        ) :: GenServer.on_start()
+  def start_link({table, _registry_name, _properties} = args) do
     GenServer.start_link(__MODULE__, args, name: table)
   end
 
@@ -95,8 +97,12 @@ defmodule VintageNet.PropertyTable.Table do
   end
 
   @impl true
-  def init({table, registry_name}) do
+  def init({table, registry_name, properties}) do
     ^table = :ets.new(table, [:named_table, read_concurrency: true])
+
+    # Insert the initial properties
+    timestamp = :erlang.monotonic_time()
+    Enum.each(properties, fn {name, value} -> :ets.insert(table, {name, value, timestamp}) end)
 
     state = %{table: table, registry: registry_name}
     {:ok, state}

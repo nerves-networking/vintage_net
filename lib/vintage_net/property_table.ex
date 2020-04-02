@@ -39,9 +39,12 @@ defmodule VintageNet.PropertyTable do
   @type property :: [String.t()]
   @type property_with_wildcards :: [String.t() | :_]
   @type value :: any()
+  @type property_value :: {property(), value()}
   @type metadata :: map()
 
-  @spec start_link(name: table_id()) :: {:ok, pid} | {:error, term}
+  @type options :: [name: table_id(), properties: [property_value()]]
+
+  @spec start_link(options()) :: {:ok, pid} | {:error, term}
   def start_link(options) do
     name = Keyword.get(options, :name)
 
@@ -49,7 +52,7 @@ defmodule VintageNet.PropertyTable do
       raise ArgumentError, "expected :name to be given and to be an atom, got: #{inspect(name)}"
     end
 
-    VintageNet.PropertyTable.Supervisor.start_link(name)
+    VintageNet.PropertyTable.Supervisor.start_link(options)
   end
 
   @doc """

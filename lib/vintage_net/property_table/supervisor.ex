@@ -5,17 +5,19 @@ defmodule VintageNet.PropertyTable.Supervisor do
 
   @moduledoc false
 
-  @spec start_link(PropertyTable.table_id()) :: Supervisor.on_start()
-  def start_link(name) do
-    Supervisor.start_link(__MODULE__, name)
+  @spec start_link(PropertyTable.options()) :: Supervisor.on_start()
+  def start_link(options) do
+    Supervisor.start_link(__MODULE__, options)
   end
 
   @impl true
-  def init(name) do
+  def init(options) do
+    name = Keyword.fetch!(options, :name)
+    properties = Keyword.get(options, :properties, [])
     registry_name = registry_name(name)
 
     children = [
-      {VintageNet.PropertyTable.Table, {name, registry_name}},
+      {VintageNet.PropertyTable.Table, {name, registry_name, properties}},
       {Registry, [keys: :duplicate, name: registry_name]}
     ]
 

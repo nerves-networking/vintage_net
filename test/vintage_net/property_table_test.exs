@@ -5,12 +5,19 @@ defmodule VintageNet.PropertyTableTest do
 
   doctest PropertyTable
 
-  setup config do
-    {:ok, _pid} = start_supervised({PropertyTable, name: config.test})
-    {:ok, %{table: config.test}}
+  test "start with initial properties", %{test: table} do
+    name1 = ["test", "a", "b"]
+    name2 = ["test", "c"]
+
+    {:ok, _pid} =
+      start_supervised({PropertyTable, properties: [{name1, 1}, {name2, 2}], name: table})
+
+    assert PropertyTable.get(table, name1) == 1
+    assert PropertyTable.get(table, name2) == 2
   end
 
-  test "wildcard subscription", %{table: table} do
+  test "wildcard subscription", %{test: table} do
+    {:ok, _pid} = start_supervised({PropertyTable, name: table})
     PropertyTable.subscribe(table, ["a", :_, "c"])
 
     # Exact match
@@ -29,7 +36,8 @@ defmodule VintageNet.PropertyTableTest do
     refute_receive {^table, ["a", "b", "d"], _, _, _}
   end
 
-  test "getting invalid properties raises", %{table: table} do
+  test "getting invalid properties raises", %{test: table} do
+    {:ok, _pid} = start_supervised({PropertyTable, name: table})
     # Wildcards aren't allowed
     assert_raise ArgumentError, fn -> PropertyTable.get(table, [:_, "a"]) end
     assert_raise ArgumentError, fn -> PropertyTable.get(table, [:_]) end
@@ -39,7 +47,8 @@ defmodule VintageNet.PropertyTableTest do
     assert_raise ArgumentError, fn -> PropertyTable.get(table, ["a", 5]) end
   end
 
-  test "sending events", %{table: table} do
+  test "sending events", %{test: table} do
+    {:ok, _pid} = start_supervised({PropertyTable, name: table})
     name = ["test"]
     PropertyTable.subscribe(table, name)
 
@@ -55,7 +64,8 @@ defmodule VintageNet.PropertyTableTest do
     PropertyTable.unsubscribe(table, name)
   end
 
-  test "setting properties to nil clears them", %{table: table} do
+  test "setting properties to nil clears them", %{test: table} do
+    {:ok, _pid} = start_supervised({PropertyTable, name: table})
     name = ["test"]
 
     PropertyTable.put(table, name, 124)
@@ -65,7 +75,8 @@ defmodule VintageNet.PropertyTableTest do
     assert PropertyTable.get_by_prefix(table, []) == []
   end
 
-  test "generic subscribers receive events", %{table: table} do
+  test "generic subscribers receive events", %{test: table} do
+    {:ok, _pid} = start_supervised({PropertyTable, name: table})
     name = ["test", "a", "b"]
 
     PropertyTable.subscribe(table, [])
@@ -74,7 +85,8 @@ defmodule VintageNet.PropertyTableTest do
     PropertyTable.unsubscribe(table, [])
   end
 
-  test "duplicate events are dropped", %{table: table} do
+  test "duplicate events are dropped", %{test: table} do
+    {:ok, _pid} = start_supervised({PropertyTable, name: table})
     name = ["test", "a", "b"]
 
     PropertyTable.subscribe(table, name)
@@ -86,7 +98,8 @@ defmodule VintageNet.PropertyTableTest do
     PropertyTable.unsubscribe(table, name)
   end
 
-  test "getting the latest", %{table: table} do
+  test "getting the latest", %{test: table} do
+    {:ok, _pid} = start_supervised({PropertyTable, name: table})
     name = ["test", "a", "b"]
     assert PropertyTable.get(table, name) == nil
 
@@ -97,7 +110,8 @@ defmodule VintageNet.PropertyTableTest do
     assert PropertyTable.get(table, name) == 106
   end
 
-  test "fetching data with timestamps", %{table: table} do
+  test "fetching data with timestamps", %{test: table} do
+    {:ok, _pid} = start_supervised({PropertyTable, name: table})
     name = ["test", "a", "b"]
     assert :error == PropertyTable.fetch_with_timestamp(table, name)
 
@@ -114,7 +128,8 @@ defmodule VintageNet.PropertyTableTest do
     assert now - timestamp < 1_000_000
   end
 
-  test "getting a subtree", %{table: table} do
+  test "getting a subtree", %{test: table} do
+    {:ok, _pid} = start_supervised({PropertyTable, name: table})
     name = ["test", "a", "b"]
     name2 = ["test", "a", "c"]
 
@@ -131,7 +146,8 @@ defmodule VintageNet.PropertyTableTest do
     assert PropertyTable.get_by_prefix(table, name2) == [{name2, 106}]
   end
 
-  test "clearing a subtree", %{table: table} do
+  test "clearing a subtree", %{test: table} do
+    {:ok, _pid} = start_supervised({PropertyTable, name: table})
     PropertyTable.put(table, ["a", "b", "c"], 1)
     PropertyTable.put(table, ["a", "b", "d"], 2)
     PropertyTable.put(table, ["a", "b", "e"], 3)
@@ -141,7 +157,8 @@ defmodule VintageNet.PropertyTableTest do
     assert PropertyTable.get_by_prefix(table, []) == [{["f", "g"], 4}]
   end
 
-  test "match using wildcards", %{table: table} do
+  test "match using wildcards", %{test: table} do
+    {:ok, _pid} = start_supervised({PropertyTable, name: table})
     PropertyTable.put(table, ["a", "b", "c"], 1)
     PropertyTable.put(table, ["A", "b", "c"], 2)
     PropertyTable.put(table, ["a", "B", "c"], 3)
