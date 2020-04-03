@@ -1,7 +1,6 @@
 defmodule VintageNet.InterfaceTest do
   use VintageNetTest.Case
   alias VintageNet.Interface
-  alias VintageNet.Interface.RawConfig
   import ExUnit.CaptureLog
 
   @ifname "test0"
@@ -18,9 +17,14 @@ defmodule VintageNet.InterfaceTest do
     VintageNet.PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
   end
 
-  defp start_and_configure(raw_config, sleep_millis \\ 0, ifname \\ @ifname) do
+  defp configure_only(config, ifname \\ @ifname) do
     {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(ifname)
-    :ok = Interface.configure(raw_config)
+    :ok = Interface.configure(ifname, config)
+  end
+
+  defp configure_and_wait(config, sleep_millis \\ 0, ifname \\ @ifname) do
+    {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(ifname)
+    :ok = Interface.configure(ifname, config)
 
     if sleep_millis do
       Process.sleep(sleep_millis)
@@ -30,56 +34,52 @@ defmodule VintageNet.InterfaceTest do
   end
 
   test "starting null interface", context do
-    in_tmp(context.test, fn ->
-      raw_config = VintageNet.Technology.Null.to_raw_config(@ifname)
-      start_and_configure(raw_config)
+    capture_log_in_tmp(context.test, fn ->
+      config = %{type: VintageNet.Technology.Null}
+      configure_and_wait(config)
 
       refute @ifname in VintageNet.configured_interfaces()
     end)
   end
 
   test "deconfigure uses null type", context do
-    in_tmp(context.test, fn ->
-      raw_config = %RawConfig{
-        ifname: @ifname,
-        type: @interface_type,
-        source_config: %{},
-        files: []
-      }
+    capture_log_in_tmp(context.test, fn ->
+      config = %{type: @interface_type}
 
-      start_and_configure(raw_config)
+      configure_and_wait(config)
       assert @ifname in VintageNet.configured_interfaces()
       :ok = VintageNet.deconfigure(@ifname)
       assert %{type: VintageNet.Technology.Null} == VintageNet.get_configuration(@ifname)
+
+      :ok = Interface.wait_until_configured(@ifname)
       refute @ifname in VintageNet.configured_interfaces()
     end)
   end
 
   test "getting the configuration", context do
-    in_tmp(context.test, fn ->
-      raw_config = VintageNet.Technology.Null.to_raw_config(@ifname)
-      start_and_configure(raw_config)
+    capture_log_in_tmp(context.test, fn ->
+      config = %{type: @interface_type}
+      configure_and_wait(config)
 
-      assert %{type: VintageNet.Technology.Null} == VintageNet.get_configuration(@ifname)
+      assert %{type: @interface_type, normalize_was_called: true} ==
+               VintageNet.get_configuration(@ifname)
     end)
   end
 
   test "creates and deletes files", context do
-    in_tmp(context.test, fn ->
-      raw_config = %RawConfig{
-        ifname: @ifname,
+    capture_log_in_tmp(context.test, fn ->
+      config = %{
         type: @interface_type,
-        source_config: %{},
         files: [{"testing", "Hello, world"}]
       }
 
-      start_and_configure(raw_config)
+      configure_and_wait(config)
 
       assert VintageNet.get(["interface", @ifname, "type"]) == @interface_type
       assert File.exists?("testing")
       assert File.read!("testing") == "Hello, world"
 
-      Interface.unconfigure(@ifname)
+      :ok = Interface.deconfigure(@ifname)
       assert :ok == Interface.wait_until_configured(@ifname)
 
       refute File.exists?("testing")
@@ -87,23 +87,19 @@ defmodule VintageNet.InterfaceTest do
   end
 
   test "a missing interface won't run commands", context do
-    in_tmp(context.test, fn ->
+    capture_log_in_tmp(context.test, fn ->
       # This assumes that ifname doesn't exist. Since we're requiring
       # it to exist before doing anything, the file should never be
       # created.
       ifname = "some_non_existent_interface0"
 
-      raw_config = %RawConfig{
-        ifname: ifname,
+      config = %{
         type: @interface_type,
-        source_config: %{},
-        files: [{"testing", "Hello, world"}],
-        up_cmds: [],
-        down_cmds: []
+        files: [{"testing", "Hello, world"}]
       }
 
       {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(ifname)
-      :ok = Interface.configure(raw_config)
+      :ok = Interface.configure(ifname, config)
 
       # It should be processed immediately. This is really just yielding
       Process.sleep(10)
@@ -114,149 +110,142 @@ defmodule VintageNet.InterfaceTest do
   end
 
   test "a missing interface will run commands if not required", context do
-    in_tmp(context.test, fn ->
+    capture_log_in_tmp(context.test, fn ->
       # This assumes that ifname doesn't exist.
       ifname = "some_non_existent_interface0"
 
-      raw_config = %RawConfig{
-        ifname: ifname,
+      config = %{
         type: @interface_type,
-        source_config: %{},
         require_interface: false,
-        files: [{"testing", "Hello, world"}],
-        up_cmds: [],
-        down_cmds: []
+        files: [{"testing", "Hello, world"}]
       }
 
-      start_and_configure(raw_config, 0, ifname)
+      configure_and_wait(config, 0, ifname)
 
       assert File.exists?("testing")
     end)
   end
 
   test "create needed subdirectories", context do
-    in_tmp(context.test, fn ->
-      raw_config = %RawConfig{
-        ifname: @ifname,
+    capture_log_in_tmp(context.test, fn ->
+      config = %{
         type: @interface_type,
-        source_config: %{},
-        files: [{"one/two/three/testing", "Hello, world"}],
-        up_cmds: [],
-        down_cmds: []
+        files: [{"one/two/three/testing", "Hello, world"}]
       }
 
-      start_and_configure(raw_config)
+      configure_and_wait(config)
 
       assert File.exists?("one/two/three/testing")
       assert File.read!("one/two/three/testing") == "Hello, world"
 
       # Created directories don't need to be removed.
-      Interface.unconfigure(@ifname)
+      Interface.deconfigure(@ifname)
       assert :ok == Interface.wait_until_configured(@ifname)
       refute File.exists?("one/two/three/testing")
     end)
   end
 
   test "can run commands", context do
-    in_tmp(context.test, fn ->
-      raw_config = %RawConfig{
-        ifname: @ifname,
+    capture_log_in_tmp(context.test, fn ->
+      config = %{
         type: @interface_type,
-        source_config: %{},
-        files: [],
         up_cmds: [{:run, "touch", ["i_am_configured"]}],
         down_cmds: [{:run, "rm", ["i_am_configured"]}]
       }
 
-      start_and_configure(raw_config)
+      configure_and_wait(config)
 
       assert File.exists?("i_am_configured")
 
-      Interface.unconfigure(@ifname)
+      :ok = Interface.deconfigure(@ifname)
       assert :ok == Interface.wait_until_configured(@ifname)
       refute File.exists?("i_am_configured")
     end)
   end
 
   test "cleans up cleanup files", context do
-    in_tmp(context.test, fn ->
-      raw_config = %RawConfig{
-        ifname: @ifname,
+    capture_log_in_tmp(context.test, fn ->
+      config = %{
         type: @interface_type,
-        source_config: %{},
         cleanup_files: ["i_am_configured"],
         up_cmds: [{:run, "touch", ["i_am_configured"]}]
       }
 
-      start_and_configure(raw_config)
+      configure_and_wait(config)
 
       assert File.exists?("i_am_configured")
 
-      Interface.unconfigure(@ifname)
+      :ok = Interface.deconfigure(@ifname)
       assert :ok == Interface.wait_until_configured(@ifname)
       refute File.exists?("i_am_configured")
     end)
   end
 
   test "failed command retries", context do
-    in_tmp(context.test, fn ->
-      raw_config = %RawConfig{
-        ifname: @ifname,
-        type: @interface_type,
-        source_config: %{},
-        retry_millis: 10,
-        files: [
-          {"run.sh",
-           """
-           #!/bin/sh
-           if [ -e first_try ]; then
-             touch i_am_configured
-           else
-             # Fail the first time
-             touch first_try
-             exit 1
-           fi
-           """}
-        ],
-        up_cmds: [{:run, "sh", ["run.sh"]}],
-        down_cmds: []
-      }
+    log =
+      capture_log_in_tmp(context.test, fn ->
+        config = %{
+          type: @interface_type,
+          retry_millis: 10,
+          files: [
+            {"run.sh",
+             """
+             #!/bin/sh
+             if [ -e first_try ]; then
+               touch i_am_configured
+             else
+               # Fail the first time
+               touch first_try
+               exit 1
+             fi
+             """}
+          ],
+          up_cmds: [{:run, "sh", ["run.sh"]}],
+          down_cmds: []
+        }
 
-      start_and_configure(raw_config, 250)
+        configure_and_wait(config, 250)
 
-      assert File.exists?("i_am_configured")
-    end)
+        assert File.exists?("i_am_configured")
+      end)
+
+    # Check that the error was logged.
+    assert log =~ "[error] Nonzero exit from sh"
   end
 
   test "hanging on configure command retries", context do
-    in_tmp(context.test, fn ->
-      raw_config = %RawConfig{
-        ifname: @ifname,
-        type: @interface_type,
-        source_config: %{},
-        retry_millis: 10,
-        files: [
-          {"run.sh",
-           """
-           #!/bin/sh
-           if [ -e first_try ]; then
-             touch i_am_configured
-           else
-             # Hang the first time
-             touch first_try
-             sleep 10000
-           fi
-           """}
-        ],
-        up_cmd_millis: 50,
-        up_cmds: [{:run, "sh", ["run.sh"]}],
-        down_cmds: []
-      }
+    log =
+      capture_log_in_tmp(context.test, fn ->
+        config = %{
+          type: @interface_type,
+          retry_millis: 10,
+          files: [
+            {"run.sh",
+             """
+             #!/bin/sh
+             if [ -e first_try ]; then
+               touch i_am_configured
+             else
+               # Hang the first time
+               touch first_try
+               /bin/sleep 10000
+               echo "Should not get here"
+             fi
+             """}
+          ],
+          up_cmd_millis: 50,
+          up_cmds: [{:run, "sh", ["run.sh"]}],
+          down_cmds: []
+        }
 
-      start_and_configure(raw_config, 250)
+        configure_and_wait(config, 250)
 
-      assert File.exists?("i_am_configured")
-    end)
+        assert File.exists?("i_am_configured")
+      end)
+
+    # Check that the error was logged.
+    assert log =~ "recovering from hang"
+    refute log =~ "Should not get here"
   end
 
   test "crash on configure command retries", context do
@@ -270,59 +259,58 @@ defmodule VintageNet.InterfaceTest do
       end
     end
 
-    in_tmp(context.test, fn ->
-      raw_config = %RawConfig{
-        ifname: @ifname,
-        type: @interface_type,
-        source_config: %{},
-        retry_millis: 10,
-        up_cmd_millis: 50,
-        up_cmds: [{:fun, crash_once}]
-      }
+    log =
+      capture_log_in_tmp(context.test, fn ->
+        config = %{
+          type: @interface_type,
+          retry_millis: 10,
+          up_cmd_millis: 50,
+          up_cmds: [{:fun, crash_once}]
+        }
 
-      start_and_configure(raw_config, 250)
+        configure_and_wait(config, 250)
 
-      assert File.exists?("i_crashed")
-      assert File.exists?("i_am_configured")
-    end)
+        assert File.exists?("i_crashed")
+        assert File.exists?("i_am_configured")
+      end)
+
+    assert log =~ "(RuntimeError) intentional oops"
   end
 
-  test "hanging on unconfigure command recovers", context do
-    in_tmp(context.test, fn ->
-      raw_config = %RawConfig{
-        ifname: @ifname,
-        type: @interface_type,
-        source_config: %{},
-        retry_millis: 10,
-        files: [{"hello", "world"}],
-        down_cmd_millis: 50,
-        down_cmds: [{:run, "sleep", ["100000"]}]
-      }
+  test "hanging on deconfigure command recovers", context do
+    log =
+      capture_log_in_tmp(context.test, fn ->
+        config = %{
+          type: @interface_type,
+          retry_millis: 10,
+          files: [{"hello", "world"}],
+          down_cmd_millis: 50,
+          down_cmds: [{:run, "sleep", ["100000"]}]
+        }
 
-      start_and_configure(raw_config)
+        configure_and_wait(config)
 
-      assert File.exists?("hello")
+        assert File.exists?("hello")
 
-      assert :ok == Interface.unconfigure(@ifname)
-      assert :ok == Interface.wait_until_configured(@ifname)
+        assert :ok == Interface.deconfigure(@ifname)
+        assert :ok == Interface.wait_until_configured(@ifname)
 
-      refute File.exists?("hello")
-    end)
+        refute File.exists?("hello")
+      end)
+
+    assert log =~ "recovering from hang"
   end
 
   test "reconfigure", context do
-    in_tmp(context.test, fn ->
-      raw_config1 = %RawConfig{
-        ifname: @ifname,
+    capture_log_in_tmp(context.test, fn ->
+      config1 = %{
         type: @interface_type,
-        source_config: %{},
         files: [{"first", ""}],
         up_cmds: [],
         down_cmds: [{:run, "touch", ["ran_first_down"]}]
       }
 
-      raw_config2 = %RawConfig{
-        ifname: @ifname,
+      config2 = %{
         type: @interface_type,
         source_config: %{},
         files: [{"second", ""}],
@@ -330,11 +318,11 @@ defmodule VintageNet.InterfaceTest do
         down_cmds: []
       }
 
-      start_and_configure(raw_config1)
+      configure_and_wait(config1)
 
       assert File.exists?("first")
 
-      assert :ok == Interface.configure(raw_config2)
+      assert :ok == Interface.configure(@ifname, config2)
       assert :ok == Interface.wait_until_configured(@ifname)
 
       refute File.exists?("first")
@@ -344,37 +332,29 @@ defmodule VintageNet.InterfaceTest do
   end
 
   test "configuring while configuring command", context do
-    in_tmp(context.test, fn ->
-      {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(@ifname)
-
+    capture_log_in_tmp(context.test, fn ->
       # Start configuring the first one - it will hang
-      raw_config = %RawConfig{
-        ifname: @ifname,
+      config = %{
         type: @interface_type,
-        source_config: %{},
         files: [{"first_config", ""}],
-        up_cmds: [{:run, "sleep", ["60"]}],
-        down_cmds: []
+        up_cmds: [{:run, "sleep", ["60"]}]
       }
 
-      :ok = Interface.configure(raw_config)
+      configure_only(config)
 
       # Make sure that everything is started before interrupting.
-      # I'm not sure this is even necessary, but is more like what
+      # I'm not sure this is even necessary, but it's more like what
       # happens in the wild.
       Process.sleep(100)
 
       # Configure the second one - it should interrupt the first
-      raw_config2 = %RawConfig{
-        ifname: @ifname,
+      config2 = %{
         type: @interface_type,
-        source_config: %{},
         files: [{"second_config", ""}],
-        up_cmds: [{:run, "touch", ["did_it"]}],
-        down_cmds: []
+        up_cmds: [{:run, "touch", ["did_it"]}]
       }
 
-      :ok = Interface.configure(raw_config2)
+      :ok = Interface.configure(@ifname, config2)
 
       assert :ok == Interface.wait_until_configured(@ifname)
 
@@ -385,13 +365,11 @@ defmodule VintageNet.InterfaceTest do
   end
 
   test "configure starts GenServers", context do
-    in_tmp(context.test, fn ->
+    capture_log_in_tmp(context.test, fn ->
       us = self()
 
-      raw_config = %RawConfig{
-        ifname: @ifname,
+      config = %{
         type: @interface_type,
-        source_config: %{},
         child_specs: [
           {Task,
            fn ->
@@ -402,12 +380,12 @@ defmodule VintageNet.InterfaceTest do
         ]
       }
 
-      start_and_configure(raw_config)
+      configure_and_wait(config)
 
       assert_receive :i_am_started
       assert Process.whereis(ItIsMe) != nil
 
-      assert :ok == Interface.unconfigure(@ifname)
+      assert :ok == Interface.deconfigure(@ifname)
       assert :ok == Interface.wait_until_configured(@ifname)
 
       assert Process.whereis(ItIsMe) == nil
@@ -415,73 +393,61 @@ defmodule VintageNet.InterfaceTest do
   end
 
   test "ioctls fail when not configured", context do
-    in_tmp(context.test, fn ->
-      # Make a configuration that hangs in the :configuring state
-      # so that it's easy to make an ioctl when not :configured.
-      raw_config = %RawConfig{
-        ifname: @ifname,
-        type: @interface_type,
-        source_config: %{},
-        up_cmd_millis: 10000,
-        up_cmds: [{:run, "sleep", ["10000"]}]
-      }
+    log =
+      capture_log_in_tmp(context.test, fn ->
+        # Make a configuration that hangs in the :configuring state
+        # so that it's easy to make an ioctl when not :configured.
+        config = %{
+          type: @interface_type,
+          up_cmd_millis: 10000,
+          up_cmds: [{:run, "sleep", ["10000"]}]
+        }
 
-      start_and_configure(raw_config, 250)
+        configure_only(config)
+        Process.sleep(250)
 
-      assert {:error, :unconfigured} == Interface.ioctl(@ifname, :a_command, [])
-    end)
+        assert {:error, :unconfigured} == Interface.ioctl(@ifname, :a_command, [])
+      end)
+
+    assert log =~ "call ioctl (returning error)"
   end
 
   test "ioctls work when configured", context do
-    in_tmp(context.test, fn ->
-      raw_config = %RawConfig{
-        ifname: @ifname,
-        type: @interface_type,
-        source_config: %{}
-      }
+    capture_log_in_tmp(context.test, fn ->
+      config = %{type: @interface_type}
 
-      start_and_configure(raw_config, 250)
+      configure_and_wait(config)
 
       assert {:ok, :hello} == Interface.ioctl(@ifname, :echo, [:hello])
     end)
   end
 
   test "ioctl crashes are handled", context do
-    in_tmp(context.test, fn ->
-      raw_config = %RawConfig{
-        ifname: @ifname,
-        type: @interface_type,
-        source_config: %{}
-      }
+    log =
+      capture_log_in_tmp(context.test, fn ->
+        config = %{type: @interface_type}
 
-      start_and_configure(raw_config, 250)
+        configure_and_wait(config)
 
-      assert {:error, {:exit, _reason}} = Interface.ioctl(@ifname, :oops, [])
-    end)
+        assert {:error, {:exit, _reason}} = Interface.ioctl(@ifname, :oops, [])
+      end)
+
+    assert log =~ "(RuntimeError) Intentional ioctl oops"
   end
 
   test "ioctls cancelled on reconfigure", context do
-    in_tmp(context.test, fn ->
-      raw_config1 = %RawConfig{
-        ifname: @ifname,
-        type: @interface_type,
-        source_config: %{}
-      }
+    capture_log_in_tmp(context.test, fn ->
+      config1 = %{type: @interface_type, id: 1}
+      config2 = %{type: @interface_type, id: 2}
 
-      raw_config2 = %RawConfig{
-        ifname: @ifname,
-        type: @interface_type,
-        source_config: %{}
-      }
-
-      start_and_configure(raw_config1)
+      configure_and_wait(config1)
 
       task = Task.async(fn -> Interface.ioctl(@ifname, :sleep, [10_000]) end)
 
       # Make sure that the task starts
       Process.sleep(10)
 
-      assert :ok == Interface.configure(raw_config2)
+      assert :ok == Interface.configure(@ifname, config2)
       assert :ok == Interface.wait_until_configured(@ifname)
 
       assert {:error, :cancelled} = Task.await(task)
@@ -489,45 +455,36 @@ defmodule VintageNet.InterfaceTest do
   end
 
   test "call configure during retry timeout", context do
-    in_tmp(context.test, fn ->
+    capture_log_in_tmp(context.test, fn ->
       # Make the retry timeout really long
-      raw_config1 = %RawConfig{
-        ifname: @ifname,
+      config1 = %{
         type: @interface_type,
-        source_config: %{},
         retry_millis: 100_000,
         up_cmds: [{:run, "false", []}]
       }
 
-      raw_config2 = %RawConfig{
-        ifname: @ifname,
-        type: @interface_type,
-        source_config: %{}
-      }
+      config2 = %{type: @interface_type}
 
       property = ["interface", @ifname, "state"]
       VintageNet.subscribe(property)
 
-      {:ok, _pid} = VintageNet.InterfacesSupervisor.start_interface(@ifname)
-      :ok = Interface.configure(raw_config1)
+      configure_only(config1)
 
       assert_receive {VintageNet, property, _old_value, :retrying, _meta}
 
-      assert :ok == Interface.configure(raw_config2)
+      assert :ok == Interface.configure(@ifname, config2)
       assert :ok == Interface.wait_until_configured(@ifname)
     end)
   end
 
   test "interface disappearing stops interface", context do
-    in_tmp(context.test, fn ->
-      raw_config = %RawConfig{
-        ifname: @ifname,
+    capture_log_in_tmp(context.test, fn ->
+      config = %{
         type: @interface_type,
-        source_config: %{},
         files: [{"testing", "Hello, world"}]
       }
 
-      start_and_configure(raw_config)
+      configure_and_wait(config)
 
       assert File.exists?("testing")
 

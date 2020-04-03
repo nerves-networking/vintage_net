@@ -17,7 +17,7 @@ defmodule VintageNet do
   [github.com/nerves-networking/vintage_net](https://github.com/nerves-networking/vintage_net)
   for more information.
   """
-  alias VintageNet.{Info, Interface, Persistence, PropertyTable}
+  alias VintageNet.{Info, Interface, PropertyTable}
 
   @typedoc """
   A name for the network interface
@@ -131,20 +131,7 @@ defmodule VintageNet do
   """
   @spec configure(ifname(), map(), configure_options()) :: :ok | {:error, any()}
   def configure(ifname, config, options \\ []) do
-    # The logic here is to validate the config by converting it to a
-    # raw_config. We'd need to do that anyway, so just get it over with.  The
-    # next step is to persist the config. This is important since if the
-    # Interface GenServer ever crashes and restarts, we want it to use this new
-    # config. `maybe_start_interface` might start up an Interface GenServer. If
-    # it does, then it will reach into Persistence for the config and it would
-    # be bad for it to get an old config. If a GenServer isn't started,
-    # configure the running one.
-    with {:ok, raw_config} <- Interface.to_raw_config(ifname, config),
-         normalized_config = raw_config.source_config,
-         :ok <- persist_configuration(ifname, normalized_config, options),
-         {:error, :already_started} <- maybe_start_interface(ifname) do
-      Interface.configure(raw_config)
-    end
+    Interface.configure(ifname, config, options)
   end
 
   @doc """
@@ -154,7 +141,7 @@ defmodule VintageNet do
   """
   @spec deconfigure(ifname(), configure_options()) :: :ok | {:error, any()}
   def deconfigure(ifname, options \\ []) do
-    configure(ifname, %{type: VintageNet.Technology.Null}, options)
+    Interface.deconfigure(ifname, options)
   end
 
   @doc """
@@ -162,7 +149,8 @@ defmodule VintageNet do
   """
   @spec get_configuration(ifname()) :: map()
   def get_configuration(ifname) do
-    Interface.get_configuration(ifname)
+    PropertyTable.get(VintageNet, ["interface", ifname, "config"]) ||
+      raise RuntimeError, "No configuration for #{ifname}"
   end
 
   @doc """
@@ -303,23 +291,5 @@ defmodule VintageNet do
       apply(type, :check_system, [opts])
     end
     |> Enum.find(:ok, fn rc -> rc != :ok end)
-  end
-
-  defp persist_configuration(ifname, normalized_config, options) do
-    case Keyword.get(options, :persist, true) do
-      true ->
-        Persistence.call(:save, [ifname, normalized_config])
-
-      false ->
-        :ok
-    end
-  end
-
-  defp maybe_start_interface(ifname) do
-    case VintageNet.InterfacesSupervisor.start_interface(ifname) do
-      {:ok, _pid} -> :ok
-      {:error, {:already_started, _pid}} -> {:error, :already_started}
-      {:error, other} -> {:error, other}
-    end
   end
 end

@@ -343,6 +343,7 @@ interfaces:
 Property      | Values              | Description
  ------------ | ------------------- | -----------
 `type`        | `VintageNetEthernet`, etc. | The type of the interface
+`config`      | `%{...}`            | The configuration for this interface
 `state`       | `:configured`, `:configuring`, etc. | The state of the interface from `VintageNet`'s point of view.
 `connection`  | `:disconnected`, `:lan`, `:internet` | This provides a determination of the Internet connection status
 `lower_up`    | `true` or `false`   | This indicates whether the physical layer is "up". E.g., a cable is connected or WiFi associated
@@ -350,4 +351,3 @@ Property      | Values              | Description
 `addresses`   | [address_info]      | This is a list of all of the addresses assigned to this interface
 
 Specific types of interfaces provide more parameters.
-

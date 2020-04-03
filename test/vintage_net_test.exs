@@ -5,15 +5,61 @@ defmodule VintageNetTest do
   import ExUnit.CaptureLog
 
   setup do
-    # Capture Application exited logs
+    # Restart the VintageNet application, so all of the tests
+    # can be in a pristine and consistent configuration.
+    #
+    # The following interfaces will exist:
+    #
+    # * "bogus0" - only in the application config
+    # * "bogus1" - only in persistence store
+    # * "bogus2" - in both the application config and persistence.
+    #              The persistence config should override.
     capture_log(fn ->
       Application.stop(:vintage_net)
+
+      # Just in case someone forgot to clean up...
+      File.rm_rf!(Application.get_env(:vintage_net, :persistence_dir))
+
+      Application.put_env(:vintage_net, :config, [
+        {"bogus0",
+         %{
+           type: VintageNetTest.TestTechnology,
+           bogus: 0
+         }},
+        {"bogus2",
+         %{
+           type: VintageNetTest.TestTechnology,
+           bogus: -1
+         }}
+      ])
+
+      VintageNet.Persistence.call(:save, [
+        "bogus1",
+        %{
+          type: VintageNetTest.TestTechnology,
+          bogus: 1
+        }
+      ])
+
+      VintageNet.Persistence.call(:save, [
+        "bogus2",
+        %{
+          type: VintageNetTest.TestTechnology,
+          bogus: 2
+        }
+      ])
+
       Application.start(:vintage_net)
     end)
 
-    # Remove persisted files if anything hung around
+    # Restore the configuration and persistance state to the original way
     on_exit(fn ->
-      File.rm(Path.join(Application.get_env(:vintage_net, :persistence_dir), "eth0"))
+      capture_log(fn ->
+        Application.stop(:vintage_net)
+        File.rm_rf!(Application.get_env(:vintage_net, :persistence_dir))
+        Application.put_env(:vintage_net, :config, [])
+        Application.start(:vintage_net)
+      end)
     end)
 
     :ok
@@ -54,8 +100,8 @@ defmodule VintageNetTest do
     assert Enum.any?(interfaces, &String.starts_with?(&1, "lo"))
   end
 
-  test "no interfaces are configured when testing" do
-    assert [] == VintageNet.configured_interfaces()
+  test "only fake interfaces are configured when testing" do
+    assert ["bogus0", "bogus1", "bogus2"] == VintageNet.configured_interfaces()
   end
 
   test "configure returns error on bad configurations" do
@@ -64,11 +110,6 @@ defmodule VintageNetTest do
 
   test "calls normalize" do
     :ok = VintageNet.configure("eth0", %{type: VintageNetTest.TestTechnology})
-
-    # "Temporary" fix - investigate why this is flaky
-    # VintageNet.Interface.wait_until_configured("eth0")
-    Process.sleep(500)
-
     applied_config = VintageNet.get_configuration("eth0")
 
     # See TestTechnology's normalize/1 method
@@ -96,12 +137,34 @@ defmodule VintageNetTest do
 
     :ok = VintageNet.configure("eth0", %{type: VintageNetTest.TestTechnology}, persist: false)
 
+    assert VintageNet.get_configuration("eth0") == %{
+             type: VintageNetTest.TestTechnology,
+             normalize_was_called: true
+           }
+
     refute File.exists?(path)
   end
 
   test "configuration_valid? works" do
     assert VintageNet.configuration_valid?("eth0", %{type: VintageNetTest.TestTechnology})
     refute VintageNet.configuration_valid?("eth0", %{this_totally_should_not_work: 1})
+  end
+
+  test "persisted configurations get restored" do
+    assert VintageNet.get_configuration("bogus0") == %{
+             type: VintageNetTest.TestTechnology,
+             bogus: 0
+           }
+
+    assert VintageNet.get_configuration("bogus1") == %{
+             type: VintageNetTest.TestTechnology,
+             bogus: 1
+           }
+
+    assert VintageNet.get_configuration("bogus2") == %{
+             type: VintageNetTest.TestTechnology,
+             bogus: 2
+           }
   end
 
   # Check that get, get_by_prefix, and match are available in the public

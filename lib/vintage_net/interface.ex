@@ -45,7 +45,7 @@ defmodule VintageNet.Interface do
   @doc """
   Stop the interface
 
-  Note that this doesn't unconfigure it.
+  Note that this doesn't deconfigure it.
   """
   @spec stop(VintageNet.ifname()) :: :ok
   def stop(ifname) do
@@ -91,21 +91,50 @@ defmodule VintageNet.Interface do
   For example, a network cable isn't plugged in or a WiFi access point
   is out of range.
   """
-  @spec configure(VintageNet.ifname(), map()) :: :ok
-  def configure(ifname, config) do
-    opts = Application.get_all_env(:vintage_net)
-    technology = technology_from_config(config)
-    normalized_config = technology.normalize(config)
-    raw_config = technology.to_raw_config(ifname, normalized_config, opts)
-    configure(raw_config)
+  @spec configure(VintageNet.ifname(), map(), VintageNet.configure_options()) ::
+          :ok | {:error, any()}
+  def configure(ifname, config, options \\ []) do
+    # The logic here is to validate the config by converting it to a
+    # raw_config. We'd need to do that anyway, so just get it over with.  The
+    # next step is to persist the config. This is important since if the
+    # Interface GenServer ever crashes and restarts, we want it to use this new
+    # config. `maybe_start_interface` might start up an Interface GenServer. If
+    # it does, then it will reach into the PropertyTable for the config and it would
+    # be bad for it to get an old config. If a GenServer isn't started,
+    # configure the running one.
+    with {:ok, raw_config} <- to_raw_config(ifname, config),
+         normalized_config = raw_config.source_config,
+         :changed <- configuration_changed(ifname, normalized_config),
+         :ok <- persist_configuration(ifname, normalized_config, options),
+         PropertyTable.put(VintageNet, ["interface", ifname, "config"], normalized_config),
+         {:error, :already_started} <- maybe_start_interface(ifname) do
+      GenStateMachine.call(via_name(raw_config.ifname), {:configure, raw_config})
+    end
   end
 
-  @doc """
-  Configure an interface the low level way with a "raw_config"
-  """
-  @spec configure(RawConfig.t()) :: :ok
-  def configure(raw_config) do
-    GenStateMachine.call(via_name(raw_config.ifname), {:configure, raw_config})
+  defp configuration_changed(ifname, normalized_config) do
+    case PropertyTable.get(VintageNet, ["interface", ifname, "config"]) do
+      ^normalized_config -> :ok
+      _ -> :changed
+    end
+  end
+
+  defp persist_configuration(ifname, normalized_config, options) do
+    case Keyword.get(options, :persist, true) do
+      true ->
+        Persistence.call(:save, [ifname, normalized_config])
+
+      false ->
+        :ok
+    end
+  end
+
+  defp maybe_start_interface(ifname) do
+    case VintageNet.InterfacesSupervisor.start_interface(ifname) do
+      {:ok, _pid} -> :ok
+      {:error, {:already_started, _pid}} -> {:error, :already_started}
+      {:error, other} -> {:error, other}
+    end
   end
 
   defp technology_from_config(%{type: type}) do
@@ -134,15 +163,7 @@ defmodule VintageNet.Interface do
   end
 
   @doc """
-  Return the current configuration
-  """
-  @spec get_configuration(VintageNet.ifname()) :: map()
-  def get_configuration(ifname) do
-    GenStateMachine.call(via_name(ifname), :get_configuration)
-  end
-
-  @doc """
-  Unconfigure the interface
+  Deconfigure the interface
 
   This doesn't exit this GenServer, but the interface
   won't be usable in any real way until it's configured
@@ -150,9 +171,9 @@ defmodule VintageNet.Interface do
 
   This function is not normally called.
   """
-  @spec unconfigure(VintageNet.ifname()) :: :ok
-  def unconfigure(ifname) do
-    configure(null_raw_config(ifname))
+  @spec deconfigure(VintageNet.ifname(), VintageNet.configure_options()) :: :ok | {:error, any()}
+  def deconfigure(ifname, options \\ []) do
+    configure(ifname, %{type: VintageNet.Technology.Null}, options)
   end
 
   @doc """
@@ -172,7 +193,6 @@ defmodule VintageNet.Interface do
   end
 
   defp debug(data, message), do: log(:debug, data, message)
-  defp info(data, message), do: log(:info, data, message)
 
   defp log(level, data, message) do
     _ = Logger.log(level, ["VintageNet(", data.ifname, "): ", message])
@@ -190,44 +210,25 @@ defmodule VintageNet.Interface do
 
     VintageNet.subscribe(["interface", ifname, "present"])
 
-    actions =
-      case load_config(ifname) do
-        {:ok, saved_raw_config} ->
-          [{:next_event, :internal, {:configure, saved_raw_config}}]
+    # Get and convert the configuration to raw form for use.
+    raw_config =
+      case PropertyTable.get(VintageNet, ["interface", ifname, "config"]) do
+        nil ->
+          # No configuration, so use a null config and fix the property table
+          raw_config = null_raw_config(ifname)
+          PropertyTable.put(VintageNet, ["interface", ifname, "config"], raw_config.source_config)
+          raw_config
 
-        {:error, reason} ->
-          info(initial_data, "starting with default config (#{inspect(reason)})")
-          []
+        config ->
+          # This is "guaranteed" to work since configurations are validated before
+          # saving them in the property table.
+          {:ok, raw_config} = to_raw_config(ifname, config)
+          raw_config
       end
 
+    actions = [{:next_event, :internal, {:configure, raw_config}}]
+
     {:ok, :configured, initial_data, actions}
-  end
-
-  defp load_config(ifname) do
-    with {:ok, config} <- Persistence.call(:load, [ifname]),
-         {:ok, raw_config} <- to_raw_config(ifname, config) do
-      {:ok, raw_config}
-    else
-      {:error, :corrupt} ->
-        _ = Logger.warn("VintageNet(#{ifname}): ignoring corrupt config and using default")
-        load_default_config(ifname)
-
-      {:error, reason} ->
-        _ = Logger.info("VintageNet(#{ifname}): loading config failed: #{inspect(reason)}")
-        load_default_config(ifname)
-    end
-  end
-
-  defp load_default_config(ifname) do
-    Application.get_env(:vintage_net, :config)
-    |> Enum.find(fn {k, _v} -> k == ifname end)
-    |> case do
-      {_ifname, config} ->
-        to_raw_config(ifname, config)
-
-      nil ->
-        {:error, :no_config}
-    end
   end
 
   # :configuring
@@ -351,7 +352,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{config: old_config} = data
       ) do
-    debug(data, ":configured -> internal configure")
+    debug(data, ":configured -> internal configure (#{inspect(new_config.type)})")
 
     {new_data, actions} = cancel_ioctls(data)
 
@@ -372,7 +373,7 @@ defmodule VintageNet.Interface do
         :configured,
         %State{config: old_config} = data
       ) do
-    debug(data, ":configured -> configure")
+    debug(data, ":configured -> configure (#{inspect(new_config.type)})")
 
     {new_data, actions} = cancel_ioctls(data)
     new_data = run_commands(new_data, old_config.down_cmds)
@@ -601,7 +602,7 @@ defmodule VintageNet.Interface do
         :retrying,
         data
       ) do
-    debug(data, ":retrying -> configure")
+    debug(data, ":retrying -> configure (#{inspect(new_config.type)})")
 
     data = %{data | config: new_config}
     actions = [{:reply, from, :ok}]
@@ -641,11 +642,6 @@ defmodule VintageNet.Interface do
       ) do
     debug(data, "#{inspect(other_state)} -> call ioctl (returning error)")
     {:keep_state, data, {:reply, from, {:error, :unconfigured}}}
-  end
-
-  @impl true
-  def handle_event({:call, from}, :get_configuration, _state, data) do
-    {:keep_state, data, {:reply, from, data.config.source_config}}
   end
 
   @impl true

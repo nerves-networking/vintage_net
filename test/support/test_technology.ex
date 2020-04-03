@@ -14,11 +14,38 @@ defmodule VintageNetTest.TestTechnology do
 
   @impl true
   def to_raw_config(ifname, config \\ %{}, _opts \\ []) do
+    # Let tests inject raw config keys if they specify them.
+    # Otherwise, use whatever the defaults are.
     %RawConfig{
       ifname: ifname,
       type: __MODULE__,
       source_config: config
     }
+    |> maybe_put(config, [
+      :files,
+      :require_interface,
+      :up_cmds,
+      :down_cmds,
+      :cleanup_files,
+      :retry_millis,
+      :up_cmd_millis,
+      :down_cmd_millis,
+      :child_specs
+    ])
+  end
+
+  defp maybe_put(raw_config, config, keys) do
+    Enum.reduce(keys, raw_config, &maybe_put_key(&2, config, &1))
+  end
+
+  defp maybe_put_key(raw_config, config, key) do
+    case Map.fetch(config, key) do
+      {:ok, value} ->
+        Map.put(raw_config, key, value)
+
+      _ ->
+        raw_config
+    end
   end
 
   @impl true

@@ -3,7 +3,7 @@ defmodule VintageNet.Interface.RawConfig do
   Raw configuration for an interface
 
   This struct contains the low-level instructions for how to configure and
-  unconfigure an interface.
+  deconfigure an interface.
 
   Fields:
 
@@ -18,7 +18,7 @@ defmodule VintageNet.Interface.RawConfig do
   * `up_cmd_millis` - the maximum amount of time to allow the up command list to take
   * `up_cmds` - a list of commands to run to configure the interface
   * `down_cmd_millis` - the maximum amount of time to allow the down command list to take
-  * `down_cmds` - a list of commands to run to unconfigure the interface
+  * `down_cmds` - a list of commands to run to bring the interface down
   * `cleanup_files` - additional files to delete (the files listed in `files` are deleted too)
 
   """

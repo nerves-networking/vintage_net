@@ -2,6 +2,7 @@ defmodule VintageNetTest.Case do
   @moduledoc false
 
   use ExUnit.CaseTemplate
+  import ExUnit.CaptureLog
 
   using do
     quote do
@@ -15,6 +16,10 @@ defmodule VintageNetTest.Case do
     _ = File.rm_rf!(path)
     File.mkdir_p!(path)
     File.cd!(path, function)
+  end
+
+  def capture_log_in_tmp(which, function) do
+    capture_log(fn -> in_tmp(which, function) end)
   end
 
   def tmp_path() do

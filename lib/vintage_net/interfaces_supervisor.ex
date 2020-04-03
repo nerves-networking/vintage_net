@@ -3,23 +3,22 @@ defmodule VintageNet.InterfacesSupervisor do
 
   @moduledoc false
 
-  alias VintageNet.Persistence
-
   @spec start_link(any()) :: GenServer.on_start()
   def start_link(_) do
-    with {:ok, pid} <- DynamicSupervisor.start_link(__MODULE__, nil, name: __MODULE__) do
-      start_configured_interfaces()
-      {:ok, pid}
+    case DynamicSupervisor.start_link(__MODULE__, nil, name: __MODULE__) do
+      {:ok, pid} ->
+        start_configured_interfaces()
+        {:ok, pid}
+
+      other ->
+        other
     end
   end
 
   @spec start_interface(VintageNet.ifname()) ::
           :ignore | {:error, any()} | {:ok, pid()} | {:ok, pid(), any()}
   def start_interface(ifname) do
-    DynamicSupervisor.start_child(
-      __MODULE__,
-      {VintageNet.Interface.Supervisor, ifname}
-    )
+    DynamicSupervisor.start_child(__MODULE__, {VintageNet.Interface.Supervisor, ifname})
   end
 
   @impl true
@@ -28,14 +27,8 @@ defmodule VintageNet.InterfacesSupervisor do
   end
 
   defp start_configured_interfaces() do
-    Enum.each(enumerate_interfaces(), &start_interface/1)
-  end
-
-  defp enumerate_interfaces() do
-    # Merge interfaces from the Application config and persistence
-    app_ifnames = for {ifname, _config} <- Application.get_env(:vintage_net, :config), do: ifname
-    persisted_ifnames = Persistence.call(:enumerate, [])
-
-    Enum.concat(app_ifnames, persisted_ifnames) |> Enum.uniq()
+    VintageNet.match(["interface", :_, "config"])
+    |> Enum.map(fn {["interface", ifname, "config"], _value} -> ifname end)
+    |> Enum.each(&start_interface/1)
   end
 end
