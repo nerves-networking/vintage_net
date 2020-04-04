@@ -28,7 +28,7 @@ defaults: &defaults
 jobs:
   build_elixir_1_10_otp_22:
     docker:
-      - image: erlang:22.2
+      - image: erlang:22.3
         environment:
           ELIXIR_VERSION: 1.10.2-otp-22
           LC_ALL: C.UTF-8
@@ -47,7 +47,7 @@ jobs:
       - run: MIX_ENV=docs mix docs
       - run: MIX_ENV=docs mix hex.build
       - run: MIX_ENV=test mix credo -a
-      - run: mix dialyzer --halt-exit-status
+      - run: mix dialyzer
       - save_cache:
           key: v1-mix-cache-{{ checksum "mix.lock" }}
           paths:
