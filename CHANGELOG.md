@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.7.8
+
+* Improvements
+  * Store an interface's configuration in the `["interface", ifname, "config"]`
+    property. This makes it possible to subscribe to configuration changes (like
+    any other property).
+  * Print out IP addresses with `VintageNet.info/0`
+
+* Bug fixes
+  * Fixed `VintageNet.get_configuration/1` to return the configuration that will
+    be applied even if it's not the configuration that's currently applied.
+    The previous semantics would break code that made decisions based on the
+    current configurations.
+
 ## v0.7.7
 
 * Improvements
