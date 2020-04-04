@@ -24,6 +24,7 @@ defmodule VintageNet.Info do
     """)
 
     ifnames = VintageNet.configured_interfaces()
+    ip_addresses = ip_address_map()
 
     if ifnames == [] do
       IO.puts("\nNo configured interfaces")
@@ -31,11 +32,16 @@ defmodule VintageNet.Info do
       ifnames
       |> Enum.map(fn ifname ->
         [
-          "\nInterface #{ifname}\n",
+          "\nInterface ",
+          ifname,
+          "\n",
           format_if_attribute(ifname, "type", "Type"),
           format_if_attribute(ifname, "present", "Present"),
           format_if_attribute(ifname, "state", "State", true),
           format_if_attribute(ifname, "connection", "Connection", true),
+          "  Addresses: ",
+          inspect(Map.get(ip_addresses, ifname, [])),
+          "\n",
           "  Configuration:\n",
           format_config(ifname, "    ", opts)
         ]
@@ -128,6 +134,66 @@ defmodule VintageNet.Info do
         # Mirror previous behavior (i.e., print nil for unset attributes)
         ["  ", print_name, ": nil\n"]
     end
+  end
+
+  @doc """
+  Return a map of network interfaces to the list of IP addresses on them
+  """
+  @spec ip_address_map() :: %{VintageNet.ifname() => [String.t()]}
+  def ip_address_map() do
+    case :inet.getifaddrs() do
+      {:ok, addresses} ->
+        ifaddrs_to_address_map(addresses)
+
+      _error ->
+        %{}
+    end
+  end
+
+  @doc """
+  Convert the result of :inet.getifaddrs/0 to a ifname->addresses map
+  """
+  @spec ifaddrs_to_address_map([{charlist(), keyword()}]) ::
+          %{VintageNet.ifname() => [String.t()]}
+  def ifaddrs_to_address_map(addresses) do
+    Enum.reduce(addresses, %{}, &process_one_interface/2)
+  end
+
+  defp process_one_interface({ifname_cl, attributes}, if_map) do
+    Map.put(if_map, to_string(ifname_cl), process_attributes(attributes))
+  end
+
+  defp process_attributes(attributes) do
+    process_attributes(attributes, nil, [])
+  end
+
+  defp process_attributes([], nil = _last_address, accumulator), do: accumulator
+
+  defp process_attributes([], last_address, accumulator) do
+    [VintageNet.IP.ip_to_string(last_address) | accumulator]
+  end
+
+  defp process_attributes([{:addr, address} | rest], nil = _last_address, accumulator) do
+    process_attributes(rest, address, accumulator)
+  end
+
+  defp process_attributes([{:addr, address} | rest], last_address, accumulator) do
+    process_attributes(rest, address, [VintageNet.IP.ip_to_string(last_address) | accumulator])
+  end
+
+  defp process_attributes([{:netmask, mask} | rest], last_address, accumulator)
+       when last_address != nil do
+    {:ok, bits} = VintageNet.IP.subnet_mask_to_prefix_length(mask)
+
+    process_attributes(rest, nil, [VintageNet.IP.cidr_to_string(last_address, bits) | accumulator])
+  end
+
+  defp process_attributes([_other | rest], last_address, accumulator) when last_address != nil do
+    process_attributes(rest, nil, [VintageNet.IP.ip_to_string(last_address) | accumulator])
+  end
+
+  defp process_attributes([_other | rest], nil, accumulator) do
+    process_attributes(rest, nil, accumulator)
   end
 
   @spec friendly_time(integer()) :: iodata()
