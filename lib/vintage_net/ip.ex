@@ -118,14 +118,24 @@ defmodule VintageNet.IP do
       iex> VintageNet.IP.subnet_mask_to_prefix_length({192, 168, 1, 1})
       {:error, "{192, 168, 1, 1} is not a valid IPv4 subnet mask"}
   """
-  @spec subnet_mask_to_prefix_length(:inet.ip4_address()) ::
-          {:ok, VintageNet.ipv4_prefix_length()} | {:error, String.t()}
-  def subnet_mask_to_prefix_length(subnet_mask) do
+  @spec subnet_mask_to_prefix_length(:inet.ip_address()) ::
+          {:ok, VintageNet.prefix_length()} | {:error, String.t()}
+  def subnet_mask_to_prefix_length(subnet_mask) when tuple_size(subnet_mask) == 4 do
     # Not exactly efficient...
     lookup = for bits <- 0..32, into: %{}, do: {prefix_length_to_subnet_mask(:inet, bits), bits}
 
     case Map.get(lookup, subnet_mask) do
       nil -> {:error, "#{inspect(subnet_mask)} is not a valid IPv4 subnet mask"}
+      bits -> {:ok, bits}
+    end
+  end
+
+  def subnet_mask_to_prefix_length(subnet_mask) when tuple_size(subnet_mask) == 8 do
+    # Not exactly efficient...
+    lookup = for bits <- 0..128, into: %{}, do: {prefix_length_to_subnet_mask(:inet6, bits), bits}
+
+    case Map.get(lookup, subnet_mask) do
+      nil -> {:error, "#{inspect(subnet_mask)} is not a valid IPv6 subnet mask"}
       bits -> {:ok, bits}
     end
   end
@@ -171,6 +181,9 @@ defmodule VintageNet.IP do
 
       iex> VintageNet.IP.to_subnet({192, 168, 255, 50}, 22)
       {192, 168, 252, 0}
+
+      iex> VintageNet.IP.to_subnet({64768, 43690, 0, 0, 4144, 58623, 65276, 33158}, 64)
+      {64768, 43690, 0, 0, 0, 0, 0, 0}
   """
   @spec to_subnet(:inet.ip_address(), VintageNet.prefix_length()) :: :inet.ip_address()
   def to_subnet({a, b, c, d}, subnet_bits) when subnet_bits >= 0 and subnet_bits <= 32 do
@@ -178,5 +191,18 @@ defmodule VintageNet.IP do
     <<subnet::size(subnet_bits), _::size(not_subnet_bits)>> = <<a, b, c, d>>
     <<new_a, new_b, new_c, new_d>> = <<subnet::size(subnet_bits), 0::size(not_subnet_bits)>>
     {new_a, new_b, new_c, new_d}
+  end
+
+  def to_subnet({a, b, c, d, e, f, g, h}, subnet_bits)
+      when subnet_bits >= 0 and subnet_bits <= 128 do
+    not_subnet_bits = 128 - subnet_bits
+
+    <<subnet::size(subnet_bits), _::size(not_subnet_bits)>> =
+      <<a::16, b::16, c::16, d::16, e::16, f::16, g::16, h::16>>
+
+    <<new_a::16, new_b::16, new_c::16, new_d::16, new_e::16, new_f::16, new_g::16, new_h::16>> =
+      <<subnet::size(subnet_bits), 0::size(not_subnet_bits)>>
+
+    {new_a, new_b, new_c, new_d, new_e, new_f, new_g, new_h}
   end
 end
