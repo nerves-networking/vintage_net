@@ -2,8 +2,8 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
   use GenServer
   require Logger
 
-  alias VintageNet.{PropertyTable, RouteManager}
   alias VintageNet.Interface.InternetTester
+  alias VintageNet.{PropertyTable, RouteManager}
 
   @moduledoc """
   This GenServer monitors a network interface for Internet connectivity

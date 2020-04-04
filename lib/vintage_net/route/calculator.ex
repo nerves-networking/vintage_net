@@ -11,8 +11,8 @@ defmodule VintageNet.Route.Calculator do
   configurations.
   """
 
-  alias VintageNet.Route.InterfaceInfo
   alias VintageNet.Interface.Classification
+  alias VintageNet.Route.InterfaceInfo
 
   @type table_index :: 0..255 | :main | :local | :default
   @type metric :: 0..32767

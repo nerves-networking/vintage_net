@@ -1,8 +1,8 @@
 defmodule VintageNet.Route.CalculatorTest do
   use ExUnit.Case
 
-  alias VintageNet.Route.{Calculator, InterfaceInfo}
   alias VintageNet.Interface.Classification
+  alias VintageNet.Route.{Calculator, InterfaceInfo}
 
   doctest Calculator
 

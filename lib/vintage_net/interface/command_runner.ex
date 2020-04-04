@@ -13,8 +13,8 @@ defmodule VintageNet.Interface.CommandRunner do
   cleanup logic.
   """
   require Logger
-  alias VintageNet.Interface.{RawConfig, OutputLogger}
   alias VintageNet.Command
+  alias VintageNet.Interface.{OutputLogger, RawConfig}
 
   @doc """
   Run a list of commands
