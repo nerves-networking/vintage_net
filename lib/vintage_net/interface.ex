@@ -614,6 +614,15 @@ defmodule VintageNet.Interface do
     end
   end
 
+  @impl true
+  def handle_event(:info, {:commands_done, _}, :retrying, %State{} = data) do
+    # This is a latent message that didn't get processed because a crash
+    # got handled first. It can be produced by getting one of an
+    # interface's supervised processes to crash on a
+    # VintageNet.deconfigure/1 call.
+    {:keep_state, data}
+  end
+
   # Catch all event handlers
   @impl true
   def handle_event(:info, {:EXIT, _pid, _reason}, _state, data) do
