@@ -98,7 +98,7 @@ defmodule VintageNet.MixProject do
       {:excoveralls, "~> 0.8", only: :test, runtime: false},
       {:dialyxir, "~> 1.0.0", only: [:dev, :test], runtime: false},
       {:muontrap, "~> 0.5.1 or ~> 0.6.0"},
-      {:gen_state_machine, "~> 2.0.0"},
+      {:gen_state_machine, "~> 2.0.0 or ~> 2.1.0"},
       {:busybox, "~> 0.1.4", optional: true},
       {:credo, "~> 1.2", only: [:dev, :test], runtime: false}
     ]
