@@ -76,6 +76,26 @@ defmodule VintageNet.InterfacesMonitor.Info do
     scope: :universe
   }
   ```
+
+  or
+
+  ```elixir
+  %{
+    address: {10, 64, 64, 64},
+    family: :inet,
+    label: "ppp0",
+    local: {10, 0, 95, 181},
+    permanent: true,
+    prefixlen: 32,
+    scope: :universe
+  }
+  ```
+
+  or
+
+  ```elixir
+  %{address: {0, 0, 0, 0, 0, 0, 0, 1}, family: :inet6, permanent: true, prefixlen: 128, scope: :host}
+  ```
   """
   @spec newaddr(t(), map()) :: t()
   def newaddr(info, address_report) do
@@ -160,11 +180,17 @@ defmodule VintageNet.InterfacesMonitor.Info do
   end
 
   defp address_reports_to_property(address_reports) do
+    # VintageNet uses the word `address` to refer to the IP address assigned to
+    # the interface. If you don't know Linux networking, I think that's an
+    # obvious use of that word. For point-to-point network links, though, Linux
+    # reports both the local and remote addresses. The remote one is stored in
+    # `address` and the local one is in `local`. Therefore, the code below uses
+    # `local` since that's always the local side of the interface.
     for report <- address_reports do
       %{
         family: report.family,
         scope: report.scope,
-        address: report.address,
+        address: report[:local] || report.address,
         prefix_length: report.prefixlen,
         netmask: IP.prefix_length_to_subnet_mask(report.family, report.prefixlen)
       }

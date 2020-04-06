@@ -8,6 +8,8 @@ defmodule VintageNet.InterfacesMonitor do
 
   use GenServer
 
+  # require Logger
+
   alias VintageNet.InterfacesMonitor.Info
 
   defmodule State do
@@ -67,8 +69,9 @@ defmodule VintageNet.InterfacesMonitor do
 
   @impl true
   def handle_info({_port, {:data, raw_report}}, state) do
-    # IO.puts("Got: #{inspect(raw_report, limit: :infinity)}")
     report = :erlang.binary_to_term(raw_report)
+
+    #  Logger.debug("if_monitor: #{inspect(report, limit: :infinity)}")
 
     new_state = handle_report(state, report)
 

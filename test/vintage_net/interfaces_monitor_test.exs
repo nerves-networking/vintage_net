@@ -179,6 +179,36 @@ defmodule VintageNet.InterfacesMonitorTest do
                     [^expected_address_info], %{}}
   end
 
+  test "ipv4 ppp address gets reported correctly" do
+    VintageNet.subscribe(["interface", "bogus0", "addresses"])
+
+    send_report({:newlink, "bogus0", 56, %{}})
+
+    send_report(
+      {:newaddr, 56,
+       %{
+         address: {10, 64, 64, 64},
+         family: :inet,
+         label: "bogus0",
+         local: {10, 0, 95, 181},
+         permanent: true,
+         prefixlen: 32,
+         scope: :universe
+       }}
+    )
+
+    expected_address_info = %{
+      family: :inet,
+      scope: :universe,
+      address: {10, 0, 95, 181},
+      netmask: {255, 255, 255, 255},
+      prefix_length: 32
+    }
+
+    assert_receive {VintageNet, ["interface", "bogus0", "addresses"], _before,
+                    [^expected_address_info], %{}}
+  end
+
   test "ipv6 addresses get reported" do
     VintageNet.subscribe(["interface", "bogus0", "addresses"])
 
