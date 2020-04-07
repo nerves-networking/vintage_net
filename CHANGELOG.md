@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.7.9
+
+* Bug fixes
+  * Fix IP address being reported for PPP connections. Previously, it was the
+    remote end of the PPP connection rather than the local end.
+  * Fix missing IPv6 address reports. Depending on when IPv6 addresses were set
+    on network interfaces, they might not have been reported. Note that IPv6
+    isn't officially supported by VintageNet yet.
+
 ## v0.7.8
 
 * Improvements
