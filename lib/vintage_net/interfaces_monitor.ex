@@ -42,7 +42,7 @@ defmodule VintageNet.InterfacesMonitor do
 
     case File.exists?(executable) do
       true ->
-        port = Port.open({:spawn_executable, executable}, [{:packet, 2}, :use_stdio, :binary])
+        port = Port.open({:spawn_executable, executable}, [{:packet, 2}, :use_stdio, :binary, :exit_status])
 
         {:ok, %State{port: port}}
 
