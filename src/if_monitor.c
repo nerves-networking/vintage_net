@@ -86,7 +86,7 @@ static void netif_init(struct netif *nb)
     if (!nb->nl_addr)
         err(EXIT_FAILURE, "mnl_socket_open (NETLINK_ROUTE)");
 
-    if (mnl_socket_bind(nb->nl_addr, RTMGRP_IPV4_IFADDR, MNL_SOCKET_AUTOPID) < 0)
+    if (mnl_socket_bind(nb->nl_addr, RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR, MNL_SOCKET_AUTOPID) < 0)
         err(EXIT_FAILURE, "mnl_socket_bind(RTMGRP_IPV4_IFADDR)");
 }
 
