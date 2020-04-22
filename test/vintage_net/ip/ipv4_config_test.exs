@@ -74,13 +74,15 @@ defmodule VintageNet.IP.IPv4ConfigTest do
     initial_raw_config = %VintageNet.Interface.RawConfig{
       ifname: "eth0",
       source_config: input,
-      type: UnitTest
+      type: UnitTest,
+      required_ifnames: ["eth0"]
     }
 
     expected = %VintageNet.Interface.RawConfig{
       type: UnitTest,
       ifname: "eth0",
       source_config: input,
+      required_ifnames: ["eth0"],
       child_specs: [
         udhcpc_child_spec("eth0", "unit_test"),
         {VintageNet.Interface.InternetConnectivityChecker, "eth0"}
@@ -113,6 +115,7 @@ defmodule VintageNet.IP.IPv4ConfigTest do
     initial_raw_config = %VintageNet.Interface.RawConfig{
       ifname: "eth0",
       source_config: input,
+      required_ifnames: ["eth0"],
       type: UnitTest
     }
 
@@ -120,6 +123,7 @@ defmodule VintageNet.IP.IPv4ConfigTest do
       type: UnitTest,
       ifname: "eth0",
       source_config: input,
+      required_ifnames: ["eth0"],
       child_specs: [
         {VintageNet.Interface.InternetConnectivityChecker, "eth0"}
       ],
@@ -158,6 +162,7 @@ defmodule VintageNet.IP.IPv4ConfigTest do
     initial_raw_config = %VintageNet.Interface.RawConfig{
       ifname: "eth0",
       source_config: input,
+      required_ifnames: ["eth0"],
       type: UnitTest
     }
 
@@ -165,6 +170,7 @@ defmodule VintageNet.IP.IPv4ConfigTest do
       type: UnitTest,
       ifname: "eth0",
       source_config: input,
+      required_ifnames: ["eth0"],
       child_specs: [
         {VintageNet.Interface.LANConnectivityChecker, "eth0"}
       ],
@@ -202,6 +208,7 @@ defmodule VintageNet.IP.IPv4ConfigTest do
     initial_raw_config = %VintageNet.Interface.RawConfig{
       ifname: "eth0",
       source_config: input,
+      required_ifnames: ["eth0"],
       type: UnitTest
     }
 
@@ -209,6 +216,7 @@ defmodule VintageNet.IP.IPv4ConfigTest do
       type: UnitTest,
       ifname: "eth0",
       source_config: input,
+      required_ifnames: ["eth0"],
       child_specs: [
         {VintageNet.Interface.LANConnectivityChecker, "eth0"}
       ],

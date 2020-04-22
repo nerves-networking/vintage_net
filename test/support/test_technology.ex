@@ -19,7 +19,8 @@ defmodule VintageNetTest.TestTechnology do
     %RawConfig{
       ifname: ifname,
       type: __MODULE__,
-      source_config: config
+      source_config: config,
+      required_ifnames: [ifname]
     }
     |> maybe_put(config, [
       :files,
@@ -30,7 +31,8 @@ defmodule VintageNetTest.TestTechnology do
       :retry_millis,
       :up_cmd_millis,
       :down_cmd_millis,
-      :child_specs
+      :child_specs,
+      :required_ifnames
     ])
   end
 

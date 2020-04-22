@@ -19,7 +19,7 @@ defmodule VintageNet.Technology.NullTest do
       type: VintageNet.Technology.Null,
       ifname: "eth0",
       source_config: input,
-      require_interface: false
+      required_ifnames: []
     }
 
     assert output == Null.to_raw_config("eth0", input, [])

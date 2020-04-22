@@ -10,7 +10,7 @@ defmodule VintageNet.Interface.RawConfig do
   * `ifname` - the name of the interface (e.g., `"eth0"`)
   * `type` - the type of network interface (aka the module that created the config)
   * `source_config` - the configuration that generated this one
-  * `require_interface` - require the interface to exist in the system before configuring
+  * `required_ifnames` - a list of ifnames that need to exist before starting this configuration. (e.g. `["eth0"]`)
   * `retry_millis` - if bringing the interface up fails, wait this amount of time before retrying
   * `files` - a list of file path, content tuples
   * `restart_strategy` - the restart strategy for the list of `child_specs`. I.e., `:one_for_one | :one_for_all | :rest_for_one`
@@ -34,11 +34,11 @@ defmodule VintageNet.Interface.RawConfig do
 
   @type file_contents :: {Path.t(), String.t()}
 
-  @enforce_keys [:ifname, :type, :source_config]
+  @enforce_keys [:ifname, :type, :source_config, :required_ifnames]
   defstruct ifname: nil,
             type: nil,
             source_config: %{},
-            require_interface: true,
+            required_ifnames: [],
             retry_millis: 30_000,
             files: [],
             restart_strategy: :one_for_all,
@@ -53,7 +53,7 @@ defmodule VintageNet.Interface.RawConfig do
           ifname: VintageNet.ifname(),
           type: atom(),
           source_config: map(),
-          require_interface: boolean(),
+          required_ifnames: [VintageNet.ifname()],
           retry_millis: non_neg_integer(),
           files: [file_contents()],
           restart_strategy: Supervisor.strategy(),

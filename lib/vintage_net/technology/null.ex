@@ -18,7 +18,7 @@ defmodule VintageNet.Technology.Null do
       ifname: ifname,
       type: __MODULE__,
       source_config: @null_config,
-      require_interface: false
+      required_ifnames: []
     }
   end
 

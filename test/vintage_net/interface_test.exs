@@ -116,7 +116,7 @@ defmodule VintageNet.InterfaceTest do
 
       config = %{
         type: @interface_type,
-        require_interface: false,
+        required_ifnames: [],
         files: [{"testing", "Hello, world"}]
       }
 
@@ -537,6 +537,103 @@ defmodule VintageNet.InterfaceTest do
       Process.sleep(10)
 
       assert File.exists?("testing")
+    end)
+  end
+
+  test "interface starts when all dependent ifnames are present", context do
+    capture_log_in_tmp(context.test, fn ->
+      config = %{
+        type: @interface_type,
+        files: [{"testing", "Hello, world"}],
+        required_ifnames: ["test1", "test2"]
+      }
+
+      configure_only(config)
+
+      Process.sleep(10)
+
+      refute File.exists?("testing")
+
+      # Add one dependent
+      VintageNet.PropertyTable.put(VintageNet, ["interface", "test1", "present"], true)
+
+      Process.sleep(10)
+
+      refute File.exists?("testing")
+
+      # Add the other dependent
+      VintageNet.PropertyTable.put(VintageNet, ["interface", "test2", "present"], true)
+
+      Process.sleep(10)
+
+      assert File.exists?("testing")
+
+      # clean up
+      VintageNet.PropertyTable.clear(VintageNet, ["interface", "test1", "present"])
+      VintageNet.PropertyTable.clear(VintageNet, ["interface", "test2", "present"])
+    end)
+  end
+
+  test "interface stops when any dependent ifname goes away", context do
+    capture_log_in_tmp(context.test, fn ->
+      config = %{
+        type: @interface_type,
+        files: [{"testing", "Hello, world"}],
+        required_ifnames: ["test1", "test2"]
+      }
+
+      VintageNet.PropertyTable.put(VintageNet, ["interface", "test1", "present"], true)
+      VintageNet.PropertyTable.put(VintageNet, ["interface", "test2", "present"], true)
+
+      configure_and_wait(config)
+
+      assert File.exists?("testing")
+
+      # "remove" one interface
+      VintageNet.PropertyTable.clear(VintageNet, ["interface", "test2", "present"])
+
+      Process.sleep(10)
+
+      refute File.exists?("testing")
+
+      # bring the interface back
+      VintageNet.PropertyTable.put(VintageNet, ["interface", "test2", "present"], true)
+
+      Process.sleep(10)
+
+      assert File.exists?("testing")
+
+      # "remove" the other interface
+      VintageNet.PropertyTable.clear(VintageNet, ["interface", "test1", "present"])
+
+      Process.sleep(10)
+
+      refute File.exists?("testing")
+
+      # bring the interface back
+      VintageNet.PropertyTable.put(VintageNet, ["interface", "test1", "present"], true)
+
+      Process.sleep(10)
+
+      assert File.exists?("testing")
+
+      # "removing" the base interface doesn't do anything since it's not required
+      VintageNet.PropertyTable.clear(VintageNet, ["interface", @ifname, "present"])
+
+      Process.sleep(10)
+
+      assert File.exists?("testing")
+
+      # bring the interface back
+      VintageNet.PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
+
+      Process.sleep(10)
+
+      assert File.exists?("testing")
+
+      # clean up
+      VintageNet.PropertyTable.clear(VintageNet, ["interface", "test1", "present"])
+      VintageNet.PropertyTable.clear(VintageNet, ["interface", "test2", "present"])
     end)
   end
 end

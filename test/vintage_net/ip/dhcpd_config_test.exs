@@ -136,7 +136,8 @@ defmodule VintageNet.IP.DhcpdConfigTest do
     initial_raw_config = %VintageNet.Interface.RawConfig{
       ifname: "eth0",
       source_config: input,
-      type: UnitTest
+      type: UnitTest,
+      required_ifnames: ["eth0"]
     }
 
     opts = [tmpdir: "tmpdir", bin_udhcpd: "udhcpd"]
@@ -191,7 +192,8 @@ defmodule VintageNet.IP.DhcpdConfigTest do
       ],
       ifname: "eth0",
       source_config: input,
-      type: UnitTest
+      type: UnitTest,
+      required_ifnames: ["eth0"]
     }
 
     assert expected == result

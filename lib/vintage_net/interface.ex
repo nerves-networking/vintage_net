@@ -208,27 +208,27 @@ defmodule VintageNet.Interface do
     initial_data = %State{ifname: ifname, config: null_raw_config(ifname)}
     update_properties(:configured, initial_data)
 
-    VintageNet.subscribe(["interface", ifname, "present"])
-
-    # Get and convert the configuration to raw form for use.
-    raw_config =
-      case PropertyTable.get(VintageNet, ["interface", ifname, "config"]) do
-        nil ->
-          # No configuration, so use a null config and fix the property table
-          raw_config = null_raw_config(ifname)
-          PropertyTable.put(VintageNet, ["interface", ifname, "config"], raw_config.source_config)
-          raw_config
-
-        config ->
-          # This is "guaranteed" to work since configurations are validated before
-          # saving them in the property table.
-          {:ok, raw_config} = to_raw_config(ifname, config)
-          raw_config
-      end
-
+    raw_config = get_raw_config(ifname)
     actions = [{:next_event, :internal, {:configure, raw_config}}]
 
     {:ok, :configured, initial_data, actions}
+  end
+
+  defp get_raw_config(ifname) do
+    # Get and convert the configuration to raw form for use.
+    case PropertyTable.get(VintageNet, ["interface", ifname, "config"]) do
+      nil ->
+        # No configuration, so use a null config and fix the property table
+        raw_config = null_raw_config(ifname)
+        PropertyTable.put(VintageNet, ["interface", ifname, "config"], raw_config.source_config)
+        raw_config
+
+      config ->
+        # This is "guaranteed" to work since configurations are validated before
+        # saving them in the property table.
+        {:ok, raw_config} = to_raw_config(ifname, config)
+        raw_config
+    end
   end
 
   # :configuring
@@ -324,11 +324,11 @@ defmodule VintageNet.Interface do
   @impl true
   def handle_event(
         :info,
-        {VintageNet, ["interface", ifname, "present"], _old_value, nil, _meta},
+        {VintageNet, ["interface", an_ifname, "present"], _old_value, nil, _meta},
         :configuring,
-        %State{ifname: ifname, command_runner: pid, config: config} = data
+        %State{command_runner: pid, config: config} = data
       ) do
-    debug(data, ":configuring -> interface disappeared: retrying after #{config.retry_millis} ms")
+    debug(data, ":configuring -> #{an_ifname} removed: retrying after #{config.retry_millis}ms")
 
     Process.exit(pid, :kill)
     {new_data, actions} = reply_to_waiters(data)
@@ -446,11 +446,11 @@ defmodule VintageNet.Interface do
   @impl true
   def handle_event(
         :info,
-        {VintageNet, ["interface", ifname, "present"], _old_value, nil, _meta},
+        {VintageNet, ["interface", an_ifname, "present"], _old_value, nil, _meta},
         :configured,
-        %State{ifname: ifname, config: config} = data
+        %State{config: config} = data
       ) do
-    debug(data, ":configured -> interface disappeared")
+    debug(data, ":configured -> #{an_ifname} removed")
 
     {new_data, actions} = cancel_ioctls(data)
     VintageNet.Interface.Supervisor.clear_technology(data.ifname)
@@ -477,10 +477,11 @@ defmodule VintageNet.Interface do
     # debug(data, "#{data.ifname}:reconfiguring -> cleanup success")
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
+    update_ifname_subscriptions(old_config.required_ifnames, new_config.required_ifnames)
 
     data = %{data | config: new_config, next_config: nil}
 
-    if interface_available?(data) do
+    if interfaces_available?(data) do
       start_configuring(new_config, data, [])
     else
       {new_data, actions} = reply_to_waiters(data)
@@ -502,10 +503,11 @@ defmodule VintageNet.Interface do
     debug(data, ":reconfiguring -> done error")
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
+    update_ifname_subscriptions(old_config.required_ifnames, new_config.required_ifnames)
 
     data = %{data | config: new_config, next_config: nil}
 
-    if interface_available?(data) do
+    if interfaces_available?(data) do
       start_configuring(new_config, data, [])
     else
       {new_data, actions} = reply_to_waiters(data)
@@ -527,9 +529,11 @@ defmodule VintageNet.Interface do
     debug(data, ":reconfiguring -> done crash (#{inspect(reason)})")
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
+    update_ifname_subscriptions(old_config.required_ifnames, new_config.required_ifnames)
+
     data = %{data | config: new_config, next_config: nil}
 
-    if interface_available?(data) do
+    if interfaces_available?(data) do
       start_configuring(new_config, data, [])
     else
       {new_data, actions} = reply_to_waiters(data)
@@ -551,10 +555,11 @@ defmodule VintageNet.Interface do
     Process.exit(pid, :kill)
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
+    update_ifname_subscriptions(old_config.required_ifnames, new_config.required_ifnames)
 
     data = %{data | config: new_config, next_config: nil}
 
-    if interface_available?(data) do
+    if interfaces_available?(data) do
       start_configuring(new_config, data, [])
     else
       {new_data, actions} = reply_to_waiters(data)
@@ -569,7 +574,7 @@ defmodule VintageNet.Interface do
 
   @impl true
   def handle_event(:state_timeout, _event, :retrying, %State{config: new_config} = data) do
-    if interface_available?(data) do
+    if interfaces_available?(data) do
       start_configuring(new_config, data, [])
     else
       {:keep_state, data, {:state_timeout, new_config.retry_millis, :retry_timeout}}
@@ -579,21 +584,17 @@ defmodule VintageNet.Interface do
   @impl true
   def handle_event(
         :info,
-        {VintageNet, ["interface", ifname, "present"], _old_value, true, _meta},
+        {VintageNet, ["interface", an_ifname, "present"], _old_value, true, _meta},
         :retrying,
-        %State{ifname: ifname, config: new_config} = data
+        %State{config: new_config} = data
       ) do
-    rm(new_config.cleanup_files)
-    cleanup_interface(data.ifname)
-    CommandRunner.create_files(new_config.files)
-    new_data = run_commands(data, new_config.up_cmds)
-
-    actions = [
-      {:state_timeout, new_config.up_cmd_millis, :configuring_timeout}
-    ]
-
-    update_properties(:configuring, new_data)
-    {:next_state, :configuring, new_data, actions}
+    debug(data, ":retrying -> #{an_ifname} up")
+    # One of the dependent interfaces appeared, so check
+    if interfaces_available?(data) do
+      start_configuring(new_config, data, [])
+    else
+      {:keep_state, data}
+    end
   end
 
   @impl true
@@ -608,7 +609,7 @@ defmodule VintageNet.Interface do
     data = %{data | config: new_config}
     actions = [{:reply, from, :ok}]
 
-    if interface_available?(data) do
+    if interfaces_available?(data) do
       start_configuring(new_config, data, actions)
     else
       {:keep_state, data, [{:state_timeout, new_config.retry_millis, :retry_timeout} | actions]}
@@ -759,7 +760,24 @@ defmodule VintageNet.Interface do
     {%{data | inflight_ioctls: %{}}, actions}
   end
 
-  defp interface_available?(data) do
-    not data.config.require_interface or VintageNet.get(["interface", data.ifname, "present"])
+  defp update_ifname_subscriptions(old_required_ifnames, required_ifnames) do
+    new_subscriptions = required_ifnames -- old_required_ifnames
+    removed_subscriptions = old_required_ifnames -- required_ifnames
+
+    Enum.each(new_subscriptions, fn ifname ->
+      VintageNet.subscribe(["interface", ifname, "present"])
+    end)
+
+    Enum.each(removed_subscriptions, fn ifname ->
+      VintageNet.unsubscribe(["interface", ifname, "present"])
+    end)
+  end
+
+  defp interfaces_available?(data) do
+    Enum.all?(data.config.required_ifnames, &interface_available?/1)
+  end
+
+  defp interface_available?(ifname) when is_binary(ifname) do
+    VintageNet.get(["interface", ifname, "present"])
   end
 end
