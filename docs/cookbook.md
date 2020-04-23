@@ -26,7 +26,7 @@ For run-time, call
 like this:
 
 ```elixir
-VintageNet.configure("eth0", %{type: VintageNetEthernet, ipv4: %{method: :dhcp}}})
+VintageNet.configure("eth0", %{type: VintageNetEthernet, ipv4: %{method: :dhcp}})
 ```
 
 To see the current configuration at an IEx prompt, type:
@@ -67,7 +67,7 @@ To use, make sure that you're either using
 This is regular wired Ethernet - nothing fancy:
 
 ```elixir
-%{type: VintageNetEthernet, ipv4: %{method: :dhcp}}}
+%{type: VintageNetEthernet, ipv4: %{method: :dhcp}}
 ```
 
 ### Wired Ethernet with a static IP
