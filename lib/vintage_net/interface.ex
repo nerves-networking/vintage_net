@@ -355,7 +355,7 @@ defmodule VintageNet.Interface do
     debug(data, ":configured -> internal configure (#{inspect(new_config.type)})")
 
     {new_data, actions} = cancel_ioctls(data)
-
+    VintageNet.Interface.Supervisor.clear_technology(data.ifname)
     new_data = run_commands(new_data, old_config.down_cmds)
 
     actions = [
@@ -376,6 +376,7 @@ defmodule VintageNet.Interface do
     debug(data, ":configured -> configure (#{inspect(new_config.type)})")
 
     {new_data, actions} = cancel_ioctls(data)
+    VintageNet.Interface.Supervisor.clear_technology(data.ifname)
     new_data = run_commands(new_data, old_config.down_cmds)
 
     actions = [
@@ -452,7 +453,7 @@ defmodule VintageNet.Interface do
     debug(data, ":configured -> interface disappeared")
 
     {new_data, actions} = cancel_ioctls(data)
-
+    VintageNet.Interface.Supervisor.clear_technology(data.ifname)
     new_data = run_commands(new_data, config.down_cmds)
 
     actions = [

@@ -392,6 +392,42 @@ defmodule VintageNet.InterfaceTest do
     end)
   end
 
+  test "GenServers from technology stop when interface disappears", context do
+    capture_log_in_tmp(context.test, fn ->
+      us = self()
+
+      config = %{
+        type: @interface_type,
+        child_specs: [
+          {Task,
+           fn ->
+             Process.register(self(), ItIsMe)
+             send(us, :i_am_started)
+             Process.sleep(1000)
+           end}
+        ]
+      }
+
+      configure_and_wait(config)
+
+      assert_receive :i_am_started
+      assert Process.whereis(ItIsMe) != nil
+
+      # "remove" the interface
+      VintageNet.PropertyTable.clear(VintageNet, ["interface", @ifname, "present"])
+
+      Process.sleep(10)
+
+      assert Process.whereis(ItIsMe) == nil
+
+      # bring the interface back and it should start again
+      VintageNet.PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
+
+      assert_receive :i_am_started
+      assert Process.whereis(ItIsMe) != nil
+    end)
+  end
+
   test "ioctls fail when not configured", context do
     log =
       capture_log_in_tmp(context.test, fn ->
