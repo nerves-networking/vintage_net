@@ -47,6 +47,7 @@ defmodule VintageNet.MixProject do
         bin_ip: "ip",
         bin_udhcpc: "udhcpc",
         bin_udhcpd: "udhcpd",
+        bin_brctl: "brctl",
         path: "/usr/sbin:/usr/bin:/sbin:/bin",
         udhcpc_handler: VintageNet.Interface.Udhcpc,
         udhcpd_handler: VintageNet.Interface.Udhcpd,
