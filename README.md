@@ -24,6 +24,7 @@ Project](https://nerves-project.org) devices. It has the following features:
 * Connect to multiple networks at a time and prioritize which interfaces are
   used (Ethernet over WiFi over cellular)
 * Internet connection monitoring and failure detection
+* Predictable interface names
 
 > **TL;DR:** Don't care about any of this and just want the string to copy/paste
 > to set up networking? See the [VintageNet Cookbook](https://github.com/nerves-networking/vintage_net/blob/master/docs/cookbook.md).
@@ -352,3 +353,34 @@ Property      | Values              | Description
 `addresses`   | [address_info]      | This is a list of all of the addresses assigned to this interface
 
 Specific types of interfaces provide more parameters.
+
+### Predictable interface names
+
+When using multiple interfaces of the same type, it may be required to
+manually assign them names to ensure that VintageNet configures
+each interface deterministically. One use case for this is 80211 Mesh
+on Raspberry Pi. The built in WiFi interface does not support mesh,
+so to ensure VintageNet configures the correct interface use the `hwpath`
+property to assign predetermined names.
+
+```elixir
+config :vintage_net,
+  ifnames: [
+    %{
+      hwpath: "/replace/this/with/the/hwpath/property/for/built/in/wifi",
+      ifname: "builtInWiFi"
+    },
+    %{
+      hwpath: "/replace/this/with/the/hwpath/property/for/usb/wifi",
+      ifname: "usbWiFi"
+    }
+  ],
+  config: [
+    {"builtInWiFi", %{type: VintageNetWiFi}},
+    {"usbWiFi", %{type: VintageNetWiFi}}
+  ]
+```
+
+Please note that when predictable interface naming is enabled, you will not be
+able to configure devices by their default name. This is to prevent double
+configuring, confusing logs, and other hard to track issues.
