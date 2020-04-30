@@ -67,18 +67,19 @@ defmodule VintageNet.Interface do
       raw_config = technology.to_raw_config(ifname, normalized_config, opts)
       {:ok, raw_config}
     catch
-      _kind, %{message: message} ->
-        {:error, message}
+      _kind, maybe_exception ->
+        if Exception.exception?(maybe_exception) do
+          {:error, Exception.message(maybe_exception)}
+        else
+          {:error,
+           """
+           Configuration has an unrecoverable error:
 
-      _kind, what ->
-        {:error,
-         """
-         Configuration has an unrecoverable error:
+           #{inspect(maybe_exception)}
 
-         #{inspect(what)}
-
-         #{Exception.format_stacktrace(__STACKTRACE__)}
-         """}
+           #{Exception.format_stacktrace(__STACKTRACE__)}
+           """}
+        end
     end
   end
 
