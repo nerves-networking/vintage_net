@@ -1,8 +1,12 @@
 defmodule VintageNet.InterfaceTest do
   use VintageNetTest.Case
+
   alias VintageNet.Interface
+  alias VintageNetTest.TestPowerManager, as: TPM
+
   import ExUnit.CaptureLog
 
+  # Use "test0" so that power management calls can be exercised
   @ifname "test0"
   @interface_type VintageNetTest.TestTechnology
 
@@ -634,6 +638,52 @@ defmodule VintageNet.InterfaceTest do
       # clean up
       VintageNet.PropertyTable.clear(VintageNet, ["interface", "test1", "present"])
       VintageNet.PropertyTable.clear(VintageNet, ["interface", "test2", "present"])
+    end)
+  end
+
+  # Check that an interface is powered on
+  test "that the interface is powered on", context do
+    capture_log_in_tmp(context.test, fn ->
+      assert TPM.call_count(@ifname, :power_on) == 0
+
+      config = %{
+        type: @interface_type,
+        up_cmds: [{:fun, VintageNet.PowerManager.PMControl, :power_on, [@ifname]}]
+      }
+
+      configure_and_wait(config)
+
+      # Power up is asynchronous and initiated by configuration.
+      Process.sleep(10)
+
+      assert TPM.call_count(@ifname, :power_on) == 1
+      assert TPM.call_count(@ifname, :start_powering_off) == 0
+      assert TPM.call_count(@ifname, :power_off) == 0
+    end)
+  end
+
+  test "interface powering off when deconfigured", context do
+    capture_log_in_tmp(context.test, fn ->
+      assert TPM.call_count(@ifname, :power_on) == 0
+
+      config = %{
+        type: @interface_type,
+        up_cmds: [{:fun, VintageNet.PowerManager.PMControl, :power_on, [@ifname]}]
+      }
+
+      configure_and_wait(config)
+
+      assert TPM.call_count(@ifname, :power_on) == 1
+      assert TPM.call_count(@ifname, :start_powering_off) == 0
+
+      # Deconfigure - the interface should start powering off after
+      # after the hold times pass. This is forced by the null technology
+      # powering off.
+      :ok = VintageNet.deconfigure(@ifname)
+
+      Process.sleep(155)
+      assert TPM.call_count(@ifname, :start_powering_off) == 1
+      assert TPM.call_count(@ifname, :power_off) == 1
     end)
   end
 end

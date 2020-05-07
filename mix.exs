@@ -64,7 +64,8 @@ defmodule VintageNet.MixProject do
         regulatory_domain: "00",
         # Contain processes in cgroups by setting to:
         #   [cgroup_base: "vintage_net", cgroup_controllers: ["cpu"]]
-        muontrap_options: []
+        muontrap_options: [],
+        power_managers: []
       ],
       extra_applications: [:logger],
       mod: {VintageNet.Application, []}

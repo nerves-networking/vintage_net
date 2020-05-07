@@ -429,3 +429,35 @@ config :vintage_net,
 * `hw_path` matches `/devices/virtual` (such as `lo0`, `ppp0` etc.)
 * A second interface's `hw_path` matches an interface that has already been
   renamed. This *should* never happen.
+
+## Power Management
+
+Some devices require additional work to be done for them to become available.
+Examples of this are:
+
+1. Setting a GPIO to enable power to the module
+2. Loading a Linux kernel module that is not automatically loaded via the
+   default mechanisms
+3. Running `usb_modeswitch` to change the USB interface to the appropriate state
+4. Performing an initialization step such as loading firmware
+
+Similarly, when the network interface is no longer being used, it can be nice to
+undo any steps above.
+
+This process is referred to as power management in VintageNet even though the
+implementation may not actually affect power use. To use it, implement the
+`VintageNet.PowerManager` behaviour and register the implementation in your
+`config.exs`.
+
+Additionally, VintageNet runs a watchdog-like service for network devices that
+supply `VintageNet.PowerManager` implementations. If the watchdog is not pet
+within the timeout period (user-specified and defaults to 60 seconds),
+VintageNet powers the device off and and on. The VintageNet power management
+code supports mandatory minimum on and off times to prevent damage to hardware
+and also minimize pointless power cycling of hardware.
+
+While many network devices are fairly reliable and powering off and on seems
+unnecessary, it can save a trip to the field or a full device reboot.
+
+`VintageNet.info/1` shows the power management state for network interfaces that
+are using this feature.

@@ -13,14 +13,8 @@ defmodule VintageNet.Interface do
   require Logger
 
   alias VintageNet.Interface.{CommandRunner, RawConfig}
-
-  alias VintageNet.{
-    Persistence,
-    PredictableInterfaceName,
-    PropertyTable,
-    RouteManager
-  }
-
+  alias VintageNet.{Persistence, PredictableInterfaceName, PropertyTable, RouteManager}
+  alias VintageNet.PowerManager.PMControl
   alias VintageNet.Technology.Null
 
   defmodule State do
@@ -488,6 +482,8 @@ defmodule VintageNet.Interface do
     CommandRunner.remove_files(old_config.files)
     update_ifname_subscriptions(old_config.required_ifnames, new_config.required_ifnames)
 
+    power_interface(data.ifname, new_config.type)
+
     data = %{data | config: new_config, next_config: nil}
 
     if interfaces_available?(data) do
@@ -513,6 +509,7 @@ defmodule VintageNet.Interface do
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
     update_ifname_subscriptions(old_config.required_ifnames, new_config.required_ifnames)
+    power_interface(data.ifname, new_config.type)
 
     data = %{data | config: new_config, next_config: nil}
 
@@ -539,6 +536,7 @@ defmodule VintageNet.Interface do
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
     update_ifname_subscriptions(old_config.required_ifnames, new_config.required_ifnames)
+    power_interface(data.ifname, new_config.type)
 
     data = %{data | config: new_config, next_config: nil}
 
@@ -565,6 +563,7 @@ defmodule VintageNet.Interface do
     rm(old_config.cleanup_files)
     CommandRunner.remove_files(old_config.files)
     update_ifname_subscriptions(old_config.required_ifnames, new_config.required_ifnames)
+    power_interface(data.ifname, new_config.type)
 
     data = %{data | config: new_config, next_config: nil}
 
@@ -614,6 +613,7 @@ defmodule VintageNet.Interface do
         data
       ) do
     debug(data, ":retrying -> configure (#{inspect(new_config.type)})")
+    power_interface(data.ifname, new_config.type)
 
     data = %{data | config: new_config}
     actions = [{:reply, from, :ok}]
@@ -721,8 +721,6 @@ defmodule VintageNet.Interface do
     # so it can't fail.
 
     RouteManager.clear_route(ifname)
-
-    # More?
   end
 
   defp rm(files) do
@@ -788,5 +786,14 @@ defmodule VintageNet.Interface do
 
   defp interface_available?(ifname) when is_binary(ifname) do
     VintageNet.get(["interface", ifname, "present"])
+  end
+
+  # Power on non-Null interfaces
+  defp power_interface(ifname, Null) do
+    PMControl.power_off(ifname)
+  end
+
+  defp power_interface(ifname, _type) do
+    PMControl.power_on(ifname)
   end
 end

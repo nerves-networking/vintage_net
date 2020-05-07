@@ -32,6 +32,7 @@ defmodule VintageNet.Application do
     children = [
       {VintageNet.PropertyTable, properties: properties, name: VintageNet},
       {VintageNet.PredictableInterfaceName, hw_path_ifnames},
+      VintageNet.PowerManager.Supervisor,
       VintageNet.InterfacesMonitor,
       {VintageNet.ToElixir.Server, socket_path},
       {VintageNet.NameResolver, args},

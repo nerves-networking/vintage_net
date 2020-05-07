@@ -50,6 +50,7 @@ defmodule VintageNet.Info do
         ifname,
         "\n",
         format_if_attribute(ifname, "type", "Type"),
+        format_power_management(ifname),
         format_if_attribute(ifname, "present", "Present"),
         format_if_attribute(ifname, "state", "State", true),
         format_if_attribute(ifname, "connection", "Connection", true),
@@ -64,6 +65,7 @@ defmodule VintageNet.Info do
         ifname,
         "\n",
         format_if_attribute(ifname, "type", "Type"),
+        format_power_management(ifname),
         "  Present: false\n",
         "  Configuration:\n",
         format_config(ifname, "    ", opts),
@@ -155,6 +157,16 @@ defmodule VintageNet.Info do
       :error ->
         # Mirror previous behavior (i.e., print nil for unset attributes)
         ["  ", print_name, ": nil\n"]
+    end
+  end
+
+  defp format_power_management(ifname) do
+    case VintageNet.PowerManager.PMControl.info(ifname) do
+      {:ok, info} ->
+        ["  Power: ", info.pm_info, "\n"]
+
+      _anything_else ->
+        []
     end
   end
 

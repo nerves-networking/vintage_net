@@ -301,3 +301,64 @@ VintageNet.deconfigure("wlan0", persist: false)
 
 To get the old configuration back, you have to call `VintageNet.configure/3`
 with it again (or restart `VintageNet` or reboot).
+
+### Perform some initialization to turn on a network interface
+
+`VintageNet` waits for network interfaces to appear before doing any work.  If
+you need to perform some work to make the network interface show up, that has to
+be done elsewhere. If you let `VintageNet` know about this work and allow it to
+turn the network interface off too, it can "cycle power" to the interface to get
+it back to a clean state when needed. Here's how:
+
+```elixir
+defmodule MyPowerManager do
+  @behaviour VintageNet.PowerManager
+
+  @reset_n_gpio 4
+  @power_on_hold_time 5 * 60000
+  @min_powered_off_time 5000
+
+  defstruct reset_n: nil
+
+  @impl VintageNet.PowerManager
+  def init(_args) do
+    {:ok, reset_n} = Circuits.GPIO.open(@reset_n_gpio, :output)
+    {:ok, %__MODULE__{reset_n: reset_n}}
+  end
+
+  @impl VintageNet.PowerManager
+  def power_on(state) do
+    # Do whatever is necessary to turn the network interface on
+    Circuits.GPIO.write(state.reset_n, 1)
+    {:ok, state, @power_on_hold_time}
+  end
+
+  @impl VintageNet.PowerManager
+  def start_powering_off(state) do
+    # If there's a graceful power off, start it here and return
+    # the max time it takes.
+    {:ok, state, 0}
+  end
+
+  @impl VintageNet.PowerManager
+  def power_off(state) do
+    # Disable the network interface
+    Circuits.GPIO.write(state.reset_n, 0)
+    {:ok, state, @min_powered_off_time}
+  end
+```
+
+Then add the following to your `config.exs`:
+
+```elixir
+config :vintage_net, power_managers: [{MyPowerManager, ifname: "wlan0"}]
+```
+
+VintageNet determines whether devices are ok by use of a watchdog. VintageNet
+and its technology implementations pet the watchdog by calling
+`VintageNet.PowerManager.PMControl.pet_watchdog/1`. This may be insufficient for
+your application. Options include calling that function in your code regularly
+or modifying the `:watchdog_timeout` in the power manager spec in your
+`config.exs`.
+
+See `VintageNet.PowerManager` for details.
