@@ -6,20 +6,26 @@ defmodule VintageNet.InterfacesMonitor.Info do
   @link_if_properties [:lower_up, :mac_address]
   @address_if_properties [:addresses]
 
-  @all_if_properties [:present] ++ @link_if_properties ++ @address_if_properties
+  @all_if_properties [:present, :hw_path] ++ @link_if_properties ++ @address_if_properties
 
   defstruct ifname: nil,
+            hw_path: "",
             link: %{},
             addresses: []
 
-  @type t() :: %__MODULE__{ifname: VintageNet.ifname(), link: map(), addresses: [map()]}
+  @type t() :: %__MODULE__{
+          ifname: VintageNet.ifname(),
+          hw_path: String.t(),
+          link: map(),
+          addresses: [map()]
+        }
 
   @doc """
   Create a new struct for caching interface notifications
   """
-  @spec new(VintageNet.ifname()) :: t()
-  def new(ifname) do
-    %__MODULE__{ifname: ifname}
+  @spec new(VintageNet.ifname(), String.t()) :: t()
+  def new(ifname, hw_path \\ "") do
+    %__MODULE__{ifname: ifname, hw_path: hw_path}
   end
 
   @doc """
@@ -146,6 +152,7 @@ defmodule VintageNet.InterfacesMonitor.Info do
   @spec update_present(t()) :: t()
   def update_present(%__MODULE__{ifname: ifname} = info) do
     PropertyTable.put(VintageNet, ["interface", ifname, "present"], true)
+    PropertyTable.put(VintageNet, ["interface", ifname, "hw_path"], info.hw_path)
     info
   end
 

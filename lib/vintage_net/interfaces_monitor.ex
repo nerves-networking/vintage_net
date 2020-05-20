@@ -10,7 +10,7 @@ defmodule VintageNet.InterfacesMonitor do
 
   # require Logger
 
-  alias VintageNet.InterfacesMonitor.Info
+  alias VintageNet.InterfacesMonitor.{HWPath, Info}
 
   defmodule State do
     @moduledoc false
@@ -139,7 +139,9 @@ defmodule VintageNet.InterfacesMonitor do
         |> Info.update_address_properties()
 
       _missing ->
-        Info.new(ifname)
+        hw_path = HWPath.query(ifname)
+
+        Info.new(ifname, hw_path)
         |> Info.update_present()
     end
   end

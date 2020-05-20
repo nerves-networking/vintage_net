@@ -345,6 +345,7 @@ Property      | Values              | Description
 `type`        | `VintageNetEthernet`, etc. | The type of the interface
 `config`      | `%{...}`            | The configuration for this interface
 `state`       | `:configured`, `:configuring`, etc. | The state of the interface from `VintageNet`'s point of view.
+`hw_path`     | `"/devices/platform/ocp/4a100000.ethernet"` | This is how Linux internally views the connections going to the interface.
 `connection`  | `:disconnected`, `:lan`, `:internet` | This provides a determination of the Internet connection status
 `lower_up`    | `true` or `false`   | This indicates whether the physical layer is "up". E.g., a cable is connected or WiFi associated
 `mac_address` | "11:22:33:44:55:66" | The interface's MAC address as a string
