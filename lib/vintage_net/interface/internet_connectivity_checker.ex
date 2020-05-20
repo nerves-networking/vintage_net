@@ -110,16 +110,15 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
 
         {:error, reason} ->
           if strikes < @max_fails_in_a_row do
-            _ =
-              Logger.debug(
-                "#{ifname}: Internet test failed (#{inspect(reason)}: #{strikes + 1}/#{
-                  @max_fails_in_a_row
-                } strikes"
-              )
+            Logger.debug(
+              "#{ifname}: Internet test failed (#{inspect(reason)}: #{strikes + 1}/#{
+                @max_fails_in_a_row
+              } strikes"
+            )
 
             {:internet, strikes + 1}
           else
-            _ = Logger.debug("#{ifname}: Internet test failed: (#{inspect(reason)})")
+            Logger.debug("#{ifname}: Internet test failed: (#{inspect(reason)})")
             {:lan, @max_fails_in_a_row}
           end
       end

@@ -46,7 +46,7 @@ defmodule VintageNet.Interface.CommandRunner do
         :ok
 
       {_, not_zero} ->
-        _ = Logger.error("Nonzero exit from #{command}, #{inspect(args)}: #{not_zero}")
+        Logger.error("Nonzero exit from #{command}, #{inspect(args)}: #{not_zero}")
         {:error, :non_zero_exit}
     end
   end

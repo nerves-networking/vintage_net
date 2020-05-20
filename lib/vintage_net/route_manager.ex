@@ -123,7 +123,7 @@ defmodule VintageNet.RouteManager do
 
   @impl true
   def handle_call({:set_route, ifname, ip_subnets, default_gateway, status}, _from, state) do
-    _ = Logger.info("RouteManager: set_route #{ifname} -> #{inspect(status)}")
+    Logger.info("RouteManager: set_route #{ifname} -> #{inspect(status)}")
 
     # The weight parameter prioritizes interfaces of the same type and connectivity.
     # All weights for interfaces of the same time must be different. I.e., we don't
@@ -165,7 +165,7 @@ defmodule VintageNet.RouteManager do
   def handle_call({:clear_route, ifname}, _from, state) do
     new_state =
       if Map.has_key?(state.interfaces, ifname) do
-        _ = Logger.info("RouteManager: clear_route #{ifname}")
+        Logger.info("RouteManager: clear_route #{ifname}")
 
         %{state | interfaces: Map.delete(state.interfaces, ifname)}
         |> update_route_tables()
@@ -198,8 +198,7 @@ defmodule VintageNet.RouteManager do
 
       ifentry ->
         if ifentry.status != new_status do
-          _ =
-            Logger.info("RouteManager: set_connection_status #{ifname} -> #{inspect(new_status)}")
+          Logger.info("RouteManager: set_connection_status #{ifname} -> #{inspect(new_status)}")
 
           put_in(state.interfaces[ifname].status, new_status)
           |> update_route_tables()

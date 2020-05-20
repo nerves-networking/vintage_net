@@ -12,7 +12,7 @@ defmodule VintageNet.Interface.Udhcpc do
   """
   @impl true
   def deconfig(ifname, info) do
-    _ = Logger.info("#{ifname} dhcp deconfig: #{inspect(info)}")
+    Logger.info("#{ifname} dhcp deconfig: #{inspect(info)}")
 
     # If there were any IPv4 addresses reported on this interface, remove them
     # now. They may not be reported by the normal mechanism from the
@@ -49,7 +49,7 @@ defmodule VintageNet.Interface.Udhcpc do
   def leasefail(ifname, _info) do
     # NOTE: This message tends to clog up logs, so be careful when enabling it.
 
-    # _ = Logger.info("#{ifname} dhcp leasefail: #{inspect(info)}")
+    # Logger.info("#{ifname} dhcp leasefail: #{inspect(info)}")
     RouteManager.clear_route(ifname)
     # if [ -x /usr/sbin/avahi-autoipd ]; then
     # 	/usr/sbin/avahi-autoipd -wD $interface --no-chroot
@@ -86,7 +86,7 @@ defmodule VintageNet.Interface.Udhcpc do
   """
   @impl true
   def renew(ifname, info) do
-    _ = Logger.debug("udhcpc.renew(#{ifname}): #{inspect(info)}")
+    Logger.debug("udhcpc.renew(#{ifname}): #{inspect(info)}")
 
     # [ -n "$broadcast" ] && BROADCAST="broadcast $broadcast"
     # [ -n "$subnet" ] && NETMASK="netmask $subnet"

@@ -97,7 +97,7 @@ defmodule VintageNet.Application do
         Map.put(configs, ifname, config)
 
       {:error, reason} ->
-        _ = Logger.warn("VintageNet(#{ifname}): ignoring saved config due to #{inspect(reason)}")
+        Logger.warn("VintageNet(#{ifname}): ignoring saved config due to #{inspect(reason)}")
 
         configs
     end

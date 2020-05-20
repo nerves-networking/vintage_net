@@ -196,8 +196,7 @@ defmodule VintageNet.Interface do
   defp debug(data, message), do: log(:debug, data, message)
 
   defp log(level, data, message) do
-    _ = Logger.log(level, ["VintageNet(", data.ifname, "): ", message])
-    :ok
+    Logger.log(level, ["VintageNet(", data.ifname, "): ", message])
   end
 
   @impl true

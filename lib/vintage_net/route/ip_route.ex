@@ -184,7 +184,7 @@ defmodule VintageNet.Route.IPRoute do
 
   defp ip_cmd(args) do
     # Send iodata to the logger with the command and args interspersed with spaces
-    # _ = Logger.debug(Enum.intersperse(["ip" | args], " "))
+    # Logger.debug(Enum.intersperse(["ip" | args], " "))
 
     case Command.cmd(:bin_ip, args, stderr_to_stdout: true) do
       {_, 0} -> :ok

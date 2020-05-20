@@ -15,7 +15,7 @@ defmodule VintageNet.Interface.Udhcpd do
         )
 
       {:error, _} ->
-        _ = Logger.error("#{ifname}: Failed to handle lease update from #{lease_file}")
+        Logger.error("#{ifname}: Failed to handle lease update from #{lease_file}")
 
         VintageNet.PropertyTable.clear_prefix(VintageNet, ["interface", ifname, "dhcpd", "leases"])
     end

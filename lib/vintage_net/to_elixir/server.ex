@@ -61,12 +61,12 @@ defmodule VintageNet.ToElixir.Server do
 
   defp dispatch({["to_elixir" | args], _env}) do
     message = Enum.join(args, " ")
-    _ = Logger.debug("Got a generic message: #{message}")
+    Logger.debug("Got a generic message: #{message}")
     :ok
   end
 
   defp dispatch(unknown) do
-    _ = Logger.error("to_elixir: dropping unknown report '#{inspect(unknown)}''")
+    Logger.error("to_elixir: dropping unknown report '#{inspect(unknown)}''")
     :ok
   end
 
