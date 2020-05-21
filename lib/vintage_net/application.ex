@@ -31,13 +31,13 @@ defmodule VintageNet.Application do
 
     children = [
       {VintageNet.PropertyTable, properties: properties, name: VintageNet},
+      {VintageNet.PredictableInterfaceName, hw_path_ifnames},
       VintageNet.InterfacesMonitor,
       {VintageNet.ToElixir.Server, socket_path},
       {VintageNet.NameResolver, args},
       VintageNet.RouteManager,
       {Registry, keys: :unique, name: VintageNet.Interface.Registry},
-      VintageNet.InterfacesSupervisor,
-      {VintageNet.PredictableInterfaceName, hw_path_ifnames}
+      VintageNet.InterfacesSupervisor
     ]
 
     opts = [strategy: :rest_for_one, name: VintageNet.Supervisor]

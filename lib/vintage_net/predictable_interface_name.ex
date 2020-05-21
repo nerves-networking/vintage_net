@@ -6,6 +6,7 @@ defmodule VintageNet.PredictableInterfaceName do
   """
 
   use GenServer
+  require Logger
   alias VintageNet.Command
 
   @prefixes [
@@ -78,23 +79,27 @@ defmodule VintageNet.PredictableInterfaceName do
         {VintageNet, ["interface", ifname, "hw_path"], nil, hw_path, _meta},
         state
       ) do
-    IO.inspect(hw_path, label: "#{ifname} hw_path")
-
     Enum.each(state.ifnames, fn
       # interface has already been renamed. Ignore.
       %{hw_path: ^hw_path, ifname: ^ifname} ->
         :ok
 
       %{hw_path: ^hw_path, ifname: rename_to} ->
-        IO.inspect(rename_to, label: "renaiming #{ifname} to")
+        Logger.debug("VintageNet renaming #{ifname} to #{rename_to}")
         rename(ifname, rename_to)
 
       # non matching config
-      %{hw_path: path, ifname: ifname} ->
-        IO.inspect(path, label: "[#{ifname}] does not match")
+      %{hw_path: _path, ifname: _ifname} ->
         :ok
     end)
 
+    {:noreply, state}
+  end
+
+  def handle_info(
+        {VintageNet, ["interface", _ifname, "hw_path"], _, nil, _meta},
+        state
+      ) do
     {:noreply, state}
   end
 

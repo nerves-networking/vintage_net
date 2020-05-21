@@ -1,6 +1,7 @@
 defmodule VintageNet.InterfacesSupervisor do
   use DynamicSupervisor
   alias VintageNet.PredictableInterfaceName
+  require Logger
 
   @moduledoc false
 
@@ -30,9 +31,21 @@ defmodule VintageNet.InterfacesSupervisor do
   defp start_configured_interfaces() do
     VintageNet.match(["interface", :_, "config"])
     |> Enum.map(fn {["interface", ifname, "config"], _value} -> ifname end)
-    |> Enum.filter(fn ifname ->
-      match?(:ok, PredictableInterfaceName.precheck(ifname))
-    end)
+    |> Enum.filter(&check_predictable_ifnames/1)
     |> Enum.each(&start_interface/1)
+  end
+
+  defp check_predictable_ifnames(ifname) do
+    case PredictableInterfaceName.precheck(ifname) do
+      :ok ->
+        true
+
+      {:error, _} ->
+        Logger.warn(
+          "VintageNet not configuring #{ifname} because predictable interface naming is enabled"
+        )
+
+        false
+    end
   end
 end
