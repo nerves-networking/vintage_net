@@ -13,7 +13,13 @@ defmodule VintageNet.Interface do
   require Logger
 
   alias VintageNet.Interface.{CommandRunner, RawConfig}
-  alias VintageNet.{Persistence, PropertyTable, RouteManager}
+
+  alias VintageNet.{
+    Persistence,
+    PredictableInterfaceName,
+    PropertyTable,
+    RouteManager
+  }
 
   defmodule State do
     @moduledoc false
@@ -104,6 +110,7 @@ defmodule VintageNet.Interface do
     # be bad for it to get an old config. If a GenServer isn't started,
     # configure the running one.
     with {:ok, raw_config} <- to_raw_config(ifname, config),
+         :ok <- PredictableInterfaceName.precheck(ifname),
          normalized_config = raw_config.source_config,
          :changed <- configuration_changed(ifname, normalized_config),
          :ok <- persist_configuration(ifname, normalized_config, options),

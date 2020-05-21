@@ -11,7 +11,7 @@ defmodule VintageNet.Application do
   def start(_type, _args) do
     args = Application.get_all_env(:vintage_net)
     socket_path = Path.join(Keyword.get(args, :tmpdir), Keyword.get(args, :to_elixir_socket))
-
+    hw_path_ifnames = Keyword.get(args, :ifnames, [])
     # Resolve paths to all of the programs that might be used.
     if using_elixir_busybox() do
       args
@@ -36,7 +36,8 @@ defmodule VintageNet.Application do
       {VintageNet.NameResolver, args},
       VintageNet.RouteManager,
       {Registry, keys: :unique, name: VintageNet.Interface.Registry},
-      VintageNet.InterfacesSupervisor
+      VintageNet.InterfacesSupervisor,
+      {VintageNet.PredictableInterfaceName, hw_path_ifnames}
     ]
 
     opts = [strategy: :rest_for_one, name: VintageNet.Supervisor]

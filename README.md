@@ -360,18 +360,18 @@ When using multiple interfaces of the same type, it may be required to
 manually assign them names to ensure that VintageNet configures
 each interface deterministically. One use case for this is 80211 Mesh
 on Raspberry Pi. The built in WiFi interface does not support mesh,
-so to ensure VintageNet configures the correct interface use the `hwpath`
+so to ensure VintageNet configures the correct interface use the `hw_path`
 property to assign predetermined names.
 
 ```elixir
 config :vintage_net,
   ifnames: [
     %{
-      hwpath: "/replace/this/with/the/hwpath/property/for/built/in/wifi",
+      hw_path: "/replace/this/with/the/hw_path/property/for/built/in/wifi",
       ifname: "builtInWiFi"
     },
     %{
-      hwpath: "/replace/this/with/the/hwpath/property/for/usb/wifi",
+      hw_path: "/replace/this/with/the/hw_path/property/for/usb/wifi",
       ifname: "usbWiFi"
     }
   ],

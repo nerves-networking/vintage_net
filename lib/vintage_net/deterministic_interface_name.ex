@@ -1,2 +1,0 @@
-defmodule VintageNet.DeterministicInterfaceName do
-end
