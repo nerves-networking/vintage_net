@@ -1,4 +1,4 @@
-![vintage net logo](assets/logo.png)
+![VintageNet Logo](assets/logo.png)
 
 [![Hex version](https://img.shields.io/hexpm/v/vintage_net.svg "Hex version")](https://hex.pm/packages/vintage_net)
 [![API docs](https://img.shields.io/hexpm/v/vintage_net.svg?label=hexdocs "API docs")](https://hexdocs.pm/vintage_net/VintageNet.html)
@@ -24,7 +24,7 @@ Project](https://nerves-project.org) devices. It has the following features:
 * Connect to multiple networks at a time and prioritize which interfaces are
   used (Ethernet over WiFi over cellular)
 * Internet connection monitoring and failure detection
-* Predictable interface names
+* Predictable network interface names
 
 > **TL;DR:** Don't care about any of this and just want the string to copy/paste
 > to set up networking? See the [VintageNet Cookbook](https://github.com/nerves-networking/vintage_net/blob/master/docs/cookbook.md).
@@ -354,33 +354,70 @@ Property      | Values              | Description
 
 Specific types of interfaces provide more parameters.
 
-### Predictable interface names
+### Predictable network interface names
 
-When using multiple interfaces of the same type, it may be required to
-manually assign them names to ensure that VintageNet configures
-each interface deterministically. One use case for this is 80211 Mesh
-on Raspberry Pi. The built in WiFi interface does not support mesh,
-so to ensure VintageNet configures the correct interface use the `hw_path`
-property to assign predetermined names.
+When using more than one of the same type of interface, it's possible for Linux
+to reorder their naming. For example, if you have two USB WiFi adapters, one
+will be named `wlan0` and the other `wlan1`. Which one is first depends on
+things like when the adapter is found and when kernel modules are loaded.  This
+can vary between boots and cause a lot of confusion.
+
+The solution is to rename network interfaces based on characteristics of the
+interface - such as how it's connected. Then application software refers to the
+new name rather than names like `wlan0`.  This is a common problem, and
+VintageNet provides support for automatically renaming network interfaces.
+
+If you're used to `systemd`'s approach to naming interfaces, be aware that
+VintageNet's approach is different: `systemd` has an
+[algorithm](https://www.freedesktop.org/software/systemd/man/systemd.net-naming-scheme.html)
+for generating names (e.g., `enp4s0`) automatically. VintageNet requires you to
+provide the names to use (e.q., `internet0`, `lan0`, etc.) and how they map to
+hardware. If VintageNet is confronted with a network interface that is connected
+in a way that it doesn't know about, it will do nothing.
+
+> IMPORTANT: Do not mix and match predictable and non-predictable interface
+> names (`wlan*`, `eth*`, etc.) It is confusing and VintageNet will fight you.
+
+Before switching to predictable names, find out how your network interfaces are
+connected. For example, this device has an Ethernet interface and two USB WiFi
+dongles:
+
+```elixir
+iex> VintageNet.match(["interface", :_, "hw_path"])
+[
+  {["interface", "eth0", "hw_path"], "/devices/platform/ocp/4a100000.ethernet"},
+  {["interface", "lo", "hw_path"], "/devices/virtual"},
+  {["interface", "wlan0", "hw_path"], "/devices/platform/ocp/47400000.usb/47401c00.usb/musb-hdrc.1/usb2/2-1/2-1:1.0"},
+  {["interface", "wlan1", "hw_path"], "/devices/platform/ocp/47400000.usb/47401400.usb/musb-hdrc.0/usb1/1-1/1-1:1.4"}
+]
+```
+
+Now update your `config.exs` with the mappings with the `:ifnames` key. Be sure
+to also update the default configuration with the new interface names.
+Continuing the example, imagine that one WiFi adapter supports 802.11 meshing
+and it's guaranteed to be in one USB port on the device. The other USB port can
+have any of a few types of USB WiFi modules. We need to use predictable naming
+in this case so that meshing is only setup on the adapter that supports it.
 
 ```elixir
 config :vintage_net,
   ifnames: [
     %{
-      hw_path: "/replace/this/with/the/hw_path/property/for/built/in/wifi",
-      ifname: "builtInWiFi"
+      hw_path: "/devices/platform/ocp/4a100000.ethernet",
+      ifname: "ethernet0"
     },
     %{
-      hw_path: "/replace/this/with/the/hw_path/property/for/usb/wifi",
-      ifname: "usbWiFi"
+      hw_path: "/devices/platform/ocp/47400000.usb/47401c00.usb/musb-hdrc.1/usb2/2-1/2-1:1.0",
+      ifname: "primary_wifi"
+    },
+    %{
+      hw_path: "/devices/platform/ocp/47400000.usb/47401c00.usb/musb-hdrc.1/usb2/2-1/2-1:1.0",
+      ifname: "mesh_wifi"
     }
   ],
   config: [
-    {"builtInWiFi", %{type: VintageNetWiFi}},
-    {"usbWiFi", %{type: VintageNetWiFi}}
+    {"ethernet0", %{type: VintageNetEthernet}},
+    {"primary_wifi", %{type: VintageNetWiFi}},
+    {"mesh_wifi", %{type: VintageNetWiFi}}
   ]
 ```
-
-Please note that when predictable interface naming is enabled, you will not be
-able to configure devices by their default name. This is to prevent double
-configuring, confusing logs, and other hard to track issues.

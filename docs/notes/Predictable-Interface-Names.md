@@ -1,23 +1,24 @@
 # Predictable Interface Names
 
-An issue presented itself with Vintage Net where various things such
-as loading firmware for wifi devices and kernel module load order
-would cause network interfaces to come up in different orders. IE
-given a usb wifi adapter and a built in wifi adapter, `wlan0` 
-could non-deterministicly be assigned to either on boot. This is
+An issue presented itself with VintageNet where various things such
+as loading firmware for WiFi devices and kernel module load order
+would cause network interfaces to come up in different orders. I.e.,
+given a USB WiFi adapter and a built-in WiFi adapter, `wlan0`
+could non-deterministically be assigned to either on boot. This is
 particularly an issue when you need one interface to perform an action
-that the other can't. For example 80211s meshing on raspberry pi.
-(because the built in wifi adapter doesn't support meshing)
+that the other can't. For example 80211s meshing on a Raspberry Pi.
+(because the built in WiFi adapter doesn't support meshing)
 
-[the systemctl documentation](https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames#Why)
+[the systemd documentation](https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames#Why)
 describes the issue in more detail.
 
 ## udevadm output
 
-These notes collected output from `udevadm` below from a few different devices including
-* x86 "normal" desktop linux
-* raspbain on raspberry pi4
-* debian on beaglebone green wifi
+These notes collected output from `udevadm` below from a few different devices including:
+
+* x86 "normal" desktop Linux
+* Raspbian on a Raspberry Pi 4
+* Debian on Beaglebone Green WiFi
 
 ### test-builtin
 
@@ -36,8 +37,8 @@ Unloaded link configuration context.
 ```
 
 These values weren't actually that helpful, as udevadm doesn't actually
-populate the `ID_NET_NAME_PATH` on beaglebone or raspberry pi systems.
-[this stackoverflow question](https://stackoverflow.com/questions/19416919/how-can-i-enable-persistent-network-interface-naming-with-udev-on-arm-devices-ru)
+populate the `ID_NET_NAME_PATH` on Beaglebone or Raspberry Pi systems.
+[this Stack Overflow question](https://stackoverflow.com/questions/19416919/how-can-i-enable-persistent-network-interface-naming-with-udev-on-arm-devices-ru)
 has a few more details
 
 ```bash
@@ -110,7 +111,7 @@ E: SYSTEMD_ALIAS=/sys/subsystem/net/devices/wlan0
 E: TAGS=:systemd:
 ```
 
-This is the beaglebone green wifi's built in WiFi interface
+This is the Beaglebone Green WiFi's built in WiFi interface
 
 ```bash
 debian@beaglebone:~$ udevadm info /sys/class/net/wlan1
@@ -155,7 +156,7 @@ E: SYSTEMD_ALIAS=/sys/subsystem/net/devices/can0
 E: TAGS=:systemd:
 ```
 
-Raspberry pi 4's builtin wifi device name
+Raspberry Pi 4's built-in WiFi device name
 
 ```bash
 pi@rpi4:~ $ udevadm info /sys/class/net/wlan0
@@ -198,7 +199,7 @@ E: SYSTEMD_ALIAS=/sys/subsystem/net/devices/eth0
 E: TAGS=:systemd:
 ```
 
-## systemctl/udev source links
+## systemd/udev source links
 
 * [get_sys_path](https://github.com/systemd/systemd/blob/484f4e5b2d62e885998fa3c09ed4d58b6c38f987/src/libsystemd/sd-device/sd-device.c#L670-L679)
 * [sd_device_get_sysattr_value](https://github.com/systemd/systemd/blob/484f4e5b2d62e885998fa3c09ed4d58b6c38f987/src/libsystemd/sd-device/sd-device.c#L1732-L1805)
