@@ -7,7 +7,7 @@ defmodule VintageNet.PredictableInterfaceName do
 
   use GenServer
   require Logger
-  alias VintageNet.Command
+  alias VintageNet.InterfaceRenamer
 
   @prefixes [
     "wlan",
@@ -64,7 +64,7 @@ defmodule VintageNet.PredictableInterfaceName do
 
   @impl GenServer
   # if predictable ifnaming is disabled, don't bother
-  # starting the server.  
+  # starting the server.
   def init([]) do
     :ignore
   end
@@ -103,13 +103,7 @@ defmodule VintageNet.PredictableInterfaceName do
     {:noreply, state}
   end
 
-  @spec rename(VintageNet.ifname(), VintageNet.ifname()) :: :ok
   defp rename(ifname, rename_to) do
-    args = ["link", "set", ifname, "name", rename_to]
-
-    case Command.cmd(:bin_ip, args, stderr_to_stdout: true) do
-      {_, 0} -> :ok
-      {message, _error} -> {:error, message}
-    end
+    InterfaceRenamer.rename(ifname, rename_to)
   end
 end
