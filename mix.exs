@@ -22,7 +22,14 @@ defmodule VintageNet.MixProject do
       docs: docs(),
       package: package(),
       description: description(),
-      aliases: [compile: [&check_deps/1, "compile"]]
+      aliases: [compile: [&check_deps/1, "compile"]],
+      preferred_cli_env: %{
+        docs: :docs,
+        "hex.publish": :docs,
+        "hex.build": :docs,
+        credo: :test,
+        "coveralls.circle": :test
+      }
     ]
   end
 
@@ -101,7 +108,7 @@ defmodule VintageNet.MixProject do
       {:muontrap, "~> 0.5.1 or ~> 0.6.0"},
       {:gen_state_machine, "~> 2.0.0 or ~> 2.1.0"},
       {:busybox, "~> 0.1.5", optional: true},
-      {:credo, "~> 1.2", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.2", only: :test, runtime: false}
     ]
   end
 
