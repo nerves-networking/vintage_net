@@ -375,8 +375,9 @@ provide the names to use (e.q., `internet0`, `lan0`, etc.) and how they map to
 hardware. If VintageNet is confronted with a network interface that is connected
 in a way that it doesn't know about, it will do nothing.
 
-> IMPORTANT: Do not mix and match predictable and non-predictable interface
-> names (`wlan*`, `eth*`, etc.) It is confusing and VintageNet will fight you.
+> IMPORTANT: Do not mix and match predictable interface names and
+> non-predictable interface names (`wlan*`, `eth*`, `usb*`, `wwan*`). It is
+> confusing and VintageNet will fight you.
 
 Before switching to predictable names, find out how your network interfaces are
 connected. For example, this device has an Ethernet interface and two USB WiFi
@@ -411,7 +412,7 @@ config :vintage_net,
       ifname: "primary_wifi"
     },
     %{
-      hw_path: "/devices/platform/ocp/47400000.usb/47401c00.usb/musb-hdrc.1/usb2/2-1/2-1:1.0",
+      hw_path: "/devices/platform/ocp/47400000.usb/47401400.usb/musb-hdrc.0/usb1/1-1/1-1:1.4",
       ifname: "mesh_wifi"
     }
   ],
@@ -421,3 +422,10 @@ config :vintage_net,
     {"mesh_wifi", %{type: VintageNetWiFi}}
   ]
 ```
+
+> IMPORTANT: VintageNet has rules about renaming interfaces to prevent confusing
+> errors. Below is a list of reasons it *will not* rename an interface
+
+* `hw_path` matches `/devices/virtual` (such as `lo0`, `ppp0` etc.)
+* A second interface's `hw_path` matches an interface that has already been
+  renamed. This *should* never happen.

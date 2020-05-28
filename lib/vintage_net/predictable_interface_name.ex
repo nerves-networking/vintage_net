@@ -81,28 +81,26 @@ defmodule VintageNet.PredictableInterfaceName do
 
   def init(ifnames) do
     VintageNet.subscribe(["interface", :_, "hw_path"])
-    {:ok, %{ifnames: ifnames}}
+    {:ok, %{ifnames: ifnames, renamed: []}}
   end
 
   @impl GenServer
   def handle_info(
+        {VintageNet, ["interface", ifname, "hw_path"], nil, "/devices/virtual", _meta},
+        state
+      ) do
+    Logger.warn("Not renaming #{ifname} because it is a virtual interface")
+    {:noreply, state}
+  end
+
+  def handle_info(
         {VintageNet, ["interface", ifname, "hw_path"], nil, hw_path, _meta},
         state
       ) do
-    Enum.each(state.ifnames, fn
-      # interface has already been renamed. Ignore.
-      %{hw_path: ^hw_path, ifname: ^ifname} ->
-        :ok
-
-      %{hw_path: ^hw_path, ifname: rename_to} ->
-        Logger.debug("VintageNet renaming #{ifname} to #{rename_to}")
-        rename(ifname, rename_to)
-
-      # non matching config
-      %{hw_path: _path, ifname: _ifname} ->
-        :ok
-    end)
-
+    # checks for duplicates and renames an interface if
+    # it matches and no other interface has been renamed
+    # by that path already
+    state = maybe_rename(state, hw_path, ifname)
     {:noreply, state}
   end
 
@@ -111,6 +109,48 @@ defmodule VintageNet.PredictableInterfaceName do
         state
       ) do
     {:noreply, state}
+  end
+
+  # checks the `renamed` list on the state to find anything
+  # that was already renamed using this hw_path
+  defp is_dupe?(previously_renamed, hw_path) do
+    Enum.find(previously_renamed, fn
+      %{hw_path: ^hw_path} -> true
+      _ -> false
+    end) || false
+  end
+
+  # this is not a pure function.. it actually causes the rename to happen
+  # and returns a new state with the renamed interface
+  defp maybe_rename(state, hw_path, ifname) do
+    renamed =
+      Enum.reduce(state.ifnames, [], fn
+        # interface has already been renamed. Ignore.
+        %{hw_path: ^hw_path, ifname: ^ifname}, renamed ->
+          renamed
+
+        %{hw_path: ^hw_path, ifname: rename_to} = rename, renamed ->
+          if is_dupe?(renamed, hw_path) do
+            Logger.warn(
+              "Not renaming #{ifname} because another interface already matched the hw_path: #{
+                hw_path
+              }"
+            )
+
+            renamed
+          else
+            Logger.debug("VintageNet renaming #{ifname} to #{rename_to}")
+            # do side effect..
+            rename(ifname, rename_to)
+            [rename | renamed]
+          end
+
+        # non matching config
+        %{hw_path: _path, ifname: _ifname}, renamed ->
+          renamed
+      end)
+
+    %{state | renamed: renamed}
   end
 
   defp rename(ifname, rename_to) do
