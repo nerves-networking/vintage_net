@@ -9,11 +9,21 @@ defmodule VintageNet.PredictableInterfaceName do
   require Logger
   alias VintageNet.InterfaceRenamer
 
+  # Linux kernel network prefixes are device dependent, but mostly follow
+  # the conventions:
+  #
+  # * `eth*` - wired Ethernet or not-obviously-p2p connections over USB
+  # * `usb*` - point-to-point connections over USB
+  # * `wlan*` - wireless LAN
+  # * `wwan*` - wireless WAN
+  #
+  # See https://elixir.bootlin.com/linux/v5.6.15/source/drivers/net/usb/usbnet.c#L1741
+  # for a partial discussion in the kernel source.
   @prefixes [
-    "wlan",
     "eth",
     "usb",
-    "ppp"
+    "wlan",
+    "wwan"
   ]
 
   @typedoc """
