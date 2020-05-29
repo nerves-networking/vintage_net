@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.8.0
+
+* New features
+  * [Breaking change for technology implementors] Decouple the network interface
+    name from the one a network technology uses. For example, cellular modems
+    can now have `vintage_net` wait for `wwan0` to appear before setting up a
+    PPP interface (like `ppp0`). All network technology implementations need to
+    be updated to provide `RawConfigs` that list the network interfaces they
+    need to start. This is hard to miss since you'll get a compile error if it
+    affects you.
+  * Deterministic interface naming support - If you have a device with multiple
+    network interfaces of the same type (e.g., multiple WiFi adapters) it is
+    possible for them to switch between being assigned `wlan0` and `wlan1`
+    under some conditions. This feature allows you to map their hardware
+    location to a name of your choosing. See the `README.md` for details.
+  * Add the "hw_path" property - For example, `{["interface", "eth0", "hw_path"], "/devices/platform/ocp/4a100000.ethernet"}`
+
+* Bug fixes
+  * Stop network interface management `GenServers` before running the "down"
+    commands. This is most noticeable in reduced log noise on network hiccups
+    and device removals.
+
 ## v0.7.9
 
 * Bug fixes
