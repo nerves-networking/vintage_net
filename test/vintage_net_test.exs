@@ -197,8 +197,6 @@ defmodule VintageNetTest do
       opts = Application.get_all_env(:vintage_net) |> prefix_paths(File.cwd!())
 
       File.mkdir!("sbin")
-      File.touch!("sbin/ifup")
-      File.touch!("sbin/ifdown")
       File.touch!("sbin/ip")
       assert :ok == VintageNet.verify_system(opts)
     end)
