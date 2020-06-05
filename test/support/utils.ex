@@ -8,8 +8,6 @@ defmodule VintageNetTest.Utils do
     |> Keyword.merge(
       bin_chat: "chat",
       bin_dnsd: "dnsd",
-      bin_ifdown: "ifdown",
-      bin_ifup: "ifup",
       bin_ip: "ip",
       bin_killall: "killall",
       bin_mknod: "mknod",

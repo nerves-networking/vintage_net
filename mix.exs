@@ -43,8 +43,6 @@ defmodule VintageNet.MixProject do
         tmpdir: "/tmp/vintage_net",
         to_elixir_socket: "comms",
         bin_dnsd: "dnsd",
-        bin_ifup: "ifup",
-        bin_ifdown: "ifdown",
         bin_ifconfig: "ifconfig",
         bin_chat: "chat",
         bin_pppd: "pppd",
