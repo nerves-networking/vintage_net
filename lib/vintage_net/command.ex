@@ -1,6 +1,18 @@
 defmodule VintageNet.Command do
   @moduledoc false
 
+  @doc "Ensures that the given command exists"
+  @spec verify_program(keyword(), atom()) :: :ok | {:error, String.t()}
+  def verify_program(opts, program) do
+    path = Keyword.fetch!(opts, program)
+
+    if File.exists?(path) do
+      :ok
+    else
+      {:error, "Can't find #{path}"}
+    end
+  end
+
   @spec cmd(atom(), [binary()], keyword()) ::
           {Collectable.t(), exit_status :: non_neg_integer()}
   def cmd(command, args, opts \\ []) do
