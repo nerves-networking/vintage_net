@@ -103,7 +103,6 @@ To use, make sure that you're either using
   {:vintage_net_wifi, "~> 0.7"}
 ```
 
-
 ### Normal password-protected WiFi (WPA2 PSK)
 
 Most password-protected home networks use WPA2 authentication and pre-shared
@@ -186,6 +185,90 @@ See the
 [vintage_net_wizard](https://github.com/nerves-networking/vintage_net_wizard)
 for an example of a project that uses AP mode and a web server for WiFi
 configuration.
+
+### Bridged Mesh WiFi
+
+In addition to infrastructure and AP modes, some WiFi modules can form a mesh.
+VintageNet supports the configuration of [802.11s](https://en.wikipedia.org/wiki/IEEE_802.11s) meshes.
+While this is the standardize way of forming WiFi meshes, it is not the same as that implemented
+by many access points that advertise WiFi meshing. It also uses the 802.11s routing protocol HWMP. (This is
+not B.A.T.M.A.N.).
+
+This section describes two configuration: the first is for the mesh gate and the second is for the mesh
+devices. The mesh gate bridges the mesh network to the network that connects to the Internet. Mesh
+nodes behave similar to normal clients: after connecting to the network, they request an IP address using
+DHCP. The DHCP request gets routed through the mesh gate and to the DHCP server on the non-mesh
+LAN. It's possible to have multiple mesh gates. Routing through the mesh and the mesh gate is
+transparent.
+
+The following configuration is for a mesh gate with one WiFi interface used for the mesh network and a wired network interface, `eth0`, that connects it to the LAN:
+
+```elixir
+mesh0_config = %{
+  type: VintageNetWiFi,
+  vintage_net_wifi: %{
+    user_mpm: 1,
+    # mesh creates a "virtual" interface based on
+    # this interface name
+    root_interface: "wlan0",
+    networks: [
+      %{
+        key_mgmt: :none,
+        ssid: "my-mesh",
+        frequency: 2432,
+        mode: :mesh
+      }
+    ]
+  },
+  # we don't need an ip address on the mesh interface
+  ipv4: %{method: :disabled},
+}
+
+# Bridge configured to bridge eth0 and mesh0 together
+br0_config = %{
+  type: VintageNetBridge,
+  ipv4: %{method: :dhcp},
+  vintage_net_bridge: %{
+    interfaces: ["eth0", "mesh0"]
+  }
+}
+
+eth0_config = %{
+  type: VintageNetEthernet,
+  # the bridge handles ip addressing
+  ipv4: %{method: :disabled},
+}
+
+VintageNet.configure("mesh0", mesh0_config)
+VintageNet.configure("br0", br0_config)
+VintageNet.configure("eth0", eth0_config)
+```
+
+This configuration is for devices on the mesh:
+
+```elixir
+mesh0_config = %{
+  type: VintageNetWiFi,
+  vintage_net_wifi: %{
+    user_mpm: 1,
+    # mesh creates a "virtual" interface based on
+    # this interface name
+    root_interface: "wlan0",
+    networks: [
+      %{
+        key_mgmt: :none,
+        ssid: "my-mesh",
+        frequency: 2432,
+        mode: :mesh
+      }
+    ]
+  },
+  # the mesh is bridged on the other
+  # device, so we can use dhcp now
+  ipv4: %{method: :dhcp},
+}
+VintageNet.configure("mesh0", mesh0_config)
+```
 
 ## Network interaction
 
