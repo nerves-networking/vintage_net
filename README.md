@@ -27,7 +27,7 @@ Project](https://nerves-project.org) devices. It has the following features:
 * Predictable network interface names
 
 > **TL;DR:** Don't care about any of this and just want the string to copy/paste
-> to set up networking? See the [VintageNet Cookbook](https://github.com/nerves-networking/vintage_net/blob/master/docs/cookbook.md).
+> to set up networking? See the [VintageNet Cookbook](https://hexdocs.pm/vintage_net/cookbook.html).
 
 The following network configurations are supported:
 
