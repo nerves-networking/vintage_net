@@ -17,7 +17,7 @@ defmodule VintageNet do
   [github.com/nerves-networking/vintage_net](https://github.com/nerves-networking/vintage_net)
   for more information.
   """
-  alias VintageNet.{Info, Interface, PropertyTable}
+  alias VintageNet.{Diagnose, Info, Interface, PropertyTable}
 
   @typedoc """
   A name for the network interface
@@ -278,6 +278,12 @@ defmodule VintageNet do
   """
   @spec info([info_options()]) :: :ok
   defdelegate info(options \\ []), to: Info
+
+  @doc """
+  Print diagnostic information
+  """
+  @spec run_diagnostics() :: :"do not show this result in output"
+  defdelegate run_diagnostics(), to: Diagnose
 
   @doc """
   Check that the system has the required programs installed
