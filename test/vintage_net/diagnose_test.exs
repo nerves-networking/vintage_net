@@ -35,7 +35,15 @@ defmodule VintageNet.DiagnoseTest do
       assert ["testifname"] == VintageNet.configured_interfaces()
     end)
 
-    output = capture_io(&Diagnose.run_diagnostics/0)
-    assert output =~ "Interface testifname\n  Configured but not detected\n"
+    opts = [
+      check_system_warnings: ["test warning"],
+      check_system_errors: ["test error 1", "test error 2"]
+    ]
+
+    output = capture_io(fn -> Diagnose.run_diagnostics(opts) end)
+    assert output =~ "Configured but not detected"
+    assert output =~ "test warning"
+    assert output =~ "test error 1"
+    assert output =~ "test error 2"
   end
 end

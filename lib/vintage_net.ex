@@ -282,8 +282,8 @@ defmodule VintageNet do
   @doc """
   Print diagnostic information
   """
-  @spec run_diagnostics() :: :"do not show this result in output"
-  defdelegate run_diagnostics(), to: Diagnose
+  @spec run_diagnostics(keyword() | nil) :: :"do not show this result in output"
+  defdelegate run_diagnostics(opts), to: Diagnose
 
   @doc """
   Check that the system has the required programs installed

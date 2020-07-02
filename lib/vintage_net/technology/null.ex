@@ -1,6 +1,7 @@
 defmodule VintageNet.Technology.Null do
   @behaviour VintageNet.Technology
 
+  alias VintageNet.Technology.SystemCheck
   alias VintageNet.Interface.RawConfig
 
   @null_config %{type: __MODULE__}
@@ -28,5 +29,5 @@ defmodule VintageNet.Technology.Null do
   end
 
   @impl VintageNet.Technology
-  def check_system(_opts), do: :ok
+  def check_system(_opts), do: %SystemCheck{}
 end
