@@ -284,20 +284,4 @@ defmodule VintageNet do
   """
   @spec run_diagnostics(keyword() | nil) :: :"do not show this result in output"
   defdelegate run_diagnostics(opts), to: Diagnose
-
-  @doc """
-  Check that the system has the required programs installed
-
-  NOTE: This isn't completely implemented yet!
-  """
-  @spec verify_system(keyword() | nil) :: :ok | {:error, String.t()}
-  def verify_system(opts \\ nil) do
-    opts = opts || Application.get_all_env(:vintage_net)
-
-    for ifname <- configured_interfaces() do
-      type = get(["interface", ifname, "type"])
-      apply(type, :check_system, [opts])
-    end
-    |> Enum.find(:ok, fn rc -> rc != :ok end)
-  end
 end
