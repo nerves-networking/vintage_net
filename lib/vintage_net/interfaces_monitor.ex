@@ -36,7 +36,7 @@ defmodule VintageNet.InterfacesMonitor do
     GenServer.call(__MODULE__, {:force_clear_ipv4_addresses, ifname})
   end
 
-  @impl true
+  @impl GenServer
   def init(_args) do
     executable = :code.priv_dir(:vintage_net) ++ '/if_monitor'
 
@@ -58,7 +58,7 @@ defmodule VintageNet.InterfacesMonitor do
     end
   end
 
-  @impl true
+  @impl GenServer
   def handle_call({:force_clear_ipv4_addresses, ifname}, _from, state) do
     {ifindex, old_info} = get_by_ifname(state, ifname)
     new_info = Info.delete_ipv4_addresses(old_info)
@@ -73,7 +73,7 @@ defmodule VintageNet.InterfacesMonitor do
     end
   end
 
-  @impl true
+  @impl GenServer
   def handle_info({_port, {:data, raw_report}}, state) do
     report = :erlang.binary_to_term(raw_report)
 

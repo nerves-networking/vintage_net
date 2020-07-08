@@ -206,7 +206,7 @@ defmodule VintageNet.Interface do
     Logger.log(level, ["VintageNet(", data.ifname, "): ", message])
   end
 
-  @impl true
+  @impl GenStateMachine
   def init(ifname) do
     Process.flag(:trap_exit, true)
 
@@ -240,7 +240,7 @@ defmodule VintageNet.Interface do
 
   # :configuring
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(:info, {:commands_done, :ok}, :configuring, %State{} = data) do
     # debug(data, ":configuring -> done success")
     {new_data, actions} = reply_to_waiters(data)
@@ -257,7 +257,7 @@ defmodule VintageNet.Interface do
     {:next_state, :configured, new_data, actions}
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :info,
         {:commands_done, {:error, _reason}},
@@ -272,7 +272,7 @@ defmodule VintageNet.Interface do
     {:next_state, :retrying, new_data, actions}
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :info,
         {:EXIT, pid, reason},
@@ -291,7 +291,7 @@ defmodule VintageNet.Interface do
     {:next_state, :retrying, new_data, actions}
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :state_timeout,
         _event,
@@ -308,7 +308,7 @@ defmodule VintageNet.Interface do
     {:next_state, :retrying, new_data, actions}
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         {:call, from},
         {:configure, new_config},
@@ -328,7 +328,7 @@ defmodule VintageNet.Interface do
     start_configuring(new_config, new_data, actions)
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :info,
         {VintageNet, ["interface", an_ifname, "present"], _old_value, nil, _meta},
@@ -352,7 +352,7 @@ defmodule VintageNet.Interface do
     {:keep_state, data, {:reply, from, :ok}}
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :internal,
         {:configure, new_config},
@@ -373,7 +373,7 @@ defmodule VintageNet.Interface do
     {:next_state, :reconfiguring, %{new_data | next_config: new_config}, actions}
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         {:call, from},
         {:configure, new_config},
@@ -395,7 +395,7 @@ defmodule VintageNet.Interface do
     {:next_state, :reconfiguring, %{new_data | next_config: new_config}, actions}
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         {:call, from},
         {:ioctl, command, args},
@@ -411,7 +411,7 @@ defmodule VintageNet.Interface do
     {:keep_state, new_data}
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :info,
         {:ioctl_done, ioctl_pid, result},
@@ -427,7 +427,7 @@ defmodule VintageNet.Interface do
     {:keep_state, new_data, action}
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :info,
         {:EXIT, pid, reason},
@@ -450,7 +450,7 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :info,
         {VintageNet, ["interface", an_ifname, "present"], _old_value, nil, _meta},
@@ -473,7 +473,7 @@ defmodule VintageNet.Interface do
 
   # :reconfiguring
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :info,
         {:commands_done, :ok},
@@ -499,7 +499,7 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :info,
         {:commands_done, {:error, _reason}},
@@ -525,7 +525,7 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :info,
         {:EXIT, pid, reason},
@@ -551,7 +551,7 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :state_timeout,
         _event,
@@ -579,7 +579,7 @@ defmodule VintageNet.Interface do
 
   # :retrying
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(:state_timeout, _event, :retrying, %State{config: new_config} = data) do
     if interfaces_available?(data) do
       start_configuring(new_config, data, [])
@@ -588,7 +588,7 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :info,
         {VintageNet, ["interface", an_ifname, "present"], _old_value, true, _meta},
@@ -604,7 +604,7 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         {:call, from},
         {:configure, new_config},
@@ -623,7 +623,7 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(:info, {:commands_done, _}, :retrying, %State{} = data) do
     # This is a latent message that didn't get processed because a crash
     # got handled first. It can be produced by getting one of an
@@ -633,14 +633,14 @@ defmodule VintageNet.Interface do
   end
 
   # Catch all event handlers
-  @impl true
+  @impl GenStateMachine
   def handle_event(:info, {:EXIT, _pid, _reason}, _state, data) do
     # Ignore latent or expected command runner and ioctl exits
     # debug(data, "#{inspect(state)} -> process exit (ignoring)")
     {:keep_state, data}
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         {:call, from},
         :wait,
@@ -651,7 +651,7 @@ defmodule VintageNet.Interface do
     {:keep_state, %{data | waiters: [from | waiters]}}
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         {:call, from},
         {:ioctl, _command, _args},
@@ -662,7 +662,7 @@ defmodule VintageNet.Interface do
     {:keep_state, data, {:reply, from, {:error, :unconfigured}}}
   end
 
-  @impl true
+  @impl GenStateMachine
   def handle_event(
         :info,
         {VintageNet, ["interface", ifname, "present"], _old_value, present, _meta},
@@ -673,7 +673,7 @@ defmodule VintageNet.Interface do
     {:keep_state, data}
   end
 
-  @impl true
+  @impl GenStateMachine
   def terminate(_reason, _state, %{ifname: ifname}) do
     PropertyTable.clear(VintageNet, ["interface", ifname, "type"])
     PropertyTable.clear(VintageNet, ["interface", ifname, "state"])

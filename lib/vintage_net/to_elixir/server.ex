@@ -17,7 +17,7 @@ defmodule VintageNet.ToElixir.Server do
     GenServer.start_link(__MODULE__, path, name: __MODULE__)
   end
 
-  @impl true
+  @impl GenServer
   def init(path) do
     # Blindly try to remove an old file just in case it exists from a previous run
     _ = File.rm(path)
@@ -29,7 +29,7 @@ defmodule VintageNet.ToElixir.Server do
     {:ok, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_info({:udp, socket, _, 0, data}, %{socket: socket} = state) do
     data
     |> :erlang.binary_to_term()
@@ -39,7 +39,7 @@ defmodule VintageNet.ToElixir.Server do
     {:noreply, state}
   end
 
-  @impl true
+  @impl GenServer
   def terminate(_reason, state) do
     # Try to clean up
     _ = File.rm(state.path)

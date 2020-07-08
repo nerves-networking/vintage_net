@@ -8,7 +8,7 @@ defmodule VintageNet.ToElixir.UdhcpdHandler do
   defmodule MyApp.UdhcpdHandler do
     @behaviour VintageNet.ToElixir.UdhcpdHandler
 
-    @impl true
+    @impl VintageNet.ToElixir.UdhcpdHandler
     def lease_update(ifname, report_data) do
       ...
     end

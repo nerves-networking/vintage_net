@@ -7,7 +7,7 @@ defmodule VintageNetTest.CapturingUdhcpdHandler do
 
   @doc """
   """
-  @impl true
+  @impl VintageNet.ToElixir.UdhcpdHandler
   def lease_update(ifname, lease_file) do
     record(ifname, :lease_update, lease_file)
   end

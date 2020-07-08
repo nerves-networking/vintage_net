@@ -96,7 +96,7 @@ defmodule VintageNet.PropertyTable.Table do
     GenServer.call(table, {:clear_prefix, name})
   end
 
-  @impl true
+  @impl GenServer
   def init({table, registry_name, properties}) do
     ^table = :ets.new(table, [:named_table, read_concurrency: true])
 
@@ -108,7 +108,7 @@ defmodule VintageNet.PropertyTable.Table do
     {:ok, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_call({:put, name, value, timestamp, metadata}, _from, state) do
     case :ets.lookup(state.table, name) do
       [{^name, ^value, _last_change}] ->
@@ -127,7 +127,7 @@ defmodule VintageNet.PropertyTable.Table do
     {:reply, :ok, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_call({:clear, name}, _from, state) do
     case :ets.lookup(state.table, name) do
       [{^name, old_value, _timestamp}] ->
@@ -141,7 +141,7 @@ defmodule VintageNet.PropertyTable.Table do
     {:reply, :ok, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_call({:clear_prefix, prefix}, _from, state) do
     to_delete = get_by_prefix(state.table, prefix)
     metadata = %{}

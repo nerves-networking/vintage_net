@@ -72,14 +72,14 @@ defmodule VintageNet.NameResolver do
 
   ## GenServer
 
-  @impl true
+  @impl GenServer
   def init(resolvconf_path) do
     state = %State{path: resolvconf_path, entries: %{}}
     write_resolvconf(state)
     {:ok, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_call({:setup, ifname, domain, name_servers}, _from, state) do
     servers = Enum.map(name_servers, &IP.ip_to_tuple!/1)
     ifentry = %{domain: domain, name_servers: servers}
@@ -89,14 +89,14 @@ defmodule VintageNet.NameResolver do
     {:reply, :ok, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_call({:clear, ifname}, _from, state) do
     state = %{state | entries: Map.delete(state.entries, ifname)}
     write_resolvconf(state)
     {:reply, :ok, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_call(:clear_all, _from, state) do
     state = %{state | entries: %{}}
     write_resolvconf(state)

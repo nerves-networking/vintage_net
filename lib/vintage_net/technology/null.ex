@@ -9,10 +9,10 @@ defmodule VintageNet.Technology.Null do
   An interface with this technology is unconfigured
   """
 
-  @impl true
+  @impl VintageNet.Technology
   def normalize(_config), do: @null_config
 
-  @impl true
+  @impl VintageNet.Technology
   def to_raw_config(ifname, _config \\ %{}, _opts \\ []) do
     %RawConfig{
       ifname: ifname,
@@ -22,11 +22,11 @@ defmodule VintageNet.Technology.Null do
     }
   end
 
-  @impl true
+  @impl VintageNet.Technology
   def ioctl(_ifname, _command, _args) do
     {:error, :unsupported}
   end
 
-  @impl true
+  @impl VintageNet.Technology
   def check_system(_opts), do: :ok
 end

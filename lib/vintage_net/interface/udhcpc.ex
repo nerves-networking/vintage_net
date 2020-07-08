@@ -10,7 +10,7 @@ defmodule VintageNet.Interface.Udhcpc do
   @doc """
   Handle deconfig reports from udhcpc
   """
-  @impl true
+  @impl VintageNet.ToElixir.UdhcpcHandler
   def deconfig(ifname, info) do
     Logger.info("#{ifname} dhcp deconfig: #{inspect(info)}")
 
@@ -45,7 +45,7 @@ defmodule VintageNet.Interface.Udhcpc do
   @doc """
   Handle leasefail reports from udhcpc
   """
-  @impl true
+  @impl VintageNet.ToElixir.UdhcpcHandler
   def leasefail(ifname, _info) do
     # NOTE: This message tends to clog up logs, so be careful when enabling it.
 
@@ -60,7 +60,7 @@ defmodule VintageNet.Interface.Udhcpc do
   @doc """
   Handle nak reports from udhcpc
   """
-  @impl true
+  @impl VintageNet.ToElixir.UdhcpcHandler
   def nak(ifname, info) do
     leasefail(ifname, info)
     :ok
@@ -84,7 +84,7 @@ defmodule VintageNet.Interface.Udhcpc do
   @doc """
   Handle renew reports from udhcpc
   """
-  @impl true
+  @impl VintageNet.ToElixir.UdhcpcHandler
   def renew(ifname, info) do
     Logger.debug("udhcpc.renew(#{ifname}): #{inspect(info)}")
 
@@ -153,7 +153,7 @@ defmodule VintageNet.Interface.Udhcpc do
   @doc """
   Handle bound reports from udhcpc
   """
-  @impl true
+  @impl VintageNet.ToElixir.UdhcpcHandler
   def bound(ifname, info) do
     renew(ifname, info)
     :ok

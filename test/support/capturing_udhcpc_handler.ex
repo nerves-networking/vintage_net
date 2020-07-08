@@ -7,35 +7,35 @@ defmodule VintageNetTest.CapturingUdhcpcHandler do
 
   @doc """
   """
-  @impl true
+  @impl VintageNet.ToElixir.UdhcpcHandler
   def deconfig(ifname, info) do
     record(ifname, :deconfig, info)
   end
 
   @doc """
   """
-  @impl true
+  @impl VintageNet.ToElixir.UdhcpcHandler
   def leasefail(ifname, info) do
     record(ifname, :leasefail, info)
   end
 
   @doc """
   """
-  @impl true
+  @impl VintageNet.ToElixir.UdhcpcHandler
   def nak(ifname, info) do
     record(ifname, :nak, info)
   end
 
   @doc """
   """
-  @impl true
+  @impl VintageNet.ToElixir.UdhcpcHandler
   def renew(ifname, info) do
     record(ifname, :renew, info)
   end
 
   @doc """
   """
-  @impl true
+  @impl VintageNet.ToElixir.UdhcpcHandler
   def bound(ifname, info) do
     record(ifname, :bound, info)
   end
