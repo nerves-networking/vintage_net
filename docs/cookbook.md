@@ -200,3 +200,18 @@ cmd "iptables -t nat -A POSTROUTING -o #{wan} -j MASQUERADE"
 # Only needed if the connection is blocked otherwise (like a default policy of DROP)
 cmd "iptables -A INPUT -i #{wan} -m state --state RELATED,ESTABLISHED -j ACCEPT"
 ```
+
+## Common tasks
+
+### Temporarily disable WiFi
+
+`VintageNet` persists configurations by default. Sometimes you just want to
+disable a network temporarily and then if the device reboots, it reboots to the
+old configuration. The `:persist` option let's you do this:
+
+```elixir
+VintageNet.deconfigure("wlan0", persist: false)
+```
+
+To get the old configuration back, you have to call `VintageNet.configure/3`
+with it again (or restart `VintageNet` or reboot).
