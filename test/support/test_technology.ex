@@ -7,12 +7,12 @@ defmodule VintageNetTest.TestTechnology do
   Support for unit testing APIs that require a Technology behaviour
   """
 
-  @impl true
+  @impl VintageNet.Technology
   def normalize(config) do
     Map.put(config, :normalize_was_called, true)
   end
 
-  @impl true
+  @impl VintageNet.Technology
   def to_raw_config(ifname, config \\ %{}, _opts \\ []) do
     # Let tests inject raw config keys if they specify them.
     # Otherwise, use whatever the defaults are.
@@ -50,7 +50,7 @@ defmodule VintageNetTest.TestTechnology do
     end
   end
 
-  @impl true
+  @impl VintageNet.Technology
   def ioctl(_ifname, :echo, [what]) do
     # Echo back our argument
     {:ok, what}
@@ -68,7 +68,7 @@ defmodule VintageNetTest.TestTechnology do
     {:error, :unsupported}
   end
 
-  @impl true
+  @impl VintageNet.Technology
   def check_system(_opts) do
     :ok
   end

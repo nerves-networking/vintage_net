@@ -14,7 +14,7 @@ defmodule VintageNet.Interface.Supervisor do
     {:via, Registry, {VintageNet.Interface.Registry, {__MODULE__, ifname}}}
   end
 
-  @impl true
+  @impl Supervisor
   def init(ifname) do
     children = [
       {VintageNet.Interface, ifname}

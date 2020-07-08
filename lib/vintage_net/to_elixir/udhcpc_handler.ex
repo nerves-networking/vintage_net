@@ -8,7 +8,7 @@ defmodule VintageNet.ToElixir.UdhcpcHandler do
   defmodule MyApp.UdhcpcHandler do
     @behaviour VintageNet.ToElixir.UdhcpcHandler
 
-    @impl true
+    @impl VintageNet.ToElixir.UdhcpcHandler
     def deconfig(ifname, data) do
       ...
     end

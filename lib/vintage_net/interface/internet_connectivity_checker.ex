@@ -25,7 +25,7 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
     GenServer.start_link(__MODULE__, ifname)
   end
 
-  @impl true
+  @impl GenServer
   def init(ifname) do
     # Handle GenServer restarts when internet-connected
     initial_strikes =
@@ -38,7 +38,7 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
     {:ok, state, {:continue, :continue}}
   end
 
-  @impl true
+  @impl GenServer
   def handle_continue(:continue, %{ifname: ifname} = state) do
     VintageNet.subscribe(lower_up_property(ifname))
 
@@ -56,7 +56,7 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
     end
   end
 
-  @impl true
+  @impl GenServer
   def handle_info(:timeout, state) do
     new_state = check_connectivity(state)
 

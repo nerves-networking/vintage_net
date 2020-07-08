@@ -23,13 +23,13 @@ defmodule VintageNet.Interface.LANConnectivityChecker do
     GenServer.start_link(__MODULE__, ifname)
   end
 
-  @impl true
+  @impl GenServer
   def init(ifname) do
     state = %{ifname: ifname}
     {:ok, state, {:continue, :continue}}
   end
 
-  @impl true
+  @impl GenServer
   def handle_continue(:continue, %{ifname: ifname} = state) do
     VintageNet.subscribe(lower_up_property(ifname))
 
@@ -46,7 +46,7 @@ defmodule VintageNet.Interface.LANConnectivityChecker do
     {:noreply, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_info(
         {VintageNet, ["interface", ifname, "lower_up"], _old_value, false, _meta},
         %{ifname: ifname} = state
@@ -56,7 +56,7 @@ defmodule VintageNet.Interface.LANConnectivityChecker do
     {:noreply, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_info(
         {VintageNet, ["interface", ifname, "lower_up"], _old_value, true, _meta},
         %{ifname: ifname} = state
@@ -69,7 +69,7 @@ defmodule VintageNet.Interface.LANConnectivityChecker do
     {:noreply, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_info(
         {VintageNet, ["interface", ifname, "lower_up"], old_value, nil, _meta},
         %{ifname: ifname} = state

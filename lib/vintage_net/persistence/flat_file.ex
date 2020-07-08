@@ -17,7 +17,7 @@ defmodule VintageNet.Persistence.FlatFile do
   Save and load configurations from flat files
   """
 
-  @impl true
+  @impl VintageNet.Persistence
   def save(ifname, config) do
     persistence_dir = persistence_dir()
 
@@ -27,7 +27,7 @@ defmodule VintageNet.Persistence.FlatFile do
     |> File.write(serialize_config(config), [:sync])
   end
 
-  @impl true
+  @impl VintageNet.Persistence
   def load(ifname) do
     path = Path.join(persistence_dir(), ifname)
 
@@ -37,13 +37,13 @@ defmodule VintageNet.Persistence.FlatFile do
     end
   end
 
-  @impl true
+  @impl VintageNet.Persistence
   def clear(ifname) do
     Path.join(persistence_dir(), ifname)
     |> File.rm!()
   end
 
-  @impl true
+  @impl VintageNet.Persistence
   def enumerate() do
     case File.ls(persistence_dir()) do
       {:ok, files} ->

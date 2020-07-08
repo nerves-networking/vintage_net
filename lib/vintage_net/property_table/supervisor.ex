@@ -10,7 +10,7 @@ defmodule VintageNet.PropertyTable.Supervisor do
     Supervisor.start_link(__MODULE__, options)
   end
 
-  @impl true
+  @impl Supervisor
   def init(options) do
     name = Keyword.fetch!(options, :name)
     properties = Keyword.get(options, :properties, [])

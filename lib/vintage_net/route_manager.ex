@@ -104,7 +104,7 @@ defmodule VintageNet.RouteManager do
 
   ## GenServer
 
-  @impl true
+  @impl GenServer
   def init(_args) do
     # Fresh slate
     IPRoute.clear_all_routes()
@@ -121,7 +121,7 @@ defmodule VintageNet.RouteManager do
     {:ok, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_call({:set_route, ifname, ip_subnets, default_gateway, status}, _from, state) do
     Logger.info("RouteManager: set_route #{ifname} -> #{inspect(status)}")
 
@@ -152,7 +152,7 @@ defmodule VintageNet.RouteManager do
     {:reply, :ok, new_state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_call({:set_connection_status, ifname, status}, _from, state) do
     new_state =
       state
@@ -161,7 +161,7 @@ defmodule VintageNet.RouteManager do
     {:reply, :ok, new_state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_call({:clear_route, ifname}, _from, state) do
     new_state =
       if Map.has_key?(state.interfaces, ifname) do
@@ -176,7 +176,7 @@ defmodule VintageNet.RouteManager do
     {:reply, :ok, new_state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_call({:set_prioritization, priorities}, _from, state) do
     new_state =
       state
