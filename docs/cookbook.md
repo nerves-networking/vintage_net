@@ -59,7 +59,7 @@ To use, make sure that you're either using
 `:vintage_net_ethernet` in your deps:
 
 ```elixir
-  {:vintage_net_ethernet, "~> 0.7"}
+  {:vintage_net_ethernet, "~> 0.8"}
 ```
 
 ### Wired Ethernet with DHCP
@@ -100,9 +100,8 @@ To use, make sure that you're either using
 `:vintage_net_wifi` in your deps:
 
 ```elixir
-  {:vintage_net_wifi, "~> 0.7"}
+  {:vintage_net_wifi, "~> 0.8"}
 ```
-
 
 ### Normal password-protected WiFi (WPA2 PSK)
 
@@ -191,7 +190,10 @@ configuration.
 
 ### Share WAN with other networks
 
-For sharing your WANs connection (e.g. internet access) with other networks `iptables` must be installed. Currently this means building a [custom nerves system](https://hexdocs.pm/nerves/customizing-systems.html). Once this is done the following commands need to be called on each boot:
+For sharing your WAN connection (e.g. internet access) with other networks
+`iptables` must be installed. Currently this means building a [custom nerves
+system](https://hexdocs.pm/nerves/customizing-systems.html). Once this is done
+the following commands need to be called on each boot:
 
 ```elixir
 wan = "eth0"
