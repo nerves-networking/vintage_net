@@ -95,7 +95,7 @@ defmodule VintageNet.PredictableInterfaceName do
   end
 
   @impl GenServer
-  # if predictable ifnaming is disabled, don't bother
+  # if predictable ifnames are disabled, don't bother
   # starting the server.
   def init([]) do
     :ignore

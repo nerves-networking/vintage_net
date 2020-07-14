@@ -47,27 +47,27 @@ defmodule VintageNet.PredictableInterfaceNameTest do
 
     PropertyTable.put(
       VintageNet,
-      ["interface", "unpredictableduplicate0", "hw_path"],
+      ["interface", "unpredictable_duplicate0", "hw_path"],
       config1.hw_path
     )
 
     PropertyTable.put(
       VintageNet,
-      ["interface", "unpredictableduplicate1", "hw_path"],
+      ["interface", "unpredictable_duplicate1", "hw_path"],
       config2.hw_path
     )
 
     Process.sleep(5)
 
     assert Enum.find(CapturingInterfaceRenamer.get(), fn
-             {:rename, "unpredictableduplicate0", "duplicate0"} -> true
+             {:rename, "unpredictable_duplicate0", "duplicate0"} -> true
              _ -> false
            end)
 
     # A second interface matching the same hw path as another interface should
     # not be renamed.
     refute Enum.find(CapturingInterfaceRenamer.get(), fn
-             {:rename, "unpredictableduplicate1", "duplicate1"} -> true
+             {:rename, "unpredictable_duplicate1", "duplicate1"} -> true
              _ -> false
            end)
   end
