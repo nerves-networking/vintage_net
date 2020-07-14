@@ -1,8 +1,8 @@
 defmodule VintageNet.PredictableInterfaceName do
   @moduledoc """
-  Handles predictable interface names by subscribing to the
-  property table and renaming matching interface names
-  based on the configuration in application env
+  Handles predictable interface names by subscribing to the property table and
+  renaming matching interface names based on the configuration in application
+  environment.
   """
 
   use GenServer
@@ -27,27 +27,27 @@ defmodule VintageNet.PredictableInterfaceName do
   ]
 
   @typedoc """
-  Configuration for mapping a hw_path to
-  a user supplied ifname
+  hw_path to a user supplied ifname mapping
   """
   @type hw_path_config() :: %{
           hw_path: Path.t(),
           ifname: VintageNet.ifname()
         }
 
+  @typedoc false
   @type state() :: %{
           ifnames: [hw_path_config()]
         }
 
   @doc """
   Called before interface configuration.
-  First checks if vintage_net is configured to
-  use predictable interface names, if so checks
-  the given ifname for "common" naming schemes.
 
-  Instead of a boolean this function returns
-  `:ok` on success, and `{:error, not_predictable_interface_name}`
-  on failure. This is done to allow usage in `with` chains.
+  First checks if vintage_net is configured to use predictable interface names,
+  if so checks the given ifname for "common" naming schemes.
+
+  Instead of a boolean this function returns `:ok` on success, and `{:error,
+  not_predictable_interface_name}` on failure. This is done to allow usage in
+  `with` chains.
   """
   @spec precheck(VintageNet.ifname()) :: :ok | {:error, :not_predictable_interface_name}
   def precheck(ifname) do
