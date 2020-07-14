@@ -6,8 +6,8 @@ defmodule VintageNet.InterfacesSupervisor do
   @moduledoc false
 
   @spec start_link(any()) :: GenServer.on_start()
-  def start_link(_) do
-    case DynamicSupervisor.start_link(__MODULE__, nil, name: __MODULE__) do
+  def start_link(args) do
+    case DynamicSupervisor.start_link(__MODULE__, args, name: __MODULE__) do
       {:ok, pid} ->
         start_configured_interfaces()
         {:ok, pid}
@@ -17,14 +17,13 @@ defmodule VintageNet.InterfacesSupervisor do
     end
   end
 
-  @spec start_interface(VintageNet.ifname()) ::
-          :ignore | {:error, any()} | {:ok, pid()} | {:ok, pid(), any()}
+  @spec start_interface(VintageNet.ifname()) :: DynamicSupervisor.on_start_child()
   def start_interface(ifname) do
     DynamicSupervisor.start_child(__MODULE__, {VintageNet.Interface.Supervisor, ifname})
   end
 
   @impl DynamicSupervisor
-  def init(_) do
+  def init(_args) do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
