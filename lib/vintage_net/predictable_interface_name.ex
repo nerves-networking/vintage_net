@@ -60,11 +60,33 @@ defmodule VintageNet.PredictableInterfaceName do
   end
 
   defp do_precheck(ifname) do
-    if Enum.any?(@prefixes, &String.starts_with?(&1, ifname)) do
+    if built_in?(ifname) do
       {:error, :not_predictable_interface_name}
     else
       :ok
     end
+  end
+
+  @doc """
+  Return whether an ifname is a built-in one
+
+  Built-in names start with `eth`, `wlan`, etc. and cannot be used
+  as interfaces names when using the predictable networking feature.
+
+  Examples:
+
+      iex> PredictableInterfaceName.built_in?("wlan0")
+      true
+
+      iex> PredictableInterfaceName.built_in?("eth50")
+      true
+
+      iex> PredictableInterfaceName.built_in?("lan")
+      false
+  """
+  @spec built_in?(VintageNet.ifname()) :: boolean()
+  def built_in?(ifname) do
+    Enum.any?(@prefixes, &String.starts_with?(ifname, &1))
   end
 
   @spec start_link([hw_path_config()]) :: GenServer.on_start()
