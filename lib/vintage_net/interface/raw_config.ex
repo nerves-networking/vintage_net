@@ -7,19 +7,19 @@ defmodule VintageNet.Interface.RawConfig do
 
   Fields:
 
-  * `ifname` - the name of the interface (e.g., `"eth0"`)
-  * `type` - the type of network interface (aka the module that created the config)
-  * `source_config` - the configuration that generated this one
-  * `required_ifnames` - a list of ifnames that need to exist before starting this configuration. (e.g. `["eth0"]`)
-  * `retry_millis` - if bringing the interface up fails, wait this amount of time before retrying
-  * `files` - a list of file path, content tuples
-  * `restart_strategy` - the restart strategy for the list of `child_specs`. I.e., `:one_for_one | :one_for_all | :rest_for_one`
-  * `child_specs` - a set of child_specs for GenServers to start up and supervise
-  * `up_cmd_millis` - the maximum amount of time to allow the up command list to take
-  * `up_cmds` - a list of commands to run to configure the interface
-  * `down_cmd_millis` - the maximum amount of time to allow the down command list to take
-  * `down_cmds` - a list of commands to run to bring the interface down
-  * `cleanup_files` - additional files to delete (the files listed in `files` are deleted too)
+  * `:ifname` - the name of the interface (e.g., `"eth0"`)
+  * `:type` - the type of network interface (aka the module that created the config)
+  * `:source_config` - the configuration that generated this one
+  * `:required_ifnames` - a list of ifnames that need to exist before starting this configuration. (e.g. `["eth0"]`)
+  * `:retry_millis` - if bringing the interface up fails, wait this amount of time before retrying
+  * `:files` - a list of file path, content tuples
+  * `:restart_strategy` - the restart strategy for the list of `child_specs`. I.e., `:one_for_one | :one_for_all | :rest_for_one`
+  * `:child_specs` - a set of child_specs for GenServers to start up and supervise
+  * `:up_cmd_millis` - the maximum amount of time to allow the up command list to take
+  * `:up_cmds` - a list of commands to run to configure the interface
+  * `:down_cmd_millis` - the maximum amount of time to allow the down command list to take
+  * `:down_cmds` - a list of commands to run to bring the interface down
+  * `:cleanup_files` - additional files to delete (the files listed in `files` are deleted too)
 
   """
 
