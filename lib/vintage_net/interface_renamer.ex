@@ -11,7 +11,7 @@ defmodule VintageNet.InterfaceRenamer do
     renamer().rename_interface(ifname, rename_to)
   end
 
-  def renamer do
+  def renamer() do
     case Application.get_env(:vintage_net, :interface_renamer) do
       nil -> VintageNet.InterfaceRenamer.IP
       module when is_atom(module) -> module

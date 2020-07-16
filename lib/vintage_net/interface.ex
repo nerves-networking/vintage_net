@@ -21,6 +21,8 @@ defmodule VintageNet.Interface do
     RouteManager
   }
 
+  alias VintageNet.Technology.Null
+
   defmodule State do
     @moduledoc false
 
@@ -181,7 +183,7 @@ defmodule VintageNet.Interface do
   """
   @spec deconfigure(VintageNet.ifname(), VintageNet.configure_options()) :: :ok | {:error, any()}
   def deconfigure(ifname, options \\ []) do
-    configure(ifname, %{type: VintageNet.Technology.Null}, options)
+    configure(ifname, %{type: Null}, options)
   end
 
   @doc """
@@ -710,7 +712,7 @@ defmodule VintageNet.Interface do
   end
 
   defp null_raw_config(ifname) do
-    VintageNet.Technology.Null.to_raw_config(ifname)
+    Null.to_raw_config(ifname)
   end
 
   defp cleanup_interface(ifname) do
