@@ -24,8 +24,8 @@ defmodule VintageNet.Interface.Udhcpc do
 
     # /sbin/ifconfig $interface up
     # /sbin/ifconfig $interface 0.0.0.0
-    _ = Command.cmd(:bin_ifconfig, [ifname, "up"])
-    _ = Command.cmd(:bin_ifconfig, [ifname, "0.0.0.0"])
+    _ = Command.cmd("ifconfig", [ifname, "up"])
+    _ = Command.cmd("ifconfig", [ifname, "0.0.0.0"])
 
     # # drop info from this interface
     # # resolv.conf may be a symlink to /tmp/, so take care
@@ -96,7 +96,7 @@ defmodule VintageNet.Interface.Udhcpc do
     # /sbin/ifconfig $interface $ip $BROADCAST $NETMASK
 
     ifconfig_args = build_ifconfig_args(ifname, info)
-    _ = Command.cmd(:bin_ifconfig, ifconfig_args)
+    _ = Command.cmd("ifconfig", ifconfig_args)
 
     case info[:router] do
       routers when is_list(routers) ->

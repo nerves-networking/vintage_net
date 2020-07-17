@@ -35,24 +35,11 @@ defmodule VintageNet.MixProject do
 
   def application do
     [
-      # The bin_* variables are paths to programs. Set to absolute paths to pin.
-      # Program names are found at application start and converted to absolute.
       env: [
         config: [],
         max_interface_count: 8,
         tmpdir: "/tmp/vintage_net",
         to_elixir_socket: "comms",
-        bin_dnsd: "dnsd",
-        bin_ifconfig: "ifconfig",
-        bin_chat: "chat",
-        bin_pppd: "pppd",
-        bin_mknod: "mknod",
-        bin_killall: "killall",
-        bin_wpa_supplicant: "/usr/sbin/wpa_supplicant",
-        bin_ip: "ip",
-        bin_udhcpc: "udhcpc",
-        bin_udhcpd: "udhcpd",
-        bin_brctl: "brctl",
         path: "/usr/sbin:/usr/bin:/sbin:/bin",
         udhcpc_handler: VintageNet.Interface.Udhcpc,
         udhcpd_handler: VintageNet.Interface.Udhcpd,
@@ -106,7 +93,6 @@ defmodule VintageNet.MixProject do
       {:dialyxir, "~> 1.0.0", only: [:dev, :test], runtime: false},
       {:muontrap, "~> 0.5.1 or ~> 0.6.0"},
       {:gen_state_machine, "~> 2.0.0 or ~> 2.1.0"},
-      {:busybox, "~> 0.1.5", optional: true},
       {:credo, "~> 1.2", only: :test, runtime: false}
     ]
   end
@@ -114,7 +100,6 @@ defmodule VintageNet.MixProject do
   defp dialyzer() do
     [
       flags: [:race_conditions, :unmatched_returns, :error_handling, :underspecs],
-      plt_add_apps: [:busybox],
       ignore_warnings: ".dialyzer_ignore.exs",
       list_unused_filters: true
     ]

@@ -146,7 +146,6 @@ defmodule VintageNet.IP.DhcpdConfig do
         opts
       ) do
     tmpdir = Keyword.fetch!(opts, :tmpdir)
-    udhcpd = Keyword.fetch!(opts, :bin_udhcpd)
     udhcpd_conf_path = Path.join(tmpdir, "udhcpd.conf.#{ifname}")
 
     new_files =
@@ -161,7 +160,7 @@ defmodule VintageNet.IP.DhcpdConfig do
           Supervisor.child_spec(
             {MuonTrap.Daemon,
              [
-               udhcpd,
+               "udhcpd",
                [
                  "-f",
                  udhcpd_conf_path

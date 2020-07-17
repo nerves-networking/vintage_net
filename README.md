@@ -86,13 +86,6 @@ Then make sure that you have the following Busybox options enabled:
 * `CONFIG_UDHCPC=y` - `udhcpc` DHCP Client
 * `CONFIG_UDHCPD=y` - `udhcpd` DHCP Server (optional)
 
-You can avoid making the Busybox changes by adding `:busybox` to your project's
-mix dependencies:
-
-```elixir
-    {:busybox, "~> 0.1", targets: @all_targets}
-```
-
 Finally, you'll need to choose what network connection technologies that you
 want available in your firmware. If using `nerves_pack`, you'll get support for
 wired Ethernet, WiFi, and USB gadget networking automatically. Otherwise, add
@@ -140,14 +133,6 @@ Key                | Description
 config             | A list of default network configurations
 tmpdir             | Path to a temporary directory for VintageNet
 to_elixir_socket   | Name to use for the Unix domain socket for C to Elixir communication
-bin_ifup           | Path to `ifup`
-bin_ifdown         | Path to `ifdown`
-bin_chat           | Path to `chat`
-bin_pppd           | Path to `pppd`
-bin_mknod          | Path to `mknod`
-bin_killall        | Path to `killall`
-bin_wpa_supplicant | Path to `wpa_supplicant`
-bin_ip             | Path to `ip`
 udhcpc_handler     | Module for handling notifications from `udhcpc`
 resolvconf         | Path to `/etc/resolv.conf`
 persistence        | Module for persisting network configurations

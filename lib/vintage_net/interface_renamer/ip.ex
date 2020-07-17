@@ -7,7 +7,7 @@ defmodule VintageNet.InterfaceRenamer.IP do
   def rename_interface(ifname, rename_to) do
     args = ["link", "set", ifname, "name", rename_to]
 
-    case Command.cmd(:bin_ip, args, stderr_to_stdout: true) do
+    case Command.cmd("ip", args, stderr_to_stdout: true) do
       {_, 0} -> :ok
       {message, _error} -> {:error, message}
     end

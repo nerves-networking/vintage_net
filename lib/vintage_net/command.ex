@@ -1,23 +1,17 @@
 defmodule VintageNet.Command do
   @moduledoc false
 
-  @spec cmd(atom(), [binary()], keyword()) ::
+  @spec cmd(Path.t(), [binary()], keyword()) ::
           {Collectable.t(), exit_status :: non_neg_integer()}
-  def cmd(command, args, opts \\ []) do
+  def cmd(command, args, opts \\ []) when is_binary(command) do
     new_opts = force_path_env(opts)
 
-    case Application.get_env(:vintage_net, command) do
-      nil ->
-        raise "Unexpected command #{command}"
-
-      path ->
-        System.cmd(path, args, new_opts)
-    end
+    System.cmd(command, args, new_opts)
   end
 
-  @spec muon_cmd(binary(), [binary()], keyword()) ::
+  @spec muon_cmd(Path.t(), [binary()], keyword()) ::
           {Collectable.t(), exit_status :: non_neg_integer()}
-  def muon_cmd(command, args, opts \\ []) do
+  def muon_cmd(command, args, opts \\ []) when is_binary(command) do
     new_opts = opts |> force_path_env() |> add_muon_options()
 
     MuonTrap.cmd(command, args, new_opts)

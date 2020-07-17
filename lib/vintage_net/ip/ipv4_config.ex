@@ -112,17 +112,16 @@ defmodule VintageNet.IP.IPv4Config do
           down_cmds: down_cmds
         } = raw_config,
         %{ipv4: %{method: :disabled}},
-        opts
+        _opts
       ) do
     # Even though IPv4 is disabled, the interface is still brought up
-    ip = Keyword.fetch!(opts, :bin_ip)
-    new_up_cmds = up_cmds ++ [{:run, ip, ["link", "set", ifname, "up"]}]
+    new_up_cmds = up_cmds ++ [{:run, "ip", ["link", "set", ifname, "up"]}]
 
     new_down_cmds =
       down_cmds ++
         [
-          {:run_ignore_errors, ip, ["addr", "flush", "dev", ifname, "label", ifname]},
-          {:run, ip, ["link", "set", ifname, "down"]}
+          {:run_ignore_errors, "ip", ["addr", "flush", "dev", ifname, "label", ifname]},
+          {:run, "ip", ["link", "set", ifname, "down"]}
         ]
 
     %RawConfig{
@@ -140,17 +139,15 @@ defmodule VintageNet.IP.IPv4Config do
           down_cmds: down_cmds
         } = raw_config,
         %{ipv4: %{method: :dhcp}} = config,
-        opts
+        _opts
       ) do
-    udhcpc = Keyword.fetch!(opts, :bin_udhcpc)
-    ip = Keyword.fetch!(opts, :bin_ip)
-    new_up_cmds = up_cmds ++ [{:run, ip, ["link", "set", ifname, "up"]}]
+    new_up_cmds = up_cmds ++ [{:run, "ip", ["link", "set", ifname, "up"]}]
 
     new_down_cmds =
       down_cmds ++
         [
-          {:run_ignore_errors, ip, ["addr", "flush", "dev", ifname, "label", ifname]},
-          {:run, ip, ["link", "set", ifname, "down"]}
+          {:run_ignore_errors, "ip", ["addr", "flush", "dev", ifname, "label", ifname]},
+          {:run, "ip", ["link", "set", ifname, "down"]}
         ]
 
     hostname = config[:hostname] || get_hostname()
@@ -161,7 +158,7 @@ defmodule VintageNet.IP.IPv4Config do
           Supervisor.child_spec(
             {MuonTrap.Daemon,
              [
-               udhcpc,
+               "udhcpc",
                [
                  "-f",
                  "-i",
@@ -198,9 +195,8 @@ defmodule VintageNet.IP.IPv4Config do
           child_specs: child_specs
         } = raw_config,
         %{ipv4: %{method: :static} = ipv4},
-        opts
+        _opts
       ) do
-    ip = Keyword.fetch!(opts, :bin_ip)
     addr_subnet = IP.cidr_to_string(ipv4.address, ipv4.prefix_length)
 
     route_manager_up =
@@ -223,9 +219,9 @@ defmodule VintageNet.IP.IPv4Config do
     new_up_cmds =
       up_cmds ++
         [
-          {:run_ignore_errors, ip, ["addr", "flush", "dev", ifname, "label", ifname]},
-          {:run, ip, ["addr", "add", addr_subnet, "dev", ifname, "label", ifname]},
-          {:run, ip, ["link", "set", ifname, "up"]},
+          {:run_ignore_errors, "ip", ["addr", "flush", "dev", ifname, "label", ifname]},
+          {:run, "ip", ["addr", "add", addr_subnet, "dev", ifname, "label", ifname]},
+          {:run, "ip", ["link", "set", ifname, "up"]},
           route_manager_up,
           resolver_up
         ]
@@ -235,8 +231,8 @@ defmodule VintageNet.IP.IPv4Config do
         [
           {:fun, VintageNet.RouteManager, :clear_route, [ifname]},
           {:fun, VintageNet.NameResolver, :clear, [ifname]},
-          {:run_ignore_errors, ip, ["addr", "flush", "dev", ifname, "label", ifname]},
-          {:run, ip, ["link", "set", ifname, "down"]}
+          {:run_ignore_errors, "ip", ["addr", "flush", "dev", ifname, "label", ifname]},
+          {:run, "ip", ["link", "set", ifname, "down"]}
         ]
 
     # If there's a default gateway, then check for internet connectivity.

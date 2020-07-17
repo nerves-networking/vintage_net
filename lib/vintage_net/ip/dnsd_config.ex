@@ -72,7 +72,6 @@ defmodule VintageNet.IP.DnsdConfig do
         opts
       ) do
     tmpdir = Keyword.fetch!(opts, :tmpdir)
-    dnsd = Keyword.fetch!(opts, :bin_dnsd)
     dnsd_conf_path = Path.join(tmpdir, "dnsd.conf.#{ifname}")
 
     new_files = [{dnsd_conf_path, dnsd_contents(dnsd_config)} | files]
@@ -93,7 +92,7 @@ defmodule VintageNet.IP.DnsdConfig do
           Supervisor.child_spec(
             {MuonTrap.Daemon,
              [
-               dnsd,
+               "dnsd",
                dnsd_args,
                Command.add_muon_options(stderr_to_stdout: true, log_output: :debug)
              ]},

@@ -9,7 +9,6 @@ use Mix.Config
 # * interface_renamer: capture interfaces that get renamed
 # * resolvconf: don't update the real resolv.conf
 # * persistence_dir: use the current directory
-# * bin_ip: just fail if anything calls ip rather that run it
 # * power_managers: register a manager for test0 so that tests
 #      that need to validate power management calls can use it.
 #
@@ -23,7 +22,6 @@ config :vintage_net,
   interface_renamer: VintageNetTest.CapturingInterfaceRenamer,
   resolvconf: "/dev/null",
   persistence_dir: "./test_tmp/persistence",
-  bin_ip: "false",
   power_managers: [
     {VintageNetTest.TestPowerManager, [ifname: "test0", watchdog_timeout: 50]},
     {VintageNetTest.BadPowerManager, [ifname: "bad_power0"]},
