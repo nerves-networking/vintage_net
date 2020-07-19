@@ -101,7 +101,7 @@ defmodule VintageNet.PropertyTable do
   @doc """
   Fetch a property with the time that it was set
 
-  Timestamps come from `:erlang.monotonic_time()`
+  Timestamps come from `System.monotonic_time()`
   """
   @spec fetch_with_timestamp(table_id(), property()) :: {:ok, value(), integer()} | :error
   def fetch_with_timestamp(table, name) when is_list(name) do

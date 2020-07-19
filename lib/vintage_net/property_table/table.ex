@@ -75,7 +75,7 @@ defmodule VintageNet.PropertyTable.Table do
   end
 
   def put(table, name, value, metadata) do
-    GenServer.call(table, {:put, name, value, :erlang.monotonic_time(), metadata})
+    GenServer.call(table, {:put, name, value, System.monotonic_time(), metadata})
   end
 
   @doc """
@@ -101,7 +101,7 @@ defmodule VintageNet.PropertyTable.Table do
     ^table = :ets.new(table, [:named_table, read_concurrency: true])
 
     # Insert the initial properties
-    timestamp = :erlang.monotonic_time()
+    timestamp = System.monotonic_time()
     Enum.each(properties, fn {name, value} -> :ets.insert(table, {name, value, timestamp}) end)
 
     state = %{table: table, registry: registry_name}

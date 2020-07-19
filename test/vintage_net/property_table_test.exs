@@ -116,7 +116,7 @@ defmodule VintageNet.PropertyTableTest do
     assert :error == PropertyTable.fetch_with_timestamp(table, name)
 
     PropertyTable.put(table, name, 105)
-    now = :erlang.monotonic_time()
+    now = System.monotonic_time()
     assert {:ok, value, timestamp} = PropertyTable.fetch_with_timestamp(table, name)
     assert value == 105
 

@@ -120,7 +120,7 @@ defmodule VintageNet.Info do
           if(print_since?,
             do: [
               " (",
-              friendly_time(:erlang.monotonic_time() - timestamp),
+              friendly_time(System.monotonic_time() - timestamp),
               ")\n"
             ],
             else: "\n"
