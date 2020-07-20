@@ -449,11 +449,11 @@ defmodule VintageNet.Interface do
   @impl GenStateMachine
   def handle_event(
         :info,
-        {VintageNet, ["interface", an_ifname, "present"], _old_value, nil, _meta},
+        {VintageNet, ["interface", ifname, "present"], _old_value, nil, _meta},
         :configured,
         %State{config: config} = data
       ) do
-    debug(data, ":configured -> #{an_ifname} removed")
+    debug(data, ":configured -> #{ifname} removed, so reconfiguring")
 
     {new_data, actions} = cancel_ioctls(data)
     VintageNet.Interface.Supervisor.clear_technology(data.ifname)
@@ -465,6 +465,19 @@ defmodule VintageNet.Interface do
 
     update_properties(:reconfiguring, new_data)
     {:next_state, :reconfiguring, %{new_data | next_config: config}, actions}
+  end
+
+  @impl GenStateMachine
+  def handle_event(
+        :info,
+        {VintageNet, ["interface", ifname, "present"], _old_value, true, _meta},
+        :configured,
+        data
+      ) do
+    # Ignore redundant notifications - could be due to restarts, old messages in
+    # in queues, etc.
+    debug(data, ":configured -> ignoring #{ifname} present notification")
+    {:keep_state, data}
   end
 
   # :reconfiguring
