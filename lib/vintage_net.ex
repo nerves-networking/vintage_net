@@ -79,8 +79,9 @@ defmodule VintageNet do
   """
   @spec all_interfaces() :: [ifname()]
   def all_interfaces() do
-    for {["interface", ifname, "present"], true} <-
-          get_by_prefix(["interface"]) do
+    present = VintageNet.match(["interface", :_, "present"])
+
+    for {[_interface, ifname, _present], true} <- present do
       ifname
     end
   end
@@ -90,8 +91,9 @@ defmodule VintageNet do
   """
   @spec configured_interfaces() :: [ifname()]
   def configured_interfaces() do
-    for {["interface", ifname, "type"], value} when value != VintageNet.Technology.Null <-
-          get_by_prefix(["interface"]) do
+    type = VintageNet.match(["interface", :_, "type"])
+
+    for {[_interface, ifname, _type], value} when value != VintageNet.Technology.Null <- type do
       ifname
     end
   end
