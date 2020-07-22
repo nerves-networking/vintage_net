@@ -11,39 +11,64 @@ defmodule VintageNet.Info do
         IO.puts("VintageNet hasn't been loaded yet. Try again soon.")
 
       version ->
-        IO.write(["VintageNet ", version, "\n\n"])
+        ifnames = interfaces_to_show()
 
-        do_info(opts)
+        IO.write([format_header(version), format_interfaces(ifnames, opts)])
     end
   end
 
-  defp do_info(opts) do
-    IO.write("""
+  defp format_header(version) do
+    """
+    VintageNet #{version}
+
     All interfaces:       #{inspect(VintageNet.all_interfaces())}
     Available interfaces: #{inspect(VintageNet.get(["available_interfaces"]))}
-    """)
 
-    ifnames = VintageNet.configured_interfaces()
+    """
+  end
 
-    if ifnames == [] do
-      IO.puts("\nNo configured interfaces")
+  defp format_interfaces([], _opts) do
+    "No interfaces"
+  end
+
+  defp format_interfaces(ifnames, opts) do
+    Enum.map(ifnames, &format_interface(&1, opts))
+  end
+
+  defp interfaces_to_show() do
+    type = VintageNet.match(["interface", :_, "type"])
+
+    for {[_interface, ifname, _type], _value} <- type do
+      ifname
+    end
+  end
+
+  defp format_interface(ifname, opts) do
+    if VintageNet.get(["interface", ifname, "present"]) do
+      [
+        "Interface ",
+        ifname,
+        "\n",
+        format_if_attribute(ifname, "type", "Type"),
+        format_if_attribute(ifname, "present", "Present"),
+        format_if_attribute(ifname, "state", "State", true),
+        format_if_attribute(ifname, "connection", "Connection", true),
+        format_addresses(ifname),
+        "  Configuration:\n",
+        format_config(ifname, "    ", opts),
+        "\n"
+      ]
     else
-      ifnames
-      |> Enum.map(fn ifname ->
-        [
-          "\nInterface ",
-          ifname,
-          "\n",
-          format_if_attribute(ifname, "type", "Type"),
-          format_if_attribute(ifname, "present", "Present"),
-          format_if_attribute(ifname, "state", "State", true),
-          format_if_attribute(ifname, "connection", "Connection", true),
-          format_addresses(ifname),
-          "  Configuration:\n",
-          format_config(ifname, "    ", opts)
-        ]
-      end)
-      |> IO.puts()
+      [
+        "Interface ",
+        ifname,
+        "\n",
+        format_if_attribute(ifname, "type", "Type"),
+        "  Present: false\n",
+        "  Configuration:\n",
+        format_config(ifname, "    ", opts),
+        "\n"
+      ]
     end
   end
 

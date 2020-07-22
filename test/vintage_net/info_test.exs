@@ -90,7 +90,7 @@ defmodule VintageNet.InfoTest do
 
     assert output =~ "All interfaces"
     assert output =~ "Available interfaces"
-    assert output =~ "No configured interfaces"
+    assert output =~ "No interfaces"
   end
 
   test "info works with a configured interface" do
