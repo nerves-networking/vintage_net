@@ -38,7 +38,7 @@ The following network configurations are supported:
 * [x] USB gadget mode Ethernet, IPv4 DHCP server to supply host IP address
 * [x] Cellular networks (see `vintage_net_mobile` for details)
 * [x] WiFi AP mode
-* [ ] IPv6
+* [ ] IPv6 - Partially supported. SLAAC configuration works.
 
 `vintage_net` takes a different approach to networking from `nerves_network`.
 Its focus is on building and applying network configurations. Where
