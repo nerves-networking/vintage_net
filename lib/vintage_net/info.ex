@@ -1,6 +1,8 @@
 defmodule VintageNet.Info do
   @moduledoc false
 
+  alias VintageNet.PowerManager.PMControl
+
   @doc """
   Print the current network status
   """
@@ -161,7 +163,7 @@ defmodule VintageNet.Info do
   end
 
   defp format_power_management(ifname) do
-    case VintageNet.PowerManager.PMControl.info(ifname) do
+    case PMControl.info(ifname) do
       {:ok, info} ->
         ["  Power: ", info.pm_info, "\n"]
 

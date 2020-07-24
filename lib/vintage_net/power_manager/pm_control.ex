@@ -257,17 +257,15 @@ defmodule VintageNet.PowerManager.PMControl do
   end
 
   defp run_callback(state, callback, args) do
-    try do
-      apply(state.impl, callback, args)
-    catch
-      kind, reason ->
-        Logger.error([
-          log_prefix(state),
-          "callback #{callback} raised #{inspect(kind)}, #{inspect(reason)}. Exiting"
-        ])
+    apply(state.impl, callback, args)
+  catch
+    kind, reason ->
+      Logger.error([
+        log_prefix(state),
+        "callback #{callback} raised #{inspect(kind)}, #{inspect(reason)}. Exiting"
+      ])
 
-        exit(:callback_failed)
-    end
+      exit(:callback_failed)
   end
 
   defp start_timer(state, millis) do
