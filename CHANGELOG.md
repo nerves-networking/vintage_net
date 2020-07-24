@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.9.0
+
+This release contains improvements that will not affect you unless you have
+created custom `VintageNet.Technology` implementation.
+
+* New features
+  * Add power management support. This adds support for powering on and off
+    network devices and also enables `VintageNet` to restart devices that are
+    not working if allowed. See `VintageNet.PowerManager` for details.
+
+* Breaking changes
+  * Paths to networking programs like `wpa_supplicant` are no longer passed as
+    opts during configuration. I.e., `:bin_wpa_supplicant`, `:bin_ip`, etc. This
+    was not a generally useful feature since it wasn't possible to include all
+    possible programs. A future plan is to add support for verifying that
+    networking programs exist before trying to configure an interface. Programs
+    should be passed as strings now.
+  * Support for the `:busybox` hex package has been removed. This was useful
+    when networking programs were unavailable on a system, but all official
+    Nerves systems have included them for the past year and `:busybox` required
+    maintenance to keep working and up-to-date.
+
 ## v0.8.0
 
 * New features
