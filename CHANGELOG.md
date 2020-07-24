@@ -2,13 +2,13 @@
 
 ## v0.9.0
 
-This release contains improvements that will not affect you unless you have
-created custom `VintageNet.Technology` implementation.
+This release contains improvements that will not affect you unless you are
+using a custom `VintageNet.Technology` implementation.
 
 * New features
   * Add power management support. This adds support for powering on and off
     network devices and also enables `VintageNet` to restart devices that are
-    not working if allowed. See `VintageNet.PowerManager` for details.
+    not working (if allowed). See `VintageNet.PowerManager` for details.
 
 * Breaking changes
   * Paths to networking programs like `wpa_supplicant` are no longer passed as
