@@ -227,12 +227,12 @@ defmodule VintageNet.InterfaceTest do
             {"run.sh",
              """
              #!/bin/sh
-             if [ -e first_try ]; then
+             if test -e first_try; then
                touch i_am_configured
              else
                # Hang the first time
                touch first_try
-               /bin/sleep 10000
+               sleep 10000
                echo "Should not get here"
              fi
              """}
