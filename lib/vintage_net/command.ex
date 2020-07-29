@@ -6,7 +6,7 @@ defmodule VintageNet.Command do
   def cmd(command, args, opts \\ []) when is_binary(command) do
     new_opts = force_path_env(opts)
 
-    System.cmd(command, args, new_opts)
+    System.cmd(find_executable!(command), args, new_opts)
   end
 
   @spec muon_cmd(Path.t(), [binary()], keyword()) ::
@@ -14,7 +14,7 @@ defmodule VintageNet.Command do
   def muon_cmd(command, args, opts \\ []) when is_binary(command) do
     new_opts = opts |> force_path_env() |> add_muon_options()
 
-    MuonTrap.cmd(command, args, new_opts)
+    MuonTrap.cmd(find_executable!(command), args, new_opts)
   end
 
   @doc """
@@ -28,15 +28,32 @@ defmodule VintageNet.Command do
     )
   end
 
+  defp find_executable!(command) do
+    find_executable(command) ||
+      raise(RuntimeError, "Can't find '#{command}' in '#{path_env()}'")
+  end
+
+  defp find_executable(command) do
+    paths = String.split(path_env(), ":")
+
+    Enum.find_value(paths, fn path ->
+      full_path = Path.join(path, command)
+
+      if File.exists?(full_path) do
+        full_path
+      end
+    end)
+  end
+
   defp force_path_env(opts) do
     original_env = Keyword.get(opts, :env, [])
 
-    new_env = [path_env() | List.keydelete(original_env, "PATH", 0)]
+    new_env = [{"PATH", path_env()} | List.keydelete(original_env, "PATH", 0)]
 
     Keyword.put(opts, :env, new_env)
   end
 
   defp path_env() do
-    {"PATH", Application.get_env(:vintage_net, :path)}
+    Application.get_env(:vintage_net, :path)
   end
 end
