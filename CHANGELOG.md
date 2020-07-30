@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9.1
+
+* Bug fixes
+  * This fixes an issue where system networking binaries were not being resolved
+    according to `vintage_net`'s view of the `PATH`. `vintage_net` looks in the
+    standard directories by default, but it's possible to restrict or add
+    locations.
+
 ## v0.9.0
 
 This release contains improvements that will not affect you unless you are
