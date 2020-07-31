@@ -6,15 +6,25 @@ defmodule VintageNet.Info do
   @doc """
   Print the current network status
   """
-  @spec info([VintageNet.info_options()]) :: :ok
+  @spec info(VintageNet.info_options()) :: :ok
   def info(opts \\ []) do
+    info_as_ansidata(opts)
+    |> IO.ANSI.format()
+    |> IO.puts()
+  end
+
+  @doc """
+  Format the information as ANSI data
+  """
+  @spec info_as_ansidata(VintageNet.info_options()) :: IO.ANSI.ansidata()
+  def info_as_ansidata(opts \\ []) do
     case vintage_net_app_info() do
       {:ok, text} ->
         ifnames = interfaces_to_show()
-        IO.write([text, format_header(), format_interfaces(ifnames, opts)])
+        [text, format_header(), format_interfaces(ifnames, opts)]
 
       {:error, text} ->
-        IO.puts(text)
+        text
     end
   end
 
@@ -29,7 +39,7 @@ defmodule VintageNet.Info do
   end
 
   defp format_interfaces([], _opts) do
-    "No interfaces"
+    "No interfaces\n\n"
   end
 
   defp format_interfaces(ifnames, opts) do

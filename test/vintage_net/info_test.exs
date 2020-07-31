@@ -99,6 +99,15 @@ defmodule VintageNet.InfoTest do
     assert output =~ "No interfaces"
   end
 
+  test "info_as_ansidata can return ansidata" do
+    output = Info.info_as_ansidata()
+    output_str = output |> IO.ANSI.format(false) |> IO.iodata_to_binary()
+
+    assert output_str =~ "All interfaces"
+    assert output_str =~ "Available interfaces"
+    assert output_str =~ "No interfaces"
+  end
+
   test "info works with a configured interface" do
     capture_log(fn ->
       :ok = VintageNet.configure("eth0", %{type: VintageNetTest.TestTechnology})
