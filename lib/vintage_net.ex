@@ -102,7 +102,7 @@ defmodule VintageNet do
 
   * `:redact` - Whether to hide passwords and similar information from the output (defaults to `true`)
   """
-  @type info_options :: {:redact, boolean()}
+  @type info_options :: [redact: boolean()]
 
   @typedoc """
   A VintageNet property
@@ -358,7 +358,7 @@ defmodule VintageNet do
 
   * `:redact` - Set to `false` to print out passwords
   """
-  @spec info([info_options()]) :: :ok
+  @spec info(info_options()) :: :ok
   defdelegate info(options \\ []), to: Info
 
   @doc """
