@@ -2,6 +2,7 @@ defmodule VintageNetTest.TestTechnology do
   @behaviour VintageNet.Technology
 
   alias VintageNet.Interface.RawConfig
+  alias VintageNet.Technology.SystemCheck
 
   @moduledoc """
   Support for unit testing APIs that require a Technology behaviour
@@ -69,7 +70,13 @@ defmodule VintageNetTest.TestTechnology do
   end
 
   @impl VintageNet.Technology
-  def check_system(_opts) do
-    :ok
+  def check_system(opts) do
+    warnings = Keyword.get(opts, :check_system_warnings, [])
+    errors = Keyword.get(opts, :check_system_errors, [])
+
+    %SystemCheck{
+      warnings: warnings,
+      errors: errors
+    }
   end
 end

@@ -1,5 +1,6 @@
 defmodule VintageNet.Technology do
   alias VintageNet.Interface.RawConfig
+  alias VintageNet.Technology.SystemCheck
 
   @moduledoc """
   Technologies define how network interface types work
@@ -58,5 +59,5 @@ defmodule VintageNet.Technology do
   This is intended to help identify missing programs without configuring a
   network.
   """
-  @callback check_system(opts :: keyword()) :: :ok | {:error, String.t()}
+  @callback check_system(opts :: keyword()) :: SystemCheck.t()
 end

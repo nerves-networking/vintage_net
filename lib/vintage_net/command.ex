@@ -1,6 +1,18 @@
 defmodule VintageNet.Command do
   @moduledoc false
 
+  @doc """
+  Ensures that the given command exists
+  """
+  @spec verify_program(Path.t()) :: :ok | {:error, String.t()}
+  def verify_program(command) do
+    if find_executable(command) do
+      :ok
+    else
+      {:error, "Can't find #{command}"}
+    end
+  end
+
   @spec cmd(Path.t(), [binary()], keyword()) ::
           {Collectable.t(), exit_status :: non_neg_integer()}
   def cmd(command, args, opts \\ []) when is_binary(command) do

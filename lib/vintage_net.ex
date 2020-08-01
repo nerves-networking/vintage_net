@@ -17,7 +17,7 @@ defmodule VintageNet do
   [github.com/nerves-networking/vintage_net](https://github.com/nerves-networking/vintage_net)
   for more information.
   """
-  alias VintageNet.{Info, Interface, PropertyTable}
+  alias VintageNet.{Diagnose, Info, Interface, PropertyTable}
 
   @typedoc """
   A name for the network interface
@@ -280,18 +280,8 @@ defmodule VintageNet do
   defdelegate info(options \\ []), to: Info
 
   @doc """
-  Check that the system has the required programs installed
-
-  NOTE: This isn't completely implemented yet!
+  Print diagnostic information
   """
-  @spec verify_system(keyword() | nil) :: :ok | {:error, String.t()}
-  def verify_system(opts \\ nil) do
-    opts = opts || Application.get_all_env(:vintage_net)
-
-    for ifname <- configured_interfaces() do
-      type = get(["interface", ifname, "type"])
-      apply(type, :check_system, [opts])
-    end
-    |> Enum.find(:ok, fn rc -> rc != :ok end)
-  end
+  @spec run_diagnostics(keyword() | nil) :: :"do not show this result in output"
+  defdelegate run_diagnostics(opts), to: Diagnose
 end
