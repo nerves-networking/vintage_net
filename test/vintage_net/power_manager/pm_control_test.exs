@@ -144,7 +144,7 @@ defmodule VintageNet.PowerManager.PMControlTest do
         assert pm_state() == :powering_off
 
         # Wait for final power off call and min off time (100 ms after start_powering_off)
-        Process.sleep(100)
+        Process.sleep(110)
         assert TPM.call_count(@test_ifname, :power_off) == 1
         assert TPM.call_count(@test_ifname, :power_on) == 2
         assert pm_state() == :on
