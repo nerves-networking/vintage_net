@@ -510,7 +510,7 @@ defmodule VintageNet.InterfaceTest do
 
       configure_only(config1)
 
-      assert_receive {VintageNet, property, _old_value, :retrying, _meta}
+      assert_receive {VintageNet, ^property, _old_value, :retrying, _meta}
 
       assert :ok == Interface.configure(@ifname, config2)
       assert :ok == Interface.wait_until_configured(@ifname)
