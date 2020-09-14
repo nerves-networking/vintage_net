@@ -7,7 +7,7 @@ defmodule VintageNet.IPTest do
     for prefix_length <- 0..32 do
       subnet_mask = IP.prefix_length_to_subnet_mask(:inet, prefix_length)
 
-      assert {:ok, prefix_length} = IP.subnet_mask_to_prefix_length(subnet_mask)
+      assert {:ok, ^prefix_length} = IP.subnet_mask_to_prefix_length(subnet_mask)
     end
   end
 
