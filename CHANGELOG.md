@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.9.2
+
+* Bug fixes
+  * Handle missing commands as errors rather than raising. This makes it
+    a little easier test `vintage_net` and libraries that use it.
+  * Fixes `@doc` tag warnings during compile time
+
 ## v0.9.1
 
 * Bug fixes
