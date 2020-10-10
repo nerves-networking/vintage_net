@@ -54,7 +54,7 @@ defmodule VintageNet.MixProject do
         muontrap_options: [],
         power_managers: []
       ],
-      extra_applications: [:logger],
+      extra_applications: [:logger, :crypto],
       mod: {VintageNet.Application, []}
     ]
   end
