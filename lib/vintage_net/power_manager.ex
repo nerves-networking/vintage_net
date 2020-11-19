@@ -97,6 +97,13 @@ defmodule VintageNet.PowerManager do
 
   This is called on start and if the power management GenServer restarts. It
   should not assume that hardware is powered down.
+
+  IMPORTANT: VintageNet assumes that `init/1` runs quickly and succeeds. Errors
+  and exceptions from calling `init/1` are handled by disabling the PowerManager.
+  The reason is that VintageNet has no knowledge on how to recover and disabling
+  a power manager was deemed less bad that having supervision tree failures
+  propagate upwards to terminate VintageNet. Messages are logged if this does
+  happen.
   """
   @callback init(args :: keyword()) :: {:ok, state :: any()}
 

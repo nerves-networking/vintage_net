@@ -167,14 +167,25 @@ defmodule VintageNet.PowerManager.PMControl do
       timer_ref: make_ref()
     }
 
-    {:ok, state, {:continue, :init}}
+    case safe_init(state) do
+      {:ok, impl_state} ->
+        {:ok, %{state | impl_state: impl_state}}
+
+      error ->
+        Logger.error(
+          "VintageNet: #{state.impl} failed to init and not retrying: #{inspect(error)}"
+        )
+
+        :ignore
+    end
   end
 
-  @impl GenServer
-  def handle_continue(:init, state) do
-    {:ok, impl_state} = state.impl.init(state.impl_args)
-
-    {:noreply, %{state | impl_state: impl_state}}
+  def safe_init(state) do
+    state.impl.init(state.impl_args)
+  rescue
+    e ->
+      Logger.error(Exception.format(:error, e, __STACKTRACE__))
+      {:error, e}
   end
 
   @impl GenServer
