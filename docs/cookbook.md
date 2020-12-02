@@ -302,6 +302,22 @@ VintageNet.deconfigure("wlan0", persist: false)
 To get the old configuration back, you have to call `VintageNet.configure/3`
 with it again (or restart `VintageNet` or reboot).
 
+### Reset an interface
+
+To reset an interface and maintain subscriptions, the following can be used:
+```elixir
+ifname = "eth0"
+cfg = VintageNet.get_configuration(ifname)
+:ok = VintageNet.deconfigure(ifname, persist: false)
+:ok = VintageNet.Interface.wait_until_configured(ifname, persist: false)
+:ok = VintageNet.configure(ifname, cfg)
+```
+This command is also useful for removing an interface's IP address and routes,
+similar to `ip addr flush dev <ifname>`.
+`VintageNet.Interface.wait_until_configured` is critical to avoid race conditions.
+The `persist: false` option is avoid an issue in the case where the system
+dies before the configure call completes.
+
 ### Perform some initialization to turn on a network interface
 
 `VintageNet` waits for network interfaces to appear before doing any work.  If
