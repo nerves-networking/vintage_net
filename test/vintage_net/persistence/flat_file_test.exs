@@ -2,8 +2,6 @@ defmodule VintageNet.Persistence.FlatFileTest do
   use VintageNetTest.Case
   alias VintageNet.Persistence.FlatFile
 
-  @persistence_dir Application.get_env(:vintage_net, :persistence_dir)
-
   @config %{
     type: VintageNetTest.TestTechnology,
     ipv4: %{method: :dhcp},
@@ -28,7 +26,8 @@ defmodule VintageNet.Persistence.FlatFileTest do
     in_tmp(context.test, fn ->
       FlatFile.save("eth0", @config)
 
-      eth0_path = Path.join(@persistence_dir, "eth0")
+      persistence_dir = Application.get_env(:vintage_net, :persistence_dir)
+      eth0_path = Path.join(persistence_dir, "eth0")
       <<version, _oops, contents::binary>> = File.read!(eth0_path)
       File.write!(eth0_path, [<<version>>, contents])
 
