@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9.3
+
+* Bug fixes
+  * Be more robust to `PowerManager.init/1` failures. While this function
+    shouldn't raise, the effect of it raising was particularly destructive to
+    VintageNet and took down networking.
+  * Update `gen_state_machine` dependency to let the 3.0.0 release be used.
+
 ## v0.9.2
 
 * Bug fixes
