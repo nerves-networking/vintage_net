@@ -10,7 +10,8 @@ defmodule VintageNet.Persistence.FlatFile do
   # 33-              Network config run through :erlang.term_to_binary and
   #                  encrypted with AES in GCM mode
   @version 1
-  @mode :aes_gcm
+
+  # Yes, I'm aware that we're using AES 128 GCM
   @aad "AES256GCM"
 
   @moduledoc """
@@ -60,23 +61,42 @@ defmodule VintageNet.Persistence.FlatFile do
     secret_key = good_secret_key()
     plaintext = :erlang.term_to_binary(config)
     iv = :crypto.strong_rand_bytes(16)
-    {ciphertext, tag} = :crypto.block_encrypt(@mode, secret_key, iv, {@aad, plaintext, 16})
+    {ciphertext, tag} = encrypt(secret_key, iv, plaintext)
     <<@version, iv::16-bytes, tag::16-bytes, ciphertext::binary>>
   end
 
   defp deserialize_config(<<@version, iv::16-bytes, tag::16-bytes, ciphertext::binary>>) do
     secret_key = good_secret_key()
 
-    case :crypto.block_decrypt(:aes_gcm, secret_key, iv, {"AES256GCM", ciphertext, tag}) do
-      :error ->
-        {:error, :decryption_failed}
-
-      plaintext ->
+    case decrypt(secret_key, iv, ciphertext, tag) do
+      plaintext when is_binary(plaintext) ->
         non_raising_binary_to_term(plaintext)
+
+      _error ->
+        {:error, :decryption_failed}
     end
   end
 
   defp deserialize_config(_anything_else), do: {:error, :corrupt}
+
+  if :erlang.system_info(:otp_release) == '21' do
+    # Remove when OTP 21 is no longer supported.
+    defp encrypt(secret_key, iv, plaintext) do
+      :crypto.block_encrypt(:aes_gcm, secret_key, iv, {@aad, plaintext, 16})
+    end
+
+    defp decrypt(secret_key, iv, ciphertext, tag) do
+      :crypto.block_decrypt(:aes_gcm, secret_key, iv, {"AES256GCM", ciphertext, tag})
+    end
+  else
+    defp encrypt(secret_key, iv, plaintext) do
+      :crypto.crypto_one_time_aead(:aes_128_gcm, secret_key, iv, plaintext, @aad, 16, true)
+    end
+
+    defp decrypt(secret_key, iv, ciphertext, tag) do
+      :crypto.crypto_one_time_aead(:aes_128_gcm, secret_key, iv, ciphertext, @aad, tag, false)
+    end
+  end
 
   defp non_raising_binary_to_term(bin) do
     {:ok, :erlang.binary_to_term(bin)}
