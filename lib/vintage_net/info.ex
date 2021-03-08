@@ -109,7 +109,8 @@ defmodule VintageNet.Info do
   defp sanitize_configuration({key, _})
        when key in [
               :psk,
-              :password
+              :password,
+              :sae_password
             ] do
     {key, "...."}
   end
