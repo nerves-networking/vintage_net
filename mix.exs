@@ -90,7 +90,7 @@ defmodule VintageNet.MixProject do
       {:elixir_make, "~> 0.6", runtime: false},
       {:ex_doc, "~> 0.22", only: :docs, runtime: false},
       {:excoveralls, "~> 0.13", only: :test, runtime: false},
-      {:dialyxir, "~> 1.0.0", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
       {:muontrap, "~> 0.5.1 or ~> 0.6.0"},
       {:gen_state_machine, "~> 2.0.0 or ~> 2.1.0 or ~> 3.0.0"},
       {:credo, "~> 1.2", only: :test, runtime: false}
