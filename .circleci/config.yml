@@ -31,7 +31,7 @@ jobs:
           keys:
             - v1-mix-cache-{{ checksum "mix.lock" }}
       - run: mix deps.get
-      - run: mix coveralls.circle
+      - run: mix test
       - run: mix format --check-formatted
       - run: mix deps.unlock --check-unused
       - run: mix compile --warnings-as-errors
@@ -39,6 +39,7 @@ jobs:
       - run: mix hex.build
       - run: mix credo -a
       - run: mix dialyzer
+      - run: mix coveralls.circle || true
       - save_cache:
           key: v1-mix-cache-{{ checksum "mix.lock" }}
           paths:
