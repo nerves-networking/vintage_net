@@ -1,41 +1,41 @@
 defmodule VintageNetTest.CapturingUdhcpcHandler do
   @moduledoc false
 
-  @behaviour VintageNet.ToElixir.UdhcpcHandler
+  @behaviour VintageNet.OSEventDispatcher.UdhcpcHandler
 
   require Logger
 
   @doc """
   """
-  @impl VintageNet.ToElixir.UdhcpcHandler
+  @impl VintageNet.OSEventDispatcher.UdhcpcHandler
   def deconfig(ifname, info) do
     record(ifname, :deconfig, info)
   end
 
   @doc """
   """
-  @impl VintageNet.ToElixir.UdhcpcHandler
+  @impl VintageNet.OSEventDispatcher.UdhcpcHandler
   def leasefail(ifname, info) do
     record(ifname, :leasefail, info)
   end
 
   @doc """
   """
-  @impl VintageNet.ToElixir.UdhcpcHandler
+  @impl VintageNet.OSEventDispatcher.UdhcpcHandler
   def nak(ifname, info) do
     record(ifname, :nak, info)
   end
 
   @doc """
   """
-  @impl VintageNet.ToElixir.UdhcpcHandler
+  @impl VintageNet.OSEventDispatcher.UdhcpcHandler
   def renew(ifname, info) do
     record(ifname, :renew, info)
   end
 
   @doc """
   """
-  @impl VintageNet.ToElixir.UdhcpcHandler
+  @impl VintageNet.OSEventDispatcher.UdhcpcHandler
   def bound(ifname, info) do
     record(ifname, :bound, info)
   end

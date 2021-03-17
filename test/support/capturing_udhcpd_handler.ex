@@ -1,13 +1,13 @@
 defmodule VintageNetTest.CapturingUdhcpdHandler do
   @moduledoc false
 
-  @behaviour VintageNet.ToElixir.UdhcpdHandler
+  @behaviour VintageNet.OSEventDispatcher.UdhcpdHandler
 
   require Logger
 
   @doc """
   """
-  @impl VintageNet.ToElixir.UdhcpdHandler
+  @impl VintageNet.OSEventDispatcher.UdhcpdHandler
   def lease_update(ifname, lease_file) do
     record(ifname, :lease_update, lease_file)
   end

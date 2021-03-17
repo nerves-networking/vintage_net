@@ -132,7 +132,6 @@ Key                | Description
  ----------------- | ---------------------------
 config             | A list of default network configurations
 tmpdir             | Path to a temporary directory for VintageNet
-to_elixir_socket   | Name to use for the Unix domain socket for C to Elixir communication
 udhcpc_handler     | Module for handling notifications from `udhcpc`
 resolvconf         | Path to `/etc/resolv.conf`
 persistence        | Module for persisting network configurations

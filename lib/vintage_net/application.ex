@@ -10,7 +10,6 @@ defmodule VintageNet.Application do
           {:ok, pid()} | {:ok, pid(), Application.state()} | {:error, reason :: any()}
   def start(_type, _args) do
     args = Application.get_all_env(:vintage_net)
-    socket_path = Path.join(Keyword.get(args, :tmpdir), Keyword.get(args, :to_elixir_socket))
     hw_path_ifnames = Keyword.get(args, :ifnames, [])
 
     # Load the initial interface configuration and store in the
@@ -21,8 +20,11 @@ defmodule VintageNet.Application do
       {VintageNet.PropertyTable, properties: properties, name: VintageNet},
       {VintageNet.PredictableInterfaceName, hw_path_ifnames},
       VintageNet.PowerManager.Supervisor,
+      {BEAMNotify,
+       name: "vintage_net_comm",
+       report_env: true,
+       dispatcher: &VintageNet.OSEventDispatcher.dispatch/2},
       VintageNet.InterfacesMonitor,
-      {VintageNet.ToElixir.Server, socket_path},
       {VintageNet.NameResolver, args},
       VintageNet.RouteManager,
       {Registry, keys: :unique, name: VintageNet.Interface.Registry},

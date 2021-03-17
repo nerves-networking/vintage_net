@@ -1,4 +1,4 @@
-defmodule VintageNet.ToElixir.UdhcpdHandler do
+defmodule VintageNet.OSEventDispatcher.UdhcpdHandler do
   @moduledoc """
   A behaviour for handling notifications from udhcpd
 
@@ -6,9 +6,9 @@ defmodule VintageNet.ToElixir.UdhcpdHandler do
 
   ```elixir
   defmodule MyApp.UdhcpdHandler do
-    @behaviour VintageNet.ToElixir.UdhcpdHandler
+    @behaviour VintageNet.OSEventDispatcher.UdhcpdHandler
 
-    @impl VintageNet.ToElixir.UdhcpdHandler
+    @impl VintageNet.OSEventDispatcher.UdhcpdHandler
     def lease_update(ifname, report_data) do
       ...
     end
@@ -22,19 +22,8 @@ defmodule VintageNet.ToElixir.UdhcpdHandler do
   ```
   """
 
-  @type update_data :: map()
-
   @doc """
   The DHCP lease file was updated
   """
   @callback lease_update(VintageNet.ifname(), Path.t()) :: :ok
-
-  @doc """
-  Called internally by vintage_net to dispatch calls
-  """
-  @spec dispatch(atom(), VintageNet.ifname(), Path.t()) :: :ok
-  def dispatch(function, ifname, lease_file) do
-    handler = Application.get_env(:vintage_net, :udhcpd_handler)
-    apply(handler, function, [ifname, lease_file])
-  end
 end

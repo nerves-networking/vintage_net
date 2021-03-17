@@ -165,7 +165,11 @@ defmodule VintageNet.IP.DhcpdConfig do
                  "-f",
                  udhcpd_conf_path
                ],
-               Command.add_muon_options(stderr_to_stdout: true, log_output: :debug)
+               Command.add_muon_options(
+                 stderr_to_stdout: true,
+                 log_output: :debug,
+                 env: BEAMNotify.env(name: "vintage_net_comm", report_env: true)
+               )
              ]},
             id: :udhcpd
           )
@@ -184,7 +188,7 @@ defmodule VintageNet.IP.DhcpdConfig do
     interface #{ifname}
     pidfile #{pidfile}
     lease_file #{lease_file}
-    notify_file #{udhcpd_handler_path()}
+    notify_file #{BEAMNotify.bin_path()}
     """
 
     config = Enum.map(dhcpd, &to_udhcpd_string/1)
@@ -263,9 +267,5 @@ defmodule VintageNet.IP.DhcpdConfig do
     ip_list
     |> Enum.map(&IP.ip_to_string/1)
     |> Enum.intersperse(" ")
-  end
-
-  defp udhcpd_handler_path() do
-    Application.app_dir(:vintage_net, ["priv", "udhcpd_handler"])
   end
 end

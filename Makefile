@@ -42,13 +42,10 @@ ifeq ($(CROSSCOMPILE),)
         $(warning this should be done automatically.)
         $(warning .)
         $(warning Skipping some C compilation unless targets explicitly passed to make.)
-        DEFAULT_TARGETS ?= $(PREFIX) $(PREFIX)/to_elixir $(PREFIX)/udhcpc_handler $(PREFIX)/udhcpd_handler
+        DEFAULT_TARGETS ?= $(PREFIX)
     endif
 endif
 DEFAULT_TARGETS ?= $(PREFIX) \
-		   $(PREFIX)/to_elixir \
-		   $(PREFIX)/udhcpc_handler \
-		   $(PREFIX)/udhcpd_handler \
 		   $(PREFIX)/if_monitor
 
 # Enable for debug messages
@@ -72,12 +69,6 @@ install: $(BUILD) $(PREFIX) $(DEFAULT_TARGETS)
 $(BUILD)/%.o: src/%.c
 	$(CC) -c $(ERL_CFLAGS) $(CFLAGS) -o $@ $<
 
-$(PREFIX)/to_elixir: $(BUILD)/to_elixir.o
-	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -o $@
-
-$(PREFIX)/udhcpd_handler $(PREFIX)/udhcpc_handler: $(PREFIX)/to_elixir
-	ln -sf to_elixir $@
-
 $(PREFIX)/if_monitor: $(BUILD)/if_monitor.o
 	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -lmnl -o $@
 
@@ -85,10 +76,7 @@ $(PREFIX) $(BUILD):
 	mkdir -p $@
 
 clean:
-	$(RM) $(PREFIX)/to_elixir \
-	    $(PREFIX)/udhcpc_handler \
-	    $(PREFIX)/udhcpd_handler \
-	    $(PREFIX)/if_monitor \
+	$(RM) $(PREFIX)/if_monitor \
 	    $(BUILD)/*.o
 
 format:

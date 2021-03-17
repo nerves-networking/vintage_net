@@ -23,9 +23,14 @@ defmodule VintageNetTest.Utils do
              "-x",
              "hostname:#{hostname}",
              "-s",
-             Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])
+             BEAMNotify.bin_path()
            ],
-           [stderr_to_stdout: true, log_output: :debug, log_prefix: "udhcpc(#{ifname}): "]
+           [
+             stderr_to_stdout: true,
+             log_output: :debug,
+             log_prefix: "udhcpc(#{ifname}): ",
+             env: BEAMNotify.env(name: "vintage_net_comm", report_env: true)
+           ]
          ]},
       type: :worker
     }

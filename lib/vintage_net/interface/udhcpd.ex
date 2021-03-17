@@ -1,10 +1,10 @@
 defmodule VintageNet.Interface.Udhcpd do
   @moduledoc false
 
-  @behaviour VintageNet.ToElixir.UdhcpdHandler
+  @behaviour VintageNet.OSEventDispatcher.UdhcpdHandler
   require Logger
 
-  @impl VintageNet.ToElixir.UdhcpdHandler
+  @impl VintageNet.OSEventDispatcher.UdhcpdHandler
   def lease_update(ifname, lease_file) do
     case parse_leases(lease_file) do
       {:ok, leases} ->

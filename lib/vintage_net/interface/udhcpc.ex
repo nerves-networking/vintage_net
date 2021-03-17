@@ -1,16 +1,17 @@
 defmodule VintageNet.Interface.Udhcpc do
-  @behaviour VintageNet.ToElixir.UdhcpcHandler
+  @behaviour VintageNet.OSEventDispatcher.UdhcpcHandler
 
   @moduledoc false
 
-  alias VintageNet.{Command, InterfacesMonitor, NameResolver, RouteManager}
+  alias VintageNet.{Command, InterfacesMonitor, IP, NameResolver, RouteManager}
 
   require Logger
 
+  @spec deconfig(binary, any) :: :ok
   @doc """
   Handle deconfig reports from udhcpc
   """
-  @impl VintageNet.ToElixir.UdhcpcHandler
+  @impl VintageNet.OSEventDispatcher.UdhcpcHandler
   def deconfig(ifname, info) do
     Logger.info("#{ifname} dhcp deconfig: #{inspect(info)}")
 
@@ -45,7 +46,7 @@ defmodule VintageNet.Interface.Udhcpc do
   @doc """
   Handle leasefail reports from udhcpc
   """
-  @impl VintageNet.ToElixir.UdhcpcHandler
+  @impl VintageNet.OSEventDispatcher.UdhcpcHandler
   def leasefail(ifname, _info) do
     # NOTE: This message tends to clog up logs, so be careful when enabling it.
 
@@ -60,31 +61,30 @@ defmodule VintageNet.Interface.Udhcpc do
   @doc """
   Handle nak reports from udhcpc
   """
-  @impl VintageNet.ToElixir.UdhcpcHandler
+  @impl VintageNet.OSEventDispatcher.UdhcpcHandler
   def nak(ifname, info) do
     leasefail(ifname, info)
-    :ok
   end
 
-  defp broadcast_args(%{broadcast: broadcast}), do: ["broadcast", broadcast]
+  defp broadcast_args(%{"broadcast" => broadcast}), do: ["broadcast", broadcast]
   defp broadcast_args(_), do: []
 
-  defp netmask_args(%{subnet: subnet}), do: ["netmask", subnet]
+  defp netmask_args(%{"subnet" => subnet}), do: ["netmask", subnet]
   defp netmask_args(_), do: []
 
-  defp build_ifconfig_args(ifname, info) do
-    [ifname, info.ip] ++ broadcast_args(info) ++ netmask_args(info)
+  defp build_ifconfig_args(ifname, %{"ip" => ip} = info) do
+    [ifname, ip] ++ broadcast_args(info) ++ netmask_args(info)
   end
 
-  defp ip_subnet(%{ip: address, mask: mask}) do
-    {:ok, our_ip} = :inet.parse_address(to_charlist(address))
+  defp ip_subnet(%{"ip" => address, "mask" => mask}) do
+    {:ok, our_ip} = IP.ip_to_tuple(address)
     {our_ip, String.to_integer(mask)}
   end
 
   @doc """
   Handle renew reports from udhcpc
   """
-  @impl VintageNet.ToElixir.UdhcpcHandler
+  @impl VintageNet.OSEventDispatcher.UdhcpcHandler
   def renew(ifname, info) do
     Logger.debug("udhcpc.renew(#{ifname}): #{inspect(info)}")
 
@@ -98,16 +98,15 @@ defmodule VintageNet.Interface.Udhcpc do
     ifconfig_args = build_ifconfig_args(ifname, info)
     _ = Command.cmd("ifconfig", ifconfig_args)
 
-    case info[:router] do
-      routers when is_list(routers) ->
+    case info["router"] do
+      [first_router | _rest] ->
         ip_subnet = ip_subnet(info)
 
-        first_router = hd(routers)
-        {:ok, default_gateway} = :inet.parse_address(to_charlist(first_router))
+        {:ok, default_gateway} = IP.ip_to_tuple(first_router)
 
         RouteManager.set_route(ifname, [ip_subnet], default_gateway, :lan)
 
-      nil ->
+      _ ->
         :ok
     end
 
@@ -129,12 +128,12 @@ defmodule VintageNet.Interface.Udhcpc do
 
     domain =
       cond do
-        Map.has_key?(info, :search) ->
+        Map.has_key?(info, "search") ->
           # prefer rfc3359 domain search list (option 119) if available
-          Map.get(info, :search)
+          Map.get(info, "search")
 
-        Map.has_key?(info, :domain) ->
-          Map.get(info, :domain)
+        Map.has_key?(info, "domain") ->
+          Map.get(info, "domain")
 
         true ->
           ""
@@ -144,7 +143,7 @@ defmodule VintageNet.Interface.Udhcpc do
     # 	echo adding dns $i
     # 	echo "nameserver $i # $interface" >> $RESOLV_CONF
     # done
-    dns = Map.get(info, :dns, [])
+    dns = Map.get(info, "dns", [])
 
     NameResolver.setup(ifname, domain, dns)
     :ok
@@ -153,9 +152,8 @@ defmodule VintageNet.Interface.Udhcpc do
   @doc """
   Handle bound reports from udhcpc
   """
-  @impl VintageNet.ToElixir.UdhcpcHandler
+  @impl VintageNet.OSEventDispatcher.UdhcpcHandler
   def bound(ifname, info) do
     renew(ifname, info)
-    :ok
   end
 end

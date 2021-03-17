@@ -166,12 +166,13 @@ defmodule VintageNet.IP.IPv4Config do
                  "-x",
                  "hostname:#{hostname}",
                  "-s",
-                 udhcpc_handler_path()
+                 BEAMNotify.bin_path()
                ],
                Command.add_muon_options(
                  stderr_to_stdout: true,
                  log_output: :debug,
-                 log_prefix: "udhcpc(#{ifname}): "
+                 log_prefix: "udhcpc(#{ifname}): ",
+                 env: BEAMNotify.env(name: "vintage_net_comm", report_env: true)
                )
              ]},
             id: :udhcpc
@@ -255,9 +256,5 @@ defmodule VintageNet.IP.IPv4Config do
   defp get_hostname() do
     {:ok, hostname} = :inet.gethostname()
     to_string(hostname)
-  end
-
-  defp udhcpc_handler_path() do
-    Application.app_dir(:vintage_net, ["priv", "udhcpc_handler"])
   end
 end

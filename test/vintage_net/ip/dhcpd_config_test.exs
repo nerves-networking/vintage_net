@@ -155,7 +155,11 @@ defmodule VintageNet.IP.DhcpdConfigTest do
              [
                "udhcpd",
                ["-f", "tmpdir/udhcpd.conf.eth0"],
-               [stderr_to_stdout: true, log_output: :debug]
+               [
+                 stderr_to_stdout: true,
+                 log_output: :debug,
+                 env: BEAMNotify.env(name: "vintage_net_comm", report_env: true)
+               ]
              ]},
           type: :worker
         }
@@ -166,7 +170,7 @@ defmodule VintageNet.IP.DhcpdConfigTest do
          interface eth0
          pidfile tmpdir/udhcpd.eth0.pid
          lease_file tmpdir/udhcpd.eth0.leases
-         notify_file #{Application.app_dir(:vintage_net)}/priv/udhcpd_handler
+         notify_file #{BEAMNotify.bin_path()}
 
          auto_time 60
          conflict_time 200

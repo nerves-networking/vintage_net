@@ -1,4 +1,4 @@
-defmodule VintageNet.ToElixir.UdhcpcHandler do
+defmodule VintageNet.OSEventDispatcher.UdhcpcHandler do
   @moduledoc """
   A behaviour for handling notifications from udhcpc
 
@@ -6,9 +6,9 @@ defmodule VintageNet.ToElixir.UdhcpcHandler do
 
   ```elixir
   defmodule MyApp.UdhcpcHandler do
-    @behaviour VintageNet.ToElixir.UdhcpcHandler
+    @behaviour VintageNet.OSEventDispatcher.UdhcpcHandler
 
-    @impl VintageNet.ToElixir.UdhcpcHandler
+    @impl VintageNet.OSEventDispatcher.UdhcpcHandler
     def deconfig(ifname, data) do
       ...
     end
@@ -22,7 +22,33 @@ defmodule VintageNet.ToElixir.UdhcpcHandler do
   ```
   """
 
-  @type update_data :: map()
+  @typedoc """
+  Update data is the unmodified environment variable strings from udhcpc
+
+  The following is an example of update data, but it really depends
+  on what udhcpc wants to send:
+
+  ```elixir
+  %{
+    "broadcast" => "192.168.7.255",
+    "dns" => "192.168.7.1",
+    "domain" => "hunleth.lan",
+    "hostname" => "nerves-9780",
+    "interface" => "eth0",
+    "ip" => "192.168.7.190",
+    "lease" => "86400",
+    "mask" => "24",
+    "opt53" => "05",
+    "opt58" => "0000a8c0",
+    "opt59" => "00012750",
+    "router" => "192.168.7.1",
+    "serverid" => "192.168.7.1",
+    "siaddr" => "192.168.7.1",
+    "subnet" => "255.255.255.0"
+  }
+  ```
+  """
+  @type update_data :: %{String.t() => String.t()}
 
   @doc """
   Deconfigure the specified interface
@@ -48,13 +74,4 @@ defmodule VintageNet.ToElixir.UdhcpcHandler do
   Handle an assignment from the DHCP server
   """
   @callback bound(VintageNet.ifname(), update_data()) :: :ok
-
-  @doc """
-  Called internally by vintage_net to dispatch calls
-  """
-  @spec dispatch(atom(), VintageNet.ifname(), update_data()) :: :ok
-  def dispatch(function, ifname, update_data) do
-    handler = Application.get_env(:vintage_net, :udhcpc_handler)
-    apply(handler, function, [ifname, update_data])
-  end
 end

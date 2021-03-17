@@ -39,7 +39,6 @@ defmodule VintageNet.MixProject do
         config: [],
         max_interface_count: 8,
         tmpdir: "/tmp/vintage_net",
-        to_elixir_socket: "comms",
         path: "/usr/sbin:/usr/bin:/sbin:/bin",
         udhcpc_handler: VintageNet.Interface.Udhcpc,
         udhcpd_handler: VintageNet.Interface.Udhcpd,
@@ -87,13 +86,16 @@ defmodule VintageNet.MixProject do
 
   defp deps do
     [
-      {:elixir_make, "~> 0.6", runtime: false},
-      {:ex_doc, "~> 0.22", only: :docs, runtime: false},
-      {:excoveralls, "~> 0.13", only: :test, runtime: false},
-      {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:muontrap, "~> 0.5.1 or ~> 0.6.0"},
+      # Runtime dependencies
+      {:beam_notify, "~> 0.2.0"},
       {:gen_state_machine, "~> 2.0.0 or ~> 2.1.0 or ~> 3.0.0"},
-      {:credo, "~> 1.2", only: :test, runtime: false}
+      {:muontrap, "~> 0.5.1 or ~> 0.6.0"},
+      # Build dependencies
+      {:credo, "~> 1.2", only: :test, runtime: false},
+      {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
+      {:elixir_make, "~> 0.6", runtime: false},
+      {:excoveralls, "~> 0.13", only: :test, runtime: false},
+      {:ex_doc, "~> 0.22", only: :docs, runtime: false}
     ]
   end
 
