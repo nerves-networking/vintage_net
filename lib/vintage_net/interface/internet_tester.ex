@@ -26,7 +26,10 @@ defmodule VintageNet.Interface.InternetTester do
     internet_host = Application.get_env(:vintage_net, :internet_host)
 
     with {:ok, src_ip} <- get_interface_address(ifname),
-         {:ok, dest_ip} <- resolve_addr(internet_host),
+         # Note: No support for DNS since DNS can't be forced through
+         # an interface. I.e., errors on other interfaces mess up DNS
+         # even if the one of interest is ok.
+         {:ok, dest_ip} <- VintageNet.IP.ip_to_tuple(internet_host),
          {:ok, tcp} <- :gen_tcp.connect(dest_ip, @ping_port, [ip: src_ip], @ping_timeout) do
       _ = :gen_tcp.close(tcp)
       :ok
@@ -61,16 +64,4 @@ defmodule VintageNet.Interface.InternetTester do
 
   defp ipv4_addr?({:addr, {_, _, _, _}}), do: true
   defp ipv4_addr?(_), do: false
-
-  # Note: No support for DNS since DNS can't be forced through
-  # an interface. I.e., errors on other interfaces mess up DNS
-  # even if the one of interest is ok.
-  defp resolve_addr(address) when is_tuple(address) do
-    {:ok, address}
-  end
-
-  defp resolve_addr(address) when is_bitstring(address) or is_list(address) do
-    to_charlist(address)
-    |> :inet.parse_address()
-  end
 end
