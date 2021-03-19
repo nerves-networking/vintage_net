@@ -156,10 +156,11 @@ defmodule VintageNet.IP.IPv4Config do
       child_specs ++
         [
           Supervisor.child_spec(
-            {MuonTrap.Daemon,
+            {VintageNet.Interface.IfupDaemon,
              [
-               "udhcpc",
-               [
+               ifname: ifname,
+               command: "udhcpc",
+               args: [
                  "-f",
                  "-i",
                  ifname,
@@ -168,12 +169,13 @@ defmodule VintageNet.IP.IPv4Config do
                  "-s",
                  BEAMNotify.bin_path()
                ],
-               Command.add_muon_options(
-                 stderr_to_stdout: true,
-                 log_output: :debug,
-                 log_prefix: "udhcpc(#{ifname}): ",
-                 env: BEAMNotify.env(name: "vintage_net_comm", report_env: true)
-               )
+               opts:
+                 Command.add_muon_options(
+                   stderr_to_stdout: true,
+                   log_output: :debug,
+                   log_prefix: "udhcpc(#{ifname}): ",
+                   env: BEAMNotify.env(name: "vintage_net_comm", report_env: true)
+                 )
              ]},
             id: :udhcpc
           ),

@@ -10,29 +10,29 @@ defmodule VintageNetTest.Utils do
   def udhcpc_child_spec(ifname, hostname) do
     %{
       id: :udhcpc,
-      restart: :permanent,
-      shutdown: 500,
       start:
-        {MuonTrap.Daemon, :start_link,
+        {VintageNet.Interface.IfupDaemon, :start_link,
          [
-           "udhcpc",
            [
-             "-f",
-             "-i",
-             ifname,
-             "-x",
-             "hostname:#{hostname}",
-             "-s",
-             BEAMNotify.bin_path()
-           ],
-           [
-             stderr_to_stdout: true,
-             log_output: :debug,
-             log_prefix: "udhcpc(#{ifname}): ",
-             env: BEAMNotify.env(name: "vintage_net_comm", report_env: true)
+             ifname: ifname,
+             command: "udhcpc",
+             args: [
+               "-f",
+               "-i",
+               ifname,
+               "-x",
+               "hostname:#{hostname}",
+               "-s",
+               BEAMNotify.bin_path()
+             ],
+             opts: [
+               stderr_to_stdout: true,
+               log_output: :debug,
+               log_prefix: "udhcpc(#{ifname}): ",
+               env: BEAMNotify.env(name: "vintage_net_comm", report_env: true)
+             ]
            ]
-         ]},
-      type: :worker
+         ]}
     }
   end
 
