@@ -1,7 +1,9 @@
 defmodule VintageNet.Route.InterfaceInfo do
   alias VintageNet.Interface.Classification
 
-  @moduledoc false
+  @moduledoc """
+  Routing information for an interface
+  """
 
   defstruct default_gateway: nil,
             weight: 0,
