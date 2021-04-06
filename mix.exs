@@ -46,7 +46,8 @@ defmodule VintageNet.MixProject do
         persistence: VintageNet.Persistence.FlatFile,
         persistence_dir: "/root/vintage_net",
         persistence_secret: "obfuscate_things",
-        internet_host: {1, 1, 1, 1},
+        internet_host_list: [{{1, 1, 1, 1}, 80}],
+        internet_host: nil,
         regulatory_domain: "00",
         # Contain processes in cgroups by setting to:
         #   [cgroup_base: "vintage_net", cgroup_controllers: ["cpu"]]

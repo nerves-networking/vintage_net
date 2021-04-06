@@ -137,7 +137,7 @@ resolvconf         | Path to `/etc/resolv.conf`
 persistence        | Module for persisting network configurations
 persistence_dir    | Path to a directory for storing persisted configurations
 persistence_secret | A 16-byte secret or an MFA for getting a secret
-internet_host      | IP address for host to `ping` to check for Internet connectivity. Must be a tuple of integers (`{1, 1, 1, 1}`) or binary representation (`"1.1.1.1"`)
+internet_host_list | IP address/ports to try to connect to for checking Internet connectivity. Defaults to a list of large public DNS providers. E.g., `[{{1, 1, 1, 1}, 53}]`.
 regulatory_domain  | ISO 3166-1 alpha-2 country (`00` for global, `US`, etc.)
 
 ## Network interface configuration
