@@ -106,7 +106,7 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
           {:disconnected, @max_fails_in_a_row}
 
         {:error, :no_ipv4_address} ->
-          {:disconnected, @max_fails_in_a_row}
+          {:lan, @max_fails_in_a_row}
 
         {:error, reason} ->
           if strikes < @max_fails_in_a_row do
