@@ -156,6 +156,17 @@ defmodule VintageNetTest do
            }
   end
 
+  test "get configuration that does exist returns default value" do
+    assert nil == VintageNet.get_configuration("does not exist")
+    assert %{} == VintageNet.get_configuration("does not exist", %{})
+  end
+
+  test "get_configuration! raises a runtime error when the configuration does not exist" do
+    assert_raise RuntimeError, ~r/^No configuration for \w+/, fn ->
+      VintageNet.get_configuration!("does not exist")
+    end
+  end
+
   # Check that get, get_by_prefix, and match are available in the public
   # interface. Better tests should be else.
   test "get" do

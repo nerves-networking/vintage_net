@@ -148,9 +148,21 @@ defmodule VintageNet do
 
   @doc """
   Return the settings for the specified interface
+
+  If the configuration does not exist return the `default` value.
   """
-  @spec get_configuration(ifname()) :: map()
-  def get_configuration(ifname) do
+  @spec get_configuration(ifname(), default :: any()) :: map() | any()
+  def get_configuration(ifname, default \\ nil) do
+    PropertyTable.get(VintageNet, ["interface", ifname, "config"], default)
+  end
+
+  @doc """
+  Return the settings for the specified interface
+
+  If the configuration does not exist this will raise a `RuntimeError`.
+  """
+  @spec get_configuration!(ifname()) :: map()
+  def get_configuration!(ifname) do
     PropertyTable.get(VintageNet, ["interface", ifname, "config"]) ||
       raise RuntimeError, "No configuration for #{ifname}"
   end
