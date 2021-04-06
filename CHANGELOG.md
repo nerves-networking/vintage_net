@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.10.0
+
+This release is mostly backwards compatible. If you have created your own
+VintageNet technology, you may need to update your unit tests. If you are an end
+user of VintageNet, your code should continue to work unmodified.
+
+* Improvements
+  * The Internet connectivity check logic now supports a list of IP addresses
+    instead of just one. The default has been updated to include major public
+    DNS providers. The code checks them in succession until one responds. See
+    `:internet_host_list` config key in the README.md if you need to change it.
+  * Only start `udhcpc`/`udhcpd` when the network interface is up. This removes
+    pointless attempts to get an IP address and their associated logs. It
+    reduces connection time for wired Ethernet but doesn't affect WiFI.
+
+* Bug fixes
+  * Replace Crypto API calls that are no longer included with OTP 24.
+  * Redact SAE passwords
+
 ## v0.9.3
 
 * Bug fixes
