@@ -32,8 +32,16 @@ defmodule VintageNet.Interface.InternetTester do
       _ = :gen_tcp.close(tcp)
       :ok
     else
-      {:error, reason} -> {:error, reason}
-      posix_error -> {:error, posix_error}
+      {:error, :econnrefused} ->
+        # If the remote refuses the connection, then that means that it received it
+        # and we're connected to the internet!
+        :ok
+
+      {:error, reason} ->
+        {:error, reason}
+
+      posix_error ->
+        {:error, posix_error}
     end
   end
 
