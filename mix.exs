@@ -46,8 +46,20 @@ defmodule VintageNet.MixProject do
         persistence: VintageNet.Persistence.FlatFile,
         persistence_dir: "/root/vintage_net",
         persistence_secret: "obfuscate_things",
-        internet_host_list: [{{1, 1, 1, 1}, 80}],
-        internet_host: nil,
+        # List of reliable hosts used to check Internet connectivity
+        # Use IP addresses and port numbers here rather than names.
+        internet_host_list: [
+          # Cloudflare DNS over TCP
+          {{1, 1, 1, 1}, 53},
+          # Google public DNS over TCP
+          {{8, 8, 8, 8}, 53},
+          # OpenDNS
+          {{208, 67, 222, 222}, 53},
+          # Quad9
+          {{9, 9, 9, 9}, 53},
+          # Neustar
+          {{156, 154, 70, 5}, 53}
+        ],
         regulatory_domain: "00",
         # Contain processes in cgroups by setting to:
         #   [cgroup_base: "vintage_net", cgroup_controllers: ["cpu"]]
