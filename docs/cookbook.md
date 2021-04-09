@@ -124,6 +124,32 @@ keys.
 }
 ```
 
+If you're regularly switching between multiple networks, you can list them all
+under the `:networks` key. Note that it's currently not possible to mix networks
+that require static IP addresses with those that use DHCP.
+
+```elixir
+%{
+  type: VintageNetWiFi,
+  vintage_net_wifi: %{
+    networks: [
+      %{
+        key_mgmt: :wpa_psk,
+        ssid: "my_network_ssid",
+        psk: "a_passphrase_or_psk"
+      },
+      %{
+        key_mgmt: :wpa_psk,
+        ssid: "another_ssid",
+        psk: "a_passphrase_or_psk"
+      },
+      ...
+    ]
+  },
+  ipv4: %{method: :dhcp},
+}
+```
+
 ### Enterprise WiFi (PEAPv0/EAP-MSCHAPV2)
 
 Protected EAP (PEAP) is a common authentication protocol for enterprise WiFi networks.
