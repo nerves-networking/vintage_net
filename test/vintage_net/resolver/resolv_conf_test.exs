@@ -10,7 +10,7 @@ defmodule VintageNet.Resolver.ResolvConfTest do
   end
 
   test "empty resolvconf is empty" do
-    assert to_resolvconf(%{}) == ""
+    assert to_resolvconf(%{}) == "# This file is managed by VintageNet. Do not edit.\n\n"
   end
 
   test "one interface" do
@@ -19,9 +19,11 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     }
 
     output = """
-    search example.com
-    nameserver 1.1.1.1
-    nameserver 8.8.8.8
+    # This file is managed by VintageNet. Do not edit.
+
+    search example.com # From eth0
+    nameserver 1.1.1.1 # From eth0
+    nameserver 8.8.8.8 # From eth0
     """
 
     assert to_resolvconf(input) == output
@@ -34,12 +36,14 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     }
 
     output = """
-    search example.com
-    search example2.com
-    nameserver 1.1.1.1
-    nameserver 8.8.8.8
-    nameserver 1.1.1.2
-    nameserver 8.8.8.9
+    # This file is managed by VintageNet. Do not edit.
+
+    search example.com # From eth0
+    search example2.com # From wlan0
+    nameserver 1.1.1.1 # From eth0
+    nameserver 1.1.1.2 # From wlan0
+    nameserver 8.8.8.8 # From eth0
+    nameserver 8.8.8.9 # From wlan0
     """
 
     assert to_resolvconf(input) == output
@@ -51,8 +55,10 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     }
 
     output = """
-    nameserver 1.1.1.1
-    nameserver 8.8.8.8
+    # This file is managed by VintageNet. Do not edit.
+
+    nameserver 1.1.1.1 # From eth0
+    nameserver 8.8.8.8 # From eth0
     """
 
     assert to_resolvconf(input) == output
@@ -66,10 +72,30 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     }
 
     output = """
-    search example.com
-    search aaa-in-between.com
-    nameserver 1.1.1.1
-    nameserver 8.8.8.8
+    # This file is managed by VintageNet. Do not edit.
+
+    search aaa-in-between.com # From eth1
+    search example.com # From wlan0,eth0
+    nameserver 1.1.1.1 # From wlan0,eth1,eth0
+    nameserver 8.8.8.8 # From wlan0,eth1,eth0
+    """
+
+    assert to_resolvconf(input) == output
+  end
+
+  test "multiple interface uniqueness" do
+    input = %{
+      "eth0" => %{domain: "example.com", name_servers: [{1, 1, 1, 1}, {8, 8, 8, 8}]},
+      "wlan0" => %{domain: "example.com", name_servers: [{8, 8, 4, 4}, {1, 1, 1, 1}]}
+    }
+
+    output = """
+    # This file is managed by VintageNet. Do not edit.
+
+    search example.com # From wlan0,eth0
+    nameserver 1.1.1.1 # From wlan0,eth0
+    nameserver 8.8.4.4 # From wlan0
+    nameserver 8.8.8.8 # From eth0
     """
 
     assert to_resolvconf(input) == output

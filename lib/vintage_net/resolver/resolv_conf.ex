@@ -1,5 +1,6 @@
 defmodule VintageNet.Resolver.ResolvConf do
   @moduledoc false
+  alias VintageNet.IP
 
   # Convert name resolver configurations into
   # /etc/resolv.conf contents
@@ -16,47 +17,33 @@ defmodule VintageNet.Resolver.ResolvConf do
 
   @spec to_config(entry_map()) :: iolist()
   def to_config(entries) do
-    domains = search_domains(entries)
-    name_servers = all_name_servers(entries)
+    domains = Enum.reduce(entries, %{}, &add_domain/2)
+    name_servers = Enum.reduce(entries, %{}, &add_name_servers/2)
 
-    [Enum.map(domains, &domain_text/1), Enum.map(name_servers, &name_server_text/1)]
+    [
+      "# This file is managed by VintageNet. Do not edit.\n\n",
+      Enum.map(domains, &domain_text/1),
+      Enum.map(name_servers, &name_server_text/1)
+    ]
   end
 
-  defp domain_text(domain), do: ["search ", domain, "\n"]
+  defp domain_text({domain, ifnames}),
+    do: ["search ", domain, " # From ", Enum.join(ifnames, ","), "\n"]
 
-  defp name_server_text(server), do: ["nameserver ", ntoa!(server), "\n"]
+  defp name_server_text({server, ifnames}),
+    do: ["nameserver ", IP.ip_to_string(server), " # From ", Enum.join(ifnames, ","), "\n"]
 
-  defp all_name_servers(entries) do
-    entries
-    |> Enum.flat_map(&name_servers/1)
-    |> Enum.uniq()
+  defp add_domain({ifname, %{domain: domain}}, acc) when not is_nil(domain) do
+    Map.update(acc, domain, [ifname], fn ifnames -> [ifname | ifnames] end)
   end
 
-  defp search_domains(entries) do
-    entries
-    |> Enum.map(&domain/1)
-    |> Enum.filter(&is_binary/1)
-    |> Enum.uniq()
+  defp add_domain(_other, acc), do: acc
+
+  defp add_name_servers({ifname, %{name_servers: servers}}, acc) do
+    Enum.reduce(servers, acc, &add_name_server(ifname, &1, &2))
   end
 
-  defp domain({_ifname, %{domain: domain}}) when is_binary(domain) and domain != "",
-    do: domain
-
-  defp domain(_), do: nil
-
-  defp name_servers({_ifname, %{name_servers: servers}}) do
-    for server <- servers, do: server
-  end
-
-  defp name_servers(_), do: []
-
-  defp ntoa!(ip) do
-    case :inet.ntoa(ip) do
-      {:error, _reason} ->
-        raise ArgumentError, "Invalid IP: #{inspect(ip)}"
-
-      result ->
-        result
-    end
+  defp add_name_server(ifname, server, acc) do
+    Map.update(acc, server, [ifname], fn ifnames -> [ifname | ifnames] end)
   end
 end

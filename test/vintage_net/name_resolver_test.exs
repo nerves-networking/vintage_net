@@ -23,7 +23,10 @@ defmodule VintageNet.NameResolverTest do
     in_tmp(context.test, fn ->
       NameResolver.start_link(resolvconf: @resolvconf_path)
       assert File.exists?(@resolvconf_path)
-      assert File.read!(@resolvconf_path) == ""
+
+      assert File.read!(@resolvconf_path) ==
+               "# This file is managed by VintageNet. Do not edit.\n\n"
+
       NameResolver.stop()
     end)
   end
@@ -36,14 +39,16 @@ defmodule VintageNet.NameResolverTest do
       contents = File.read!(@resolvconf_path)
 
       assert contents == """
-             search example.com
-             nameserver 1.1.1.1
-             nameserver 8.8.8.8
+             # This file is managed by VintageNet. Do not edit.
+
+             search example.com # From eth0
+             nameserver 1.1.1.1 # From eth0
+             nameserver 8.8.8.8 # From eth0
              """
 
       NameResolver.clear("eth0")
       contents = File.read!(@resolvconf_path)
-      assert contents == ""
+      assert contents == "# This file is managed by VintageNet. Do not edit.\n\n"
 
       NameResolver.stop()
     end)
@@ -58,21 +63,25 @@ defmodule VintageNet.NameResolverTest do
       contents = File.read!(@resolvconf_path)
 
       assert contents == """
-             search example.com
-             search example2.com
-             nameserver 1.1.1.1
-             nameserver 8.8.8.8
-             nameserver 1.1.1.2
-             nameserver 8.8.8.9
+             # This file is managed by VintageNet. Do not edit.
+
+             search example.com # From eth0
+             search example2.com # From wlan0
+             nameserver 1.1.1.1 # From eth0
+             nameserver 1.1.1.2 # From wlan0
+             nameserver 8.8.8.8 # From eth0
+             nameserver 8.8.8.9 # From wlan0
              """
 
       NameResolver.clear("eth0")
       contents = File.read!(@resolvconf_path)
 
       assert contents == """
-             search example2.com
-             nameserver 1.1.1.2
-             nameserver 8.8.8.9
+             # This file is managed by VintageNet. Do not edit.
+
+             search example2.com # From wlan0
+             nameserver 1.1.1.2 # From wlan0
+             nameserver 8.8.8.9 # From wlan0
              """
 
       NameResolver.stop()
@@ -85,7 +94,10 @@ defmodule VintageNet.NameResolverTest do
       NameResolver.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
       NameResolver.setup("wlan0", "example2.com", ["1.1.1.2", "8.8.8.9"])
       NameResolver.clear_all()
-      assert File.read!(@resolvconf_path) == ""
+
+      assert File.read!(@resolvconf_path) ==
+               "# This file is managed by VintageNet. Do not edit.\n\n"
+
       NameResolver.stop()
     end)
   end
@@ -98,13 +110,15 @@ defmodule VintageNet.NameResolverTest do
       contents = File.read!(@resolvconf_path)
 
       assert contents == """
-             search example.com
-             nameserver 1.1.1.1
+             # This file is managed by VintageNet. Do not edit.
+
+             search example.com # From eth0
+             nameserver 1.1.1.1 # From eth0
              """
 
       NameResolver.clear("eth0")
       contents = File.read!(@resolvconf_path)
-      assert contents == ""
+      assert contents == "# This file is managed by VintageNet. Do not edit.\n\n"
 
       NameResolver.stop()
     end)
@@ -118,12 +132,14 @@ defmodule VintageNet.NameResolverTest do
       contents = File.read!(@resolvconf_path)
 
       assert contents == """
-             nameserver 1.1.1.1
+             # This file is managed by VintageNet. Do not edit.
+
+             nameserver 1.1.1.1 # From eth0
              """
 
       NameResolver.clear("eth0")
       contents = File.read!(@resolvconf_path)
-      assert contents == ""
+      assert contents == "# This file is managed by VintageNet. Do not edit.\n\n"
 
       NameResolver.stop()
     end)
