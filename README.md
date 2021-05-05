@@ -139,6 +139,7 @@ persistence_dir    | Path to a directory for storing persisted configurations
 persistence_secret | A 16-byte secret or an MFA for getting a secret
 internet_host_list | IP address/ports to try to connect to for checking Internet connectivity. Defaults to a list of large public DNS providers. E.g., `[{{1, 1, 1, 1}, 53}]`.
 regulatory_domain  | ISO 3166-1 alpha-2 country (`00` for global, `US`, etc.)
+additional_name_servers     | List of DNS servers to be used in addition to any supplied by an interface. E.g., `[{1, 1, 1, 1}, {8, 8, 8, 8}]`
 
 ## Network interface configuration
 

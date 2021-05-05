@@ -144,4 +144,36 @@ defmodule VintageNet.NameResolverTest do
       NameResolver.stop()
     end)
   end
+
+  test "poorly formatted IP addresses don't crash", context do
+    in_tmp(context.test, fn ->
+      {:ok, _pid} =
+        NameResolver.start_link(
+          resolvconf: @resolvconf_path,
+          additional_name_servers: [{8, 8, 8, 8}, {1, 2}]
+        )
+
+      NameResolver.setup("eth0", nil, [{1, 1, 1, 1}])
+
+      contents = File.read!(@resolvconf_path)
+
+      assert contents == """
+             # This file is managed by VintageNet. Do not edit.
+
+             nameserver 1.1.1.1 # From eth0
+             nameserver 8.8.8.8 # From global
+             """
+
+      NameResolver.clear("eth0")
+      contents = File.read!(@resolvconf_path)
+
+      assert contents == """
+             # This file is managed by VintageNet. Do not edit.
+
+             nameserver 8.8.8.8 # From global
+             """
+
+      NameResolver.stop()
+    end)
+  end
 end

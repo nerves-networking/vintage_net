@@ -3,9 +3,9 @@ defmodule VintageNet.Resolver.ResolvConfTest do
   alias VintageNet.Resolver.ResolvConf
 
   # Helper to flatten return value
-  defp to_resolvconf(map) do
+  defp to_resolvconf(map, additional_name_servers \\ []) do
     map
-    |> ResolvConf.to_config()
+    |> ResolvConf.to_config(additional_name_servers)
     |> IO.iodata_to_binary()
   end
 
@@ -99,5 +99,22 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     """
 
     assert to_resolvconf(input) == output
+  end
+
+  test "additional nameservers" do
+    input = %{
+      "eth0" => %{domain: "example.com", name_servers: [{8, 8, 8, 8}, {1, 1, 1, 1}]}
+    }
+
+    output = """
+    # This file is managed by VintageNet. Do not edit.
+
+    search example.com # From eth0
+    nameserver 1.1.1.1 # From global,eth0
+    nameserver 8.8.4.4 # From global
+    nameserver 8.8.8.8 # From eth0
+    """
+
+    assert to_resolvconf(input, [{1, 1, 1, 1}, {8, 8, 4, 4}]) == output
   end
 end
