@@ -14,11 +14,15 @@ defmodule VintageNet.Resolver.ResolvConf do
 
   @typedoc "All entries"
   @type entry_map :: %{VintageNet.ifname() => entry()}
+  @type additional_name_servers :: [:inet.ip_address()]
 
-  @spec to_config(entry_map()) :: iolist()
-  def to_config(entries) do
+  @spec to_config(entry_map(), additional_name_servers) :: iolist()
+  def to_config(entries, additional_name_servers) do
     domains = Enum.reduce(entries, %{}, &add_domain/2)
     name_servers = Enum.reduce(entries, %{}, &add_name_servers/2)
+
+    name_servers =
+      Enum.reduce(additional_name_servers, name_servers, &add_name_server("global", &1, &2))
 
     [
       "# This file is managed by VintageNet. Do not edit.\n\n",

@@ -1,5 +1,6 @@
 defmodule VintageNet.NameResolver do
   use GenServer
+  require Logger
   alias VintageNet.IP
   alias VintageNet.Resolver.ResolvConf
 
@@ -23,16 +24,21 @@ defmodule VintageNet.NameResolver do
 
   defmodule State do
     @moduledoc false
-    defstruct [:path, :entries]
+    defstruct [:path, :entries, :additional_name_servers]
   end
 
   @doc """
   Start the resolv.conf manager.
+
+  Accepted args:
+
+  * `resolvconf` - path to the resolvconf file
+  * `additional_name_servers` - list of additional servers
   """
   @spec start_link(keyword) :: GenServer.on_start()
   def start_link(args) do
-    resolvconf_path = Keyword.get(args, :resolvconf)
-    GenServer.start_link(__MODULE__, resolvconf_path, name: __MODULE__)
+    relevant_args = Keyword.take(args, [:resolvconf, :additional_name_servers])
+    GenServer.start_link(__MODULE__, relevant_args, name: __MODULE__)
   end
 
   @doc """
@@ -73,8 +79,19 @@ defmodule VintageNet.NameResolver do
   ## GenServer
 
   @impl GenServer
-  def init(resolvconf_path) do
-    state = %State{path: resolvconf_path, entries: %{}}
+  def init(args) do
+    resolvconf_path = Keyword.get(args, :resolvconf)
+
+    additional_name_servers =
+      Keyword.get(args, :additional_name_servers, [])
+      |> Enum.reduce([], &ip_to_tuple_safe/2)
+
+    state = %State{
+      path: resolvconf_path,
+      entries: %{},
+      additional_name_servers: additional_name_servers
+    }
+
     write_resolvconf(state)
     {:ok, state}
   end
@@ -103,7 +120,25 @@ defmodule VintageNet.NameResolver do
     {:reply, :ok, state}
   end
 
-  defp write_resolvconf(%State{path: path, entries: entries}) do
-    File.write!(path, ResolvConf.to_config(entries))
+  defp write_resolvconf(%State{
+         path: path,
+         entries: entries,
+         additional_name_servers: additional_name_servers
+       }) do
+    File.write!(path, ResolvConf.to_config(entries, additional_name_servers))
+  end
+
+  @spec ip_to_tuple_safe(VintageNet.any_ip_address(), [:inet.ip_address()]) :: [
+          :inet.ip_address()
+        ]
+  defp ip_to_tuple_safe(ip, acc) do
+    case IP.ip_to_tuple(ip) do
+      {:error, reason} ->
+        Logger.error("Failed to parse IP address: #{inspect(ip)} (#{reason})")
+        acc
+
+      {:ok, ip} ->
+        [ip | acc]
+    end
   end
 end
