@@ -37,7 +37,7 @@ defmodule VintageNet.Resolver.ResolvConf do
   defp name_server_text({server, ifnames}),
     do: ["nameserver ", IP.ip_to_string(server), " # From ", Enum.join(ifnames, ","), "\n"]
 
-  defp add_domain({ifname, %{domain: domain}}, acc) when not is_nil(domain) do
+  defp add_domain({ifname, %{domain: domain}}, acc) when is_binary(domain) and domain != "" do
     Map.update(acc, domain, [ifname], fn ifnames -> [ifname | ifnames] end)
   end
 

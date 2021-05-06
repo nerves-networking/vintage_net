@@ -64,6 +64,21 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     assert to_resolvconf(input) == output
   end
 
+  test "empty search domain" do
+    input = %{
+      "eth0" => %{domain: "", name_servers: [{1, 1, 1, 1}, {8, 8, 8, 8}]}
+    }
+
+    output = """
+    # This file is managed by VintageNet. Do not edit.
+
+    nameserver 1.1.1.1 # From eth0
+    nameserver 8.8.8.8 # From eth0
+    """
+
+    assert to_resolvconf(input) == output
+  end
+
   test "pruning redundant entries" do
     input = %{
       "eth0" => %{domain: "example.com", name_servers: [{1, 1, 1, 1}, {8, 8, 8, 8}]},
