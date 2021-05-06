@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.10.1
+
+* Improvements
+  * There's now an `:additional_name_servers` global configuration key so that
+    it's possible to force name servers to always be in the list to use. For
+    example, if you don't trust that you'll always get good name servers from
+    DHCP, you can add a few public name servers to this list.
+  * `/etc/resolv.conf` now has nice comments on where configuration items come
+    from. Thanks to Connor Rigby for this idea and implementation.
+
 ## v0.10.0
 
 This release is mostly backwards compatible. If you have created your own
