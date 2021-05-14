@@ -147,6 +147,33 @@ defmodule VintageNet do
   end
 
   @doc """
+  Configure an interface to use the defaults
+
+  This configures an interface to the defaults found in the application
+  environment (`config.exs`). If the application environment doesn't have a
+  default configuration, the interface is deconfigured. On reboot, the
+  interface will continue to use the defaults and if a new version of firmware
+  updates the defaults, it will use those.
+  """
+  @spec reset_to_defaults(ifname()) :: :ok | {:error, any()}
+  def reset_to_defaults(ifname) do
+    with :ok <- configure(ifname, default_config(ifname)) do
+      # Clear out the persistence file so that if the defaults
+      # change that the new ones will be used.
+      VintageNet.Persistence.call(:clear, [ifname])
+    end
+  end
+
+  defp default_config(ifname) do
+    Application.get_env(:vintage_net, :config)
+    |> List.keyfind(ifname, 0)
+    |> case do
+      {^ifname, config} -> config
+      _anything_else -> %{type: VintageNet.Technology.Null}
+    end
+  end
+
+  @doc """
   Return the settings for the specified interface
   """
   @spec get_configuration(ifname()) :: map()
