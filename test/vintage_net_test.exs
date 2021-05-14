@@ -156,6 +156,45 @@ defmodule VintageNetTest do
            }
   end
 
+  describe "resets interfaces to defaults" do
+    test "already set to defaults" do
+      path = Path.join(Application.get_env(:vintage_net, :persistence_dir), "bogus0")
+
+      refute File.exists?(path)
+      :ok = VintageNet.reset_to_defaults("bogus0")
+      refute File.exists?(path)
+      assert %{bogus: 0} = VintageNet.get_configuration("bogus0")
+    end
+
+    test "unconfigured in defaults" do
+      path = Path.join(Application.get_env(:vintage_net, :persistence_dir), "bogus1")
+
+      assert File.exists?(path)
+      :ok = VintageNet.reset_to_defaults("bogus1")
+      refute File.exists?(path)
+      assert %{type: VintageNet.Technology.Null} == VintageNet.get_configuration("bogus1")
+    end
+
+    test "overridden by a configuration" do
+      path = Path.join(Application.get_env(:vintage_net, :persistence_dir), "bogus2")
+
+      assert File.exists?(path)
+      :ok = VintageNet.reset_to_defaults("bogus2")
+      refute File.exists?(path)
+      # The default for bogus2 is -1
+      assert %{bogus: -1} = VintageNet.get_configuration("bogus2")
+    end
+
+    test "unknown network interface" do
+      path = Path.join(Application.get_env(:vintage_net, :persistence_dir), "unknown1")
+
+      refute File.exists?(path)
+      :ok = VintageNet.reset_to_defaults("unknown1")
+      refute File.exists?(path)
+      assert %{type: VintageNet.Technology.Null} == VintageNet.get_configuration("unknown1")
+    end
+  end
+
   # Check that get, get_by_prefix, and match are available in the public
   # interface. Better tests should be else.
   test "get" do
