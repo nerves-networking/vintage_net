@@ -53,6 +53,7 @@ defmodule VintageNet.PropertyTable.Table do
     |> Enum.sort()
   end
 
+  @dialyzer {:nowarn_function, append: 1}
   defp append([]), do: :"$1"
   defp append([h]), do: [h | :"$1"]
   defp append([h | t]), do: [h | append(t)]
