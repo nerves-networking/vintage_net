@@ -154,9 +154,7 @@ defmodule VintageNet.PredictableInterfaceName do
         %{hw_path: ^hw_path, ifname: rename_to} = rename, renamed ->
           if is_dupe?(renamed, hw_path) do
             Logger.warn(
-              "Not renaming #{ifname} because another interface already matched the hw_path: #{
-                hw_path
-              }"
+              "Not renaming #{ifname} because another interface already matched the hw_path: #{hw_path}"
             )
 
             renamed
