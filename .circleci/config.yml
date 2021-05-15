@@ -78,28 +78,6 @@ jobs:
       - run: mix deps.get
       - run: mix test
 
-  build_elixir_1_8_otp_22:
-    docker:
-      - image: hexpm/elixir:1.8.2-erlang-22.3.4.18-alpine-3.13.3
-    <<: *defaults
-    steps:
-      - checkout
-      - <<: *install_hex_rebar
-      - <<: *install_system_deps
-      - run: mix deps.get
-      - run: mix test
-
-  build_elixir_1_7_otp_21:
-    docker:
-      - image: hexpm/elixir:1.7.4-erlang-21.3.8.22-alpine-3.13.3
-    <<: *defaults
-    steps:
-      - checkout
-      - <<: *install_hex_rebar
-      - <<: *install_system_deps
-      - run: mix deps.get
-      - run: mix test
-
 workflows:
   version: 2
   build_test:
@@ -108,5 +86,3 @@ workflows:
       - build_elixir_1_11_otp_23
       - build_elixir_1_10_otp_23
       - build_elixir_1_9_otp_22
-      - build_elixir_1_8_otp_22
-      - build_elixir_1_7_otp_21
