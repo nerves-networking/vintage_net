@@ -143,9 +143,7 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
 
     if strikes < @max_fails_in_a_row do
       Logger.debug(
-        "#{state.ifname}: Internet check failed to #{inspect(hd(state.hosts))} (#{inspect(reason)}): #{
-          strikes
-        }/#{@max_fails_in_a_row} strikes"
+        "#{state.ifname}: Internet check failed to #{inspect(hd(state.hosts))} (#{inspect(reason)}): #{strikes}/#{@max_fails_in_a_row} strikes"
       )
 
       %{state | connectivity: :internet, strikes: strikes, hosts: rotate_list(state.hosts)}
@@ -230,9 +228,7 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
 
       host ->
         Logger.warn(
-          "VintageNet: Legacy :internet_host key is in use. Please change this to `internet_host_list: [{#{
-            inspect(host)
-          }, 80}]."
+          "VintageNet: Legacy :internet_host key is in use. Please change this to `internet_host_list: [{#{inspect(host)}, 80}]."
         )
 
         [{host, 80}]
