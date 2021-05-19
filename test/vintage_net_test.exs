@@ -50,6 +50,9 @@ defmodule VintageNetTest do
       ])
 
       Application.start(:vintage_net)
+
+      # Loading of configurations is async and sometimes fails without short sleep
+      Process.sleep(10)
     end)
 
     # Restore the configuration and persistance state to the original way
