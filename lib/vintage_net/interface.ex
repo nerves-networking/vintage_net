@@ -736,9 +736,9 @@ defmodule VintageNet.Interface do
 
     if state != :configured do
       # Once a state is `:configured`, then the configuration provides the connection
-      # status. When not configured, report it as `:disconnected` to avoid any confusion
-      # with stale or unset values.
-      PropertyTable.put(VintageNet, ["interface", ifname, "connection"], :disconnected)
+      # status. When not configured, make sure there are no routing tables entries or
+      # stale properties.
+      RouteManager.set_connection_status(ifname, :disconnected)
     end
   end
 

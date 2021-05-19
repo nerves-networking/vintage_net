@@ -2,7 +2,7 @@ defmodule VintageNet.Interface.LANConnectivityChecker do
   use GenServer
   require Logger
 
-  alias VintageNet.{PropertyTable, RouteManager}
+  alias VintageNet.RouteManager
 
   @moduledoc """
   This GenServer monitors a network interface for LAN connectivity
@@ -35,12 +35,12 @@ defmodule VintageNet.Interface.LANConnectivityChecker do
 
     case VintageNet.get(lower_up_property(ifname)) do
       true ->
-        set_connectivity(ifname, :lan)
+        RouteManager.set_connection_status(ifname, :lan)
 
       _not_true ->
         # If the physical layer isn't up, don't start polling until
         # we're notified that it is available.
-        set_connectivity(ifname, :disconnected)
+        RouteManager.set_connection_status(ifname, :disconnected)
     end
 
     {:noreply, state}
@@ -52,7 +52,7 @@ defmodule VintageNet.Interface.LANConnectivityChecker do
         %{ifname: ifname} = state
       ) do
     # Physical layer is down. We're definitely disconnected.
-    set_connectivity(ifname, :disconnected)
+    RouteManager.set_connection_status(ifname, :disconnected)
     {:noreply, state}
   end
 
@@ -64,7 +64,7 @@ defmodule VintageNet.Interface.LANConnectivityChecker do
     # Physical layer is up. Optimistically assume that the LAN is accessible.
 
     # NOTE: Consider triggering based on whether the interface has an IP address or not.
-    set_connectivity(ifname, :lan)
+    RouteManager.set_connection_status(ifname, :lan)
 
     {:noreply, state}
   end
@@ -75,13 +75,8 @@ defmodule VintageNet.Interface.LANConnectivityChecker do
         %{ifname: ifname} = state
       ) do
     # The interface was completely removed!
-    if old_value, do: set_connectivity(ifname, :disconnected)
+    if old_value, do: RouteManager.set_connection_status(ifname, :disconnected)
     {:noreply, state}
-  end
-
-  defp set_connectivity(ifname, connectivity) do
-    RouteManager.set_connection_status(ifname, connectivity)
-    PropertyTable.put(VintageNet, ["interface", ifname, "connection"], connectivity)
   end
 
   defp lower_up_property(ifname) do
