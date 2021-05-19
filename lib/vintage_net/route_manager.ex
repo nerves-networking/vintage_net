@@ -125,25 +125,7 @@ defmodule VintageNet.RouteManager do
   def handle_call({:set_route, ifname, ip_subnets, default_gateway, status}, _from, state) do
     Logger.info("RouteManager: set_route #{ifname} -> #{inspect(status)}")
 
-    # The weight parameter prioritizes interfaces of the same type and connectivity.
-    # All weights for interfaces of the same time must be different. I.e., we don't
-    # leave it to chance which one is used. Also, bandwidth sharing of interfaces
-    # can't be accomplished by giving interfaces the same low level priority with
-    # how things are set up anyway.
-    #
-    # It will likely be necessary to expose this to users who have more than one
-    # of the same interface type available. For now, lower numbered interfaces
-    # have priority. For example, eth0 is used over eth1, etc. The 10 is hardcoded
-    # to correspond to the calculation in classification.ex.
-    weight = rem(Classification.to_instance(ifname), 10)
-
-    ifentry = %InterfaceInfo{
-      interface_type: Classification.to_type(ifname),
-      weight: weight,
-      ip_subnets: ip_subnets,
-      default_gateway: default_gateway,
-      status: status
-    }
+    ifentry = new_interface_info(ifname, ip_subnets, default_gateway, status)
 
     new_state =
       put_in(state.interfaces[ifname], ifentry)
@@ -163,17 +145,20 @@ defmodule VintageNet.RouteManager do
 
   @impl GenServer
   def handle_call({:clear_route, ifname}, _from, state) do
-    new_state =
-      if Map.has_key?(state.interfaces, ifname) do
-        Logger.info("RouteManager: clear_route #{ifname}")
+    if Map.has_key?(state.interfaces, ifname) do
+      Logger.info("RouteManager: clear_route #{ifname}")
 
+      # Need to force the property to disconnected since we're removing it from the map.
+      VintageNet.PropertyTable.put(VintageNet, ["interface", ifname, "connection"], :disconnected)
+
+      new_state =
         %{state | interfaces: Map.delete(state.interfaces, ifname)}
         |> update_route_tables()
-      else
-        state
-      end
 
-    {:reply, :ok, new_state}
+      {:reply, :ok, new_state}
+    else
+      {:reply, :ok, state}
+    end
   end
 
   @impl GenServer
@@ -186,6 +171,28 @@ defmodule VintageNet.RouteManager do
     {:reply, :ok, new_state}
   end
 
+  defp new_interface_info(ifname, ip_subnets, default_gateway, status) do
+    # The weight parameter prioritizes interfaces of the same type and connectivity.
+    # All weights for interfaces of the same time must be different. I.e., we don't
+    # leave it to chance which one is used. Also, bandwidth sharing of interfaces
+    # can't be accomplished by giving interfaces the same low level priority with
+    # how things are set up anyway.
+    #
+    # It will likely be necessary to expose this to users who have more than one
+    # of the same interface type available. For now, lower numbered interfaces
+    # have priority. For example, eth0 is used over eth1, etc. The 10 is hardcoded
+    # to correspond to the calculation in classification.ex.
+    weight = rem(Classification.to_instance(ifname), 10)
+
+    %InterfaceInfo{
+      interface_type: Classification.to_type(ifname),
+      weight: weight,
+      ip_subnets: ip_subnets,
+      default_gateway: default_gateway,
+      status: status
+    }
+  end
+
   # Only process routes if the status changes
   defp update_connection_status(
          %State{interfaces: interfaces} = state,
@@ -194,7 +201,14 @@ defmodule VintageNet.RouteManager do
        ) do
     case interfaces[ifname] do
       nil ->
-        state
+        Logger.warn(
+          "RouteManager: set_connection_status to #{inspect(new_status)} on unknown ifname: #{ifname}"
+        )
+
+        ifentry = new_interface_info(ifname, [], nil, new_status)
+
+        put_in(state.interfaces[ifname], ifentry)
+        |> update_route_tables()
 
       ifentry ->
         if ifentry.status != new_status do
@@ -219,8 +233,17 @@ defmodule VintageNet.RouteManager do
     Enum.each(route_delta, &handle_delta/1)
 
     # Update the global routing properties in the property table
+    # NOTE: These next three calls can update zero or more entries
+    #       in the property table. There's no notion of atomicity,
+    #       so it's possible for listeners to detect inconsistencies.
+    #       All orderings are problematic in some scenario. However,
+    #       in practice, a user is mostly listening either to the
+    #       overall state (which interfaces are available on the device
+    #       or whether the device can reach the internet in any way) or
+    #       it's specifically interested in one interface.
     Properties.update_available_interfaces(new_routes)
     Properties.update_best_connection(state.interfaces)
+    Properties.update_connection_status(state.interfaces)
 
     %{state | route_state: new_route_state, routes: new_routes}
   end

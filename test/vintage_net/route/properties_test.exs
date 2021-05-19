@@ -81,4 +81,44 @@ defmodule VintageNet.Route.PropertiesTest do
       assert status == VintageNet.get(["connection"])
     end
   end
+
+  test "updates connection status" do
+    interfaces = %{
+      "eth0" => %InterfaceInfo{
+        interface_type: :ethernet,
+        status: :lan,
+        weight: 0,
+        ip_subnets: [{{192, 168, 1, 50}, 24}],
+        default_gateway: {192, 168, 1, 1}
+      },
+      "wlan0" => %InterfaceInfo{
+        interface_type: :wifi,
+        status: :internet,
+        weight: 0,
+        ip_subnets: [{{192, 168, 1, 60}, 24}],
+        default_gateway: {192, 168, 1, 1}
+      },
+      "usb0" => %InterfaceInfo{
+        interface_type: :local,
+        status: :disconnected,
+        weight: 0,
+        ip_subnets: [{{192, 168, 1, 70}, 24}],
+        default_gateway: {192, 168, 1, 1}
+      },
+      "wwan0" => %InterfaceInfo{
+        interface_type: :mobile,
+        status: :internet,
+        weight: 0,
+        ip_subnets: [{{192, 168, 1, 70}, 24}],
+        default_gateway: {192, 168, 1, 1}
+      }
+    }
+
+    :ok = Properties.update_connection_status(interfaces)
+
+    assert :lan == VintageNet.get(["interface", "eth0", "connection"])
+    assert :internet == VintageNet.get(["interface", "wlan0", "connection"])
+    assert :disconnected == VintageNet.get(["interface", "usb0", "connection"])
+    assert :internet == VintageNet.get(["interface", "wwan0", "connection"])
+  end
 end

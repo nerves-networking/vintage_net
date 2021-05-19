@@ -3,7 +3,7 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
   require Logger
 
   alias VintageNet.Interface.{Classification, InternetTester}
-  alias VintageNet.{PropertyTable, RouteManager}
+  alias VintageNet.RouteManager
 
   @moduledoc """
   This GenServer monitors a network interface for Internet connectivity
@@ -163,10 +163,9 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
     # It's desirable to set these even if redundant since the checks in this
     # modules are authoritative. I.e., the internet isn't connected unless we
     # declare it detected. Other modules can reset the connection to :lan
-    # if, for example, a new IP address gets set by DHCP. The following functions
-    # will optimize out redundant calls if they really are redundant.
+    # if, for example, a new IP address gets set by DHCP. The following call
+    # will optimize out redundant updates if they really are redundant.
     RouteManager.set_connection_status(ifname, connectivity)
-    PropertyTable.put(VintageNet, ["interface", ifname, "connection"], connectivity)
     state
   end
 

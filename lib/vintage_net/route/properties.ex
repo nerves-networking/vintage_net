@@ -57,4 +57,14 @@ defmodule VintageNet.Route.Properties do
     for {:local_route, ifname, _address, _subnet_bits, metric, :main} <- routes,
         do: {metric, ifname}
   end
+
+  @doc """
+  Update the every interface's connection status
+  """
+  @spec update_connection_status(Calculator.interface_infos()) :: :ok
+  def update_connection_status(infos) do
+    Enum.each(infos, fn {ifname, %{status: status}} ->
+      VintageNet.PropertyTable.put(VintageNet, ["interface", ifname, "connection"], status)
+    end)
+  end
 end
