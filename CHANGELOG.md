@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.10.2
+
+This release officially removes support for Elixir 1.7 and Elixir 1.8. It turns
+out that those versions wouldn't have worked in v0.10.0 due to a dependency that
+was added.
+
+* Improvements
+  * Add `VintageNet.reset_to_defaults/1` so that it's easy to reset a network
+    interface's configuration to what it would be if `VintageNet.configure` had
+    never been called. The previous "easy" way of doing this was to erase the
+    persisted configuration file and reboot.
+  * Clean up interface reachability handling (disconnected vs. lan-connected vs
+    internet-connected). There was an issue where the status was out of sync due
+    a bug in a technology implementation. This is harder to do now. IMPORTANT:
+    if you have a custom technology implementation, calling
+    `VintageNet.RouteManager.set_connection_status` is sufficient. You no
+    longer need to update the status property for your interface. This is not a
+    common need.
+
 ## v0.10.1
 
 * Improvements
