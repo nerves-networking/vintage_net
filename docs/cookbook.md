@@ -212,6 +212,28 @@ See the
 for an example of a project that uses AP mode and a web server for WiFi
 configuration.
 
+### Advanced Use of WPA Supplicant
+
+VintageNetWifi supports an "escape hatch" of sorts if you need precise control over the contents of the supplicant configuration.
+The contents of the `wpa_supplicant_conf` will be coppied without validation to the wpa_supplicant.conf file that
+VintageNet manages. Example:
+
+```elixir
+%{
+  type: VintageNetWiFi,
+  vintage_net_wifi: %{
+    wpa_supplicant_conf: """
+    network={
+      ssid="home"
+      key_mgmt=WPA-PSK
+      psk="very secret passphrase"
+    }
+    """
+  },
+  ipv4: %{method: :dhcp}
+}
+```
+
 ### Bridged Mesh WiFi
 
 In addition to infrastructure and AP modes, some WiFi modules can form a mesh.
