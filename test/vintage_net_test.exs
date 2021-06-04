@@ -30,7 +30,8 @@ defmodule VintageNetTest do
          %{
            type: VintageNetTest.TestTechnology,
            bogus: -1
-         }}
+         }},
+        {"invalid_config", :this, :should, :be, :ignored, :with, :a, :warning}
       ])
 
       VintageNet.Persistence.call(:save, [

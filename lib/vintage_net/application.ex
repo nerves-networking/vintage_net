@@ -5,6 +5,7 @@ defmodule VintageNet.Application do
   use Application
 
   alias VintageNet.Persistence
+  require Logger
 
   @spec start(Application.start_type(), any()) ::
           {:ok, pid()} | {:ok, pid(), Application.state()} | {:error, reason :: any()}
@@ -37,11 +38,23 @@ defmodule VintageNet.Application do
 
   defp load_initial_configurations() do
     # Get the default interface configurations
-    configs = Application.get_env(:vintage_net, :config) |> Map.new()
+    configs =
+      Application.get_env(:vintage_net, :config)
+      |> Enum.filter(&valid_config?/1)
+      |> Map.new()
 
     persisted_ifnames = Persistence.call(:enumerate, [])
 
     Enum.reduce(persisted_ifnames, configs, &load_and_merge_config/2)
+  end
+
+  # Minimally check configurations to make sure they at least have the right form.
+  defp valid_config?({ifname, %{type: type}}) when is_binary(ifname) and is_atom(type), do: true
+
+  defp valid_config?(config) do
+    Logger.warn("VintageNet: Dropping invalid configuration #{inspect(config)}")
+
+    false
   end
 
   defp load_and_merge_config(ifname, configs) do
@@ -51,7 +64,6 @@ defmodule VintageNet.Application do
 
       {:error, reason} ->
         Logger.warn("VintageNet(#{ifname}): ignoring saved config due to #{inspect(reason)}")
-
         configs
     end
   end
