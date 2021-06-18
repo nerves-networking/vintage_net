@@ -71,12 +71,23 @@ defmodule VintageNet.OSEventDispatcherTest do
   test "udhcpd handler notifies Elixir" do
     CapturingUdhcpdHandler.clear()
 
-    OSEventDispatcher.dispatch(["udhcpd.wlan0.leases"], %{})
+    OSEventDispatcher.dispatch(["/tmp/vintage_net/udhcpd.wlan0.leases"], %{})
 
     [{ifname, reported_op, lease_file}] = CapturingUdhcpdHandler.get()
     assert reported_op == :lease_update
     assert ifname == "wlan0"
-    assert lease_file == "udhcpd.wlan0.leases"
+    assert lease_file == "/tmp/vintage_net/udhcpd.wlan0.leases"
+  end
+
+  test "udhcpd handler with relative path notifies Elixir" do
+    CapturingUdhcpdHandler.clear()
+
+    OSEventDispatcher.dispatch(["udhcpd.wlan1.leases"], %{})
+
+    [{ifname, reported_op, lease_file}] = CapturingUdhcpdHandler.get()
+    assert reported_op == :lease_update
+    assert ifname == "wlan1"
+    assert lease_file == "udhcpd.wlan1.leases"
   end
 
   import ExUnit.CaptureLog
@@ -86,6 +97,14 @@ defmodule VintageNet.OSEventDispatcherTest do
 
     assert capture_log(fn ->
              OSEventDispatcher.dispatch(["hello"], %{})
+           end) =~ "dropping unexpected notification"
+  end
+
+  test "dispatcher warns on unknown multi-arg messages" do
+    CapturingUdhcpdHandler.clear()
+
+    assert capture_log(fn ->
+             OSEventDispatcher.dispatch(["hello", "world"], %{})
            end) =~ "dropping unexpected notification"
   end
 end
