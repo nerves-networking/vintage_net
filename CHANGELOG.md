@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.10.3
+
+* Bug fixes
+  * Fix regression with tracking udhcpd lease notifications. Leases
+    notifications were being ignored, so if you were monitoring leases to see
+    who was connected, then you wouldn't see any connections without this fix.
+    Thanks to Jon Thacker for reporting this issue.
+  * Fix crashes when the application config is invalid. While the configurations
+    were incorrect and needed to be fixed, it was harder to debug than it should
+    have been. This release logs messages on invalid configs and carries on
+    bringing up left that's valid. Thanks to Matt Ludwigs for this fix.
+
 ## v0.10.2
 
 This release officially removes support for Elixir 1.7 and Elixir 1.8. It turns
