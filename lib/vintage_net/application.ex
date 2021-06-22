@@ -38,14 +38,36 @@ defmodule VintageNet.Application do
 
   defp load_initial_configurations() do
     # Get the default interface configurations
-    configs =
-      Application.get_env(:vintage_net, :config)
-      |> Enum.filter(&valid_config?/1)
-      |> Map.new()
+    configs = get_config_env() |> Map.new()
 
     persisted_ifnames = Persistence.call(:enumerate, [])
 
     Enum.reduce(persisted_ifnames, configs, &load_and_merge_config/2)
+  end
+
+  @doc """
+  Return network configurations stored in the application environment
+
+  This function is guaranteed to return a list of `{ifname, map}` tuples even
+  if the application environment is messed up. Invalid entries generate log
+  messages.
+  """
+  @spec get_config_env() :: [{VintageNet.ifname(), map()}]
+  def get_config_env() do
+    # Configurations can be stored either under :default_config or :config.
+    # :config is the old way which is used a lot, but causes confusion if
+    # you've overwritten the network configuration on a device. E.g., why
+    # doesn't my network configuration change when I change the config.exs?
+
+    configs =
+      Application.get_env(:vintage_net, :default_config) ||
+        Application.get_env(:vintage_net, :config)
+
+    if is_list(configs) do
+      Enum.filter(configs, &valid_config?/1)
+    else
+      []
+    end
   end
 
   # Minimally check configurations to make sure they at least have the right form.

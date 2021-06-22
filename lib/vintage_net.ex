@@ -165,7 +165,7 @@ defmodule VintageNet do
   end
 
   defp default_config(ifname) do
-    Application.get_env(:vintage_net, :config)
+    VintageNet.Application.get_config_env()
     |> List.keyfind(ifname, 0)
     |> case do
       {^ifname, config} -> config
