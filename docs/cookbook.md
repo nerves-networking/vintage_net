@@ -124,6 +124,30 @@ keys.
 }
 ```
 
+Here are example parameters for an static IP address.
+
+```elixir
+%{
+  type: VintageNetWiFi,
+  vintage_net_wifi: %{
+    networks: [
+      %{
+        key_mgmt: :wpa_psk,
+        ssid: "my_network_ssid",
+        psk: "a_passphrase_or_psk"
+      }
+    ]
+  },
+  ipv4: %{
+    method: :static,
+    address: "192.168.9.232",
+    prefix_length: 24,
+    gateway: "192.168.9.1",
+    name_servers: ["1.1.1.1"]
+  }
+}
+```
+
 If you're regularly switching between multiple networks, you can list them all
 under the `:networks` key. Note that it's currently not possible to mix networks
 that require static IP addresses with those that use DHCP.
