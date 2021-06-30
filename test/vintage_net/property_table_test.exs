@@ -208,4 +208,23 @@ defmodule VintageNet.PropertyTableTest do
              {["a", "b", "c"], 1}
            ]
   end
+
+  test "timestamp of old and new values are provided in metadata", %{test: table} do
+    name = ["a", "b", "c"]
+
+    {:ok, _pid} = start_supervised({PropertyTable, name: table, properties: [{name, 1}]})
+
+    PropertyTable.subscribe(table, name)
+
+    {:ok, 1, old_timestamp} = PropertyTable.fetch_with_timestamp(table, name)
+
+    PropertyTable.put(table, ["a", "b", "c"], 88)
+
+    assert_receive {^table, ["a", "b", "c"], 1, 88, metadata}
+
+    {:ok, 88, new_timestamp} = PropertyTable.fetch_with_timestamp(table, name)
+
+    assert old_timestamp == metadata.old_timestamp
+    assert new_timestamp == metadata.new_timestamp
+  end
 end

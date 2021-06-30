@@ -116,9 +116,16 @@ defmodule VintageNet.PropertyTable.Table do
         # No change, so no notifications
         :ok
 
-      [{^name, old_value, _last_change}] ->
+      [{^name, old_value, last_change}] ->
+        timestamp_metadata = %{
+          old_timestamp: last_change,
+          new_timestamp: timestamp
+        }
+
+        updated_metadata = Map.merge(timestamp_metadata, metadata)
+
         :ets.insert(state.table, {name, value, timestamp})
-        dispatch(state, name, old_value, value, metadata)
+        dispatch(state, name, old_value, value, updated_metadata)
 
       [] ->
         :ets.insert(state.table, {name, value, timestamp})
