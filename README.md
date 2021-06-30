@@ -308,10 +308,19 @@ iex> VintageNet.subscribe(["interface", "eth0"])
 :ok
 
 iex> flush
-{VintageNet, ["interface", "eth0", "state"], :configuring, :configured, %{}}
+{VintageNet, ["interface", "eth0", "state"], :configuring, :configured, %{old_timestamp: 123456, new_timestamp: 124456}}
 ```
 
 The message format is `{VintageNet, name, old_value, new_value, metadata}`
+
+Metadata fields include at least the following:
+
+* `:old_timestamp` - the timestamp for when the property first had the `old_value`
+* `:new_timestamp` - the timestamp when the property changed from the `old_value` to the `new_value`
+
+Timestamps are all captured by calling `System.monotonic_time/0` so they're in `:native` time units.
+
+Use `System.convert_time_unit/3` to convert to the usual time units.
 
 ### Global properties
 
