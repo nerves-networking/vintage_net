@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.10.4
+
+* Bug fixes
+  * DHCP renewals would bounce connection status from :internet to :lan and back
+    even when the IP address, subnet, and default gateway didn't change. This
+    could cause a network connectivity hiccup that would happen every 24 hours
+    (a common DHCP lease time). A fix was added to assume internet connectivity
+    was maintained if the DHCP renewal didn't change IP parameters.
+
 ## v0.10.3
 
 * Bug fixes
