@@ -65,12 +65,24 @@ defmodule VintageNet.RouteManager do
   @spec set_route(
           VintageNet.ifname(),
           [{:inet.ip_address(), VintageNet.prefix_length()}],
+          :inet.ip_address()
+        ) ::
+          :ok
+  def set_route(ifname, ip_subnets, route) do
+    GenServer.call(__MODULE__, {:set_route, ifname, ip_subnets, route})
+  end
+
+  @doc false
+  @spec set_route(
+          VintageNet.ifname(),
+          [{:inet.ip_address(), VintageNet.prefix_length()}],
           :inet.ip_address(),
           Classification.connection_status()
         ) ::
           :ok
-  def set_route(ifname, ip_subnets, route, status \\ :lan) do
-    GenServer.call(__MODULE__, {:set_route, ifname, ip_subnets, route, status})
+  @deprecated "set_route/4 is deprecated. Status parameter is assumed to be at least :lan"
+  def set_route(ifname, ip_subnets, route, _status) do
+    set_route(ifname, ip_subnets, route)
   end
 
   @doc """
@@ -122,16 +134,25 @@ defmodule VintageNet.RouteManager do
   end
 
   @impl GenServer
-  def handle_call({:set_route, ifname, ip_subnets, default_gateway, status}, _from, state) do
-    Logger.info("RouteManager: set_route #{ifname} -> #{inspect(status)}")
+  def handle_call({:set_route, ifname, ip_subnets, default_gateway}, _from, state) do
+    if interface_info_changed?(state, ifname, ip_subnets, default_gateway) do
+      Logger.info("RouteManager: set_route #{ifname} -> :lan")
 
-    ifentry = new_interface_info(ifname, ip_subnets, default_gateway, status)
+      # LAN connectivity assumed since if the information changed, then
+      # internet connectivity needs to be reverified. Plus any existing TCP
+      # connections going to the internet will be broken given the IP or
+      # default gateway change.
+      ifentry = new_interface_info(ifname, ip_subnets, default_gateway, :lan)
 
-    new_state =
-      put_in(state.interfaces[ifname], ifentry)
-      |> update_route_tables()
+      new_state =
+        put_in(state.interfaces[ifname], ifentry)
+        |> update_route_tables()
 
-    {:reply, :ok, new_state}
+      {:reply, :ok, new_state}
+    else
+      Logger.info("RouteManager: set_route #{ifname} ignored since no change.")
+      {:reply, :ok, state}
+    end
   end
 
   @impl GenServer
@@ -169,6 +190,18 @@ defmodule VintageNet.RouteManager do
       |> update_route_tables()
 
     {:reply, :ok, new_state}
+  end
+
+  defp interface_info_changed?(state, ifname, ip_subnets, default_gateway) do
+    case Map.fetch(state.interfaces, ifname) do
+      {:ok,
+       %InterfaceInfo{ip_subnets: ^ip_subnets, default_gateway: ^default_gateway, status: status}}
+      when status in [:lan, :internet] ->
+        false
+
+      _ ->
+        true
+    end
   end
 
   defp new_interface_info(ifname, ip_subnets, default_gateway, status) do

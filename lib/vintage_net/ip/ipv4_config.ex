@@ -209,7 +209,7 @@ defmodule VintageNet.IP.IPv4Config do
 
         gateway ->
           {:fun, VintageNet.RouteManager, :set_route,
-           [ifname, [{ipv4.address, ipv4.prefix_length}], gateway, :lan]}
+           [ifname, [{ipv4.address, ipv4.prefix_length}], gateway]}
       end
 
     resolver_up =

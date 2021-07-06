@@ -104,7 +104,7 @@ defmodule VintageNet.Interface.Udhcpc do
 
         {:ok, default_gateway} = IP.ip_to_tuple(first_router)
 
-        RouteManager.set_route(ifname, [ip_subnet], default_gateway, :lan)
+        RouteManager.set_route(ifname, [ip_subnet], default_gateway)
 
       _ ->
         :ok
