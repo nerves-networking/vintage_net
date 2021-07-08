@@ -67,9 +67,11 @@ all: install
 install: $(BUILD) $(PREFIX) $(DEFAULT_TARGETS)
 
 $(BUILD)/%.o: src/%.c
+	@echo " CC $(notdir $@)"
 	$(CC) -c $(ERL_CFLAGS) $(CFLAGS) -o $@ $<
 
 $(PREFIX)/if_monitor: $(BUILD)/if_monitor.o
+	@echo " LD $(notdir $@)"
 	$(CC) $^ $(ERL_LDFLAGS) $(LDFLAGS) -lmnl -o $@
 
 $(PREFIX) $(BUILD):
@@ -94,3 +96,6 @@ format:
 	    src/*.c
 
 .PHONY: all clean calling_from_make install format
+
+# Don't echo commands unless the caller exports "V=1"
+${V}.SILENT:
