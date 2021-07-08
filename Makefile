@@ -94,3 +94,6 @@ format:
 	    src/*.c
 
 .PHONY: all clean calling_from_make install format
+
+# Don't echo commands unless the caller exports "V=1"
+${V}.SILENT:
