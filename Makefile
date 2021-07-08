@@ -77,9 +77,11 @@ $(PREFIX)/if_monitor: $(BUILD)/if_monitor.o
 $(PREFIX) $(BUILD):
 	mkdir -p $@
 
-clean:
+mix_clean:
 	$(RM) $(PREFIX)/if_monitor \
 	    $(BUILD)/*.o
+clean:
+	mix clean
 
 format:
 	astyle \
@@ -95,7 +97,7 @@ format:
 	    --pad-oper \
 	    src/*.c
 
-.PHONY: all clean calling_from_make install format
+.PHONY: all clean mix_clean calling_from_make install format
 
 # Don't echo commands unless the caller exports "V=1"
 ${V}.SILENT:
