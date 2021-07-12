@@ -2,7 +2,7 @@
 #
 # Makefile targets:
 #
-# all/install   build and install the NIF
+# all/install   build and install the port binary
 # clean         clean build products and intermediates
 #
 # Variables to override:
