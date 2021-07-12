@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.10.5
+
+This release only contains build system and hex package update. It doesn't
+change any code and is a safe update.
+
 ## v0.10.4
 
 * Bug fixes
