@@ -146,10 +146,10 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
         "#{state.ifname}: Internet check failed to #{inspect(hd(state.hosts))} (#{inspect(reason)}): #{strikes}/#{@max_fails_in_a_row} strikes"
       )
 
-      %{state | connectivity: :internet, strikes: strikes, hosts: rotate_list(state.hosts)}
+      %{state | strikes: strikes, hosts: rotate_list(state.hosts)}
     else
       Logger.debug("#{state.ifname}: Internet unreachable: (#{inspect(reason)})")
-      %{state | connectivity: :lan, strikes: @max_fails_in_a_row}
+      %{state | connectivity: :lan, strikes: @max_fails_in_a_row, hosts: rotate_list(state.hosts)}
     end
   end
 
