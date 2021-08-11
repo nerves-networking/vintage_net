@@ -18,19 +18,19 @@ defmodule VintageNet.Interface.InternetConnectivityCheckerTest do
              ) ==
                %{ifname: "bogus0", connectivity: :internet, hosts: [2, 1], strikes: 1}
 
-      # No IP address reverts to LAN
+      # No IP address reverts to :lan
       assert InternetConnectivityChecker.update_state_from_ping(
                base_state,
                {:error, :no_ipv4_address}
              ) ==
                %{ifname: "bogus0", connectivity: :lan, hosts: [1, 2], strikes: 3}
 
-      # No interfaces goes to disconnected
+      # No interfaces goes to :lan
       assert InternetConnectivityChecker.update_state_from_ping(
                base_state,
                {:error, :if_not_found}
              ) ==
-               %{ifname: "bogus0", connectivity: :disconnected, hosts: [1, 2], strikes: 3}
+               %{ifname: "bogus0", connectivity: :lan, hosts: [1, 2], strikes: 3}
 
       # Check 3 strikes reverts to :lan
       base_state = %{ifname: "bogus0", connectivity: :internet, strikes: 2, hosts: [1, 2]}
@@ -56,12 +56,12 @@ defmodule VintageNet.Interface.InternetConnectivityCheckerTest do
       assert InternetConnectivityChecker.update_state_from_ping(base_state, :ok) ==
                %{ifname: "bogus0", connectivity: :internet, hosts: [1, 2], strikes: 0}
 
-      # No interfaces goes to disconnected
+      # No interfaces goes to :lan
       assert InternetConnectivityChecker.update_state_from_ping(
                base_state,
                {:error, :if_not_found}
              ) ==
-               %{ifname: "bogus0", connectivity: :disconnected, hosts: [1, 2], strikes: 3}
+               %{ifname: "bogus0", connectivity: :lan, hosts: [1, 2], strikes: 3}
     end
 
     test "disconnected scenarios" do
