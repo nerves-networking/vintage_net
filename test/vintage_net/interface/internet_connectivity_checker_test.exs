@@ -39,7 +39,7 @@ defmodule VintageNet.Interface.InternetConnectivityCheckerTest do
                base_state,
                {:error, :ehostdown}
              ) ==
-               %{ifname: "bogus0", connectivity: :lan, hosts: [1, 2], strikes: 3}
+               %{ifname: "bogus0", connectivity: :lan, hosts: [2, 1], strikes: 3}
     end
 
     test "lan scenarios" do
