@@ -131,7 +131,10 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
   end
 
   def update_state_from_ping(state, {:error, :if_not_found}) do
-    %{state | connectivity: :disconnected, strikes: @max_fails_in_a_row}
+    # The connectivity is likely going to be disconnected, but don't
+    # only let `lower_up` being false set disconnected, since there's
+    # no way to get out of disconnected without a `lower_up` transition.
+    %{state | connectivity: :lan, strikes: @max_fails_in_a_row}
   end
 
   def update_state_from_ping(state, {:error, :no_ipv4_address}) do
