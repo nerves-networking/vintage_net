@@ -1,13 +1,13 @@
-defmodule VintageNet.Interface.LANConnectivityCheckerTest do
+defmodule VintageNet.Connectivity.LANCheckerTest do
   use ExUnit.Case, async: true
-
-  alias VintageNet.Interface.LANConnectivityChecker
+  import ExUnit.CaptureLog
+  alias VintageNet.Connectivity.LANChecker
 
   test "disconnected interface" do
     property = ["interface", "disconnected_interface2", "connection"]
     VintageNet.subscribe(property)
 
-    start_supervised!({LANConnectivityChecker, "disconnected_interface2"})
+    start_supervised!({LANChecker, "disconnected_interface2"})
 
     assert_receive {VintageNet, ^property, _old_value, :disconnected, _meta}, 1_000
   end
@@ -18,10 +18,20 @@ defmodule VintageNet.Interface.LANConnectivityCheckerTest do
     property = ["interface", ifname, "connection"]
     VintageNet.subscribe(property)
 
-    start_supervised!({LANConnectivityChecker, ifname})
+    start_supervised!({LANChecker, ifname})
 
     assert_receive {VintageNet, ^property, _old_value, :lan, _meta}, 1_000
     refute_receive {VintageNet, ^property, _old_value, :internet, _meta}
+  end
+
+  test "deprecation warning when using old LANConnectivityChecker" do
+    messages =
+      capture_log(fn ->
+        start_supervised!({VintageNet.Interface.LANConnectivityChecker, get_ifname()})
+      end)
+
+    assert messages =~
+             "VintageNet.Interface.LANConnectivityChecker is now VintageNet.Connectivity.LANChecker"
   end
 
   defp get_ifname() do
