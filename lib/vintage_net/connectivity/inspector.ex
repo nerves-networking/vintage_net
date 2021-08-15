@@ -66,29 +66,31 @@ defmodule VintageNet.Connectivity.Inspector do
         {:unavailable, %{}}
 
       our_addresses ->
-        check_sockets(Port.list(), our_addresses, cache, {:unknown, %{}})
+        {:unknown, %{}}
+        |> check_ports(Port.list(), our_addresses, cache)
+        |> check_sockets(:socket.which_sockets(:tcp), our_addresses, cache)
     end
   end
 
   @doc false
-  @spec check_sockets([port()], [ip_address_and_mask()], cache(), result()) :: result()
-  def check_sockets([], _our_addresses, _cache, result), do: result
+  @spec check_ports(result(), [port()], [ip_address_and_mask()], cache()) :: result()
+  def check_ports(result, [], _our_addresses, _cache), do: result
 
-  def check_sockets([socket | rest], our_addresses, cache, result) do
+  def check_ports(result, [socket | rest], our_addresses, cache) do
     new_result =
       case Map.fetch(cache, socket) do
         {:ok, previous_stats} ->
-          new_stats = get_stats(socket)
+          new_stats = get_port_stats(socket)
           update_result(result, socket, previous_stats, new_stats)
 
         _ ->
-          check_new_socket(socket, our_addresses, result)
+          check_new_port(socket, our_addresses, result)
       end
 
-    check_sockets(rest, our_addresses, cache, new_result)
+    check_ports(new_result, rest, our_addresses, cache)
   end
 
-  defp get_stats(socket) do
+  defp get_port_stats(socket) when is_port(socket) do
     case :inet.getstat(socket, [:send_oct, :recv_oct]) do
       {:ok, [send_oct: tx, recv_oct: rx]} ->
         {tx, rx}
@@ -105,6 +107,30 @@ defmodule VintageNet.Connectivity.Inspector do
     end
   end
 
+  @doc false
+  @spec check_sockets(result(), [:socket.socket()], [ip_address_and_mask()], cache()) :: result()
+  def check_sockets(result, [], _our_addresses, _cache), do: result
+
+  def check_sockets(result, [socket | rest], our_addresses, cache) do
+    new_result =
+      case Map.fetch(cache, socket) do
+        {:ok, previous_stats} ->
+          new_stats = get_socket_stats(socket)
+          update_result(result, socket, previous_stats, new_stats)
+
+        _ ->
+          check_new_socket(socket, our_addresses, result)
+      end
+
+    check_sockets(new_result, rest, our_addresses, cache)
+  end
+
+  defp get_socket_stats(socket) do
+    # Socket API
+    %{counters: %{write_byte: tx, read_byte: rx}} = :socket.info(socket)
+    {tx, rx}
+  end
+
   defp update_result({:unknown, cache}, socket, {tx1, rx1}, {tx2, rx2} = new_stats)
        when tx2 > tx1 and rx2 > rx1 do
     {:available, Map.put(cache, socket, new_stats)}
@@ -114,14 +140,14 @@ defmodule VintageNet.Connectivity.Inspector do
     {status, Map.put(cache, socket, new_stats)}
   end
 
-  defp check_new_socket(socket, our_addresses, {status, cache}) do
+  defp check_new_port(socket, our_addresses, {status, cache}) do
     with {:name, 'tcp_inet'} <- Port.info(socket, :name),
          true <- connected?(socket),
          {:ok, {src_ip, _src_port}} <- :inet.sockname(socket),
          true <- on_interface?(src_ip, our_addresses),
          {:ok, {dest_ip, _dest_port}} <- :inet.peername(socket),
          false <- on_interface?(dest_ip, our_addresses) do
-      {status, Map.put(cache, socket, get_stats(socket))}
+      {status, Map.put(cache, socket, get_port_stats(socket))}
     else
       _ -> {status, cache}
     end
@@ -131,6 +157,19 @@ defmodule VintageNet.Connectivity.Inspector do
     case :prim_inet.getstatus(socket) do
       {:ok, status} -> :connected in status
       _ -> false
+    end
+  end
+
+  defp check_new_socket(socket, our_addresses, {status, cache}) do
+    # Socket API
+    with %{protocol: :tcp, counters: %{write_byte: tx, read_byte: rx}} <- :socket.info(socket),
+         {:ok, %{addr: src_ip}} <- :socket.sockname(socket),
+         true <- on_interface?(src_ip, our_addresses),
+         {:ok, %{addr: dest_ip}} <- :socket.peername(socket),
+         false <- on_interface?(dest_ip, our_addresses) do
+      {status, Map.put(cache, socket, {tx, rx})}
+    else
+      _ -> {status, cache}
     end
   end
 
