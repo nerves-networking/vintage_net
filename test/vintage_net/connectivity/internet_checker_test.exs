@@ -31,6 +31,26 @@ defmodule VintageNet.Connectivity.InternetCheckerTest do
     assert_receive {VintageNet, ^property, _old_value, :internet, _meta}, 1_000
   end
 
+  @tag :requires_interfaces_monitor
+  test "internet goes away" do
+    ifname = "disconnected"
+    property = ["interface", ifname, "connection"]
+    lower_up = ["interface", ifname, "lower_up"]
+
+    # Set up a situation where the InternetChecker will start with thinking the
+    # internet is connected, but then change its mind when the interface goes away.
+    VintageNet.PropertyTable.put(VintageNet, property, :internet)
+    VintageNet.PropertyTable.put(VintageNet, lower_up, true)
+
+    VintageNet.subscribe(property)
+
+    start_supervised!({InternetChecker, ifname})
+
+    Process.sleep(250)
+    VintageNet.PropertyTable.put(VintageNet, lower_up, false)
+    assert_receive {VintageNet, ^property, _old_value, :disconnected, _meta}, 1_000
+  end
+
   test "deprecation warning when using old InternetConnectivityChecker" do
     messages =
       capture_log(fn ->
