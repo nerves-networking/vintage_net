@@ -67,10 +67,10 @@ defmodule VintageNet.NameResolverTest do
 
              search example.com # From eth0
              search example2.com # From wlan0
-             nameserver 1.1.1.1 # From eth0
              nameserver 1.1.1.2 # From wlan0
-             nameserver 8.8.8.8 # From eth0
+             nameserver 1.1.1.1 # From eth0
              nameserver 8.8.8.9 # From wlan0
+             nameserver 8.8.8.8 # From eth0
              """
 
       NameResolver.clear("eth0")
@@ -160,8 +160,8 @@ defmodule VintageNet.NameResolverTest do
       assert contents == """
              # This file is managed by VintageNet. Do not edit.
 
-             nameserver 1.1.1.1 # From eth0
              nameserver 8.8.8.8 # From global
+             nameserver 1.1.1.1 # From eth0
              """
 
       NameResolver.clear("eth0")
@@ -171,6 +171,29 @@ defmodule VintageNet.NameResolverTest do
              # This file is managed by VintageNet. Do not edit.
 
              nameserver 8.8.8.8 # From global
+             """
+
+      NameResolver.stop()
+    end)
+  end
+
+  test "tuple IP addresses with ports", context do
+    in_tmp(context.test, fn ->
+      {:ok, _pid} =
+        NameResolver.start_link(
+          resolvconf: @resolvconf_path,
+          additional_name_servers: [{{127, 0, 0, 1}, 25353}]
+        )
+
+      NameResolver.setup("eth0", nil, [{1, 1, 1, 1}])
+
+      contents = File.read!(@resolvconf_path)
+
+      assert contents == """
+             # This file is managed by VintageNet. Do not edit.
+
+             nameserver 127.0.0.1:25353 # From global
+             nameserver 1.1.1.1 # From eth0
              """
 
       NameResolver.stop()

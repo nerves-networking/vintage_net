@@ -84,7 +84,7 @@ defmodule VintageNet.NameResolver do
 
     additional_name_servers =
       Keyword.get(args, :additional_name_servers, [])
-      |> Enum.reduce([], &ip_to_tuple_safe/2)
+      |> Enum.reduce([], &parse_nameserver/2)
 
     state = %State{
       path: resolvconf_path,
@@ -128,17 +128,28 @@ defmodule VintageNet.NameResolver do
     File.write!(path, ResolvConf.to_config(entries, additional_name_servers))
   end
 
-  @spec ip_to_tuple_safe(VintageNet.any_ip_address(), [:inet.ip_address()]) :: [
-          :inet.ip_address()
-        ]
-  defp ip_to_tuple_safe(ip, acc) do
+  defp parse_nameserver({ip, port}, acc) do
+    case ip_to_tuple_safe(ip) do
+      {:ok, ip} -> [{ip, port} | acc]
+      _ -> acc
+    end
+  end
+
+  defp parse_nameserver(ip, acc) when is_tuple(ip) do
+    case ip_to_tuple_safe(ip) do
+      {:ok, ip} -> [{ip, 53} | acc]
+      _ -> acc
+    end
+  end
+
+  defp ip_to_tuple_safe(ip) do
     case IP.ip_to_tuple(ip) do
       {:error, reason} ->
         Logger.error("Failed to parse IP address: #{inspect(ip)} (#{reason})")
-        acc
+        :error
 
       {:ok, ip} ->
-        [ip | acc]
+        {:ok, ip}
     end
   end
 end

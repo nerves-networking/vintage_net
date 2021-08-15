@@ -40,10 +40,10 @@ defmodule VintageNet.Resolver.ResolvConfTest do
 
     search example.com # From eth0
     search example2.com # From wlan0
-    nameserver 1.1.1.1 # From eth0
     nameserver 1.1.1.2 # From wlan0
-    nameserver 8.8.8.8 # From eth0
+    nameserver 1.1.1.1 # From eth0
     nameserver 8.8.8.9 # From wlan0
+    nameserver 8.8.8.8 # From eth0
     """
 
     assert to_resolvconf(input) == output
@@ -90,9 +90,9 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     # This file is managed by VintageNet. Do not edit.
 
     search aaa-in-between.com # From eth1
-    search example.com # From wlan0,eth0
-    nameserver 1.1.1.1 # From wlan0,eth1,eth0
-    nameserver 8.8.8.8 # From wlan0,eth1,eth0
+    search example.com # From eth0,wlan0
+    nameserver 1.1.1.1 # From eth0,eth1,wlan0
+    nameserver 8.8.8.8 # From eth0,eth1,wlan0
     """
 
     assert to_resolvconf(input) == output
@@ -107,9 +107,9 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     output = """
     # This file is managed by VintageNet. Do not edit.
 
-    search example.com # From wlan0,eth0
-    nameserver 1.1.1.1 # From wlan0,eth0
+    search example.com # From eth0,wlan0
     nameserver 8.8.4.4 # From wlan0
+    nameserver 1.1.1.1 # From eth0,wlan0
     nameserver 8.8.8.8 # From eth0
     """
 
@@ -131,5 +131,18 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     """
 
     assert to_resolvconf(input, [{1, 1, 1, 1}, {8, 8, 4, 4}]) == output
+  end
+
+  test "nameservers with port numbers" do
+    input = %{}
+
+    output = """
+    # This file is managed by VintageNet. Do not edit.
+
+    nameserver 127.0.0.1:1234 # From global
+    nameserver 8.8.4.4 # From global
+    """
+
+    assert to_resolvconf(input, [{{127, 0, 0, 1}, 1234}, {{8, 8, 4, 4}, 53}]) == output
   end
 end
