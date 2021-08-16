@@ -2,8 +2,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
   use GenServer
   require Logger
 
-  alias VintageNet.Connectivity.TCPPing
-  alias VintageNet.Interface.Classification
+  alias VintageNet.Connectivity.{CheckLogic, TCPPing}
   alias VintageNet.RouteManager
 
   @moduledoc """
@@ -14,16 +13,11 @@ defmodule VintageNet.Connectivity.InternetChecker do
   reflect that. Otherwise, the network interface is assumed to merely
   have LAN connectivity if it's up.
   """
-  @min_interval 500
-  @max_interval 30_000
-  @max_fails_in_a_row 3
 
   @typep state() :: %{
            ifname: VintageNet.ifname(),
            hosts: [{VintageNet.any_ip_address(), non_neg_integer()}],
-           strikes: non_neg_integer(),
-           interval: non_neg_integer(),
-           connectivity: Classification.connection_status()
+           status: CheckLogic.state()
          }
 
   @doc """
@@ -36,18 +30,12 @@ defmodule VintageNet.Connectivity.InternetChecker do
 
   @impl GenServer
   def init(ifname) do
-    # Handle GenServer restarts when internet-connected. If internet connected,
-    # then start the strike count over at zero since who knows where things were
-    # at and that way a first strike doesn't bounce the status.
     connectivity = VintageNet.get(["interface", ifname, "connection"])
-    initial_strikes = if connectivity == :internet, do: 0, else: @max_fails_in_a_row
 
     state = %{
       ifname: ifname,
       hosts: get_internet_host_list(),
-      strikes: initial_strikes,
-      interval: @min_interval,
-      connectivity: connectivity
+      status: CheckLogic.init(connectivity)
     }
 
     {:ok, state, {:continue, :continue}}
@@ -59,19 +47,19 @@ defmodule VintageNet.Connectivity.InternetChecker do
 
     new_state =
       if VintageNet.get(lower_up_property(ifname)) do
-        check_connectivity(state)
+        check_connectivity(state) |> report_connectivity()
       else
-        state |> ifdown() |> report_connectivity()
+        ifdown(state) |> report_connectivity()
       end
 
-    {:noreply, new_state, new_state.interval}
+    {:noreply, new_state, new_state.status.interval}
   end
 
   @impl GenServer
   def handle_info(:timeout, state) do
-    new_state = check_connectivity(state)
+    new_state = state |> check_connectivity() |> report_connectivity()
 
-    {:noreply, new_state, new_state.interval}
+    {:noreply, new_state, new_state.status.interval}
   end
 
   def handle_info(
@@ -80,7 +68,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
       ) do
     new_state = state |> ifdown() |> report_connectivity()
 
-    {:noreply, new_state}
+    {:noreply, new_state, new_state.status.interval}
   end
 
   def handle_info(
@@ -89,7 +77,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
       ) do
     new_state = state |> ifup() |> report_connectivity()
 
-    {:noreply, new_state, @min_interval}
+    {:noreply, new_state, new_state.status.interval}
   end
 
   def handle_info(
@@ -98,113 +86,40 @@ defmodule VintageNet.Connectivity.InternetChecker do
       ) do
     # The interface was completely removed!
     new_state = state |> ifdown() |> report_connectivity()
-    {:noreply, new_state}
+    {:noreply, new_state, new_state.status.interval}
   end
 
   defp ifdown(state) do
-    # Physical layer is down. Don't poll for connectivity since it won't happen.
-    %{state | connectivity: :disconnected, interval: :infinity}
+    %{state | status: CheckLogic.ifdown(state.status)}
   end
 
   defp ifup(state) do
-    # Physical layer is up. Optimistically assume that the LAN is accessible and
-    # start polling again after a short delay
-    %{state | connectivity: :lan, interval: @min_interval}
+    %{state | status: CheckLogic.ifup(state.status)}
   end
 
   defp check_connectivity(state) do
-    ping_result = TCPPing.ping(state.ifname, hd(state.hosts))
+    case TCPPing.ping(state.ifname, hd(state.hosts)) do
+      :ok ->
+        %{state | status: CheckLogic.check_succeeded(state.status)}
 
-    state
-    |> update_state_from_ping(ping_result)
-    |> report_connectivity()
-    |> compute_next_interval()
-  end
-
-  # Public for unit test purposes
-  @doc false
-  @spec update_state_from_ping(state(), :ok | {:error, TCPPing.ping_error_reason()}) ::
-          state()
-  def update_state_from_ping(state, :ok) do
-    # Success - reset the number of strikes to stay in Internet mode
-    # even if there are hiccups.
-    %{state | connectivity: :internet, strikes: 0}
-  end
-
-  def update_state_from_ping(state, {:error, :if_not_found}) do
-    # The connectivity is likely going to be disconnected, but don't
-    # only let `lower_up` being false set disconnected, since there's
-    # no way to get out of disconnected without a `lower_up` transition.
-    %{state | connectivity: :lan, strikes: @max_fails_in_a_row}
-  end
-
-  def update_state_from_ping(state, {:error, :no_ipv4_address}) do
-    %{state | connectivity: :lan, strikes: @max_fails_in_a_row}
-  end
-
-  def update_state_from_ping(%{connectivity: :internet} = state, {:error, reason}) do
-    strikes = state.strikes + 1
-
-    if strikes < @max_fails_in_a_row do
-      Logger.debug(
-        "#{state.ifname}: Internet check failed to #{inspect(hd(state.hosts))} (#{inspect(reason)}): #{strikes}/#{@max_fails_in_a_row} strikes"
-      )
-
-      %{state | strikes: strikes, hosts: rotate_list(state.hosts)}
-    else
-      Logger.debug("#{state.ifname}: Internet unreachable: (#{inspect(reason)})")
-      %{state | connectivity: :lan, strikes: @max_fails_in_a_row, hosts: rotate_list(state.hosts)}
+      {:error, _reason} ->
+        %{state | status: CheckLogic.check_failed(state.status), hosts: rotate_list(state.hosts)}
     end
   end
 
-  def update_state_from_ping(state, {:error, _reason}) do
-    # Final case where the internet wasn't reachable and it wasn't reachable before this.
-    # Rotate the hosts to check and maybe we'll get lucky next time.
-    %{state | hosts: rotate_list(state.hosts)}
-  end
-
-  defp report_connectivity(%{ifname: ifname, connectivity: connectivity} = state) do
+  defp report_connectivity(state) do
     # It's desirable to set these even if redundant since the checks in this
     # modules are authoritative. I.e., the internet isn't connected unless we
     # declare it detected. Other modules can reset the connection to :lan
     # if, for example, a new IP address gets set by DHCP. The following call
     # will optimize out redundant updates if they really are redundant.
-    RouteManager.set_connection_status(ifname, connectivity)
+    RouteManager.set_connection_status(state.ifname, state.status.connectivity)
     state
   end
 
   defp lower_up_property(ifname) do
     ["interface", ifname, "lower_up"]
   end
-
-  # Public for unit test purposes
-  @doc false
-  @spec compute_next_interval(state()) :: state()
-  def compute_next_interval(state) do
-    %{state | interval: next_interval(state.connectivity, state.interval, state.strikes)}
-  end
-
-  # Public for unit test purposes
-  @doc false
-  @spec next_interval(Classification.connection_status(), non_neg_integer(), non_neg_integer()) ::
-          non_neg_integer()
-  def next_interval(connection, interval, strikes)
-
-  # If pings work, then wait the max interval before checking again
-  def next_interval(:internet, _interval, 0), do: @max_interval
-
-  # If a ping fails, retry, but don't wait as long as when everything is working
-  def next_interval(:internet, _interval, strikes) do
-    max(@min_interval, div(@max_interval, strikes + 1))
-  end
-
-  # Back off of checks if they're not working
-  def next_interval(:lan, interval, _strikes) do
-    min(interval * 2, @max_interval)
-  end
-
-  # Wait for interface up notification before polling again
-  def next_interval(:disconnected, _interval, _strikes), do: :infinity
 
   # Rotate a list left
   @doc false
