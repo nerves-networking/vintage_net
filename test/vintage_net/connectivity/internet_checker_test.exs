@@ -1,5 +1,5 @@
 defmodule VintageNet.Connectivity.InternetCheckerTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   import ExUnit.CaptureLog
 
   alias VintageNet.Connectivity.InternetChecker
@@ -12,22 +12,43 @@ defmodule VintageNet.Connectivity.InternetCheckerTest do
   end
 
   test "disconnected interface" do
-    property = ["interface", "disconnected_interface", "connection"]
+    ifname = "disconnected_interface"
+    property = ["interface", ifname, "connection"]
+    lower_up = ["interface", ifname, "lower_up"]
+
+    # Set up
+    VintageNet.PropertyTable.clear(VintageNet, property)
+    VintageNet.PropertyTable.clear(VintageNet, lower_up)
     VintageNet.subscribe(property)
 
-    start_supervised!({InternetChecker, "disconnected_interface"})
+    start_supervised!({InternetChecker, ifname})
 
     assert_receive {VintageNet, ^property, _old_value, :disconnected, _meta}, 1_000
   end
 
   @tag :requires_interfaces_monitor
   test "internet connected interface" do
+    # Start clean slate since this test uses a real network interface
+    capture_log(fn ->
+      Application.stop(:vintage_net)
+      Application.start(:vintage_net)
+    end)
+
     ifname = get_ifname()
     property = ["interface", ifname, "connection"]
+    lower_up = ["interface", ifname, "lower_up"]
+
+    # Set up a situation where the InternetChecker will see take a guess that
+    # the connection is disconnected and then fix it self when it sees the
+    # lower_up being true and then detect the internet.
+    VintageNet.PropertyTable.put(VintageNet, property, :disconnected)
+    VintageNet.PropertyTable.put(VintageNet, lower_up, true)
+
     VintageNet.subscribe(property)
 
     start_supervised!({InternetChecker, ifname})
 
+    assert_receive {VintageNet, ^property, _old_value, :lan, _meta}, 1_000
     assert_receive {VintageNet, ^property, _old_value, :internet, _meta}, 1_000
   end
 
