@@ -14,6 +14,12 @@ defmodule VintageNet.Connectivity.LANCheckerTest do
 
   @tag :requires_interfaces_monitor
   test "lan connected interface" do
+    # Start clean slate since this test uses a real network interface
+    capture_log(fn ->
+      Application.stop(:vintage_net)
+      Application.start(:vintage_net)
+    end)
+
     ifname = get_ifname()
     property = ["interface", ifname, "connection"]
     VintageNet.subscribe(property)
