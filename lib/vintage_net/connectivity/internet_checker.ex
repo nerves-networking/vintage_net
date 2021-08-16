@@ -2,7 +2,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
   use GenServer
   require Logger
 
-  alias VintageNet.Connectivity.{CheckLogic, TCPPing}
+  alias VintageNet.Connectivity.{CheckLogic, Inspector, TCPPing}
   alias VintageNet.RouteManager
 
   @moduledoc """
@@ -14,11 +14,13 @@ defmodule VintageNet.Connectivity.InternetChecker do
   have LAN connectivity if it's up.
   """
 
-  @typep state() :: %{
-           ifname: VintageNet.ifname(),
-           hosts: [{VintageNet.any_ip_address(), non_neg_integer()}],
-           status: CheckLogic.state()
-         }
+  @typedoc false
+  @type state() :: %{
+          ifname: VintageNet.ifname(),
+          hosts: [{VintageNet.any_ip_address(), non_neg_integer()}],
+          status: CheckLogic.state(),
+          inspector: Inspector.cache()
+        }
 
   @doc """
   Start the connectivity checker GenServer
@@ -35,7 +37,8 @@ defmodule VintageNet.Connectivity.InternetChecker do
     state = %{
       ifname: ifname,
       hosts: get_internet_host_list(),
-      status: CheckLogic.init(connectivity)
+      status: CheckLogic.init(connectivity),
+      inspector: %{}
     }
 
     {:ok, state, {:continue, :continue}}
@@ -98,12 +101,17 @@ defmodule VintageNet.Connectivity.InternetChecker do
   end
 
   defp check_connectivity(state) do
-    case TCPPing.ping(state.ifname, hd(state.hosts)) do
-      :ok ->
-        %{state | status: CheckLogic.check_succeeded(state.status)}
+    {status, new_cache} = Inspector.check_internet(state.ifname, state.inspector)
 
-      {:error, _reason} ->
-        %{state | status: CheckLogic.check_failed(state.status), hosts: rotate_list(state.hosts)}
+    if status == :available or TCPPing.ping(state.ifname, hd(state.hosts)) == :ok do
+      %{state | status: CheckLogic.check_succeeded(state.status), inspector: new_cache}
+    else
+      %{
+        state
+        | status: CheckLogic.check_failed(state.status),
+          hosts: rotate_list(state.hosts),
+          inspector: new_cache
+      }
     end
   end
 
