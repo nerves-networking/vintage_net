@@ -59,6 +59,7 @@ defmodule VintageNet.Interface.Classification do
   def to_type("wl" <> _rest), do: :wifi
   def to_type("ra" <> _rest), do: :wifi
   def to_type("ppp" <> _rest), do: :mobile
+  def to_type("wwan" <> _rest), do: :mobile
   def to_type("lo" <> _rest), do: :local
   def to_type("tap" <> _rest), do: :local
   def to_type(_other), do: :unknown
