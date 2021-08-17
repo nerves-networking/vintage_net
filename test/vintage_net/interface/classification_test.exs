@@ -5,28 +5,6 @@ defmodule VintageNet.Interface.ClassificationTest do
 
   doctest Classification
 
-  test "that to_type works" do
-    assert Classification.to_type("eth0") == :ethernet
-    assert Classification.to_type("eth1") == :ethernet
-    assert Classification.to_type("en0") == :ethernet
-    assert Classification.to_type("enp6s0") == :ethernet
-    assert Classification.to_type("wlan0") == :wifi
-    assert Classification.to_type("wlan1") == :wifi
-    assert Classification.to_type("ppp0") == :mobile
-    assert Classification.to_type("something0") == :unknown
-  end
-
-  test "that to_instance works" do
-    assert Classification.to_instance("eth0") == 0
-    assert Classification.to_instance("eth1") == 1
-    assert Classification.to_instance("en3") == 3
-    assert Classification.to_instance("enp6s0") == 60
-    assert Classification.to_instance("wlan0") == 0
-    assert Classification.to_instance("wlan1") == 1
-    assert Classification.to_instance("ppp0") == 0
-    assert Classification.to_instance("something5") == 5
-  end
-
   test "disconnected interfaces classify as disabled" do
     priors = Classification.default_prioritization()
 
