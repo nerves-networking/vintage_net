@@ -61,6 +61,17 @@ defmodule VintageNet do
   @type ipv6_prefix_length :: 0..128
 
   @typedoc """
+  Interface connection status
+
+  * `:disconnected` - The interface doesn't exist or it's not connected
+  * `:lan` - The interface is connected to the LAN, but may not be able
+    reach the Internet
+  * `:internet` - Packets going through the interface should be able to
+    reach the Internet
+  """
+  @type connection_status :: :lan | :internet | :disconnected
+
+  @typedoc """
   Valid options for `VintageNet.configure/3`
 
   * `:persist` - Whether or not to save the configuration (defaults to `true`)

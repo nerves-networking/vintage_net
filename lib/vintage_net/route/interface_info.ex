@@ -16,7 +16,7 @@ defmodule VintageNet.Route.InterfaceInfo do
           weight: Classification.weight(),
           ip_subnets: [{:inet.ip_address(), VintageNet.prefix_length()}],
           interface_type: Classification.interface_type(),
-          status: Classification.connection_status()
+          status: VintageNet.connection_status()
         }
 
   # @spec metric(t(), [Classification.prioritization()]) :: :disabled | pos_integer()
