@@ -77,7 +77,7 @@ defmodule VintageNet.RouteManager do
           VintageNet.ifname(),
           [{:inet.ip_address(), VintageNet.prefix_length()}],
           :inet.ip_address(),
-          Classification.connection_status()
+          VintageNet.connection_status()
         ) ::
           :ok
   @deprecated "set_route/4 is deprecated. Status parameter is assumed to be at least :lan"
@@ -91,7 +91,7 @@ defmodule VintageNet.RouteManager do
   Changing the connection status can re-prioritize routing. The
   specified interface doesn't need to have a default route.
   """
-  @spec set_connection_status(VintageNet.ifname(), Classification.connection_status()) :: :ok
+  @spec set_connection_status(VintageNet.ifname(), VintageNet.connection_status()) :: :ok
   def set_connection_status(ifname, status) do
     GenServer.call(__MODULE__, {:set_connection_status, ifname, status})
   end

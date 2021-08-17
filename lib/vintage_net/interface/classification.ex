@@ -9,17 +9,6 @@ defmodule VintageNet.Interface.Classification do
   @type interface_type :: :ethernet | :wifi | :mobile | :local | :unknown
 
   @typedoc """
-  Interface connection status
-
-  * `:disconnected` - The interface doesn't exist or it's not connected
-  * `:lan` - The interface is connected to the LAN, but may not be able
-    reach the Internet
-  * `:internet` - Packets going through the interface should be able to
-    reach the Internet
-  """
-  @type connection_status :: :lan | :internet | :disconnected
-
-  @typedoc """
   Prioritization for using default gateways
 
   Examples
@@ -28,7 +17,7 @@ defmodule VintageNet.Interface.Classification do
   * `{:ethernet, :_}` - Wired ethernet with any status
   * `{:_, :internet}` - Any Internet-connected network interface
   """
-  @type prioritization :: {interface_type() | :_, connection_status() | :_}
+  @type prioritization :: {interface_type() | :_, VintageNet.connection_status() | :_}
 
   @typedoc """
   A weight used to disambiguate interfaces that would otherwise have the same priority
@@ -96,7 +85,9 @@ defmodule VintageNet.Interface.Classification do
   to indicate that a route shouldn't be added to the Linux routing tables
   at all.
   """
-  @spec compute_metric(interface_type(), connection_status(), weight(), [prioritization()]) ::
+  @spec compute_metric(interface_type(), VintageNet.connection_status(), weight(), [
+          prioritization()
+        ]) ::
           pos_integer() | :disabled
   def compute_metric(_type, :disconnected, _weight, _prioritization), do: :disabled
 

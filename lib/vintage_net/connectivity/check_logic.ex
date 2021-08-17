@@ -1,6 +1,4 @@
 defmodule VintageNet.Connectivity.CheckLogic do
-  alias VintageNet.Interface.Classification
-
   @moduledoc """
   Core logic for determining internet connectivity based on check results
 
@@ -14,7 +12,7 @@ defmodule VintageNet.Connectivity.CheckLogic do
   @max_fails_in_a_row 3
 
   @type state() :: %{
-          connectivity: Classification.connection_status(),
+          connectivity: VintageNet.connection_status(),
           strikes: non_neg_integer(),
           interval: non_neg_integer() | :infinity
         }
@@ -24,7 +22,7 @@ defmodule VintageNet.Connectivity.CheckLogic do
 
   Pass in the assumed connection status. This is a best guess to start things out.
   """
-  @spec init(Classification.connection_status()) :: state()
+  @spec init(VintageNet.connection_status()) :: state()
   def init(:internet) do
     # Best case, but check quickly to verify that the internet truly is reachable.
     %{connectivity: :internet, strikes: 0, interval: @min_interval}
