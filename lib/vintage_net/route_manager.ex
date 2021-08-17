@@ -206,7 +206,7 @@ defmodule VintageNet.RouteManager do
 
   defp new_interface_info(ifname, ip_subnets, default_gateway, status) do
     # The weight parameter prioritizes interfaces of the same type and connectivity.
-    # All weights for interfaces of the same time must be different. I.e., we don't
+    # All weights for interfaces of the same type must be different. I.e., we don't
     # leave it to chance which one is used. Also, bandwidth sharing of interfaces
     # can't be accomplished by giving interfaces the same low level priority with
     # how things are set up anyway.
