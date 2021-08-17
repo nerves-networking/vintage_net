@@ -72,6 +72,25 @@ defmodule VintageNet do
   @type connection_status :: :lan | :internet | :disconnected
 
   @typedoc """
+  Interface type
+
+  This is a coarse characterization of a network interface that can be useful
+  for prioritizing interfaces.
+
+  * `:ethernet` - Wired-based networking. Generally expected to be fast.
+  * `:wifi` - Wireless networking. Expected to be not as fast as Ethernet,
+  * `:mobile` - Cellular-based networking. Expected to be metered and slower
+    than `:wifi` and `:ethernet`
+  * `:local` - Interfaces that never route to other hosts
+  * `:unknown` - Catch-all when the network interface can't be categorized
+
+  These are general categories that are helpful for VintageNet's default
+  routing prioritization. See `VintageNet.Interface.Classification` for more
+  information on the use.
+  """
+  @type interface_type :: :ethernet | :wifi | :mobile | :local | :unknown
+
+  @typedoc """
   Valid options for `VintageNet.configure/3`
 
   * `:persist` - Whether or not to save the configuration (defaults to `true`)

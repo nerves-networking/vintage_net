@@ -15,7 +15,7 @@ defmodule VintageNet.Route.InterfaceInfo do
           default_gateway: :inet.ip_address() | nil,
           weight: Classification.weight(),
           ip_subnets: [{:inet.ip_address(), VintageNet.prefix_length()}],
-          interface_type: Classification.interface_type(),
+          interface_type: VintageNet.interface_type(),
           status: VintageNet.connection_status()
         }
 

@@ -2,7 +2,7 @@ defmodule VintageNet.RouteManager do
   use GenServer
   require Logger
 
-  alias VintageNet.Interface.Classification
+  alias VintageNet.Interface.{Classification, NameUtilities}
   alias VintageNet.Route.{Calculator, InterfaceInfo, IPRoute, Properties}
 
   @moduledoc """
@@ -215,10 +215,10 @@ defmodule VintageNet.RouteManager do
     # of the same interface type available. For now, lower numbered interfaces
     # have priority. For example, eth0 is used over eth1, etc. The 10 is hardcoded
     # to correspond to the calculation in classification.ex.
-    weight = rem(Classification.to_instance(ifname), 10)
+    weight = rem(NameUtilities.get_instance(ifname), 10)
 
     %InterfaceInfo{
-      interface_type: Classification.to_type(ifname),
+      interface_type: NameUtilities.to_type(ifname),
       weight: weight,
       ip_subnets: ip_subnets,
       default_gateway: default_gateway,
