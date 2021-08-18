@@ -6,6 +6,7 @@ defmodule VintageNet.Route.Properties do
   * `["available_interfaces"]`
   * `["connection"]`
   """
+  alias VintageNet.Route
   alias VintageNet.Route.Calculator
 
   @doc """
@@ -13,7 +14,7 @@ defmodule VintageNet.Route.Properties do
 
   This function orders interfaces based on metric just like Linux does
   """
-  @spec update_available_interfaces(Calculator.entries()) :: :ok
+  @spec update_available_interfaces(Route.entries()) :: :ok
   def update_available_interfaces(routes) do
     # Available interfaces are those with local routes
     # in priority order.

@@ -11,19 +11,10 @@ defmodule VintageNet.Route.Calculator do
   configurations.
   """
 
-  alias VintageNet.Interface.Classification
-  alias VintageNet.Route.InterfaceInfo
+  alias VintageNet.Route
+  alias VintageNet.Route.{DefaultMetric, InterfaceInfo}
 
-  @type table_index :: 0..255 | :main | :local | :default
-  @type metric :: 0..32767
-  @type rule :: {:rule, table_index(), :inet.ip_address()}
-  @type default_route ::
-          {:default_route, VintageNet.ifname(), :inet.ip_address(), metric(), table_index()}
-  @type local_route ::
-          {:local_route, VintageNet.ifname(), :inet.ip_address(), metric(), table_index()}
-  @type entry :: rule() | default_route() | local_route()
-  @type entries :: [entry()]
-  @type table_indices :: %{VintageNet.ifname() => table_index()}
+  @type table_indices :: %{VintageNet.ifname() => Route.table_index()}
 
   @type interface_infos :: %{VintageNet.ifname() => InterfaceInfo.t()}
 
@@ -38,6 +29,7 @@ defmodule VintageNet.Route.Calculator do
   @doc """
   Return the table indices used for routing based on source IP.
   """
+  @spec rule_table_index_range() :: Range.t()
   def rule_table_index_range() do
     max_index = 100 + VintageNet.max_interface_count() - 1
     100..max_index
@@ -49,11 +41,9 @@ defmodule VintageNet.Route.Calculator do
   The entries are ordered so that List.myers_difference/2 can be used to
   minimize the routing table changes.
   """
-  @spec compute(table_indices(), interface_infos(), [Classification.prioritization()]) ::
-          {table_indices(), entries()}
-  def compute(table_indices, infos, prioritization) do
-    {new_table_indices, entries} =
-      Enum.reduce(infos, {table_indices, []}, &make_entries(&1, &2, prioritization))
+  @spec compute(table_indices(), interface_infos()) :: {table_indices(), Route.entries()}
+  def compute(table_indices, infos) do
+    {new_table_indices, entries} = Enum.reduce(infos, {table_indices, []}, &make_entries(&1, &2))
 
     sorted_entries = Enum.sort(entries, &sort/2)
 
@@ -83,9 +73,9 @@ defmodule VintageNet.Route.Calculator do
     priority_a <= priority_b
   end
 
-  defp make_entries({ifname, info}, {table_indices, entries}, prioritization) do
+  defp make_entries({ifname, info}, {table_indices, entries}) do
     {new_table_indices, table_index} = get_table_index(ifname, table_indices)
-    metric = InterfaceInfo.metric(info, prioritization)
+    metric = DefaultMetric.compute_metric(ifname, info)
 
     new_entries = routing_table_entries(metric, ifname, table_index, info)
 
