@@ -2,7 +2,7 @@ defmodule VintageNet.RouteManager do
   use GenServer
   require Logger
 
-  alias VintageNet.Interface.{Classification, NameUtilities}
+  alias VintageNet.Interface.NameUtilities
   alias VintageNet.Route.{Calculator, InterfaceInfo, IPRoute, Properties}
 
   @moduledoc """
@@ -38,7 +38,7 @@ defmodule VintageNet.RouteManager do
   defmodule State do
     @moduledoc false
 
-    defstruct prioritization: nil, interfaces: nil, route_state: nil, routes: []
+    defstruct interfaces: nil, route_state: nil, routes: []
   end
 
   @doc """
@@ -104,16 +104,6 @@ defmodule VintageNet.RouteManager do
     GenServer.call(__MODULE__, {:clear_route, ifname})
   end
 
-  @doc """
-  Set the order that default gateways should be used
-
-  The list is ordered from highest priority to lowest
-  """
-  @spec set_prioritization([Classification.prioritization()]) :: :ok
-  def set_prioritization(priorities) do
-    GenServer.call(__MODULE__, {:set_prioritization, priorities})
-  end
-
   ## GenServer
 
   @impl GenServer
@@ -124,7 +114,6 @@ defmodule VintageNet.RouteManager do
 
     state =
       %State{
-        prioritization: Classification.default_prioritization(),
         interfaces: %{},
         route_state: Calculator.init()
       }
@@ -182,16 +171,6 @@ defmodule VintageNet.RouteManager do
     end
   end
 
-  @impl GenServer
-  def handle_call({:set_prioritization, priorities}, _from, state) do
-    new_state =
-      state
-      |> Map.put(:prioritization, priorities)
-      |> update_route_tables()
-
-    {:reply, :ok, new_state}
-  end
-
   defp interface_info_changed?(state, ifname, ip_subnets, default_gateway) do
     case Map.fetch(state.interfaces, ifname) do
       {:ok,
@@ -214,7 +193,7 @@ defmodule VintageNet.RouteManager do
     # It will likely be necessary to expose this to users who have more than one
     # of the same interface type available. For now, lower numbered interfaces
     # have priority. For example, eth0 is used over eth1, etc. The 10 is hardcoded
-    # to correspond to the calculation in classification.ex.
+    # to correspond to the calculation in default_metric.ex.
     weight = rem(NameUtilities.get_instance(ifname), 10)
 
     %InterfaceInfo{
@@ -257,8 +236,7 @@ defmodule VintageNet.RouteManager do
 
   defp update_route_tables(state) do
     # See what changed and then run it.
-    {new_route_state, new_routes} =
-      Calculator.compute(state.route_state, state.interfaces, state.prioritization)
+    {new_route_state, new_routes} = Calculator.compute(state.route_state, state.interfaces)
 
     route_delta = List.myers_difference(state.routes, new_routes)
 

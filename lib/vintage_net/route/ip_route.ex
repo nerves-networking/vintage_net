@@ -5,8 +5,7 @@ defmodule VintageNet.Route.IPRoute do
 
   require Logger
 
-  alias VintageNet.Route.Calculator
-  alias VintageNet.{Command, IP}
+  alias VintageNet.{Command, IP, Route}
 
   @doc """
   Add a default route
@@ -14,10 +13,9 @@ defmodule VintageNet.Route.IPRoute do
   @spec add_default_route(
           VintageNet.ifname(),
           :inet.ip_address(),
-          Calculator.metric(),
-          Calculator.table_index()
-        ) ::
-          :ok | {:error, any()}
+          Route.metric(),
+          Route.table_index()
+        ) :: :ok | {:error, any()}
   def add_default_route(ifname, route, metric, table_index) when is_integer(metric) do
     table_index_string = table_index_to_string(table_index)
 
@@ -43,8 +41,8 @@ defmodule VintageNet.Route.IPRoute do
           VintageNet.ifname(),
           :inet.ip_address(),
           VintageNet.prefix_length(),
-          Calculator.metric(),
-          Calculator.table_index()
+          Route.metric(),
+          Route.table_index()
         ) ::
           :ok | {:error, any()}
   def add_local_route(ifname, ip, subnet_bits, metric, table_index) when is_integer(metric) do
@@ -72,7 +70,7 @@ defmodule VintageNet.Route.IPRoute do
   @doc """
   Add a source IP address -> routing table rule
   """
-  @spec add_rule(:inet.ip_address(), Calculator.table_index()) :: :ok | {:error, any()}
+  @spec add_rule(:inet.ip_address(), Route.table_index()) :: :ok | {:error, any()}
   def add_rule(ip_address, table_index) do
     table_index_string = table_index_to_string(table_index)
 
@@ -90,7 +88,7 @@ defmodule VintageNet.Route.IPRoute do
   @doc """
   Clear all rules that select the specified table or tables
   """
-  @spec clear_all_rules(Calculator.table_index() | Enumerable.t()) :: :ok
+  @spec clear_all_rules(Route.table_index() | Enumerable.t()) :: :ok
   def clear_all_rules(table_index) when is_integer(table_index) or is_atom(table_index) do
     repeat_til_error(fn -> clear_a_rule(table_index) end)
   end
@@ -122,7 +120,7 @@ defmodule VintageNet.Route.IPRoute do
   @doc """
   Clear one default route that goes to the specified interface
   """
-  @spec clear_a_route(VintageNet.ifname(), Calculator.table_index()) :: :ok | {:error, any()}
+  @spec clear_a_route(VintageNet.ifname(), Route.table_index()) :: :ok | {:error, any()}
   def clear_a_route(ifname, table_index \\ :main) do
     table_index_string = table_index_to_string(table_index)
     ip_cmd(["route", "del", "default", "table", table_index_string, "dev", ifname])
@@ -135,8 +133,8 @@ defmodule VintageNet.Route.IPRoute do
           VintageNet.ifname(),
           :inet.ip_address(),
           VintageNet.prefix_length(),
-          Calculator.metric(),
-          Calculator.table_index()
+          Route.metric(),
+          Route.table_index()
         ) ::
           :ok | {:error, any()}
   def clear_a_local_route(ifname, ip, subnet_bits, metric, table_index) when is_integer(metric) do
@@ -170,7 +168,7 @@ defmodule VintageNet.Route.IPRoute do
   @doc """
   Clear out one rule
   """
-  @spec clear_a_rule(Calculator.table_index()) :: :ok | {:error, any()}
+  @spec clear_a_rule(Route.table_index()) :: :ok | {:error, any()}
   def clear_a_rule(table_index) do
     table_index_string = table_index_to_string(table_index)
 

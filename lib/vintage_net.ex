@@ -85,7 +85,7 @@ defmodule VintageNet do
   * `:unknown` - Catch-all when the network interface can't be categorized
 
   These are general categories that are helpful for VintageNet's default
-  routing prioritization. See `VintageNet.Interface.Classification` for more
+  routing prioritization. See `VintageNet.Route.DefaultMetric` for more
   information on the use.
   """
   @type interface_type :: :ethernet | :wifi | :mobile | :local | :unknown

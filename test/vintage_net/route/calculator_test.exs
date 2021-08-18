@@ -1,20 +1,17 @@
 defmodule VintageNet.Route.CalculatorTest do
   use ExUnit.Case
 
-  alias VintageNet.Interface.Classification
   alias VintageNet.Route.{Calculator, InterfaceInfo}
 
   doctest Calculator
 
   test "no interfaces" do
-    prioritization = Classification.default_prioritization()
     state = Calculator.init()
 
-    assert {%{}, []} == Calculator.compute(state, %{}, prioritization)
+    assert {%{}, []} == Calculator.compute(state, %{})
   end
 
   test "one interface" do
-    prioritization = Classification.default_prioritization()
     state = Calculator.init()
 
     interfaces = %{
@@ -34,11 +31,10 @@ defmodule VintageNet.Route.CalculatorTest do
               {:local_route, "eth0", {192, 168, 1, 50}, 24, 10, :main},
               {:default_route, "eth0", {192, 168, 1, 1}, 0, 100},
               {:default_route, "eth0", {192, 168, 1, 1}, 10, :main}
-            ]} == Calculator.compute(state, interfaces, prioritization)
+            ]} == Calculator.compute(state, interfaces)
   end
 
   test "a disconnected interface" do
-    prioritization = Classification.default_prioritization()
     state = Calculator.init()
 
     # The calculator should ignore the IP address and gateway even
@@ -53,11 +49,10 @@ defmodule VintageNet.Route.CalculatorTest do
       }
     }
 
-    assert {%{"eth0" => 100}, []} == Calculator.compute(state, interfaces, prioritization)
+    assert {%{"eth0" => 100}, []} == Calculator.compute(state, interfaces)
   end
 
   test "interface w/o addresses" do
-    prioritization = Classification.default_prioritization()
     state = Calculator.init()
 
     interfaces = %{
@@ -70,11 +65,10 @@ defmodule VintageNet.Route.CalculatorTest do
       }
     }
 
-    assert {%{"eth0" => 100}, []} == Calculator.compute(state, interfaces, prioritization)
+    assert {%{"eth0" => 100}, []} == Calculator.compute(state, interfaces)
   end
 
   test "interface w/o default gateway" do
-    prioritization = Classification.default_prioritization()
     state = Calculator.init()
 
     interfaces = %{
@@ -93,11 +87,10 @@ defmodule VintageNet.Route.CalculatorTest do
               {:local_route, "eth0", {192, 168, 1, 50}, 24, 0, 100},
               {:local_route, "eth0", {192, 168, 1, 50}, 24, 50, :main}
             ]} ==
-             Calculator.compute(state, interfaces, prioritization)
+             Calculator.compute(state, interfaces)
   end
 
   test "two interfaces, both internet" do
-    prioritization = Classification.default_prioritization()
     state = Calculator.init()
 
     interfaces = %{
@@ -129,11 +122,10 @@ defmodule VintageNet.Route.CalculatorTest do
               {:default_route, "eth0", {192, 168, 1, 1}, 10, :main},
               {:default_route, "wlan0", {192, 168, 1, 1}, 0, 101},
               {:default_route, "wlan0", {192, 168, 1, 1}, 20, :main}
-            ]} == Calculator.compute(state, interfaces, prioritization)
+            ]} == Calculator.compute(state, interfaces)
   end
 
   test "two interfaces, bad ethernet" do
-    prioritization = Classification.default_prioritization()
     state = Calculator.init()
 
     interfaces = %{
@@ -165,11 +157,10 @@ defmodule VintageNet.Route.CalculatorTest do
               {:default_route, "eth0", {192, 168, 1, 1}, 50, :main},
               {:default_route, "wlan0", {192, 168, 1, 1}, 0, 101},
               {:default_route, "wlan0", {192, 168, 1, 1}, 20, :main}
-            ]} == Calculator.compute(state, interfaces, prioritization)
+            ]} == Calculator.compute(state, interfaces)
   end
 
   test "one interface and many addresses" do
-    prioritization = Classification.default_prioritization()
     state = Calculator.init()
 
     interfaces = %{
@@ -195,7 +186,7 @@ defmodule VintageNet.Route.CalculatorTest do
               {:local_route, "eth0", {192, 168, 1, 50}, 24, 10, :main},
               {:default_route, "eth0", {192, 168, 1, 1}, 0, 100},
               {:default_route, "eth0", {192, 168, 1, 1}, 10, :main}
-            ]} == Calculator.compute(state, interfaces, prioritization)
+            ]} == Calculator.compute(state, interfaces)
   end
 
   test "rule table index range is as expected" do
@@ -203,7 +194,6 @@ defmodule VintageNet.Route.CalculatorTest do
   end
 
   test "multiple interfaces of the same type" do
-    prioritization = Classification.default_prioritization()
     state = Calculator.init()
 
     interfaces = %{
@@ -247,6 +237,6 @@ defmodule VintageNet.Route.CalculatorTest do
               {:default_route, "eth1", {192, 168, 1, 1}, 11, :main},
               {:default_route, "eth2", {192, 168, 2, 1}, 0, 102},
               {:default_route, "eth2", {192, 168, 2, 1}, 12, :main}
-            ]} == Calculator.compute(state, interfaces, prioritization)
+            ]} == Calculator.compute(state, interfaces)
   end
 end
