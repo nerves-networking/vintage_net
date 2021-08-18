@@ -27,7 +27,7 @@ defmodule VintageNet.Application do
        dispatcher: &VintageNet.OSEventDispatcher.dispatch/2},
       VintageNet.InterfacesMonitor,
       {VintageNet.NameResolver, args},
-      VintageNet.RouteManager,
+      {VintageNet.RouteManager, args},
       {Registry, keys: :unique, name: VintageNet.Interface.Registry},
       VintageNet.InterfacesSupervisor
     ]

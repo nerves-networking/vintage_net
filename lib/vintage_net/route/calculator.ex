@@ -12,7 +12,7 @@ defmodule VintageNet.Route.Calculator do
   """
 
   alias VintageNet.Route
-  alias VintageNet.Route.{DefaultMetric, InterfaceInfo}
+  alias VintageNet.Route.InterfaceInfo
 
   @type table_indices :: %{VintageNet.ifname() => Route.table_index()}
 
@@ -41,9 +41,11 @@ defmodule VintageNet.Route.Calculator do
   The entries are ordered so that List.myers_difference/2 can be used to
   minimize the routing table changes.
   """
-  @spec compute(table_indices(), interface_infos()) :: {table_indices(), Route.entries()}
-  def compute(table_indices, infos) do
-    {new_table_indices, entries} = Enum.reduce(infos, {table_indices, []}, &make_entries(&1, &2))
+  @spec compute(table_indices(), interface_infos(), Route.route_metric_fun()) ::
+          {table_indices(), Route.entries()}
+  def compute(table_indices, infos, route_metric_fun) do
+    {new_table_indices, entries} =
+      Enum.reduce(infos, {table_indices, []}, &make_entries(&1, &2, route_metric_fun))
 
     sorted_entries = Enum.sort(entries, &sort/2)
 
@@ -73,9 +75,9 @@ defmodule VintageNet.Route.Calculator do
     priority_a <= priority_b
   end
 
-  defp make_entries({ifname, info}, {table_indices, entries}) do
+  defp make_entries({ifname, info}, {table_indices, entries}, route_metric_fun) do
     {new_table_indices, table_index} = get_table_index(ifname, table_indices)
-    metric = DefaultMetric.compute_metric(ifname, info)
+    metric = route_metric_fun.(ifname, info)
 
     new_entries = routing_table_entries(metric, ifname, table_index, info)
 
