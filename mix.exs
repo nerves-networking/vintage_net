@@ -64,7 +64,8 @@ defmodule VintageNet.MixProject do
         # Contain processes in cgroups by setting to:
         #   [cgroup_base: "vintage_net", cgroup_controllers: ["cpu"]]
         muontrap_options: [],
-        power_managers: []
+        power_managers: [],
+        route_metric_fun: &VintageNet.Route.DefaultMetric.compute_metric/2
       ],
       extra_applications: [:logger, :crypto],
       mod: {VintageNet.Application, []}

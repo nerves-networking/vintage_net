@@ -3,7 +3,8 @@ defmodule VintageNet.RouteManager do
   require Logger
 
   alias VintageNet.Interface.NameUtilities
-  alias VintageNet.Route.{Calculator, InterfaceInfo, IPRoute, Properties}
+  alias VintageNet.Route
+  alias VintageNet.Route.{Calculator, DefaultMetric, InterfaceInfo, IPRoute, Properties}
 
   @moduledoc """
   This module manages the default route.
@@ -35,14 +36,21 @@ defmodule VintageNet.RouteManager do
   ```
   """
 
-  defmodule State do
-    @moduledoc false
-
-    defstruct interfaces: nil, route_state: nil, routes: []
-  end
+  @typedoc false
+  @type state() :: %{
+          interfaces: %{VintageNet.ifname() => InterfaceInfo.t()},
+          route_state: Calculator.table_indices(),
+          routes: Route.entries(),
+          route_metric_fun: Route.route_metric_fun()
+        }
 
   @doc """
-  Start the route manager.
+  Start the route manager
+
+  Options:
+
+  * `:route_metric_fun` - a 2-arity function that takes a ifname and `VintageNet.Route.InterfaceInfo`
+    and returns `VintageNet.Route.metric()`
   """
   @spec start_link(keyword) :: GenServer.on_start()
   def start_link(args) do
@@ -107,19 +115,30 @@ defmodule VintageNet.RouteManager do
   ## GenServer
 
   @impl GenServer
-  def init(_args) do
+  def init(args) do
+    route_metric_fun = args[:route_metric_fun] |> check_compute_metric()
+
     # Fresh slate
     IPRoute.clear_all_routes()
     IPRoute.clear_all_rules(Calculator.rule_table_index_range())
 
     state =
-      %State{
+      %{
         interfaces: %{},
-        route_state: Calculator.init()
+        route_state: Calculator.init(),
+        route_metric_fun: route_metric_fun,
+        routes: []
       }
       |> update_route_tables()
 
     {:ok, state}
+  end
+
+  defp check_compute_metric(fun) when is_function(fun, 2), do: fun
+
+  defp check_compute_metric(_other) do
+    Logger.error("RouteManager: Expecting :route_metric_fun to be a 2-arity function")
+    &DefaultMetric.compute_metric/2
   end
 
   @impl GenServer
@@ -206,12 +225,8 @@ defmodule VintageNet.RouteManager do
   end
 
   # Only process routes if the status changes
-  defp update_connection_status(
-         %State{interfaces: interfaces} = state,
-         ifname,
-         new_status
-       ) do
-    case interfaces[ifname] do
+  defp update_connection_status(state, ifname, new_status) do
+    case state.interfaces[ifname] do
       nil ->
         Logger.warn(
           "RouteManager: set_connection_status to #{inspect(new_status)} on unknown ifname: #{ifname}"
@@ -236,7 +251,8 @@ defmodule VintageNet.RouteManager do
 
   defp update_route_tables(state) do
     # See what changed and then run it.
-    {new_route_state, new_routes} = Calculator.compute(state.route_state, state.interfaces)
+    {new_route_state, new_routes} =
+      Calculator.compute(state.route_state, state.interfaces, state.route_metric_fun)
 
     route_delta = List.myers_difference(state.routes, new_routes)
 

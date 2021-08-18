@@ -3,6 +3,8 @@ defmodule VintageNet.Route do
   Types for handling routing tables
   """
 
+  alias VintageNet.Route.InterfaceInfo
+
   @typedoc """
   Metric (priority) for a routing table entry
   """
@@ -50,4 +52,12 @@ defmodule VintageNet.Route do
   A list of routing table entries
   """
   @type entries :: [entry()]
+
+  @typedoc """
+  Compute a route metric value from information about the interface
+
+  See `VintageNet.Route.DefaultMetric.compute_metric/2` for an example. This can be
+  set using the `:route_metric_fun` application environment key.
+  """
+  @type route_metric_fun() :: (VintageNet.ifname(), InterfaceInfo.t() -> metric())
 end

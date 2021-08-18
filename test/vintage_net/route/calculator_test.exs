@@ -1,14 +1,18 @@
 defmodule VintageNet.Route.CalculatorTest do
   use ExUnit.Case
 
-  alias VintageNet.Route.{Calculator, InterfaceInfo}
+  alias VintageNet.Route.{Calculator, DefaultMetric, InterfaceInfo}
 
   doctest Calculator
+
+  defp compute(state, interfaces) do
+    Calculator.compute(state, interfaces, &DefaultMetric.compute_metric/2)
+  end
 
   test "no interfaces" do
     state = Calculator.init()
 
-    assert {%{}, []} == Calculator.compute(state, %{})
+    assert {%{}, []} == compute(state, %{})
   end
 
   test "one interface" do
@@ -31,7 +35,7 @@ defmodule VintageNet.Route.CalculatorTest do
               {:local_route, "eth0", {192, 168, 1, 50}, 24, 10, :main},
               {:default_route, "eth0", {192, 168, 1, 1}, 0, 100},
               {:default_route, "eth0", {192, 168, 1, 1}, 10, :main}
-            ]} == Calculator.compute(state, interfaces)
+            ]} == compute(state, interfaces)
   end
 
   test "a disconnected interface" do
@@ -49,7 +53,7 @@ defmodule VintageNet.Route.CalculatorTest do
       }
     }
 
-    assert {%{"eth0" => 100}, []} == Calculator.compute(state, interfaces)
+    assert {%{"eth0" => 100}, []} == compute(state, interfaces)
   end
 
   test "interface w/o addresses" do
@@ -65,7 +69,7 @@ defmodule VintageNet.Route.CalculatorTest do
       }
     }
 
-    assert {%{"eth0" => 100}, []} == Calculator.compute(state, interfaces)
+    assert {%{"eth0" => 100}, []} == compute(state, interfaces)
   end
 
   test "interface w/o default gateway" do
@@ -87,7 +91,7 @@ defmodule VintageNet.Route.CalculatorTest do
               {:local_route, "eth0", {192, 168, 1, 50}, 24, 0, 100},
               {:local_route, "eth0", {192, 168, 1, 50}, 24, 50, :main}
             ]} ==
-             Calculator.compute(state, interfaces)
+             compute(state, interfaces)
   end
 
   test "two interfaces, both internet" do
@@ -122,7 +126,7 @@ defmodule VintageNet.Route.CalculatorTest do
               {:default_route, "eth0", {192, 168, 1, 1}, 10, :main},
               {:default_route, "wlan0", {192, 168, 1, 1}, 0, 101},
               {:default_route, "wlan0", {192, 168, 1, 1}, 20, :main}
-            ]} == Calculator.compute(state, interfaces)
+            ]} == compute(state, interfaces)
   end
 
   test "two interfaces, bad ethernet" do
@@ -157,7 +161,7 @@ defmodule VintageNet.Route.CalculatorTest do
               {:default_route, "eth0", {192, 168, 1, 1}, 50, :main},
               {:default_route, "wlan0", {192, 168, 1, 1}, 0, 101},
               {:default_route, "wlan0", {192, 168, 1, 1}, 20, :main}
-            ]} == Calculator.compute(state, interfaces)
+            ]} == compute(state, interfaces)
   end
 
   test "one interface and many addresses" do
@@ -186,7 +190,7 @@ defmodule VintageNet.Route.CalculatorTest do
               {:local_route, "eth0", {192, 168, 1, 50}, 24, 10, :main},
               {:default_route, "eth0", {192, 168, 1, 1}, 0, 100},
               {:default_route, "eth0", {192, 168, 1, 1}, 10, :main}
-            ]} == Calculator.compute(state, interfaces)
+            ]} == compute(state, interfaces)
   end
 
   test "rule table index range is as expected" do
@@ -237,6 +241,6 @@ defmodule VintageNet.Route.CalculatorTest do
               {:default_route, "eth1", {192, 168, 1, 1}, 11, :main},
               {:default_route, "eth2", {192, 168, 2, 1}, 0, 102},
               {:default_route, "eth2", {192, 168, 2, 1}, 12, :main}
-            ]} == Calculator.compute(state, interfaces)
+            ]} == compute(state, interfaces)
   end
 end
