@@ -3,7 +3,7 @@
 [![Hex version](https://img.shields.io/hexpm/v/vintage_net.svg "Hex version")](https://hex.pm/packages/vintage_net)
 [![API docs](https://img.shields.io/hexpm/v/vintage_net.svg?label=hexdocs "API docs")](https://hexdocs.pm/vintage_net/VintageNet.html)
 [![CircleCI](https://circleci.com/gh/nerves-networking/vintage_net.svg?style=svg)](https://circleci.com/gh/nerves-networking/vintage_net)
-[![Coverage Status](https://coveralls.io/repos/github/nerves-networking/vintage_net/badge.svg?branch=master)](https://coveralls.io/github/nerves-networking/vintage_net?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/nerves-networking/vintage_net/badge.svg?branch=main)](https://coveralls.io/github/nerves-networking/vintage_net?branch=main)
 
 > **_NOTE:_**  If you've been using `vintage_net` `v0.6.x` or earlier, we split
 > out network technology support out to separate libraries in `v0.7.0`. You'll
@@ -36,7 +36,9 @@ The following network configurations are supported:
 * [x] WiFi password-less and WEP
 * [x] WPA2 PSK and EAP
 * [x] USB gadget mode Ethernet, IPv4 DHCP server to supply host IP address
-* [x] Cellular networks (see `vintage_net_mobile` for details)
+* [x] Cellular networks (see
+  [`vintage_net_qmi`](https://hex.pm/packages/vintage_net_qmi) and
+  [`vintage_net_mobile`](https://hex.pm/packages/vintage_net_mobile) for details)
 * [x] WiFi AP mode
 * [ ] IPv6 - Partially supported. SLAAC configuration works.
 
@@ -69,8 +71,8 @@ There are two routes to integrating `vintage_net`:
 
 1. Use [nerves_pack](https://hex.pm/packages/nerves_pack). `nerves_pack` is like
    `nerves_init_gadget`, but for `vintage_net`.
-2. Copy and paste from
-   [vintage_net_example](https://github.com/nerves-networking/vintage_net_example)
+2. Copy and paste from the
+   [Nerves hello WiFi example](https://github.com/nerves-project/nerves_examples/tree/main/hello_wifi)
 
 The next step is to make sure that your Nerves system is compatible. The
 official Nerves systems released after 12/11/2019 work without modification. If
@@ -94,7 +96,8 @@ one or more of the following to your dependency list:
 * [`vintage_net_ethernet`](https://github.com/nerves-networking/vintage_net_ethernet) - Standard wired Ethernet
 * [`vintage_net_wifi`](https://github.com/nerves-networking/vintage_net_wifi) - Client configurations for 802.11 WiFi
 * [`vintage_net_direct`](https://github.com/nerves-networking/vintage_net_direct) - Direct connections like those used for USB gadget
-* [`vintage_net_mobile`](https://github.com/nerves-networking/vintage_net_mobile) - Support for a few cellular modems
+* [`vintage_net_qmi`](https://github.com/nerves-networking/vintage_net_qmi) - Support USB-connected cellular modems
+* [`vintage_net_mobile`](https://github.com/nerves-networking/vintage_net_mobile) - Support UART-connected cellular modems
 
 ## Configuration
 
