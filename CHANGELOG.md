@@ -2,6 +2,35 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.0] - 2021-08-19
+
+This release should be a safe update for most users. Many routing table and
+internet connectivity check modules were updated, but the changes were primarily
+in private APIs.
+
+* Added
+  * Support for detecting Internet connectivity on an interface passively by
+    watching tx and rx stats on TCP sockets. For example, if you have a
+    long-lived TCP connection (like for MQTT), the keepalive messages will
+    bump tx and rx counters that will let VintageNet skip testing the connection
+    for connectivity. This reduces traffic on metered connections.
+  * Support for completely overriding route metric calculation. You can now
+    specify a `:route_metric_fun` instead of using the `DefaultMetric`
+    calculator for determining which network interface preferences.
+  * VintageNet property change events now come with timestamps. These are useful
+    for computing state durations and other time-based stats for events.
+
+* Removed
+  * Support for setting route prioritization order. This feature was more
+    limiting that it originally looked. The new `:route_metric_fun` is more
+    straightforward since it lets you explicitly specify orderings and lets
+    decisions be made based on more input data.
+
+* Changed
+  * `VintageNet.Interface.InternetConnectivityChecker` is now
+    `VintageNet.Connectivity.InternetChecker`. Please update any references. Old
+    references will continue to work, but give a deprecation message at runtime.
+
 ## [v0.10.5] - 2021-07-12
 
 This release only contains build system and hex package update. It doesn't
@@ -497,6 +526,7 @@ need to run `apt install libnl-genl-3-dev`.
 
 Initial release to hex.
 
+[v0.11.0]: https://github.com/nerves-networking/vintage_net/compare/v0.10.5...v0.11.0
 [v0.10.5]: https://github.com/nerves-networking/vintage_net/compare/v0.10.4...v0.10.5
 [v0.10.4]: https://github.com/nerves-networking/vintage_net/compare/v0.10.3...v0.10.4
 [v0.10.3]: https://github.com/nerves-networking/vintage_net/compare/v0.10.2...v0.10.3
