@@ -179,7 +179,7 @@ defmodule VintageNet.IP.IPv4Config do
              ]},
             id: :udhcpc
           ),
-          {VintageNet.Interface.InternetConnectivityChecker, ifname}
+          {VintageNet.Connectivity.InternetChecker, ifname}
         ]
 
     %RawConfig{
@@ -241,8 +241,8 @@ defmodule VintageNet.IP.IPv4Config do
     # If there's a default gateway, then check for internet connectivity.
     checker =
       case ipv4[:gateway] do
-        nil -> {VintageNet.Interface.LANConnectivityChecker, ifname}
-        _exists -> {VintageNet.Interface.InternetConnectivityChecker, ifname}
+        nil -> {VintageNet.Connectivity.LANChecker, ifname}
+        _exists -> {VintageNet.Connectivity.InternetChecker, ifname}
       end
 
     new_child_specs = child_specs ++ [checker]
