@@ -85,6 +85,7 @@ defmodule VintageNet.NameResolver do
     additional_name_servers =
       Keyword.get(args, :additional_name_servers, [])
       |> Enum.reduce([], &ip_to_tuple_safe/2)
+      |> Enum.reverse()
 
     state = %State{
       path: resolvconf_path,

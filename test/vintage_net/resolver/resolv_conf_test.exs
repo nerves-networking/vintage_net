@@ -91,8 +91,8 @@ defmodule VintageNet.Resolver.ResolvConfTest do
 
     search aaa-in-between.com # From eth1
     search example.com # From wlan0,eth0
-    nameserver 1.1.1.1 # From wlan0,eth1,eth0
-    nameserver 8.8.8.8 # From wlan0,eth1,eth0
+    nameserver 1.1.1.1 # From eth0,eth1,wlan0
+    nameserver 8.8.8.8 # From eth0,eth1,wlan0
     """
 
     assert to_resolvconf(input) == output
@@ -108,7 +108,7 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     # This file is managed by VintageNet. Do not edit.
 
     search example.com # From wlan0,eth0
-    nameserver 1.1.1.1 # From wlan0,eth0
+    nameserver 1.1.1.1 # From eth0,wlan0
     nameserver 8.8.4.4 # From wlan0
     nameserver 8.8.8.8 # From eth0
     """
@@ -131,5 +131,26 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     """
 
     assert to_resolvconf(input, [{1, 1, 1, 1}, {8, 8, 4, 4}]) == output
+  end
+
+  test "global nameservers are always first" do
+    additional_name_servers = [{8, 8, 8, 8}, {1, 1, 1, 1}]
+
+    input = %{
+      "eth0" => %{name_servers: [{4, 4, 4, 4}, {3, 3, 3, 3}, {8, 8, 8, 8}]},
+      "eth1" => %{name_servers: [{4, 4, 4, 4}, {1, 1, 1, 1}, {2, 2, 2, 2}]}
+    }
+
+    output = """
+    # This file is managed by VintageNet. Do not edit.
+
+    nameserver 8.8.8.8 # From global,eth0
+    nameserver 1.1.1.1 # From global,eth1
+    nameserver 4.4.4.4 # From eth0,eth1
+    nameserver 2.2.2.2 # From eth1
+    nameserver 3.3.3.3 # From eth0
+    """
+
+    assert to_resolvconf(input, additional_name_servers) == output
   end
 end
