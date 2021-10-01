@@ -2,6 +2,22 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.1] - 2021-10-01
+
+* Changed
+  * The DNS server ordering is more deterministic now. Global DNS servers are
+    guaranteed to be listed first and in the order specified. VintageNet will
+    also try to preserve the ordering of DNS servers learned through DHCP. This
+    isn't always possible, though. This fixes a hard-to-find error where an
+    a difference in DNS server orderings between to device locations led to
+    different behavior.
+  * Use `VintageNet.ConnectivityChecker.*` in VintageNet. The connectivity
+    checker module change was half made in `v0.11.0`, but the old module name
+    was kept in a couple places to avoid breaking unit tests in other VintageNet
+    libraries. Now it's completely converted. This doesn't affect runtime. Code
+    that references the previous names will still get deprecation warnings like
+    in `v0.11.0`.
+
 ## [v0.11.0] - 2021-08-19
 
 This release should be a safe update for most users. Many routing table and
