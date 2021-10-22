@@ -112,6 +112,14 @@ defmodule VintageNet.RouteManager do
     GenServer.call(__MODULE__, {:clear_route, ifname})
   end
 
+  @doc """
+  Refresh route metrics for all interfaces.
+  """
+  @spec refresh_route_metrics() :: :ok
+  def refresh_route_metrics() do
+    GenServer.call(__MODULE__, :refresh_route_metrics)
+  end
+
   ## GenServer
 
   @impl GenServer
@@ -188,6 +196,13 @@ defmodule VintageNet.RouteManager do
     else
       {:reply, :ok, state}
     end
+  end
+
+  @impl GenServer
+  def handle_call(:refresh_route_metrics, _from, state) do
+    Logger.info("RouteManager: refresh_route_metrics")
+    new_state = update_route_tables(state)
+    {:reply, :ok, new_state}
   end
 
   defp interface_info_changed?(state, ifname, ip_subnets, default_gateway) do
