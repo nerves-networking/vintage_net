@@ -2,6 +2,14 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.2] - 2021-10-25
+
+* Added
+  * Added `VintageNet.RouteManager.refresh_route_metrics/0` to recompute the
+    routing table metrics. This is useful if you're supplying your own
+    `:route_metric_fun` and something has changed to make it return a different
+    prioritization. Thanks to @LostKobrakai for this feature.
+
 ## [v0.11.1] - 2021-10-01
 
 * Changed
