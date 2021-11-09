@@ -159,7 +159,7 @@ defmodule VintageNet do
   Options:
 
   * `:persist` - set to `false` to avoid persisting this configuration. System
-    restarts will revert to the previous configuration.
+    restarts will revert to the previous configuration. Defaults to true.
   """
   @spec configure(ifname(), map(), configure_options()) :: :ok | {:error, any()}
   def configure(ifname, config, options \\ []) do
@@ -167,7 +167,7 @@ defmodule VintageNet do
   end
 
   @doc """
-  Deconfigure settings for a specified interface.
+  Deconfigure and persists (by default) settings for a specified interface.
 
   Supports same options as `configure/3`
   """
