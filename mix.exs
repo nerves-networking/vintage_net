@@ -121,6 +121,7 @@ defmodule VintageNet.MixProject do
 
   defp docs do
     [
+      before_closing_body_tag: &before_closing_body_tag/1,
       extras: ["README.md", "docs/cookbook.md", "CHANGELOG.md"],
       main: "readme",
       source_ref: "v#{@version}",
@@ -128,6 +129,32 @@ defmodule VintageNet.MixProject do
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
     ]
   end
+
+  defp before_closing_body_tag(:html) do
+    """
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@8.13.3/dist/mermaid.min.js"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      mermaid.initialize({ startOnLoad: false });
+      let id = 0;
+      for (const codeEl of document.querySelectorAll("pre code.mermaid")) {
+        const preEl = codeEl.parentElement;
+        const graphDefinition = codeEl.textContent;
+        const graphEl = document.createElement("div");
+        const graphId = "mermaid-graph-" + id++;
+        mermaid.render(graphId, graphDefinition, function (svgSource, bindListeners) {
+          graphEl.innerHTML = svgSource;
+          bindListeners && bindListeners(graphEl);
+          preEl.insertAdjacentElement("afterend", graphEl);
+          preEl.remove();
+        });
+      }
+    });
+    </script>
+    """
+  end
+
+  defp before_closing_body_tag(_), do: ""
 
   defp check_deps(_) do
     for bad_dep <- [:nerves_init_gadget, :nerves_network] do
