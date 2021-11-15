@@ -3,8 +3,25 @@ defmodule VintageNet.Connectivity.CheckLogic do
   Core logic for determining internet connectivity based on check results
 
   This module is meant to be used by `InternetChecker` and others for
-  determining when to run checks and how many failures should change
-  the network interface's state.
+  determining when to run checks and how many failures should change the
+  network interface's state.
+
+  It implements a state machine that figures out what the connectivity status
+  is based on internet-connectivity check successes and fails. It also returns
+  how long to wait between checks.
+
+  ```mermaid
+  stateDiagram-v2
+    direction LR
+    [*]-->internet : init
+
+    state connected {
+      internet-->lan : max failures
+      lan-->internet : check succeeded
+    }
+    connected-->disconnected : ifdown
+    disconnected-->lan : ifup
+  ```
   """
 
   @min_interval 500
@@ -36,6 +53,12 @@ defmodule VintageNet.Connectivity.CheckLogic do
     %{connectivity: :disconnected, strikes: @max_fails_in_a_row, interval: :infinity}
   end
 
+  @doc """
+  Call this when the interface comes up
+
+  It is assumed that the interface has LAN connectivity now and a check will
+  be scheduled to happen shortly.
+  """
   @spec ifup(state()) :: state()
   def ifup(%{connectivity: :disconnected} = state) do
     # Physical layer is up. Optimistically assume that the LAN is accessible and
@@ -45,12 +68,21 @@ defmodule VintageNet.Connectivity.CheckLogic do
 
   def ifup(state), do: state
 
+  @doc """
+  Call this when the interface goes down
+
+  The interface will be categorized as `:disconnected` until `ifup/1` gets
+  called again.
+  """
   @spec ifdown(state()) :: state()
   def ifdown(state) do
     # Physical layer is down. Don't poll for connectivity since it won't happen.
     %{state | connectivity: :disconnected, interval: :infinity}
   end
 
+  @doc """
+  Call this when an Internet connectivity check succeeds
+  """
   @spec check_succeeded(state()) :: state()
   def check_succeeded(%{connectivity: :disconnected} = state), do: state
 
@@ -60,6 +92,12 @@ defmodule VintageNet.Connectivity.CheckLogic do
     %{state | connectivity: :internet, strikes: 0, interval: @max_interval}
   end
 
+  @doc """
+  Call this when an Internet connectivity check fails
+
+  Depending on how many failures have happened it a row, the connectivity may
+  be degraded to `:lan`.
+  """
   @spec check_failed(state()) :: state()
   def check_failed(%{connectivity: :internet} = state) do
     # There's no discernment between types of failures. Everything means

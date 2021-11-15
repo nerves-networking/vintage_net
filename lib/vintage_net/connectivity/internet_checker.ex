@@ -48,7 +48,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
   def handle_continue(:continue, %{ifname: ifname} = state) do
     VintageNet.subscribe(lower_up_property(ifname))
 
-    # Always run ifup and ifdown depeneding on the interface even
+    # Always run ifup and ifdown depending on the interface even
     # if it's redundant. There may have been a crash and this will
     # get our connectivity status back in sync.
     new_state =
