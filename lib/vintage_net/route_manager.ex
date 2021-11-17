@@ -152,13 +152,27 @@ defmodule VintageNet.RouteManager do
   @impl GenServer
   def handle_call({:set_route, ifname, ip_subnets, default_gateway}, _from, state) do
     if interface_info_changed?(state, ifname, ip_subnets, default_gateway) do
-      Logger.info("RouteManager: set_route #{ifname} -> :lan")
+      Logger.info(
+        "RouteManager: set_route #{ifname}: IP: #{inspect(ip_subnets)}, GW: #{inspect(default_gateway)}"
+      )
 
-      # LAN connectivity assumed since if the information changed, then
-      # internet connectivity needs to be reverified. Plus any existing TCP
-      # connections going to the internet will be broken given the IP or
-      # default gateway change.
-      ifentry = new_interface_info(ifname, ip_subnets, default_gateway, :lan)
+      # Mostly keep the status.
+      #
+      # All changes to the connectivity status need to come
+      # from the connectivity checker or reasoning about this gets confusing.
+      # Note that we know here that the connectivity state may have changed
+      # since either the IP address or default gateway changed. Nonetheless,
+      # defer to the connectivity checker to tell us.
+      #
+      # If we don't know about the interface yet (no route), then it definitely
+      # has :lan status so start there.
+      status =
+        case Map.fetch(state.interfaces, ifname) do
+          {:ok, %InterfaceInfo{status: status}} -> status
+          _ -> :lan
+        end
+
+      ifentry = new_interface_info(ifname, ip_subnets, default_gateway, status)
 
       new_state =
         put_in(state.interfaces[ifname], ifentry)
