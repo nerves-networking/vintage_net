@@ -8,20 +8,19 @@ defmodule VintageNet.Info do
   """
   @spec info([VintageNet.info_options()]) :: :ok
   def info(opts \\ []) do
-    case version() do
-      :not_loaded ->
-        IO.puts("VintageNet hasn't been loaded yet. Try again soon.")
-
-      version ->
+    case vintage_net_app_info() do
+      {:ok, text} ->
         ifnames = interfaces_to_show()
+        IO.write([text, format_header(), format_interfaces(ifnames, opts)])
 
-        IO.write([format_header(version), format_interfaces(ifnames, opts)])
+      {:error, text} ->
+        IO.puts(text)
     end
   end
 
-  defp format_header(version) do
+  defp format_header() do
     """
-    VintageNet #{version}
+
 
     All interfaces:       #{inspect(VintageNet.all_interfaces())}
     Available interfaces: #{inspect(VintageNet.get(["available_interfaces"]))}
@@ -76,12 +75,35 @@ defmodule VintageNet.Info do
     end
   end
 
-  defp version() do
+  defp loaded?(app) do
     Application.loaded_applications()
-    |> List.keyfind(:vintage_net, 0)
+    |> List.keyfind(app, 0)
     |> case do
-      {:vintage_net, _description, version} -> version
-      _ -> :not_loaded
+      {^app, _description, _version} -> true
+      _ -> false
+    end
+  end
+
+  defp started?(app) do
+    Application.started_applications()
+    |> List.keyfind(app, 0)
+    |> case do
+      {^app, _description, _version} -> true
+      _ -> false
+    end
+  end
+
+  defp vintage_net_app_info() do
+    cond do
+      not loaded?(:vintage_net) ->
+        {:error, "VintageNet hasn't been loaded. If the system just booted, try again shortly."}
+
+      not started?(:vintage_net) ->
+        {:error,
+         "VintageNet loaded, but not started. Check the log to see if an error stopped the :vintage_net application."}
+
+      true ->
+        {:ok, "VintageNet #{Application.spec(:vintage_net)[:vsn]}"}
     end
   end
 
