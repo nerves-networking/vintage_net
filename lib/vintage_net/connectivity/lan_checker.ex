@@ -35,12 +35,12 @@ defmodule VintageNet.Connectivity.LANChecker do
 
     case VintageNet.get(lower_up_property(ifname)) do
       true ->
-        RouteManager.set_connection_status(ifname, :lan)
+        RouteManager.set_connection_status(ifname, :lan, "ifup")
 
       _not_true ->
         # If the physical layer isn't up, don't start polling until
         # we're notified that it is available.
-        RouteManager.set_connection_status(ifname, :disconnected)
+        RouteManager.set_connection_status(ifname, :disconnected, "ifdown")
     end
 
     {:noreply, state}
@@ -52,7 +52,7 @@ defmodule VintageNet.Connectivity.LANChecker do
         %{ifname: ifname} = state
       ) do
     # Physical layer is down. We're definitely disconnected.
-    RouteManager.set_connection_status(ifname, :disconnected)
+    RouteManager.set_connection_status(ifname, :disconnected, "ifdown")
     {:noreply, state}
   end
 
@@ -64,7 +64,7 @@ defmodule VintageNet.Connectivity.LANChecker do
     # Physical layer is up. Optimistically assume that the LAN is accessible.
 
     # NOTE: Consider triggering based on whether the interface has an IP address or not.
-    RouteManager.set_connection_status(ifname, :lan)
+    RouteManager.set_connection_status(ifname, :lan, "ifup")
 
     {:noreply, state}
   end
@@ -75,7 +75,7 @@ defmodule VintageNet.Connectivity.LANChecker do
         %{ifname: ifname} = state
       ) do
     # The interface was completely removed!
-    if old_value, do: RouteManager.set_connection_status(ifname, :disconnected)
+    if old_value, do: RouteManager.set_connection_status(ifname, :disconnected, "removed!")
     {:noreply, state}
   end
 

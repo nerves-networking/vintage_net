@@ -99,9 +99,10 @@ defmodule VintageNet.RouteManager do
   Changing the connection status can re-prioritize routing. The
   specified interface doesn't need to have a default route.
   """
-  @spec set_connection_status(VintageNet.ifname(), VintageNet.connection_status()) :: :ok
-  def set_connection_status(ifname, status) do
-    GenServer.call(__MODULE__, {:set_connection_status, ifname, status})
+  @spec set_connection_status(VintageNet.ifname(), VintageNet.connection_status(), String.t()) ::
+          :ok
+  def set_connection_status(ifname, status, why \\ "unknown") do
+    GenServer.call(__MODULE__, {:set_connection_status, ifname, status, why})
   end
 
   @doc """
@@ -172,10 +173,10 @@ defmodule VintageNet.RouteManager do
   end
 
   @impl GenServer
-  def handle_call({:set_connection_status, ifname, status}, _from, state) do
+  def handle_call({:set_connection_status, ifname, status, why}, _from, state) do
     new_state =
       state
-      |> update_connection_status(ifname, status)
+      |> update_connection_status(ifname, status, why)
 
     {:reply, :ok, new_state}
   end
@@ -240,11 +241,11 @@ defmodule VintageNet.RouteManager do
   end
 
   # Only process routes if the status changes
-  defp update_connection_status(state, ifname, new_status) do
+  defp update_connection_status(state, ifname, new_status, why) do
     case state.interfaces[ifname] do
       nil ->
         Logger.warn(
-          "RouteManager: set_connection_status to #{inspect(new_status)} on unknown ifname: #{ifname}"
+          "RouteManager: new set_connection_status #{ifname}} -> #{inspect(new_status)} (#{why})"
         )
 
         ifentry = new_interface_info(ifname, [], nil, new_status)
@@ -254,7 +255,9 @@ defmodule VintageNet.RouteManager do
 
       ifentry ->
         if ifentry.status != new_status do
-          Logger.info("RouteManager: set_connection_status #{ifname} -> #{inspect(new_status)}")
+          Logger.info(
+            "RouteManager: set_connection_status #{ifname} -> #{inspect(new_status)} (#{why})"
+          )
 
           put_in(state.interfaces[ifname].status, new_status)
           |> update_route_tables()
