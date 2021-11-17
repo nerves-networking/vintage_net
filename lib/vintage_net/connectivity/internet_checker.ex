@@ -53,9 +53,9 @@ defmodule VintageNet.Connectivity.InternetChecker do
     # get our connectivity status back in sync.
     new_state =
       if VintageNet.get(lower_up_property(ifname)) do
-        state |> ifup() |> report_connectivity()
+        state |> ifup() |> report_connectivity("ifup")
       else
-        state |> ifdown() |> report_connectivity()
+        state |> ifdown() |> report_connectivity("ifdown")
       end
 
     {:noreply, new_state, new_state.status.interval}
@@ -63,7 +63,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
 
   @impl GenServer
   def handle_info(:timeout, state) do
-    new_state = state |> check_connectivity() |> report_connectivity()
+    new_state = state |> check_connectivity() |> report_connectivity("timeout")
 
     {:noreply, new_state, new_state.status.interval}
   end
@@ -72,7 +72,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
         {VintageNet, ["interface", ifname, "lower_up"], _old_value, false, _meta},
         %{ifname: ifname} = state
       ) do
-    new_state = state |> ifdown() |> report_connectivity()
+    new_state = state |> ifdown() |> report_connectivity("ifdown")
 
     {:noreply, new_state, new_state.status.interval}
   end
@@ -81,7 +81,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
         {VintageNet, ["interface", ifname, "lower_up"], _old_value, true, _meta},
         %{ifname: ifname} = state
       ) do
-    new_state = state |> ifup() |> report_connectivity()
+    new_state = state |> ifup() |> report_connectivity("ifup")
 
     {:noreply, new_state, new_state.status.interval}
   end
@@ -91,7 +91,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
         %{ifname: ifname} = state
       ) do
     # The interface was completely removed!
-    new_state = state |> ifdown() |> report_connectivity()
+    new_state = state |> ifdown() |> report_connectivity("removed!")
     {:noreply, new_state, new_state.status.interval}
   end
 
@@ -118,13 +118,12 @@ defmodule VintageNet.Connectivity.InternetChecker do
     end
   end
 
-  defp report_connectivity(state) do
+  defp report_connectivity(state, why) do
     # It's desirable to set these even if redundant since the checks in this
     # modules are authoritative. I.e., the internet isn't connected unless we
-    # declare it detected. Other modules can reset the connection to :lan
-    # if, for example, a new IP address gets set by DHCP. The following call
+    # declare it detected.The following call
     # will optimize out redundant updates if they really are redundant.
-    RouteManager.set_connection_status(state.ifname, state.status.connectivity)
+    RouteManager.set_connection_status(state.ifname, state.status.connectivity, why)
     state
   end
 
