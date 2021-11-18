@@ -2,6 +2,20 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.3] - 2021-11-18
+
+* Changed
+  * Don't downgrade the connection status on DHCP renewals. Previously, if there
+    was a DHCP renewal, the connection status could go from "Internet-connected"
+    "LAN-connected". The logic was that IP address and router changes may make
+    the Internet unreachible. The new logic is to assume that the device is
+    still Internet-connected and let the connectivity checker downgrade the
+    status should it be necessary. This not only removes a status hiccup, but
+    also fixes a race between the connectivity checker upgrading the connection
+    and the DHCP notification degrading it.
+  * Improve the `VintageNet.info` error when the `:vintage_net` application
+    stops.
+
 ## [v0.11.2] - 2021-10-25
 
 * Added
