@@ -1,6 +1,4 @@
 defmodule VintageNet.Interface do
-  use GenStateMachine
-
   @moduledoc """
   Manage a network interface at a very high level
 
@@ -10,12 +8,14 @@ defmodule VintageNet.Interface do
   The actual code that supplies the configuration implements the `VintageNet.Technology`
   behaviour.
   """
-  require Logger
+  use GenStateMachine
 
   alias VintageNet.Interface.{CommandRunner, RawConfig}
   alias VintageNet.{Persistence, PredictableInterfaceName, PropertyTable, RouteManager}
   alias VintageNet.PowerManager.PMControl
   alias VintageNet.Technology.Null
+
+  require Logger
 
   defmodule State do
     @moduledoc false

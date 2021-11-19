@@ -1,10 +1,4 @@
 defmodule VintageNet.Connectivity.InternetChecker do
-  use GenServer
-  require Logger
-
-  alias VintageNet.Connectivity.{CheckLogic, Inspector, TCPPing}
-  alias VintageNet.RouteManager
-
   @moduledoc """
   This GenServer monitors a network interface for Internet connectivity
 
@@ -13,6 +7,11 @@ defmodule VintageNet.Connectivity.InternetChecker do
   reflect that. Otherwise, the network interface is assumed to merely
   have LAN connectivity if it's up.
   """
+  use GenServer
+
+  alias VintageNet.Connectivity.{CheckLogic, Inspector, TCPPing}
+  alias VintageNet.RouteManager
+  require Logger
 
   @typedoc false
   @type state() :: %{

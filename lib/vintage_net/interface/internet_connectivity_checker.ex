@@ -1,7 +1,6 @@
 defmodule VintageNet.Interface.InternetConnectivityChecker do
-  require Logger
-
   @moduledoc false
+  require Logger
 
   def child_spec(opts) do
     warn()

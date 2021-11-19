@@ -1,9 +1,8 @@
 defmodule VintageNet.Persistence.Null do
-  @behaviour VintageNet.Persistence
-
   @moduledoc """
   Don't save or load configuration at all.
   """
+  @behaviour VintageNet.Persistence
 
   @impl VintageNet.Persistence
   def save(_ifname, _config) do

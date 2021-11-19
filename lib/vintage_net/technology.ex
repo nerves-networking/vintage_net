@@ -1,12 +1,12 @@
 defmodule VintageNet.Technology do
-  alias VintageNet.Interface.RawConfig
-
   @moduledoc """
   Technologies define how network interface types work
 
   VintageNet comes with several built-in technologies, but more can be
   added or existing ones modified by implementing the `Technology` behaviour.
   """
+
+  alias VintageNet.Interface.RawConfig
 
   @doc """
   Normalize a configuration

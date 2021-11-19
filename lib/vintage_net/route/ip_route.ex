@@ -3,9 +3,8 @@ defmodule VintageNet.Route.IPRoute do
   This module knows how to invoke the `ip` command to modify the Linux routing tables
   """
 
-  require Logger
-
   alias VintageNet.{Command, IP, Route}
+  require Logger
 
   @doc """
   Add a default route

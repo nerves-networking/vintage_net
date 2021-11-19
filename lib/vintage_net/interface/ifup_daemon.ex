@@ -1,7 +1,4 @@
 defmodule VintageNet.Interface.IfupDaemon do
-  use GenServer
-  require Logger
-
   @moduledoc """
   Wrap MuonTrap.Daemon to start and stop a program based on whether the network is up
 
@@ -12,6 +9,8 @@ defmodule VintageNet.Interface.IfupDaemon do
   {VintageNet.Interface.IfupDaemon, ifname: ifname, command: program, args: arguments, opts: options]}
   ```
   """
+  use GenServer
+  require Logger
 
   @typedoc false
   @type init_args :: [

@@ -1,7 +1,6 @@
 defmodule VintageNet.Interface.Udhcpc do
-  @behaviour VintageNet.OSEventDispatcher.UdhcpcHandler
-
   @moduledoc false
+  @behaviour VintageNet.OSEventDispatcher.UdhcpcHandler
 
   alias VintageNet.{Command, InterfacesMonitor, IP, NameResolver, RouteManager}
 

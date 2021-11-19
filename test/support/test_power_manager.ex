@@ -1,7 +1,6 @@
 defmodule VintageNetTest.TestPowerManager do
-  @behaviour VintageNet.PowerManager
-
   @moduledoc false
+  @behaviour VintageNet.PowerManager
 
   defstruct hold_on_time: 50,
             time_to_power_off: 100,

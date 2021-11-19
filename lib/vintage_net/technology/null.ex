@@ -1,13 +1,12 @@
 defmodule VintageNet.Technology.Null do
+  @moduledoc """
+  An interface with this technology is unconfigured
+  """
   @behaviour VintageNet.Technology
 
   alias VintageNet.Interface.RawConfig
 
   @null_config %{type: __MODULE__}
-
-  @moduledoc """
-  An interface with this technology is unconfigured
-  """
 
   @impl VintageNet.Technology
   def normalize(_config), do: @null_config

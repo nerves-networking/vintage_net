@@ -1,10 +1,9 @@
 defmodule VintageNet.InterfacesMonitorTest do
   use ExUnit.Case
-
-  alias VintageNet.InterfacesMonitor
-  doctest InterfacesMonitor
-
   import ExUnit.CaptureLog
+  alias VintageNet.InterfacesMonitor
+
+  doctest InterfacesMonitor
 
   setup do
     # Capture Application exited logs

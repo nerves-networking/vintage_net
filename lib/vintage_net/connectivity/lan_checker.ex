@@ -1,9 +1,4 @@
 defmodule VintageNet.Connectivity.LANChecker do
-  use GenServer
-  require Logger
-
-  alias VintageNet.RouteManager
-
   @moduledoc """
   This GenServer monitors a network interface for LAN connectivity
 
@@ -14,6 +9,11 @@ defmodule VintageNet.Connectivity.LANChecker do
   This is an alternative to the InternetConnectivityChecker that
   actively monitors reachability to a host.
   """
+
+  use GenServer
+
+  alias VintageNet.RouteManager
+  require Logger
 
   @doc """
   Start the connectivity checker GenServer

@@ -1,9 +1,8 @@
 defmodule VintageNet.PropertyTable.Table do
+  @moduledoc false
   use GenServer
 
   alias VintageNet.PropertyTable
-
-  @moduledoc false
 
   @spec start_link(
           {PropertyTable.table_id(), Registry.registry(), [PropertyTable.property_value()]}

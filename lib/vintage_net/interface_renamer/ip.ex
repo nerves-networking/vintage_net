@@ -1,8 +1,8 @@
 defmodule VintageNet.InterfaceRenamer.IP do
   @moduledoc false
-  alias VintageNet.Command
 
   @behaviour VintageNet.InterfaceRenamer
+  alias VintageNet.Command
 
   def rename_interface(ifname, rename_to) do
     args = ["link", "set", ifname, "name", rename_to]

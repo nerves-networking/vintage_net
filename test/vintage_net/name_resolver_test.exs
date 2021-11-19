@@ -1,7 +1,7 @@
 defmodule VintageNet.NameResolverTest do
   use VintageNetTest.Case
-  alias VintageNet.NameResolver
   import ExUnit.CaptureLog
+  alias VintageNet.NameResolver
 
   @resolvconf_path "fake_resolv.conf"
 

@@ -1,9 +1,8 @@
 defmodule VintageNet.PropertyTable.Supervisor do
+  @moduledoc false
   use Supervisor
 
   alias VintageNet.PropertyTable
-
-  @moduledoc false
 
   @spec start_link(PropertyTable.options()) :: Supervisor.on_start()
   def start_link(options) do

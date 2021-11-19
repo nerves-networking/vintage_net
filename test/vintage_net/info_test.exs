@@ -1,11 +1,11 @@
 defmodule VintageNet.InfoTest do
   use VintageNetTest.Case
-  alias VintageNet.Info
-
-  doctest Info
 
   import ExUnit.CaptureIO
   import ExUnit.CaptureLog
+  alias VintageNet.Info
+
+  doctest Info
 
   setup do
     # Capture Application exited logs

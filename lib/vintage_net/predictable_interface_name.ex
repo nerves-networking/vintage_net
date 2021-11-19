@@ -4,10 +4,9 @@ defmodule VintageNet.PredictableInterfaceName do
   renaming matching interface names based on the configuration in application
   environment.
   """
-
   use GenServer
-  require Logger
   alias VintageNet.InterfaceRenamer
+  require Logger
 
   # Linux kernel network prefixes are device dependent, but mostly follow
   # the conventions:

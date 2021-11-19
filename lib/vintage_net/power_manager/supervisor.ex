@@ -1,10 +1,9 @@
 defmodule VintageNet.PowerManager.Supervisor do
-  use Supervisor
-  require Logger
-
   @moduledoc """
   Supervision for all of the power management controllers
   """
+  use Supervisor
+  require Logger
 
   @spec start_link(any()) :: Supervisor.on_start_child()
   def start_link(args) do

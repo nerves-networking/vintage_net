@@ -1,4 +1,7 @@
 defmodule VintageNet.Persistence.FlatFile do
+  @moduledoc """
+  Save and load configurations from flat files
+  """
   @behaviour VintageNet.Persistence
 
   # Version 1 persistence files have the following format:
@@ -13,10 +16,6 @@ defmodule VintageNet.Persistence.FlatFile do
 
   # Yes, I'm aware that we're using AES 128 GCM
   @aad "AES256GCM"
-
-  @moduledoc """
-  Save and load configurations from flat files
-  """
 
   @impl VintageNet.Persistence
   def save(ifname, config) do

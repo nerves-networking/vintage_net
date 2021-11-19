@@ -1,6 +1,8 @@
 defmodule VintageNet.OSEventDispatcherTest do
   use ExUnit.Case
 
+  import ExUnit.CaptureLog
+
   alias VintageNet.OSEventDispatcher
   alias VintageNetTest.{CapturingUdhcpcHandler, CapturingUdhcpdHandler}
 
@@ -89,8 +91,6 @@ defmodule VintageNet.OSEventDispatcherTest do
     assert ifname == "wlan1"
     assert lease_file == "udhcpd.wlan1.leases"
   end
-
-  import ExUnit.CaptureLog
 
   test "dispatcher warns on unknown messages" do
     CapturingUdhcpdHandler.clear()

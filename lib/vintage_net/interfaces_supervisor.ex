@@ -1,9 +1,8 @@
 defmodule VintageNet.InterfacesSupervisor do
+  @moduledoc false
   use DynamicSupervisor
   alias VintageNet.PredictableInterfaceName
   require Logger
-
-  @moduledoc false
 
   @spec start_link(any()) :: GenServer.on_start()
   def start_link(args) do

@@ -1,10 +1,9 @@
 defmodule VintageNet.InterfaceTest do
   use VintageNetTest.Case
+  import ExUnit.CaptureLog
 
   alias VintageNet.Interface
   alias VintageNetTest.TestPowerManager, as: TPM
-
-  import ExUnit.CaptureLog
 
   # Use "test0" so that power management calls can be exercised
   @ifname "test0"

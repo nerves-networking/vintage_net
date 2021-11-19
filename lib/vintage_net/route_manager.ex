@@ -1,11 +1,4 @@
 defmodule VintageNet.RouteManager do
-  use GenServer
-  require Logger
-
-  alias VintageNet.Interface.NameUtilities
-  alias VintageNet.Route
-  alias VintageNet.Route.{Calculator, DefaultMetric, InterfaceInfo, IPRoute, Properties}
-
   @moduledoc """
   This module manages the default route.
 
@@ -35,6 +28,12 @@ defmodule VintageNet.RouteManager do
   CONFIG_IP_MULTIPLE_TABLES=y
   ```
   """
+  use GenServer
+
+  alias VintageNet.Interface.NameUtilities
+  alias VintageNet.Route
+  alias VintageNet.Route.{Calculator, DefaultMetric, InterfaceInfo, IPRoute, Properties}
+  require Logger
 
   @typedoc false
   @type state() :: %{

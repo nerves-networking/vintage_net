@@ -14,9 +14,9 @@ defmodule VintageNet.Interface.CommandRunner do
   CommandRunner also implements RawConfig's file creation and
   cleanup logic.
   """
-  require Logger
   alias VintageNet.Command
   alias VintageNet.Interface.{OutputLogger, RawConfig}
+  require Logger
 
   @doc """
   Run one or more commands

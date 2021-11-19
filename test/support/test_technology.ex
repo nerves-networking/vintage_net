@@ -1,11 +1,11 @@
 defmodule VintageNetTest.TestTechnology do
-  @behaviour VintageNet.Technology
-
-  alias VintageNet.Interface.RawConfig
-
   @moduledoc """
   Support for unit testing APIs that require a Technology behaviour
   """
+
+  @behaviour VintageNet.Technology
+
+  alias VintageNet.Interface.RawConfig
 
   @impl VintageNet.Technology
   def normalize(config) do

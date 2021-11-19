@@ -1,7 +1,6 @@
 defmodule VintageNetTest.BadPowerManager do
-  @behaviour VintageNet.PowerManager
-
   @moduledoc false
+  @behaviour VintageNet.PowerManager
 
   @impl VintageNet.PowerManager
   def init(_args) do

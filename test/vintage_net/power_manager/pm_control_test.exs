@@ -1,10 +1,9 @@
 defmodule VintageNet.PowerManager.PMControlTest do
   use VintageNetTest.Case
+  import ExUnit.CaptureLog
 
   alias VintageNet.PowerManager.PMControl
   alias VintageNetTest.TestPowerManager, as: TPM
-
-  import ExUnit.CaptureLog
 
   @test_ifname "test0"
 

@@ -1,9 +1,4 @@
 defmodule VintageNet.NameResolver do
-  use GenServer
-  require Logger
-  alias VintageNet.IP
-  alias VintageNet.Resolver.ResolvConf
-
   @moduledoc """
   This module manages the contents of "/etc/resolv.conf".
 
@@ -21,6 +16,10 @@ defmodule VintageNet.NameResolver do
   module will track configurations to network interfaces so that it can reflect
   which resolvers are around. Resolver order isn't handled.
   """
+  use GenServer
+  alias VintageNet.IP
+  alias VintageNet.Resolver.ResolvConf
+  require Logger
 
   defmodule State do
     @moduledoc false
