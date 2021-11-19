@@ -124,7 +124,7 @@ defmodule VintageNet.Persistence.FlatFile do
         apply(m, f, a)
 
       f when is_function(f, 0) ->
-        apply(f, [])
+        f.()
 
       unhidden_key when is_binary(unhidden_key) and byte_size(unhidden_key) == 16 ->
         unhidden_key

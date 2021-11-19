@@ -347,7 +347,7 @@ defmodule VintageNet do
 
     for ifname <- configured_interfaces() do
       type = get(["interface", ifname, "type"])
-      apply(type, :check_system, [opts])
+      type.check_system(opts)
     end
     |> Enum.find(:ok, fn rc -> rc != :ok end)
   end

@@ -28,7 +28,7 @@ defmodule VintageNet.OSEventDispatcher do
     case extract_lease_file_ifname(lease_file) do
       {:ok, ifname} ->
         handler = Application.get_env(:vintage_net, :udhcpd_handler)
-        apply(handler, :lease_update, [ifname, lease_file])
+        handler.lease_update(ifname, lease_file)
 
       :error ->
         Logger.warn("VintageNet: dropping unexpected notification: [#{inspect(lease_file)}]")
