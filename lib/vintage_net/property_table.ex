@@ -59,6 +59,7 @@ defmodule VintageNet.PropertyTable do
   Returns a specification to start a property_table under a supervisor.
   See `Supervisor`.
   """
+  @spec child_spec(keyword()) :: Supervisor.child_spec()
   def child_spec(opts) do
     %{
       id: Keyword.get(opts, :name, PropertyTable),

@@ -64,6 +64,4 @@ defmodule VintageNet.Interface.RawConfig do
           down_cmds: [command()],
           cleanup_files: [Path.t()]
         }
-
-  def unimplemented_ioctl(_, _), do: {:error, :unimplemented}
 end

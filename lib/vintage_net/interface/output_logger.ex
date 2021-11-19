@@ -10,6 +10,9 @@ defmodule VintageNet.Interface.OutputLogger do
   def new(prefix), do: %__MODULE__{prefix: prefix}
 
   defimpl Collectable do
+    @spec into(Collectable.t()) ::
+            {initial_acc :: term(),
+             collector :: (term(), Collectable.command() -> Collectable.t() | term())}
     def into(%VintageNet.Interface.OutputLogger{} = logger) do
       {logger, &collector/2}
     end

@@ -122,6 +122,7 @@ defmodule VintageNet.PowerManager.PMControl do
   since assumption is that if someone wants to reset, they're ready
   to reset now.
   """
+  @spec force_reset(VintageNet.ifname()) :: :ok
   def force_reset(ifname) do
     GenServer.cast(via_name(ifname), :force_reset)
   end
@@ -178,7 +179,7 @@ defmodule VintageNet.PowerManager.PMControl do
     end
   end
 
-  def safe_init(state) do
+  defp safe_init(state) do
     state.impl.init(state.impl_args)
   rescue
     e ->

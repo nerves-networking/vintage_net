@@ -81,6 +81,7 @@ defmodule VintageNet.Persistence.FlatFileTest do
     end)
   end
 
+  @spec get_secret() :: binary()
   def get_secret() do
     "my_super_secret_"
   end

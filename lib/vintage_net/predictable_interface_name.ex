@@ -160,7 +160,7 @@ defmodule VintageNet.PredictableInterfaceName do
           else
             Logger.debug("VintageNet renaming #{ifname} to #{rename_to}")
             # do side effect..
-            rename(ifname, rename_to)
+            :ok = rename(ifname, rename_to)
             [rename | renamed]
           end
 

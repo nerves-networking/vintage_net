@@ -29,7 +29,7 @@ defmodule VintageNet.IP.IPv4Config do
   @doc """
   Normalize the IPv4 parameters in a configuration.
   """
-  # @spec normalize(map()) :: map()
+  @spec normalize(map()) :: %{ipv4: map()}
   def normalize(%{ipv4: ipv4} = config) do
     new_ipv4 = normalize_by_method(ipv4)
     %{config | ipv4: new_ipv4}
