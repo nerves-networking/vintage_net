@@ -9,14 +9,17 @@ defmodule VintageNet.Connectivity.InternetChecker do
   """
   use GenServer
 
-  alias VintageNet.Connectivity.{CheckLogic, Inspector, TCPPing}
+  alias VintageNet.Connectivity.{CheckLogic, DNSResolver, Inspector, TCPPing}
   alias VintageNet.RouteManager
   require Logger
+
+  import VintageNet.Connectivity.DNSResolver, only: [hostent: 1]
 
   @typedoc false
   @type state() :: %{
           ifname: VintageNet.ifname(),
-          hosts: [{VintageNet.any_ip_address(), non_neg_integer()}],
+          configured_hosts: [{VintageNet.any_ip_address(), non_neg_integer()}],
+          working_hosts: [{:inet.ip_address(), non_neg_integer()}],
           status: CheckLogic.state(),
           inspector: Inspector.cache()
         }
@@ -35,7 +38,8 @@ defmodule VintageNet.Connectivity.InternetChecker do
 
     state = %{
       ifname: ifname,
-      hosts: get_internet_host_list(),
+      configured_host: get_internet_host_list(),
+      working_hosts: [],
       status: CheckLogic.init(connectivity),
       inspector: %{}
     }
@@ -105,17 +109,49 @@ defmodule VintageNet.Connectivity.InternetChecker do
   defp check_connectivity(state) do
     {status, new_cache} = Inspector.check_internet(state.ifname, state.inspector)
 
-    if status == :available or TCPPing.ping(state.ifname, hd(state.hosts)) == :ok do
-      %{state | status: CheckLogic.check_succeeded(state.status), inspector: new_cache}
-    else
-      %{
-        state
-        | status: CheckLogic.check_failed(state.status),
-          hosts: rotate_list(state.hosts),
-          inspector: new_cache
-      }
+    check_connected(status, %{state | inspector: new_cache})
+  end
+
+  def check_connected(:available, state) do
+    %{state | status: CheckLogic.check_succeeded(state.status)}
+  end
+
+  def check_connected(status, %{working_hosts: []} = state) do
+    working_hosts = build_working_hosts(state)
+
+    check_connected(status, %{state | working_hosts: working_hosts})
+  end
+
+  def check_connected(_status, state) do
+    [host | remaining_working_hosts] = state.working_hosts
+
+    case TCPPing.ping(state.ifname, host) do
+      :ok ->
+        %{state | status: CheckLogic.check_succeeded(state.status)}
+
+      _error ->
+        %{
+          state
+          | status: CheckLogic.check_failed(state.status),
+            working_hosts: remaining_working_hosts
+        }
     end
   end
+
+  defp build_working_hosts(state) do
+    Enum.flat_map(state.configured_hosts, fn {host, port} ->
+      case DNSResolver.resolve(host) do
+        {:ok, hostent} ->
+          hostent(h_addr_list: addrs) = hostent
+          add_port_to_addrs(addrs, port)
+
+        {:error, _reason} ->
+          []
+      end
+    end)
+  end
+
+  defp add_port_to_addrs(addrs, port), do: Enum.map(addrs, &{&1, port})
 
   defp report_connectivity(state, why) do
     # It's desirable to set these even if redundant since the checks in this
@@ -137,8 +173,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
   def rotate_list(hosts), do: tl(hosts) ++ [hd(hosts)]
 
   defp get_internet_host_list() do
-    hosts = legacy_internet_host() ++ Application.get_env(:vintage_net, :internet_host_list)
-    good_hosts = Enum.flat_map(hosts, &normalize_internet_host/1)
+    good_hosts = get_hosts()
 
     if good_hosts == [] do
       Logger.warn("VintageNet: `:internet_host_list` is invalid. Using defaults")
@@ -162,14 +197,30 @@ defmodule VintageNet.Connectivity.InternetChecker do
     end
   end
 
+  defp get_hosts() do
+    hosts = legacy_internet_host() ++ Application.get_env(:vintage_net, :internet_host_list)
+
+    Enum.reduce(hosts, [], fn host, good_hosts ->
+      case normalize_internet_host(host) do
+        {:ok, normalized_host} ->
+          good_hosts ++ [normalized_host]
+
+        {:error, _reason} ->
+          good_hosts
+      end
+    end)
+  end
+
   defp normalize_internet_host({host, port}) when port > 0 and port < 65536 do
     case VintageNet.IP.ip_to_tuple(host) do
-      {:ok, host_as_tuple} -> [{host_as_tuple, port}]
-      _anything_else -> []
+      {:ok, host_as_tuple} -> {:ok, {host_as_tuple, port}}
+      # if we cannot parse the IP address we assume that it is a domain name.
+      {:error, _invalid_ip_address} -> {:ok, {host, port}}
     end
   end
 
   defp normalize_internet_host(other) do
     Logger.warn("VintageNet: Dropping invalid Internet destination (#{inspect(other)})")
+    {:error, :invalid_internet_destination}
   end
 end
