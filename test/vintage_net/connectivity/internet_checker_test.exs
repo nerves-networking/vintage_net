@@ -12,6 +12,31 @@ defmodule VintageNet.Connectivity.InternetCheckerTest do
     assert [] == InternetChecker.rotate_list([])
   end
 
+  describe "connected?/2" do
+    test "when internet is available" do
+      assert true == InternetChecker.connected?(:available, %{})
+    end
+
+    test "when DNS cannot be resolved for domain" do
+      domain = "fake.domain.name.com.io.vintage.net"
+      state = %{hosts: [{domain, 80}]}
+
+      assert false == InternetChecker.connected?(:unknown, state)
+    end
+
+    test "when IP addresses are passed in" do
+      state = %{hosts: [{{1, 1, 1, 1}, 80}], ifname: Utils.get_ifname_for_tests()}
+
+      assert true == InternetChecker.connected?(:unknown, state)
+    end
+
+    test "when DNS can be resolved for a domain name" do
+      state = %{hosts: [{"localhost", 80}], ifname: Utils.get_ifname_for_tests()}
+
+      assert true == InternetChecker.connected?(:unknown, state)
+    end
+  end
+
   test "disconnected interface" do
     ifname = "disconnected_interface"
     property = ["interface", ifname, "connection"]
