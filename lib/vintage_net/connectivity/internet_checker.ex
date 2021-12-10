@@ -142,7 +142,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
 
     if good_hosts == [] do
       Logger.warn("VintageNet: `:internet_host_list` is invalid. Using defaults")
-      [{1, 1, 1, 1}, 80]
+      [{{1, 1, 1, 1}, 80}]
     else
       good_hosts
     end
