@@ -2,6 +2,7 @@ defmodule VintageNet.Connectivity.LANCheckerTest do
   use ExUnit.Case, async: true
   import ExUnit.CaptureLog
   alias VintageNet.Connectivity.LANChecker
+  alias VintageNetTest.Utils
 
   test "disconnected interface" do
     property = ["interface", "disconnected_interface2", "connection"]
@@ -20,7 +21,7 @@ defmodule VintageNet.Connectivity.LANCheckerTest do
       Application.start(:vintage_net)
     end)
 
-    ifname = get_ifname()
+    ifname = Utils.get_ifname_for_tests()
     property = ["interface", ifname, "connection"]
     VintageNet.subscribe(property)
 
@@ -33,27 +34,12 @@ defmodule VintageNet.Connectivity.LANCheckerTest do
   test "deprecation warning when using old LANConnectivityChecker" do
     messages =
       capture_log(fn ->
-        start_supervised!({VintageNet.Interface.LANConnectivityChecker, get_ifname()})
+        start_supervised!(
+          {VintageNet.Interface.LANConnectivityChecker, Utils.get_ifname_for_tests()}
+        )
       end)
 
     assert messages =~
              "VintageNet.Interface.LANConnectivityChecker is now VintageNet.Connectivity.LANChecker"
-  end
-
-  defp get_ifname() do
-    case :inet.getifaddrs() do
-      {:ok, addrs} ->
-        addrs
-        |> Enum.filter(&filter_interfaces/1)
-        |> List.first()
-        |> elem(0)
-        |> to_string()
-    end
-  end
-
-  defp filter_interfaces({[?l, ?o | _anything], _}), do: false
-
-  defp filter_interfaces({_ifname, fields}) do
-    Enum.member?(fields[:flags], :up) and fields[:addr] != nil
   end
 end
