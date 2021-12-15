@@ -55,4 +55,22 @@ defmodule VintageNetTest.Utils do
       type: :worker
     }
   end
+
+  @spec get_ifname_for_tests() :: VintageNet.ifname()
+  def get_ifname_for_tests() do
+    case :inet.getifaddrs() do
+      {:ok, addrs} ->
+        addrs
+        |> Enum.filter(&filter_interfaces/1)
+        |> List.first()
+        |> elem(0)
+        |> to_string()
+    end
+  end
+
+  defp filter_interfaces({[?l, ?o | _anything], _}), do: false
+
+  defp filter_interfaces({_ifname, fields}) do
+    Enum.member?(fields[:flags], :up) and fields[:addr] != nil
+  end
 end
