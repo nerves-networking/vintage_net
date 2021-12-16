@@ -31,7 +31,7 @@ jobs:
           keys:
             - v1-mix-cache-{{ checksum "mix.lock" }}
       - run: mix deps.get
-      - run: mix test
+      - run: mix test --exclude requires_ipv6
       - run: mix format --check-formatted
       - run: mix deps.unlock --check-unused
       - run: mix docs
@@ -54,7 +54,7 @@ jobs:
       - <<: *install_hex_rebar
       - <<: *install_system_deps
       - run: mix deps.get
-      - run: mix test
+      - run: mix test --exclude requires_ipv6
 
   build_elixir_1_10_otp_23:
     docker:
@@ -65,7 +65,7 @@ jobs:
       - <<: *install_hex_rebar
       - <<: *install_system_deps
       - run: mix deps.get
-      - run: mix test
+      - run: mix test --exclude requires_ipv6
 
   build_elixir_1_9_otp_22:
     docker:
@@ -76,7 +76,7 @@ jobs:
       - <<: *install_hex_rebar
       - <<: *install_system_deps
       - run: mix deps.get
-      - run: mix test
+      - run: mix test --exclude requires_ipv6
 
 workflows:
   version: 2
