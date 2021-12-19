@@ -58,19 +58,17 @@ defmodule VintageNetTest.Utils do
 
   @spec get_ifname_for_tests() :: VintageNet.ifname()
   def get_ifname_for_tests() do
-    case :inet.getifaddrs() do
-      {:ok, addrs} ->
-        addrs
-        |> Enum.filter(&filter_interfaces/1)
-        |> List.first()
-        |> elem(0)
-        |> to_string()
-    end
+    {:ok, addrs} = :inet.getifaddrs()
+    [{ifname, _info} | _rest] = Enum.filter(addrs, &good_interface?/1)
+    to_string(ifname)
   end
 
-  defp filter_interfaces({[?l, ?o | _anything], _}), do: false
+  defp good_interface?({[?l, ?o | _anything], _}), do: false
 
-  defp filter_interfaces({_ifname, fields}) do
-    Enum.member?(fields[:flags], :up) and fields[:addr] != nil
+  defp good_interface?({_ifname, fields}) do
+    Enum.member?(fields[:flags], :up) and Enum.any?(fields, &ipv4_address_field?/1)
   end
+
+  defp ipv4_address_field?({:addr, {_, _, _, _}}), do: true
+  defp ipv4_address_field?(_), do: false
 end
