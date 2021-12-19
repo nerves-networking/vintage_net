@@ -40,7 +40,7 @@ defmodule VintageNet.Connectivity.InspectorTest do
     {status, cache} =
       Inspector.check_ports({:unknown, %{}}, [socket], [{src_ip, {255, 255, 255, 0}}], cache)
 
-    assert status == :available
+    assert status == :internet
     assert Map.has_key?(cache, socket)
 
     # Close the socket
@@ -87,7 +87,7 @@ defmodule VintageNet.Connectivity.InspectorTest do
       {status, cache} =
         Inspector.check_sockets({:unknown, %{}}, [socket], [{src_ip, {255, 255, 255, 0}}], cache)
 
-      assert status == :available
+      assert status == :internet
       assert Map.has_key?(cache, socket)
 
       # Close the socket

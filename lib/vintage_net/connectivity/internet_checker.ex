@@ -9,19 +9,18 @@ defmodule VintageNet.Connectivity.InternetChecker do
   """
   use GenServer
 
-  alias VintageNet.Connectivity.{CheckLogic, DNSResolver, Inspector, TCPPing}
+  alias VintageNet.Connectivity.{CheckLogic, HostList, Inspector, TCPPing}
   alias VintageNet.RouteManager
   require Logger
-
-  import VintageNet.Connectivity.DNSResolver, only: [hostent: 1]
 
   @typedoc false
   @type state() :: %{
           ifname: VintageNet.ifname(),
           configured_hosts: [{VintageNet.any_ip_address(), non_neg_integer()}],
-          working_hosts: [{:inet.ip_address(), non_neg_integer()}],
-          status: CheckLogic.state(),
-          inspector: Inspector.cache()
+          ping_list: [{:inet.ip_address(), non_neg_integer()}],
+          check_logic: CheckLogic.state(),
+          inspector: Inspector.cache(),
+          status: Inspector.status()
         }
 
   @doc """
@@ -38,10 +37,11 @@ defmodule VintageNet.Connectivity.InternetChecker do
 
     state = %{
       ifname: ifname,
-      configured_host: get_internet_host_list(),
-      working_hosts: [],
-      status: CheckLogic.init(connectivity),
-      inspector: %{}
+      configured_hosts: HostList.load(),
+      ping_list: [],
+      check_logic: CheckLogic.init(connectivity),
+      inspector: %{},
+      status: :unknown
     }
 
     {:ok, state, {:continue, :continue}}
@@ -61,14 +61,14 @@ defmodule VintageNet.Connectivity.InternetChecker do
         state |> ifdown() |> report_connectivity("ifdown")
       end
 
-    {:noreply, new_state, new_state.status.interval}
+    {:noreply, new_state, new_state.check_logic.interval}
   end
 
   @impl GenServer
   def handle_info(:timeout, state) do
     new_state = state |> check_connectivity() |> report_connectivity("timeout")
 
-    {:noreply, new_state, new_state.status.interval}
+    {:noreply, new_state, new_state.check_logic.interval}
   end
 
   def handle_info(
@@ -77,7 +77,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
       ) do
     new_state = state |> ifdown() |> report_connectivity("ifdown")
 
-    {:noreply, new_state, new_state.status.interval}
+    {:noreply, new_state, new_state.check_logic.interval}
   end
 
   def handle_info(
@@ -86,7 +86,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
       ) do
     new_state = state |> ifup() |> report_connectivity("ifup")
 
-    {:noreply, new_state, new_state.status.interval}
+    {:noreply, new_state, new_state.check_logic.interval}
   end
 
   def handle_info(
@@ -95,132 +95,81 @@ defmodule VintageNet.Connectivity.InternetChecker do
       ) do
     # The interface was completely removed!
     new_state = state |> ifdown() |> report_connectivity("removed!")
-    {:noreply, new_state, new_state.status.interval}
+    {:noreply, new_state, new_state.check_logic.interval}
   end
 
   defp ifdown(state) do
-    %{state | status: CheckLogic.ifdown(state.status)}
+    %{state | check_logic: CheckLogic.ifdown(state.check_logic)}
   end
 
   defp ifup(state) do
-    %{state | status: CheckLogic.ifup(state.status)}
+    %{state | check_logic: CheckLogic.ifup(state.check_logic)}
   end
 
   defp check_connectivity(state) do
+    # Steps
+    # 1. Reset status to unknown
+    # 2. See if we can determine internet-connectivity via TCP stats
+    # 3. If still unknown, refresh the ping list
+    # 4. If still unknown, ping. This step is definitive.
+    # 5. Record whether there's internet
+    state
+    |> reset_status()
+    |> check_inspector()
+    |> reload_ping_list()
+    |> ping_if_unknown()
+    |> update_check_logic()
+  end
+
+  defp reset_status(state) do
+    %{state | status: :unknown}
+  end
+
+  defp check_inspector(state) do
     {status, new_cache} = Inspector.check_internet(state.ifname, state.inspector)
-
-    check_connected(status, %{state | inspector: new_cache})
+    %{state | status: status, inspector: new_cache}
   end
 
-  def check_connected(:available, state) do
-    %{state | status: CheckLogic.check_succeeded(state.status)}
+  defp reload_ping_list(%{status: :unknown, ping_list: []} = state) do
+    ping_list = HostList.create_ping_list(state.configured_hosts)
+    %{state | ping_list: ping_list}
   end
 
-  def check_connected(status, %{working_hosts: []} = state) do
-    working_hosts = build_working_hosts(state)
+  defp reload_ping_list(state), do: state
 
-    check_connected(status, %{state | working_hosts: working_hosts})
-  end
-
-  def check_connected(_status, state) do
-    [host | remaining_working_hosts] = state.working_hosts
-
-    case TCPPing.ping(state.ifname, host) do
-      :ok ->
-        %{state | status: CheckLogic.check_succeeded(state.status)}
-
-      _error ->
-        %{
-          state
-          | status: CheckLogic.check_failed(state.status),
-            working_hosts: remaining_working_hosts
-        }
+  defp ping_if_unknown(%{status: :unknown, ping_list: [who | rest]} = state) do
+    case TCPPing.ping(state.ifname, who) do
+      :ok -> %{state | status: :internet}
+      _error -> %{state | status: :no_internet, ping_list: rest}
     end
   end
 
-  defp build_working_hosts(state) do
-    Enum.flat_map(state.configured_hosts, fn {host, port} ->
-      case DNSResolver.resolve(host) do
-        {:ok, hostent} ->
-          hostent(h_addr_list: addrs) = hostent
-          add_port_to_addrs(addrs, port)
-
-        {:error, _reason} ->
-          []
-      end
-    end)
+  defp ping_if_unknown(%{status: :unknown, ping_list: []} = state) do
+    # Ping list being empty is due to the user only providing hostnames and
+    # DNS resolution not working.
+    %{state | status: :no_internet}
   end
 
-  defp add_port_to_addrs(addrs, port), do: Enum.map(addrs, &{&1, port})
+  defp ping_if_unknown(state), do: state
+
+  defp update_check_logic(%{status: :internet} = state) do
+    %{state | check_logic: CheckLogic.check_succeeded(state.check_logic)}
+  end
+
+  defp update_check_logic(%{status: :no_internet} = state) do
+    %{state | check_logic: CheckLogic.check_failed(state.check_logic)}
+  end
 
   defp report_connectivity(state, why) do
     # It's desirable to set these even if redundant since the checks in this
     # modules are authoritative. I.e., the internet isn't connected unless we
     # declare it detected.The following call
     # will optimize out redundant updates if they really are redundant.
-    RouteManager.set_connection_status(state.ifname, state.status.connectivity, why)
+    RouteManager.set_connection_status(state.ifname, state.check_logic.connectivity, why)
     state
   end
 
   defp lower_up_property(ifname) do
     ["interface", ifname, "lower_up"]
-  end
-
-  # Rotate a list left
-  @doc false
-  @spec rotate_list(list()) :: list()
-  def rotate_list([]), do: []
-  def rotate_list(hosts), do: tl(hosts) ++ [hd(hosts)]
-
-  defp get_internet_host_list() do
-    good_hosts = get_hosts()
-
-    if good_hosts == [] do
-      Logger.warn("VintageNet: `:internet_host_list` is invalid. Using defaults")
-      [{{1, 1, 1, 1}, 80}]
-    else
-      good_hosts
-    end
-  end
-
-  defp legacy_internet_host() do
-    case Application.get_env(:vintage_net, :internet_host) do
-      nil ->
-        []
-
-      host ->
-        Logger.warn(
-          "VintageNet: Legacy :internet_host key is in use. Please change this to `internet_host_list: [{#{inspect(host)}, 80}]."
-        )
-
-        [{host, 80}]
-    end
-  end
-
-  defp get_hosts() do
-    hosts = legacy_internet_host() ++ Application.get_env(:vintage_net, :internet_host_list)
-
-    Enum.reduce(hosts, [], fn host, good_hosts ->
-      case normalize_internet_host(host) do
-        {:ok, normalized_host} ->
-          good_hosts ++ [normalized_host]
-
-        {:error, _reason} ->
-          good_hosts
-      end
-    end)
-  end
-
-  defp normalize_internet_host({host, port}) when port > 0 and port < 65536 do
-    case VintageNet.IP.ip_to_tuple(host) do
-      {:ok, host_as_tuple} -> {:ok, {host_as_tuple, port}}
-      # if we cannot parse the IP address we assume that it is a domain name.
-      {:error, _invalid_ip_address} -> {:ok, {host, port}}
-    end
-  end
-
-  defp normalize_internet_host(other) do
-    Logger.warn("VintageNet: Dropping invalid Internet destination (#{inspect(other)})")
-    {:error, :invalid_internet_destination}
   end
 end
