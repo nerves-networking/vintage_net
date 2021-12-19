@@ -32,17 +32,26 @@ defmodule VintageNet.Connectivity.Inspector do
   @type cache() :: %{port() => {non_neg_integer(), non_neg_integer()}}
 
   @typedoc """
-  The return tuple for `check_internet/2`:
+  Internet connectivity status
 
-  * `:available` - at least one TCP connection sent and received data to a
+    * `:internet` - the internet is available
+    * `:unknown` - not sure
+    * `:no_internet` - the internet is definitely not available
+  """
+  @type status() :: :internet | :unknown | :no_internet
+
+  @typedoc """
+  The return tuple for `check_internet/2`
+
+  * `:internet` - at least one TCP connection sent and received data to a
     non-LAN IP address
   * `:unknown` - no conclusion could be made
-  * `:unavailable` - the interface didn't have an IP address, so Internet is
+  * `:no_internet` - the interface didn't have an IP address, so Internet is
     definitely not available
 
   Save the cache away and pass it to the next call to `check_internet/2`.
   """
-  @type result() :: {:available | :unknown | :unavailable, cache()}
+  @type result() :: {status(), cache()}
 
   @typep ip_address_and_mask() :: {:inet.ip_address(), :inet.ip_address()}
 
@@ -53,7 +62,7 @@ defmodule VintageNet.Connectivity.Inspector do
   back the returned cache for each subsequent call. If any TCP socket that's
   connected to a computer on another subnet and that's using the passed in
   network interface has send AND received data since the previous call, then
-  `:available` is returned. If not, then usually `:unknown` is returned to
+  `:internet` is returned. If not, then usually `:unknown` is returned to
   signify that internet may be available, but we just don't know. If the
   interface doesn't have an IP address, then `:unavailable` is returned, since
   that's a prerequisite to communicating with anyone on the internet.
@@ -133,7 +142,7 @@ defmodule VintageNet.Connectivity.Inspector do
 
   defp update_result({:unknown, cache}, socket, {tx1, rx1}, {tx2, rx2} = new_stats)
        when tx2 > tx1 and rx2 > rx1 do
-    {:available, Map.put(cache, socket, new_stats)}
+    {:internet, Map.put(cache, socket, new_stats)}
   end
 
   defp update_result({status, cache}, socket, _previous_stats, new_stats) do
