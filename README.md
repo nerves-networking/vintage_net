@@ -140,7 +140,7 @@ resolvconf         | Path to `/etc/resolv.conf`
 persistence        | Module for persisting network configurations
 persistence_dir    | Path to a directory for storing persisted configurations
 persistence_secret | A 16-byte secret or an MFA for getting a secret
-internet_host_list | IP address/ports to try to connect to for checking Internet connectivity. Defaults to a list of large public DNS providers. E.g., `[{{1, 1, 1, 1}, 53}]`.
+internet_host_list | IP address or hostnames and ports to try to connect to for checking Internet connectivity. Defaults to a list of large public DNS providers. E.g., `[{{1, 1, 1, 1}, 53}]`.
 regulatory_domain  | ISO 3166-1 alpha-2 country (`00` for global, `US`, etc.)
 additional_name_servers     | List of DNS servers to be used in addition to any supplied by an interface. E.g., `[{1, 1, 1, 1}, {8, 8, 8, 8}]`
 route_metric_fun   | Customize how network interfaces are prioritized. See `VintageNet.Route.DefaultMetric.compute_metric/2`
@@ -427,6 +427,61 @@ config :vintage_net,
 * `hw_path` matches `/devices/virtual` (such as `lo0`, `ppp0` etc.)
 * A second interface's `hw_path` matches an interface that has already been
   renamed. This *should* never happen.
+
+## Internet connectivity checks
+
+VintageNet can check whether a network interface can reach the Internet. This
+has a few uses:
+
+1. Selecting which network interface is used when a device has more than one. A
+   common example is a device with a backup cellular connection.
+2. Automatically recovering a network interface that has lost connectivity. Some
+   times bouncing the network interface actually works, so doing this
+   automatically can sometimes revive a remote device.
+3. Letting the application know the status of the network connection to provide
+   more helpful information about what's happening.
+
+The logic for declaring that the Internet is available is:
+
+1. Is there a TCP socket in use on the network interface that has sent and
+   received data from a host that's not on the same subnet? If yes, then the
+   device is Internet-connected.
+2. Get the list of Internet servers to check. See below for the list.
+3. Resolve any domain names in the list. If DNS isn't working, remove them from
+   the list.
+4. Pick a random IP address from the remaining list and "ping" it. Technically,
+   VintageNet tries to connect over TCP to a specified port, and if it either
+   connects successfully or gets a port closed response, then the device is
+   Internet-connected.
+5. Wait a bit and then go back to step 1.
+
+The list of Internet servers to check is critically important. VintageNet uses
+the `:internet_host_list` key in the application environment for this. The
+default setting has many popular name servers in it. The idea being that if you
+can't reach a name server, the Internet probably isn't going to work well.
+
+If you are deploying to locations with locked down networks, you'll find that
+the default setting to test name servers won't work. It is not uncommon to find
+a network that blocks popular name servers like 8.8.8.8.
+
+The recommendation is to set the `:internet_host_list` to include your backend
+server. If VintageNet can reach it, then presumably your application works and
+having VintageNet declare the internet reachable via that network interface is
+correct.
+
+For example,
+
+```elixir
+config :vintage_net,
+  internet_host_list: [{"abcdefghijk-ats.iot.us-east-1.amazonaws.com", 443}]
+```
+
+The use of the connectivity checker is specified by the technology. Both the
+`VintageNetEthernet` and `VintageNetWiFi` use the internet connectivity checker.
+This is selected by adding the `VintageNet.Connectivity.InternetChecker`
+GenServer to the `:child_specs` configuration returned by the technology. E.g.,
+`child_specs: [{VintageNet.Connectivity.InternetChecker, "eth0"}]`. Most users
+do not need to be concerned about this.
 
 ## Power Management
 
