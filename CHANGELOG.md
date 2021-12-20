@@ -2,6 +2,15 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.4] - 2021-12-20
+
+* Changed
+  * Internet connectivity checks can now take domain names. Previously only IP
+    addresses were supported. This change lets you add your own servers to the
+    list since those servers may be more reliable indicators of Internet access
+    in highly firewalled locations. A section on this was added to the README.md
+    with an example.
+
 ## [v0.11.3] - 2021-11-18
 
 * Changed
