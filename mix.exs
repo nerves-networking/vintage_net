@@ -22,7 +22,7 @@ defmodule VintageNet.MixProject do
       docs: docs(),
       package: package(),
       description: description(),
-      aliases: [compile: [&check_deps/1, "compile"], docs: ["docs", &copy_images/1]],
+      aliases: [compile: [&check_deps/1, "compile"]],
       preferred_cli_env: %{
         docs: :docs,
         "hex.publish": :docs,
@@ -126,15 +126,11 @@ defmodule VintageNet.MixProject do
       extras: ["README.md", "docs/cookbook.md", "CHANGELOG.md"],
       main: "readme",
       logo: "assets/vintage_net-notext.png",
+      assets: "assets",
       source_ref: "v#{@version}",
       source_url: @source_url,
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
     ]
-  end
-
-  # Copy the images referenced by docs, since ex_doc doesn't do this.
-  defp copy_images(_) do
-    File.cp_r("assets", "doc/assets")
   end
 
   defp before_closing_body_tag(:html) do
