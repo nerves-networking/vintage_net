@@ -56,6 +56,7 @@ defmodule VintageNet.Info do
         format_if_attribute(ifname, "state", "State", true),
         format_if_attribute(ifname, "connection", "Connection", true),
         format_addresses(ifname),
+        format_if_attribute(ifname, "mac_address", "MAC Address"),
         "  Configuration:\n",
         format_config(ifname, "    ", opts),
         "\n"
