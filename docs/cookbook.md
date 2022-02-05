@@ -201,6 +201,28 @@ Protected EAP (PEAP) is a common authentication protocol for enterprise WiFi net
 
 TBD
 
+### Hidden WiFi networks
+
+If the access point has been configured to not advertise a network, VintageNetWiFi won't find it. It has to explicitly be told to search for
+it. Add `scan_ssid: 1` to the configuration to do this. For example,
+
+```elixir
+%{
+  type: VintageNetWiFi,
+  vintage_net_wifi: %{
+    networks: [
+      %{
+        key_mgmt: :wpa_psk,
+        ssid: "my_network_ssid",
+        psk: "a_passphrase_or_psk",
+        scan_ssid: 1
+      }
+    ]
+  },
+  ipv4: %{method: :dhcp},
+}
+```
+
 ### Access point WiFi
 
 Some WiFi modules can be run in access point mode. This makes it possible to
