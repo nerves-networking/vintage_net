@@ -29,7 +29,7 @@ defmodule VintageNet.PowerManager do
   of the networking interface (like "wlan0") to determine when the device is
   really available for networking.
 
-  The following timeouts are important to consider:
+  The following timeouts are important to consider (in milliseconds):
 
   1. `time_to_power_off`
   2. `power_on_hold_time`
@@ -121,11 +121,11 @@ defmodule VintageNet.PowerManager do
   It is ok for this function to return immediately. When the network interface
   appears, VintageNet will start trying to use it.
 
-  The return tuple should include the number of seconds VintageNet should wait
-  before trying to power down the module again. This value should be
+  The return tuple should include the number of milliseconds VintageNet should
+  wait before trying to power down the module again. This value should be
   sufficiently large to avoid getting into loops where VintageNet gives up on a
-  network interface before it has initialized. 10 minutes (600 seconds), for
-  example, is a reasonable setting.
+  network interface before it has initialized. 10 minutes (600,000 milliseconds),
+  for example, is a reasonable setting.
   """
   @callback power_on(state :: any()) ::
               {:ok, next_state :: any(), hold_time :: non_neg_integer()}
@@ -135,8 +135,8 @@ defmodule VintageNet.PowerManager do
 
   This function should start a graceful shutdown of the network interface
   hardware.  It may return immediately. The return value specifies how long in
-  seconds VintageNet should wait before calling `power_off/2`. The idea is that
-  a graceful power off should be allowed some time to complete, but not
+  milliseconds VintageNet should wait before calling `power_off/2`. The idea is
+  that a graceful power off should be allowed some time to complete, but not
   forever.
   """
   @callback start_powering_off(state :: any()) ::
@@ -149,8 +149,8 @@ defmodule VintageNet.PowerManager do
   this is called after the graceful power down should have completed, it should
   forcefully turn off the power to the hardware.
 
-  The implementation also returns a time that power must remain off. `power_on/1`
-  won't be called until that time expires.
+  The implementation also returns a time that power must remain off, in milliseconds.
+  `power_on/1` won't be called until that time expires.
   """
   @callback power_off(state :: any()) ::
               {:ok, next_state :: any(), min_off_time :: non_neg_integer()}
