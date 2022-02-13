@@ -13,7 +13,6 @@ $CC $CFLAGS -std=c99 -D_XOPEN_SOURCE=600 -o /dev/null -xc - 2>/dev/null <<EOF
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
 #include <unistd.h>
 
 #include <arpa/inet.h>
