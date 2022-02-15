@@ -64,7 +64,7 @@ defmodule VintageNet.Connectivity.Inspector do
   network interface has send AND received data since the previous call, then
   `:internet` is returned. If not, then usually `:unknown` is returned to
   signify that internet may be available, but we just don't know. If the
-  interface doesn't have an IP address, then `:unavailable` is returned, since
+  interface doesn't have an IP address, then `:no_internet` is returned, since
   that's a prerequisite to communicating with anyone on the internet.
   """
   @spec check_internet(VintageNet.ifname(), cache()) :: result()
@@ -72,7 +72,7 @@ defmodule VintageNet.Connectivity.Inspector do
     case get_addresses(ifname) do
       [] ->
         # If we don't even have an IP address, then there's no Internet for sure.
-        {:unavailable, %{}}
+        {:no_internet, %{}}
 
       our_addresses ->
         {:unknown, %{}}
