@@ -104,6 +104,6 @@ defmodule VintageNet.Connectivity.InspectorTest do
   end
 
   test "checking the internet of a bogus network interface fails nicely" do
-    assert Inspector.check_internet("bogus0", %{}) == {:unavailable, %{}}
+    assert Inspector.check_internet("bogus0", %{}) == {:no_internet, %{}}
   end
 end
