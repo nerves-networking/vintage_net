@@ -2,6 +2,12 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.5] - 2022-02-18
+
+* Changed
+  * Fix a no function clause exception in the InternetChecker that could happen
+    if no IP addresses were assigned to an interface.
+
 ## [v0.11.4] - 2021-12-20
 
 * Changed
