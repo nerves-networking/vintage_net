@@ -579,7 +579,11 @@ need to run `apt install libnl-genl-3-dev`.
 
 Initial release to hex.
 
-[v0.11.1]: https://github.com/nerves-networking/vintage_net/compare/v0.10.5...v0.11.1
+[v0.11.5]: https://github.com/nerves-networking/vintage_net/compare/v0.11.4...v0.11.5
+[v0.11.4]: https://github.com/nerves-networking/vintage_net/compare/v0.11.3...v0.11.4
+[v0.11.3]: https://github.com/nerves-networking/vintage_net/compare/v0.11.2...v0.11.3
+[v0.11.2]: https://github.com/nerves-networking/vintage_net/compare/v0.11.1...v0.11.2
+[v0.11.1]: https://github.com/nerves-networking/vintage_net/compare/v0.11.0...v0.11.1
 [v0.11.0]: https://github.com/nerves-networking/vintage_net/compare/v0.10.5...v0.11.0
 [v0.10.5]: https://github.com/nerves-networking/vintage_net/compare/v0.10.4...v0.10.5
 [v0.10.4]: https://github.com/nerves-networking/vintage_net/compare/v0.10.3...v0.10.4
