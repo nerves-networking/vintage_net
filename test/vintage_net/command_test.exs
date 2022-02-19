@@ -22,4 +22,9 @@ defmodule VintageNet.CommandTest do
     assert {expected_path <> "\n", 0} == Command.cmd("sh", ["-c", "echo $PATH"])
     assert {expected_path <> "\n", 0} == Command.muon_cmd("sh", ["-c", "echo $PATH"])
   end
+
+  test "full path executable" do
+    assert {"hello\n", 0} = Command.muon_cmd("/bin/sh", ["-c", "echo hello"])
+    assert {_reason, 256} = Command.muon_cmd("/bin/does-not-exist", ["-c", "echo hello"])
+  end
 end

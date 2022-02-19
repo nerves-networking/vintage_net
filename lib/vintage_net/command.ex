@@ -47,6 +47,16 @@ defmodule VintageNet.Command do
     )
   end
 
+  defp find_executable("/" <> _ = path) do
+    # User supplied the absolute path so
+    # just check that it exists
+    if File.exists?(path) do
+      {:ok, path}
+    else
+      {"'#{path}' not found", 256}
+    end
+  end
+
   # Note that error return value has to be compatible with System.cmd
   defp find_executable(command) do
     paths = String.split(path_env(), ":")
