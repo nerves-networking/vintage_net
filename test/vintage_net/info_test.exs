@@ -23,7 +23,7 @@ defmodule VintageNet.InfoTest do
     :ok
   end
 
-  test "info sanitizes psk and password fields" do
+  test "info sanitizes protected fields" do
     capture_log(fn ->
       :ok =
         VintageNet.configure("eth0", %{
@@ -34,8 +34,11 @@ defmodule VintageNet.InfoTest do
           },
           list_of_arbitrary_configuration: [
             %{psk: "psk2", password: "password2"},
-            %{psk: "psk3", password: "password3"}
-          ]
+            %{psk: "psk3", password: "password3"},
+            %{preshared_key: "psk4"},
+            %{sae_password: "sae1"}
+          ],
+          private_key: "priv_key"
         })
 
       # configure/2 is asynchronous, so wait for the interface to appear.
@@ -47,9 +50,12 @@ defmodule VintageNet.InfoTest do
     refute output =~ "psk1"
     refute output =~ "psk2"
     refute output =~ "psk3"
+    refute output =~ "psk4"
     refute output =~ "password1"
     refute output =~ "password2"
     refute output =~ "password3"
+    refute output =~ "sae1"
+    refute output =~ "priv_key"
   end
 
   test "info allows for not redacting" do
