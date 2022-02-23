@@ -133,7 +133,9 @@ defmodule VintageNet.Info do
        when key in [
               :psk,
               :password,
-              :sae_password
+              :sae_password,
+              :private_key,
+              :preshared_key
             ] do
     {key, "...."}
   end
