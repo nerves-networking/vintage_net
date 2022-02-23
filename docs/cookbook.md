@@ -248,7 +248,12 @@ involved. Here is a basic configuration:
   },
   dhcpd: %{
     start: "192.168.24.2",
-    end: "192.168.24.10"
+    end: "192.168.24.10",
+    options: %{
+      dns: ["1.1.1.1", "1.0.0.1"],
+      subnet: "192.168.24.255",
+      router: ["192.168.24.1"]
+    }
   }
 }
 ```
@@ -377,6 +382,7 @@ the following commands need to be called on each boot:
 wan = "eth0"
 cmd "sysctl -w net.ipv4.ip_forward=1"
 cmd "iptables -t nat -A POSTROUTING -o #{wan} -j MASQUERADE"
+cmd "iptables --append FORWARD --in-interface wlan0 -j ACCEPT"
 # Only needed if the connection is blocked otherwise (like a default policy of DROP)
 cmd "iptables -A INPUT -i #{wan} -m state --state RELATED,ESTABLISHED -j ACCEPT"
 ```
