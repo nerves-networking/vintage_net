@@ -14,22 +14,45 @@ defmodule VintageNet.IP.DhcpdConfig do
   * `:min_lease` - If client asks for lease below this value, it will be rounded up to this value (seconds)
   * `:auto_time` - The time period at which udhcpd will write out leases file.
   * `:static_leases` - list of `{mac_address, ip_address}`
-  * `:options` - a map DHCP response options to set. See below.
+  * `:options` - a map DHCP response options to set. Such as:
+    * `:dns` - IP_LIST
+    * `:domain` -  STRING - [0x0f] client's domain suffix
+    * `:hostname` - STRING
+    * `:mtu` - NUM
+    * `:router` - IP_LIST
+    * `:search` - STRING_LIST - [0x77] search domains
+    * `:serverid` - IP (defaults to the interface's IP address)
+    * `:subnet` - IP (as a subnet mask)
 
-  DHCP response options are (see RFC 2132 for details):
+  > #### :options {: .info}
+  > Options may also be passed in as integers. These are passed directly to the DHCP server
+  > and their values are strings that are not interpreted by VintageNet. Use this to support
+  > custom DHCP header options. For more details on DHCP response options see RFC 2132
 
-  * `:dns` - IP_LIST
-  * `:domain` -  STRING - [0x0f] client's domain suffix
-  * `:hostname` - STRING
-  * `:mtu` - NUM
-  * `:router` - IP_LIST
-  * `:search` - STRING_LIST - [0x77] search domains
-  * `:serverid` - IP (defaults to the interface's IP address)
-  * `:subnet` - IP
-
-  Options may also be passed in as integers. These are passed directly to the DHCP server
-  and their values are strings that are not interpreted by VintageNet. Use this to support
-  custom DHCP header options.
+  ## Example
+  ```
+    VintageNet.configure("wlan0", %{
+      type: VintageNetWiFi,
+      vintage_net_wifi: %{
+        networks: [
+          %{
+            mode: :ap,
+            ssid: "test ssid",
+            key_mgmt: :none
+          }
+        ]
+      },
+      dhcpd: %{
+        start: "192.168.24.2",
+        end: "192.168.24.10",
+        options: %{
+          dns: ["1.1.1.1", "1.0.0.1"],
+          subnet: "192.168.24.255",
+          router: ["192.168.24.1"]
+        }
+      }
+    })
+  ```
   """
 
   alias VintageNet.{Command, IP}
