@@ -258,6 +258,24 @@ involved. Here is a basic configuration:
 }
 ```
 
+If you want to use WPA2 on your access point, make the networks map look like
+this:
+
+```elixir
+  %{
+    mode: :ap,
+    key_mgmt: :wpa_psk,
+    proto: "RSN",
+    pairwise: "CCMP",
+    group: "CCMP",
+    ssid: "test ssid",
+    psk: "secret123"
+  }
+```
+
+The `proto: "RSN"` entry is important since the `wpa_supplicant` default is
+`WPA` and not `WPA2`.
+
 See the
 [vintage_net_wizard](https://github.com/nerves-networking/vintage_net_wizard)
 for an example of a project that uses AP mode and a web server for WiFi
