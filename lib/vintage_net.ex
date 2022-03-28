@@ -17,7 +17,7 @@ defmodule VintageNet do
   [github.com/nerves-networking/vintage_net](https://github.com/nerves-networking/vintage_net)
   for more information.
   """
-  alias VintageNet.{Info, Interface, PropertyTable}
+  alias VintageNet.{Info, Interface}
 
   @typedoc """
   A name for the network interface
@@ -109,9 +109,11 @@ defmodule VintageNet do
   """
   @spec all_interfaces() :: [ifname()]
   def all_interfaces() do
-    present = VintageNet.match(["interface", :_, "present"])
+    present =
+      VintageNet.match(["interface", :_, "present"]) ++
+        match(%{group: "interface", field: "present"})
 
-    for {[_interface, ifname, _present], true} <- present do
+    for {[_interface, ifname, _present], true} <- present, uniq: true do
       ifname
     end
   end
@@ -121,9 +123,11 @@ defmodule VintageNet do
   """
   @spec configured_interfaces() :: [ifname()]
   def configured_interfaces() do
-    type = VintageNet.match(["interface", :_, "type"])
+    type =
+      VintageNet.match(["interface", :_, "type"]) ++ match(%{group: "interface", field: "type"})
 
-    for {[_interface, ifname, _type], value} when value != VintageNet.Technology.Null <- type do
+    for {[_interface, ifname, _type], value} when value != VintageNet.Technology.Null <- type,
+        uniq: true do
       ifname
     end
   end
@@ -209,6 +213,7 @@ defmodule VintageNet do
   @spec get_configuration(ifname()) :: map()
   def get_configuration(ifname) do
     PropertyTable.get(VintageNet, ["interface", ifname, "config"]) ||
+      get(%{group: "interface", ifname: ifname, field: "config"}) ||
       raise RuntimeError, "No configuration for #{ifname}"
   end
 
@@ -233,9 +238,10 @@ defmodule VintageNet do
   interface) and `match/1` to run wildcard matches (i.e., get a specific
   property for all interfaces).
   """
-  @spec get(PropertyTable.property(), PropertyTable.value()) :: PropertyTable.value()
-  def get(name, default \\ nil) do
-    PropertyTable.get(VintageNet, name, default)
+  @spec get(VintageNet.PropertyTable.property() | PropertyTable.property(), PropertyTable.value()) ::
+          PropertyTable.value()
+  def get(name, default \\ nil) when is_list(name) do
+    prop_mod(name).get(VintageNet, name, default)
   end
 
   @doc """
@@ -244,11 +250,11 @@ defmodule VintageNet do
   Patterns are list of strings that optionally specify `:_` at
   a position in the list to match any value.
   """
-  @spec match(PropertyTable.property_with_wildcards()) :: [
+  @spec match(VintageNet.PropertyTable.property_with_wildcards() | PropertyTable.property()) :: [
           {PropertyTable.property(), PropertyTable.value()}
         ]
   def match(pattern) do
-    PropertyTable.match(VintageNet, pattern)
+    prop_mod(pattern).match(VintageNet, pattern)
   end
 
   @doc """
@@ -261,7 +267,7 @@ defmodule VintageNet do
           {PropertyTable.property(), PropertyTable.value()}
         ]
   def get_by_prefix(prefix) do
-    PropertyTable.get_by_prefix(VintageNet, prefix)
+    VintageNet.PropertyTable.get_by_prefix(VintageNet, prefix)
   end
 
   @doc """
@@ -287,17 +293,19 @@ defmodule VintageNet do
   VintageNet.subscribe(["interface", :_, "addresses"])
   ```
   """
-  @spec subscribe(PropertyTable.property_with_wildcards()) :: :ok
+  @spec subscribe(VintageNet.PropertyTable.property_with_wildcards() | PropertyTable.property()) ::
+          :ok
   def subscribe(name) do
-    PropertyTable.subscribe(VintageNet, name)
+    prop_mod(name).subscribe(VintageNet, name)
   end
 
   @doc """
   Stop subscribing to property change messages
   """
-  @spec unsubscribe(PropertyTable.property_with_wildcards()) :: :ok
+  @spec unsubscribe(VintageNet.PropertyTable.property_with_wildcards() | PropertyTable.property()) ::
+          :ok
   def unsubscribe(name) do
-    PropertyTable.unsubscribe(VintageNet, name)
+    prop_mod(name).unsubscribe(VintageNet, name)
   end
 
   @doc """
@@ -354,4 +362,7 @@ defmodule VintageNet do
     end
     |> Enum.find(:ok, fn rc -> rc != :ok end)
   end
+
+  defp prop_mod(prop) when is_list(prop), do: VintageNet.PropertyTable
+  defp prop_mod(prop) when is_map(prop), do: PropertyTable
 end

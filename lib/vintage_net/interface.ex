@@ -10,6 +10,8 @@ defmodule VintageNet.Interface do
   """
   use GenStateMachine
 
+  alias PropertyTable, as: NewPropertyTable
+
   alias VintageNet.Interface.{CommandRunner, RawConfig}
   alias VintageNet.{Persistence, PredictableInterfaceName, PropertyTable, RouteManager}
   alias VintageNet.PowerManager.PMControl
@@ -111,13 +113,18 @@ defmodule VintageNet.Interface do
          :changed <- configuration_changed(ifname, normalized_config),
          :ok <- persist_configuration(ifname, normalized_config, options),
          PropertyTable.put(VintageNet, ["interface", ifname, "config"], normalized_config),
+         NewPropertyTable.put(
+           VintageNet,
+           %{group: "interface", field: "config", ifname: ifname},
+           normalized_config
+         ),
          {:error, :already_started} <- maybe_start_interface(ifname) do
       GenStateMachine.call(via_name(raw_config.ifname), {:configure, raw_config})
     end
   end
 
   defp configuration_changed(ifname, normalized_config) do
-    case PropertyTable.get(VintageNet, ["interface", ifname, "config"]) do
+    case NewPropertyTable.get(VintageNet, %{group: "interface", field: "config", ifname: ifname}) do
       ^normalized_config -> :ok
       _ -> :changed
     end
@@ -219,11 +226,17 @@ defmodule VintageNet.Interface do
 
   defp get_raw_config(ifname) do
     # Get and convert the configuration to raw form for use.
-    case PropertyTable.get(VintageNet, ["interface", ifname, "config"]) do
+    case NewPropertyTable.get(VintageNet, %{group: "interface", field: "config", ifname: ifname}) do
       nil ->
         # No configuration, so use a null config and fix the property table
         raw_config = null_raw_config(ifname)
-        PropertyTable.put(VintageNet, ["interface", ifname, "config"], raw_config.source_config)
+
+        NewPropertyTable.put(
+          VintageNet,
+          %{group: "interface", field: "config", ifname: ifname},
+          raw_config.source_config
+        )
+
         raw_config
 
       config ->
@@ -327,7 +340,8 @@ defmodule VintageNet.Interface do
   @impl GenStateMachine
   def handle_event(
         :info,
-        {VintageNet, ["interface", an_ifname, "present"], _old_value, nil, _meta},
+        {VintageNet, %{group: "interface", field: "present", ifname: an_ifname}, _old_value, nil,
+         _meta},
         :configuring,
         %State{command_runner: pid, config: config} = data
       ) do
@@ -592,7 +606,8 @@ defmodule VintageNet.Interface do
   @impl GenStateMachine
   def handle_event(
         :info,
-        {VintageNet, ["interface", an_ifname, "present"], _old_value, true, _meta},
+        {VintageNet, %{group: "interface", field: "present", ifname: an_ifname}, _old_value, true,
+         _meta},
         :retrying,
         %State{config: new_config} = data
       ) do
@@ -679,6 +694,8 @@ defmodule VintageNet.Interface do
   def terminate(_reason, _state, %{ifname: ifname}) do
     PropertyTable.clear(VintageNet, ["interface", ifname, "type"])
     PropertyTable.clear(VintageNet, ["interface", ifname, "state"])
+    NewPropertyTable.clear(VintageNet, %{group: "interface", field: "type", ifname: ifname})
+    NewPropertyTable.clear(VintageNet, %{group: "interface", field: "state", ifname: ifname})
   end
 
   defp start_configuring(new_config, data, actions) do
@@ -733,6 +750,14 @@ defmodule VintageNet.Interface do
 
     PropertyTable.put(VintageNet, ["interface", ifname, "type"], config.type)
     PropertyTable.put(VintageNet, ["interface", ifname, "state"], state)
+
+    NewPropertyTable.put(
+      VintageNet,
+      %{group: "interface", field: "type", ifname: ifname},
+      config.type
+    )
+
+    NewPropertyTable.put(VintageNet, %{group: "interface", field: "state", ifname: ifname}, state)
 
     if state != :configured do
       # Once a state is `:configured`, then the configuration provides the connection
