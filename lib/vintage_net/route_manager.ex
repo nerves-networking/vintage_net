@@ -200,7 +200,7 @@ defmodule VintageNet.RouteManager do
       Logger.info("RouteManager: clear_route #{ifname}")
 
       # Need to force the property to disconnected since we're removing it from the map.
-      VintageNet.PropertyTable.put(VintageNet, ["interface", ifname, "connection"], :disconnected)
+      PropertyTable.put(VintageNet, ["interface", ifname, "connection"], :disconnected)
 
       new_state =
         %{state | interfaces: Map.delete(state.interfaces, ifname)}

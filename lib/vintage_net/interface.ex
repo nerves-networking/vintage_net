@@ -11,7 +11,7 @@ defmodule VintageNet.Interface do
   use GenStateMachine
 
   alias VintageNet.Interface.{CommandRunner, RawConfig}
-  alias VintageNet.{Persistence, PredictableInterfaceName, PropertyTable, RouteManager}
+  alias VintageNet.{Persistence, PredictableInterfaceName, RouteManager}
   alias VintageNet.PowerManager.PMControl
   alias VintageNet.Technology.Null
 
@@ -677,8 +677,8 @@ defmodule VintageNet.Interface do
 
   @impl GenStateMachine
   def terminate(_reason, _state, %{ifname: ifname}) do
-    PropertyTable.clear(VintageNet, ["interface", ifname, "type"])
-    PropertyTable.clear(VintageNet, ["interface", ifname, "state"])
+    PropertyTable.delete(VintageNet, ["interface", ifname, "type"])
+    PropertyTable.delete(VintageNet, ["interface", ifname, "state"])
   end
 
   defp start_configuring(new_config, data, actions) do
@@ -731,8 +731,10 @@ defmodule VintageNet.Interface do
     ifname = data.ifname
     config = data.config
 
-    PropertyTable.put(VintageNet, ["interface", ifname, "type"], config.type)
-    PropertyTable.put(VintageNet, ["interface", ifname, "state"], state)
+    PropertyTable.put_many(VintageNet, [
+      {["interface", ifname, "type"], config.type},
+      {["interface", ifname, "state"], state}
+    ])
 
     if state != :configured do
       # Once a state is `:configured`, then the configuration provides the connection

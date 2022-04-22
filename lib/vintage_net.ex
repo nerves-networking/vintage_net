@@ -17,7 +17,7 @@ defmodule VintageNet do
   [github.com/nerves-networking/vintage_net](https://github.com/nerves-networking/vintage_net)
   for more information.
   """
-  alias VintageNet.{Info, Interface, PropertyTable}
+  alias VintageNet.{Info, Interface}
 
   @typedoc """
   A name for the network interface
@@ -103,6 +103,32 @@ defmodule VintageNet do
   * `:redact` - Whether to hide passwords and similar information from the output (defaults to `true`)
   """
   @type info_options :: {:redact, boolean()}
+
+  @typedoc """
+  A VintageNet property
+
+  VintageNet uses lists of strings to name networking configuration and status
+  items.
+  """
+  @type property :: [String.t()]
+
+  @typedoc """
+  A pattern for matching against VintageNet properties
+
+  Patterns are used when subscribing for network property changes or getting a
+  set of properties and their values.
+
+  Since properties are organized hierarchically, the default way of matching patterns is to match on prefixes. It's also
+  possible to use the `:_` wildcard to match anything at a position.
+  """
+  @type pattern :: [String.t() | :_ | :"$"]
+
+  @typedoc """
+  A property's value
+
+  See the `README.md` for documenation on available properties.
+  """
+  @type value :: any()
 
   @doc """
   Return a list of all interfaces on the system
@@ -233,7 +259,7 @@ defmodule VintageNet do
   interface) and `match/1` to run wildcard matches (i.e., get a specific
   property for all interfaces).
   """
-  @spec get(PropertyTable.property(), PropertyTable.value()) :: PropertyTable.value()
+  @spec get(property(), value()) :: value()
   def get(name, default \\ nil) do
     PropertyTable.get(VintageNet, name, default)
   end
@@ -244,11 +270,9 @@ defmodule VintageNet do
   Patterns are list of strings that optionally specify `:_` at
   a position in the list to match any value.
   """
-  @spec match(PropertyTable.property_with_wildcards()) :: [
-          {PropertyTable.property(), PropertyTable.value()}
-        ]
+  @spec match(pattern()) :: [{property(), value()}]
   def match(pattern) do
-    PropertyTable.match(VintageNet, pattern)
+    PropertyTable.match(VintageNet, pattern ++ [:"$"]) |> Enum.sort()
   end
 
   @doc """
@@ -257,11 +281,9 @@ defmodule VintageNet do
   To get a list of all known properties and their values, call
   `VintageNet.get_by_prefix([])`
   """
-  @spec get_by_prefix(PropertyTable.property()) :: [
-          {PropertyTable.property(), PropertyTable.value()}
-        ]
-  def get_by_prefix(prefix) do
-    PropertyTable.get_by_prefix(VintageNet, prefix)
+  @spec get_by_prefix(property()) :: [{property(), value()}]
+  def get_by_prefix(pattern) do
+    PropertyTable.match(VintageNet, pattern) |> Enum.sort()
   end
 
   @doc """
@@ -287,7 +309,7 @@ defmodule VintageNet do
   VintageNet.subscribe(["interface", :_, "addresses"])
   ```
   """
-  @spec subscribe(PropertyTable.property_with_wildcards()) :: :ok
+  @spec subscribe(pattern()) :: :ok
   def subscribe(name) do
     PropertyTable.subscribe(VintageNet, name)
   end
@@ -295,7 +317,7 @@ defmodule VintageNet do
   @doc """
   Stop subscribing to property change messages
   """
-  @spec unsubscribe(PropertyTable.property_with_wildcards()) :: :ok
+  @spec unsubscribe(pattern()) :: :ok
   def unsubscribe(name) do
     PropertyTable.unsubscribe(VintageNet, name)
   end

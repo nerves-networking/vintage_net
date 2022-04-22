@@ -17,7 +17,7 @@ defmodule VintageNet.Application do
     properties = load_initial_configurations() |> Enum.map(&config_to_property/1)
 
     children = [
-      {VintageNet.PropertyTable, properties: properties, name: VintageNet},
+      {PropertyTable, properties: properties, name: VintageNet, tuple_events: true},
       {VintageNet.PredictableInterfaceName, hw_path_ifnames},
       VintageNet.PowerManager.Supervisor,
       {BEAMNotify,

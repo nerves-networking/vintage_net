@@ -1,7 +1,7 @@
 defmodule VintageNet.InterfacesMonitor.Info do
   @moduledoc false
 
-  alias VintageNet.{IP, PropertyTable}
+  alias VintageNet.IP
 
   @link_if_properties [:lower_up, :mac_address]
   @address_if_properties [:addresses]
@@ -142,7 +142,7 @@ defmodule VintageNet.InterfacesMonitor.Info do
   @spec clear_properties(VintageNet.ifname()) :: :ok
   def clear_properties(ifname) do
     Enum.each(@all_if_properties, fn property ->
-      PropertyTable.clear(VintageNet, ["interface", ifname, to_string(property)])
+      PropertyTable.delete(VintageNet, ["interface", ifname, to_string(property)])
     end)
   end
 
@@ -151,8 +151,11 @@ defmodule VintageNet.InterfacesMonitor.Info do
   """
   @spec update_present(t()) :: t()
   def update_present(%__MODULE__{ifname: ifname} = info) do
-    PropertyTable.put(VintageNet, ["interface", ifname, "present"], true)
-    PropertyTable.put(VintageNet, ["interface", ifname, "hw_path"], info.hw_path)
+    PropertyTable.put_many(VintageNet, [
+      {["interface", ifname, "present"], true},
+      {["interface", ifname, "hw_path"], info.hw_path}
+    ])
+
     info
   end
 
@@ -169,7 +172,7 @@ defmodule VintageNet.InterfacesMonitor.Info do
   end
 
   defp update_link_property(ifname, property, nil) do
-    PropertyTable.clear(VintageNet, ["interface", ifname, to_string(property)])
+    PropertyTable.delete(VintageNet, ["interface", ifname, to_string(property)])
   end
 
   defp update_link_property(ifname, property, value) do

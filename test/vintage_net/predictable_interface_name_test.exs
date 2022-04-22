@@ -2,7 +2,6 @@ defmodule VintageNet.PredictableInterfaceNameTest do
   use ExUnit.Case, async: false
 
   alias VintageNet.PredictableInterfaceName
-  alias VintageNet.PropertyTable
   alias VintageNetTest.CapturingInterfaceRenamer
 
   doctest PredictableInterfaceName

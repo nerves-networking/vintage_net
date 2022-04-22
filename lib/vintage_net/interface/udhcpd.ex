@@ -8,16 +8,12 @@ defmodule VintageNet.Interface.Udhcpd do
   def lease_update(ifname, lease_file) do
     case parse_leases(lease_file) do
       {:ok, leases} ->
-        VintageNet.PropertyTable.put(
-          VintageNet,
-          ["interface", ifname, "dhcpd", "leases"],
-          leases
-        )
+        PropertyTable.put(VintageNet, ["interface", ifname, "dhcpd", "leases"], leases)
 
       {:error, _} ->
         Logger.error("#{ifname}: Failed to handle lease update from #{lease_file}")
 
-        VintageNet.PropertyTable.clear_prefix(VintageNet, ["interface", ifname, "dhcpd", "leases"])
+        PropertyTable.delete_matches(VintageNet, ["interface", ifname, "dhcpd", "leases"])
     end
   end
 

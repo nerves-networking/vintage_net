@@ -17,7 +17,7 @@ defmodule VintageNet.InterfaceTest do
     end)
 
     # Make the test interface available
-    VintageNet.PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
+    PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
   end
 
   defp configure_only(config, ifname \\ @ifname) do
@@ -417,14 +417,14 @@ defmodule VintageNet.InterfaceTest do
       assert Process.whereis(ItIsMe) != nil
 
       # "remove" the interface
-      VintageNet.PropertyTable.clear(VintageNet, ["interface", @ifname, "present"])
+      PropertyTable.delete(VintageNet, ["interface", @ifname, "present"])
 
       Process.sleep(10)
 
       assert Process.whereis(ItIsMe) == nil
 
       # bring the interface back and it should start again
-      VintageNet.PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
+      PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
 
       assert_receive :i_am_started
       assert Process.whereis(ItIsMe) != nil
@@ -528,14 +528,14 @@ defmodule VintageNet.InterfaceTest do
       assert File.exists?("testing")
 
       # "remove" the interface
-      VintageNet.PropertyTable.clear(VintageNet, ["interface", @ifname, "present"])
+      PropertyTable.delete(VintageNet, ["interface", @ifname, "present"])
 
       Process.sleep(10)
 
       refute File.exists?("testing")
 
       # bring the interface back
-      VintageNet.PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
+      PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
 
       Process.sleep(10)
 
@@ -558,22 +558,22 @@ defmodule VintageNet.InterfaceTest do
       refute File.exists?("testing")
 
       # Add one dependent
-      VintageNet.PropertyTable.put(VintageNet, ["interface", "test1", "present"], true)
+      PropertyTable.put(VintageNet, ["interface", "test1", "present"], true)
 
       Process.sleep(10)
 
       refute File.exists?("testing")
 
       # Add the other dependent
-      VintageNet.PropertyTable.put(VintageNet, ["interface", "test2", "present"], true)
+      PropertyTable.put(VintageNet, ["interface", "test2", "present"], true)
 
       Process.sleep(10)
 
       assert File.exists?("testing")
 
       # clean up
-      VintageNet.PropertyTable.clear(VintageNet, ["interface", "test1", "present"])
-      VintageNet.PropertyTable.clear(VintageNet, ["interface", "test2", "present"])
+      PropertyTable.delete(VintageNet, ["interface", "test1", "present"])
+      PropertyTable.delete(VintageNet, ["interface", "test2", "present"])
     end)
   end
 
@@ -585,58 +585,58 @@ defmodule VintageNet.InterfaceTest do
         required_ifnames: ["test1", "test2"]
       }
 
-      VintageNet.PropertyTable.put(VintageNet, ["interface", "test1", "present"], true)
-      VintageNet.PropertyTable.put(VintageNet, ["interface", "test2", "present"], true)
+      PropertyTable.put(VintageNet, ["interface", "test1", "present"], true)
+      PropertyTable.put(VintageNet, ["interface", "test2", "present"], true)
 
       configure_and_wait(config)
 
       assert File.exists?("testing")
 
       # "remove" one interface
-      VintageNet.PropertyTable.clear(VintageNet, ["interface", "test2", "present"])
+      PropertyTable.delete(VintageNet, ["interface", "test2", "present"])
 
       Process.sleep(10)
 
       refute File.exists?("testing")
 
       # bring the interface back
-      VintageNet.PropertyTable.put(VintageNet, ["interface", "test2", "present"], true)
+      PropertyTable.put(VintageNet, ["interface", "test2", "present"], true)
 
       Process.sleep(10)
 
       assert File.exists?("testing")
 
       # "remove" the other interface
-      VintageNet.PropertyTable.clear(VintageNet, ["interface", "test1", "present"])
+      PropertyTable.delete(VintageNet, ["interface", "test1", "present"])
 
       Process.sleep(10)
 
       refute File.exists?("testing")
 
       # bring the interface back
-      VintageNet.PropertyTable.put(VintageNet, ["interface", "test1", "present"], true)
+      PropertyTable.put(VintageNet, ["interface", "test1", "present"], true)
 
       Process.sleep(10)
 
       assert File.exists?("testing")
 
       # "removing" the base interface doesn't do anything since it's not required
-      VintageNet.PropertyTable.clear(VintageNet, ["interface", @ifname, "present"])
+      PropertyTable.delete(VintageNet, ["interface", @ifname, "present"])
 
       Process.sleep(10)
 
       assert File.exists?("testing")
 
       # bring the interface back
-      VintageNet.PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
+      PropertyTable.put(VintageNet, ["interface", @ifname, "present"], true)
 
       Process.sleep(10)
 
       assert File.exists?("testing")
 
       # clean up
-      VintageNet.PropertyTable.clear(VintageNet, ["interface", "test1", "present"])
-      VintageNet.PropertyTable.clear(VintageNet, ["interface", "test2", "present"])
+      PropertyTable.delete(VintageNet, ["interface", "test1", "present"])
+      PropertyTable.delete(VintageNet, ["interface", "test2", "present"])
     end)
   end
 

@@ -25,7 +25,7 @@ defmodule VintageNet.Route.Properties do
       |> Enum.sort()
       |> Enum.map(fn {_metric, ifname} -> ifname end)
 
-    VintageNet.PropertyTable.put(VintageNet, ["available_interfaces"], interfaces)
+    PropertyTable.put(VintageNet, ["available_interfaces"], interfaces)
   end
 
   @doc """
@@ -36,7 +36,7 @@ defmodule VintageNet.Route.Properties do
   @spec update_best_connection(Calculator.interface_infos()) :: :ok
   def update_best_connection(infos) do
     best = best_connection(infos)
-    VintageNet.PropertyTable.put(VintageNet, ["connection"], best)
+    PropertyTable.put(VintageNet, ["connection"], best)
   end
 
   defp best_connection(infos) when infos == %{} do
@@ -60,12 +60,13 @@ defmodule VintageNet.Route.Properties do
   end
 
   @doc """
-  Update the every interface's connection status
+  Update every interface's connection status
   """
   @spec update_connection_status(Calculator.interface_infos()) :: :ok
   def update_connection_status(infos) do
-    Enum.each(infos, fn {ifname, %{status: status}} ->
-      VintageNet.PropertyTable.put(VintageNet, ["interface", ifname, "connection"], status)
-    end)
+    props =
+      for {ifname, %{status: status}} <- infos, do: {["interface", ifname, "connection"], status}
+
+    PropertyTable.put_many(VintageNet, props)
   end
 end

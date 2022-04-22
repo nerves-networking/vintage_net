@@ -165,7 +165,7 @@ defmodule VintageNet.Info do
   defp sanitize_configuration(data), do: data
 
   defp format_if_attribute(ifname, name, print_name, print_since? \\ false) do
-    case VintageNet.PropertyTable.fetch_with_timestamp(VintageNet, ["interface", ifname, name]) do
+    case PropertyTable.fetch_with_timestamp(VintageNet, ["interface", ifname, name]) do
       {:ok, value, timestamp} ->
         [
           "  ",

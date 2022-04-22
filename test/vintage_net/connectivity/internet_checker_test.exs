@@ -11,8 +11,8 @@ defmodule VintageNet.Connectivity.InternetCheckerTest do
     lower_up = ["interface", ifname, "lower_up"]
 
     # Set up
-    VintageNet.PropertyTable.clear(VintageNet, property)
-    VintageNet.PropertyTable.clear(VintageNet, lower_up)
+    PropertyTable.delete(VintageNet, property)
+    PropertyTable.delete(VintageNet, lower_up)
     VintageNet.subscribe(property)
 
     start_supervised!({InternetChecker, ifname})
@@ -35,8 +35,8 @@ defmodule VintageNet.Connectivity.InternetCheckerTest do
     # Set up a situation where the InternetChecker will see take a guess that
     # the connection is disconnected and then fix it self when it sees the
     # lower_up being true and then detect the internet.
-    VintageNet.PropertyTable.put(VintageNet, property, :disconnected)
-    VintageNet.PropertyTable.put(VintageNet, lower_up, true)
+    PropertyTable.put(VintageNet, property, :disconnected)
+    PropertyTable.put(VintageNet, lower_up, true)
 
     VintageNet.subscribe(property)
 
@@ -54,15 +54,15 @@ defmodule VintageNet.Connectivity.InternetCheckerTest do
 
     # Set up a situation where the InternetChecker will start with thinking the
     # internet is connected, but then change its mind when the interface goes away.
-    VintageNet.PropertyTable.put(VintageNet, property, :internet)
-    VintageNet.PropertyTable.put(VintageNet, lower_up, true)
+    PropertyTable.put(VintageNet, property, :internet)
+    PropertyTable.put(VintageNet, lower_up, true)
 
     VintageNet.subscribe(property)
 
     start_supervised!({InternetChecker, ifname})
 
     Process.sleep(250)
-    VintageNet.PropertyTable.put(VintageNet, lower_up, false)
+    PropertyTable.put(VintageNet, lower_up, false)
     assert_receive {VintageNet, ^property, _old_value, :disconnected, _meta}, 1_000
   end
 

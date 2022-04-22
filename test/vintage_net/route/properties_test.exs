@@ -8,8 +8,8 @@ defmodule VintageNet.Route.PropertiesTest do
   setup do
     # Clean up the properties we test before and after
     clear_all = fn ->
-      VintageNet.PropertyTable.clear(VintageNet, ["available_interfaces"])
-      VintageNet.PropertyTable.clear(VintageNet, ["connection"])
+      PropertyTable.delete(VintageNet, ["available_interfaces"])
+      PropertyTable.delete(VintageNet, ["connection"])
     end
 
     clear_all.()
