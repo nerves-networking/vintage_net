@@ -2,6 +2,26 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.12.0] - 2022-04-27
+
+This release has two potentially breaking changes:
+
+1. Elixir 1.11 is now the minimum supported Elixir version.
+2. `VintageNet.PropertyTable` has been extracted to its own library and is now
+   just `PropertyTable`. Most users did not use `VintageNet.PropertyTable`
+   directly, but if you did, you'll need to update the references.
+
+* Changed
+  * Extract `VintageNet.PropertyTable` to its own library. Note that many
+    improvements were made to PropertyTable including renaming functions for
+    consistency and changing the events. Code was added to VintageNet to hide
+    these changes for now. Longer term, we'll be making things more consistent,
+    but the hope is that the PropertyTable changes are transparent to VintageNet
+    users in this release.
+  * Support specifying absolute paths to network configuration commands. While
+    this is not preferred, it's useful in some scenarios.
+  * Redact more kinds of secrets in `VintageNet.info`
+
 ## [v0.11.5] - 2022-02-18
 
 * Changed
@@ -579,6 +599,7 @@ need to run `apt install libnl-genl-3-dev`.
 
 Initial release to hex.
 
+[v0.12.0]: https://github.com/nerves-networking/vintage_net/compare/v0.11.5...v0.12.0
 [v0.11.5]: https://github.com/nerves-networking/vintage_net/compare/v0.11.4...v0.11.5
 [v0.11.4]: https://github.com/nerves-networking/vintage_net/compare/v0.11.3...v0.11.4
 [v0.11.3]: https://github.com/nerves-networking/vintage_net/compare/v0.11.2...v0.11.3
