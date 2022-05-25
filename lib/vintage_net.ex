@@ -346,7 +346,7 @@ defmodule VintageNet do
 
   This is a utility function for calling the `:scan` ioctl.
   """
-  @spec scan(ifname()) :: :ok | {:error, any()}
+  @spec scan(ifname()) :: :ok | {:ok, any()} | {:error, any()}
   def scan(ifname) do
     ioctl(ifname, :scan)
   end

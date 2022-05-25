@@ -5,7 +5,7 @@ defmodule VintageNet.PowerManager.Supervisor do
   use Supervisor
   require Logger
 
-  @spec start_link(any()) :: Supervisor.on_start_child()
+  @spec start_link(any()) :: Supervisor.on_start()
   def start_link(args) do
     Supervisor.start_link(__MODULE__, args, name: __MODULE__)
   end
