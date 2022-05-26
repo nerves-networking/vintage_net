@@ -53,8 +53,11 @@ defmodule VintageNet.Route.DefaultMetric do
 
       value ->
         # Don't return 0, since that looks like the metric wasn't set. Also space out the numbers.
-        # (Lower numbers are higher priority)
-        (value + 1) * 10 + info.weight
+        # (Lower numbers are higher priority).
+        #
+        # NOTE: The floor/1 call indicates to Dialyzer that the return value is
+        #       guaranteed to be an integer.
+        floor((value + 1) * 10 + info.weight)
     end
   end
 

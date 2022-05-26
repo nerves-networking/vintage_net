@@ -61,10 +61,18 @@ defmodule VintageNet.PowerManager.StateMachine do
     handle(state, :force_reset)
   end
 
+  @doc """
+  Return information about the current state
+  """
   @spec info(state(), non_neg_integer()) :: String.t()
-  def info(state, time_left) do
-    handle(state, {:info, time_left})
-  end
+  def info(:on_hold, time_left), do: "Starting up/on (#{time_left} ms left)"
+  def info(:waiting_to_power_off, time_left), do: "Waiting to power off (#{time_left} ms left)"
+  def info(:on, time_left), do: "On (watchdog timeout in #{time_left} ms)"
+  def info(:resetting, time_left), do: "Resetting in #{time_left} ms"
+  def info(:powering_off, time_left), do: "Power off done in #{time_left} ms"
+  def info(:waiting_to_power_on, time_left), do: "Will power on in #{time_left} ms"
+  def info(:off_hold, time_left), do: "Off (OK to power on in #{time_left} ms)"
+  def info(:off, _time_left), do: "Off"
 
   # on_hold
   defp handle(:on_hold, :timeout) do
@@ -79,10 +87,6 @@ defmodule VintageNet.PowerManager.StateMachine do
     {:resetting, [:start_powering_off]}
   end
 
-  defp handle(:on_hold, {:info, time_left}) do
-    "Starting up/on (#{time_left} ms left)"
-  end
-
   # waiting_to_power_off
   defp handle(:waiting_to_power_off, :timeout) do
     {:powering_off, [:start_powering_off]}
@@ -90,10 +94,6 @@ defmodule VintageNet.PowerManager.StateMachine do
 
   defp handle(:waiting_to_power_off, :power_on) do
     {:on_hold, []}
-  end
-
-  defp handle(:waiting_to_power_off, {:info, time_left}) do
-    "Waiting to power off (#{time_left} ms left)"
   end
 
   # on
@@ -113,10 +113,6 @@ defmodule VintageNet.PowerManager.StateMachine do
     {:resetting, [:start_powering_off]}
   end
 
-  defp handle(:on, {:info, time_left}) do
-    "On (watchdog timeout in #{time_left} ms)"
-  end
-
   # resetting
   defp handle(:resetting, :timeout) do
     {:waiting_to_power_on, [:power_off]}
@@ -124,10 +120,6 @@ defmodule VintageNet.PowerManager.StateMachine do
 
   defp handle(:resetting, :power_off) do
     {:powering_off, []}
-  end
-
-  defp handle(:resetting, {:info, time_left}) do
-    "Resetting in #{time_left} ms"
   end
 
   # powering_off
@@ -139,10 +131,6 @@ defmodule VintageNet.PowerManager.StateMachine do
     {:off_hold, [:power_off]}
   end
 
-  defp handle(:powering_off, {:info, time_left}) do
-    "Power off done in #{time_left} ms"
-  end
-
   # waiting_to_power_on
   defp handle(:waiting_to_power_on, :timeout) do
     {:on_hold, [:power_on]}
@@ -150,10 +138,6 @@ defmodule VintageNet.PowerManager.StateMachine do
 
   defp handle(:waiting_to_power_on, :power_off) do
     {:off_hold, []}
-  end
-
-  defp handle(:waiting_to_power_on, {:info, time_left}) do
-    "Will power on in #{time_left} ms"
   end
 
   # off_hold
@@ -165,17 +149,9 @@ defmodule VintageNet.PowerManager.StateMachine do
     {:waiting_to_power_on, []}
   end
 
-  defp handle(:off_hold, {:info, time_left}) do
-    "Off (OK to power on in #{time_left} ms)"
-  end
-
   # off
   defp handle(:off, :power_on) do
     {:on_hold, [:power_on]}
-  end
-
-  defp handle(:off, {:info, _time_left}) do
-    "Off"
   end
 
   # Anything that wasn't handled is a no-op
