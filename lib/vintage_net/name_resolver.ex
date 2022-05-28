@@ -21,10 +21,11 @@ defmodule VintageNet.NameResolver do
   alias VintageNet.Resolver.ResolvConf
   require Logger
 
-  defmodule State do
-    @moduledoc false
-    defstruct [:path, :entries, :additional_name_servers]
-  end
+  @type state() :: %{
+          path: String.t(),
+          entries: ResolvConf.entry_map(),
+          additional_name_servers: ResolvConf.additional_name_servers()
+        }
 
   @doc """
   Start the resolv.conf manager.
@@ -86,13 +87,13 @@ defmodule VintageNet.NameResolver do
       |> Enum.reduce([], &ip_to_tuple_safe/2)
       |> Enum.reverse()
 
-    state = %State{
+    state = %{
       path: resolvconf_path,
       entries: %{},
       additional_name_servers: additional_name_servers
     }
 
-    write_resolvconf(state)
+    refresh(state)
     {:ok, state}
   end
 
@@ -102,30 +103,38 @@ defmodule VintageNet.NameResolver do
     ifentry = %{domain: domain, name_servers: servers}
 
     state = %{state | entries: Map.put(state.entries, ifname, ifentry)}
-    write_resolvconf(state)
+    refresh(state)
     {:reply, :ok, state}
   end
 
   @impl GenServer
   def handle_call({:clear, ifname}, _from, state) do
     state = %{state | entries: Map.delete(state.entries, ifname)}
-    write_resolvconf(state)
+    refresh(state)
     {:reply, :ok, state}
   end
 
   @impl GenServer
   def handle_call(:clear_all, _from, state) do
     state = %{state | entries: %{}}
-    write_resolvconf(state)
+    refresh(state)
     {:reply, :ok, state}
   end
 
-  defp write_resolvconf(%State{
+  defp refresh(%{
          path: path,
          entries: entries,
          additional_name_servers: additional_name_servers
        }) do
+    # Update the resolv.conf file
     File.write!(path, ResolvConf.to_config(entries, additional_name_servers))
+
+    # Let VintageNet users know the latest
+    PropertyTable.put(
+      VintageNet,
+      ["name_servers"],
+      ResolvConf.to_name_server_list(entries, additional_name_servers)
+    )
   end
 
   @spec ip_to_tuple_safe(VintageNet.any_ip_address(), [:inet.ip_address()]) :: [

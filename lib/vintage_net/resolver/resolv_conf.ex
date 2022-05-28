@@ -1,5 +1,7 @@
 defmodule VintageNet.Resolver.ResolvConf do
-  @moduledoc false
+  @moduledoc """
+  Utilities for creating resolv.conf file contents
+  """
   alias VintageNet.IP
 
   # Convert name resolver configurations into
@@ -15,11 +17,15 @@ defmodule VintageNet.Resolver.ResolvConf do
   @typedoc "All entries"
   @type entry_map :: %{VintageNet.ifname() => entry()}
   @type additional_name_servers :: [:inet.ip_address()]
+  @type name_server_info :: %{address: :inet.ip_address(), from: [:global | VintageNet.ifname()]}
 
-  @spec to_config(entry_map(), additional_name_servers) :: iolist()
+  @doc """
+  Convert the name server information to resolv.conf contents
+  """
+  @spec to_config(entry_map(), additional_name_servers()) :: iolist()
   def to_config(entries, additional_name_servers) do
     domains = Enum.reduce(entries, %{}, &add_domain/2)
-    name_servers = entries_to_name_servers(entries, additional_name_servers)
+    name_servers = to_name_server_list(entries, additional_name_servers)
 
     [
       "# This file is managed by VintageNet. Do not edit.\n\n",
@@ -28,7 +34,8 @@ defmodule VintageNet.Resolver.ResolvConf do
     ]
   end
 
-  defp entries_to_name_servers(entries, additional_name_servers) do
+  @spec to_name_server_list(entry_map(), additional_name_servers) :: [name_server_info()]
+  def to_name_server_list(entries, additional_name_servers) do
     # This is trickier than it looks since we want the ordering of name
     # servers to be deterministic. Here are the rules:
     #
@@ -38,9 +45,12 @@ defmodule VintageNet.Resolver.ResolvConf do
     # 3. Global entries are always first
 
     Enum.reduce(entries, %{}, &add_name_servers(&2, &1))
-    |> add_name_servers({"global", %{name_servers: additional_name_servers}})
+    |> add_name_servers({:global, %{name_servers: additional_name_servers}})
     |> Enum.map(&sort_ifname_lists/1)
     |> Enum.sort(&name_server_lte/2)
+    |> Enum.map(fn {address, ifname_tuples} ->
+      %{address: address, from: Enum.map(ifname_tuples, fn {ifname, _ix} -> ifname end)}
+    end)
   end
 
   defp add_domain({ifname, %{domain: domain}}, acc) when is_binary(domain) and domain != "" do
@@ -65,14 +75,14 @@ defmodule VintageNet.Resolver.ResolvConf do
   end
 
   defp ifname_ix_compare({ifname, ix1}, {ifname, ix2}), do: ix1 <= ix2
-  defp ifname_ix_compare({"global", _ix1}, _not_global), do: true
-  defp ifname_ix_compare(_not_global, {"global", _ix2}), do: false
+  defp ifname_ix_compare({:global, _ix1}, _not_global), do: true
+  defp ifname_ix_compare(_not_global, {:global, _ix2}), do: false
   defp ifname_ix_compare({ifname1, _ix1}, {ifname2, _ix2}), do: ifname1 <= ifname2
 
   defp name_server_lte(
          {_ns1, ifname_index_list1} = a,
          {_ns2, ifname_index_list2} = b,
-         ifname \\ "global"
+         ifname \\ :global
        ) do
     index1 = find_ifname_index(ifname_index_list1, ifname)
     index2 = find_ifname_index(ifname_index_list2, ifname)
@@ -102,10 +112,9 @@ defmodule VintageNet.Resolver.ResolvConf do
   defp find_ifname_index([_no | rest], ifname), do: find_ifname_index(rest, ifname)
 
   defp domain_text({domain, ifnames}),
-    do: ["search ", domain, " # From ", Enum.intersperse(ifnames, ","), "\n"]
+    do: ["search ", domain, " # From ", Enum.join(ifnames, ","), "\n"]
 
-  defp name_server_text({server, ifname_orders}) do
-    ifnames = Enum.map(ifname_orders, fn {ifname, _} -> ifname end)
-    ["nameserver ", IP.ip_to_string(server), " # From ", Enum.intersperse(ifnames, ","), "\n"]
+  defp name_server_text(%{address: address, from: ifnames}) do
+    ["nameserver ", IP.ip_to_string(address), " # From ", Enum.join(ifnames, ","), "\n"]
   end
 end

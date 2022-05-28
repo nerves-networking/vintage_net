@@ -332,6 +332,7 @@ Property               | Values           | Description
  --------------------- | ---------------- | -----------
 `available_interfaces` | `[eth0, ...]`    | Currently available network interfaces in priority order. E.g., the first one is used by default
 `connection`           | `:disconnected`, `:lan`, `:internet` | The overall network connection status. This is the best status of all interfaces.
+`name_servers`         | `[%{address: ..., from: []}]` | Name server addresses and where VintageNet learned about them
 
 ### Common network interface properties
 

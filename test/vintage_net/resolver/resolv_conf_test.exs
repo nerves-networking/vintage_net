@@ -116,7 +116,7 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     assert to_resolvconf(input) == output
   end
 
-  test "additional nameservers" do
+  test "additional name servers" do
     input = %{
       "eth0" => %{domain: "example.com", name_servers: [{8, 8, 8, 8}, {1, 1, 1, 1}]}
     }
@@ -133,7 +133,7 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     assert to_resolvconf(input, [{1, 1, 1, 1}, {8, 8, 4, 4}]) == output
   end
 
-  test "global nameservers are always first" do
+  test "global name servers are always first" do
     additional_name_servers = [{8, 8, 8, 8}, {1, 1, 1, 1}]
 
     input = %{
@@ -152,5 +152,24 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     """
 
     assert to_resolvconf(input, additional_name_servers) == output
+  end
+
+  test "to_name_server_list/2" do
+    additional_name_servers = [{8, 8, 8, 8}, {1, 1, 1, 1}]
+
+    input = %{
+      "eth0" => %{name_servers: [{4, 4, 4, 4}, {3, 3, 3, 3}, {8, 8, 8, 8}]},
+      "eth1" => %{name_servers: [{4, 4, 4, 4}, {1, 1, 1, 1}, {2, 2, 2, 2}]}
+    }
+
+    output = [
+      %{address: {8, 8, 8, 8}, from: [:global, "eth0"]},
+      %{address: {1, 1, 1, 1}, from: [:global, "eth1"]},
+      %{address: {4, 4, 4, 4}, from: ["eth0", "eth1"]},
+      %{address: {2, 2, 2, 2}, from: ["eth1"]},
+      %{address: {3, 3, 3, 3}, from: ["eth0"]}
+    ]
+
+    assert ResolvConf.to_name_server_list(input, additional_name_servers) == output
   end
 end

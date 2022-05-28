@@ -15,13 +15,15 @@ defmodule VintageNet.NameResolverTest do
       Application.stop(:vintage_net)
     end)
 
+    start_supervised!({PropertyTable, [name: VintageNet]})
+
     on_exit(fn -> Application.start(:vintage_net) end)
     :ok
   end
 
   test "empty resolvconf is empty", context do
     in_tmp(context.test, fn ->
-      NameResolver.start_link(resolvconf: @resolvconf_path)
+      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
       assert File.exists?(@resolvconf_path)
 
       assert File.read!(@resolvconf_path) ==
@@ -33,7 +35,7 @@ defmodule VintageNet.NameResolverTest do
 
   test "adding one interface", context do
     in_tmp(context.test, fn ->
-      NameResolver.start_link(resolvconf: @resolvconf_path)
+      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
       NameResolver.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
 
       contents = File.read!(@resolvconf_path)
@@ -56,7 +58,7 @@ defmodule VintageNet.NameResolverTest do
 
   test "adding two interfaces", context do
     in_tmp(context.test, fn ->
-      NameResolver.start_link(resolvconf: @resolvconf_path)
+      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
       NameResolver.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
       NameResolver.setup("wlan0", "example2.com", ["1.1.1.2", "8.8.8.9"])
 
@@ -90,7 +92,7 @@ defmodule VintageNet.NameResolverTest do
 
   test "clearing all interfaces", context do
     in_tmp(context.test, fn ->
-      NameResolver.start_link(resolvconf: @resolvconf_path)
+      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
       NameResolver.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
       NameResolver.setup("wlan0", "example2.com", ["1.1.1.2", "8.8.8.9"])
       NameResolver.clear_all()
@@ -104,7 +106,7 @@ defmodule VintageNet.NameResolverTest do
 
   test "tuple IP addresses", context do
     in_tmp(context.test, fn ->
-      NameResolver.start_link(resolvconf: @resolvconf_path)
+      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
       NameResolver.setup("eth0", "example.com", [{1, 1, 1, 1}])
 
       contents = File.read!(@resolvconf_path)
@@ -126,7 +128,7 @@ defmodule VintageNet.NameResolverTest do
 
   test "no search domain", context do
     in_tmp(context.test, fn ->
-      NameResolver.start_link(resolvconf: @resolvconf_path)
+      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
       NameResolver.setup("eth0", nil, [{1, 1, 1, 1}])
 
       contents = File.read!(@resolvconf_path)
@@ -147,11 +149,13 @@ defmodule VintageNet.NameResolverTest do
 
   test "poorly formatted IP addresses don't crash", context do
     in_tmp(context.test, fn ->
-      {:ok, _pid} =
-        NameResolver.start_link(
-          resolvconf: @resolvconf_path,
-          additional_name_servers: [{8, 8, 8, 8}, {1, 2}]
-        )
+      start_supervised!(
+        {NameResolver,
+         [
+           resolvconf: @resolvconf_path,
+           additional_name_servers: [{8, 8, 8, 8}, {1, 2}]
+         ]}
+      )
 
       NameResolver.setup("eth0", nil, [{1, 1, 1, 1}])
 
@@ -171,11 +175,13 @@ defmodule VintageNet.NameResolverTest do
   test "global name servers are always first", context do
     # This roughly matches a simpler test in resolve_conf_test.exs
     in_tmp(context.test, fn ->
-      {:ok, _pid} =
-        NameResolver.start_link(
-          resolvconf: @resolvconf_path,
-          additional_name_servers: [{8, 8, 8, 8}, {1, 1, 1, 1}]
-        )
+      start_supervised!(
+        {NameResolver,
+         [
+           resolvconf: @resolvconf_path,
+           additional_name_servers: [{8, 8, 8, 8}, {1, 1, 1, 1}]
+         ]}
+      )
 
       # At one point IP addresses sorted numerically, so 4.4.4.4 is
       # chosen here to be between the two IP addresses above.
@@ -205,6 +211,24 @@ defmodule VintageNet.NameResolverTest do
              nameserver 4.4.4.4 # From eth1
              nameserver 2.2.2.2 # From eth1
              """
+
+      NameResolver.stop()
+    end)
+  end
+
+  test "name servers updated in property table", context do
+    in_tmp(context.test, fn ->
+      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
+
+      NameResolver.setup("eth0", nil, [{4, 4, 4, 4}, {3, 3, 3, 3}])
+
+      assert VintageNet.get(["name_servers"]) == [
+               %{address: {4, 4, 4, 4}, from: ["eth0"]},
+               %{address: {3, 3, 3, 3}, from: ["eth0"]}
+             ]
+
+      NameResolver.clear("eth0")
+      assert VintageNet.get(["name_servers"]) == []
 
       NameResolver.stop()
     end)

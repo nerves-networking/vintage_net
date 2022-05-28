@@ -219,7 +219,11 @@ defmodule VintageNetTest do
     assert [{["available_interfaces"], []}] ==
              VintageNet.match(["available_interfaces"])
 
-    assert [{["available_interfaces"], []}, {["connection"], :disconnected}] ==
+    assert [
+             {["available_interfaces"], []},
+             {["connection"], :disconnected},
+             {["name_servers"], []}
+           ] ==
              VintageNet.match([:_])
   end
 
