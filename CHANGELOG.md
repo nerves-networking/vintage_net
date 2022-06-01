@@ -2,6 +2,12 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.12.1] - 2022-06-01
+
+* Changed
+  * The list of name servers that VintageNet uses when configuring the name
+    resolve is now available by running `VintageNet.get(["name_servers"])`.
+
 ## [v0.12.0] - 2022-04-27
 
 This release has two potentially breaking changes:
@@ -599,6 +605,7 @@ need to run `apt install libnl-genl-3-dev`.
 
 Initial release to hex.
 
+[v0.12.1]: https://github.com/nerves-networking/vintage_net/compare/v0.12.0...v0.12.1
 [v0.12.0]: https://github.com/nerves-networking/vintage_net/compare/v0.11.5...v0.12.0
 [v0.11.5]: https://github.com/nerves-networking/vintage_net/compare/v0.11.4...v0.11.5
 [v0.11.4]: https://github.com/nerves-networking/vintage_net/compare/v0.11.3...v0.11.4
