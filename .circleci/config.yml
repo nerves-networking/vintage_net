@@ -29,7 +29,7 @@ jobs:
       - <<: *install_system_deps
       - restore_cache:
           keys:
-            - v2-mix-cache-{{ checksum "mix.lock" }}
+            - v3-mix-cache-{{ checksum "mix.lock" }}
       - run: mix deps.get
       - run: mix test --exclude requires_ipv6
       - run: mix format --check-formatted
@@ -40,7 +40,7 @@ jobs:
       - run: mix dialyzer
       - run: mix coveralls.circle || true
       - save_cache:
-          key: v2-mix-cache-{{ checksum "mix.lock" }}
+          key: v3-mix-cache-{{ checksum "mix.lock" }}
           paths:
             - _build/plts
 
