@@ -20,20 +20,19 @@ defmodule VintageNet.Persistence.FlatFile do
   @impl VintageNet.Persistence
   def save(ifname, config) do
     persistence_dir = persistence_dir()
+    path = Path.join(persistence_dir, ifname)
 
-    File.mkdir_p!(persistence_dir)
-
-    Path.join(persistence_dir, ifname)
-    |> File.write(serialize_config(config), [:sync])
+    with :ok <- File.mkdir_p(persistence_dir) do
+      File.write(path, serialize_config(config), [:sync])
+    end
   end
 
   @impl VintageNet.Persistence
   def load(ifname) do
     path = Path.join(persistence_dir(), ifname)
 
-    case File.read(path) do
-      {:ok, contents} -> deserialize_config(contents)
-      error -> error
+    with {:ok, contents} <- File.read(path) do
+      deserialize_config(contents)
     end
   end
 
