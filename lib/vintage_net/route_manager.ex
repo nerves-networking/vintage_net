@@ -98,10 +98,22 @@ defmodule VintageNet.RouteManager do
   Changing the connection status can re-prioritize routing. The
   specified interface doesn't need to have a default route.
   """
-  @spec set_connection_status(VintageNet.ifname(), VintageNet.connection_status(), String.t()) ::
+  @spec set_connection_status(
+          VintageNet.ifname(),
+          VintageNet.connection_status(),
+          String.t() | nil
+        ) ::
           :ok
-  def set_connection_status(ifname, status, why \\ "unknown") do
+  def set_connection_status(ifname, status, why \\ nil) do
+    why = why || caller()
     GenServer.call(__MODULE__, {:set_connection_status, ifname, status, why})
+  end
+
+  defp caller() do
+    {:current_stacktrace, [_info, _caller_fun, _vintage_net_fun, {m, f, a, loc} | _rest]} =
+      Process.info(self(), :current_stacktrace)
+
+    "#{m}.#{f}/#{a}(#{inspect(loc)})"
   end
 
   @doc """
