@@ -109,7 +109,7 @@ defmodule VintageNet.Interface do
          :ok <- PredictableInterfaceName.precheck(ifname),
          normalized_config = raw_config.source_config,
          :changed <- configuration_changed(ifname, normalized_config),
-         :ok <- persist_configuration(ifname, normalized_config, options),
+         persist_configuration(ifname, normalized_config, options),
          PropertyTable.put(VintageNet, ["interface", ifname, "config"], normalized_config),
          {:error, :already_started} <- maybe_start_interface(ifname) do
       GenStateMachine.call(via_name(raw_config.ifname), {:configure, raw_config})
@@ -124,13 +124,13 @@ defmodule VintageNet.Interface do
   end
 
   defp persist_configuration(ifname, normalized_config, options) do
-    case Keyword.get(options, :persist, true) do
-      true ->
-        Persistence.call(:save, [ifname, normalized_config])
-
-      false ->
-        :ok
+    if Keyword.get(options, :persist, true) do
+      with {:error, reason} <- Persistence.call(:save, [ifname, normalized_config]) do
+        log(:warn, ifname, "Error saving configuration: #{inspect(reason)}")
+      end
     end
+
+    :ok
   end
 
   defp maybe_start_interface(ifname) do
@@ -196,10 +196,10 @@ defmodule VintageNet.Interface do
     GenStateMachine.call(via_name(ifname), {:ioctl, command, args})
   end
 
-  defp debug(data, message), do: log(:debug, data, message)
+  defp debug(data, message), do: log(:debug, data.ifname, message)
 
-  defp log(level, data, message) do
-    Logger.log(level, ["VintageNet(", data.ifname, "): ", message])
+  defp log(level, ifname, message) do
+    Logger.log(level, ["VintageNet(", ifname, "): ", message])
   end
 
   @impl GenStateMachine
