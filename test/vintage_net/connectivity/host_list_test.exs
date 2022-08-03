@@ -78,7 +78,8 @@ defmodule VintageNet.Connectivity.HostListTest do
     end
 
     test "removes bad hostnames" do
-      assert [] == HostList.create_ping_list([{"fake.domain.name.com.io.vintage.net", 80}])
+      assert [] ==
+               HostList.create_ping_list([{"fake.domain.name.com.io.vintage.net.invalid", 80}])
     end
 
     test "resolves names that return more than one result" do
