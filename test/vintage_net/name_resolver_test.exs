@@ -1,5 +1,5 @@
 defmodule VintageNet.NameResolverTest do
-  use VintageNetTest.Case
+  use VintageNetTest.Case, async: true
   import ExUnit.CaptureLog
   alias VintageNet.NameResolver
 
@@ -23,7 +23,7 @@ defmodule VintageNet.NameResolverTest do
 
   test "empty resolvconf is empty", context do
     in_tmp(context.test, fn ->
-      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
+      start_supervised!({NameResolver, [resolvconf: Path.join(File.cwd!(), @resolvconf_path)]})
       assert File.exists?(@resolvconf_path)
 
       assert File.read!(@resolvconf_path) ==
@@ -35,7 +35,7 @@ defmodule VintageNet.NameResolverTest do
 
   test "adding one interface", context do
     in_tmp(context.test, fn ->
-      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
+      start_supervised!({NameResolver, [resolvconf: Path.join(File.cwd!(), @resolvconf_path)]})
       NameResolver.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
 
       contents = File.read!(@resolvconf_path)
@@ -58,7 +58,7 @@ defmodule VintageNet.NameResolverTest do
 
   test "adding two interfaces", context do
     in_tmp(context.test, fn ->
-      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
+      start_supervised!({NameResolver, [resolvconf: Path.join(File.cwd!(), @resolvconf_path)]})
       NameResolver.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
       NameResolver.setup("wlan0", "example2.com", ["1.1.1.2", "8.8.8.9"])
 
@@ -92,7 +92,7 @@ defmodule VintageNet.NameResolverTest do
 
   test "clearing all interfaces", context do
     in_tmp(context.test, fn ->
-      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
+      start_supervised!({NameResolver, [resolvconf: Path.join(File.cwd!(), @resolvconf_path)]})
       NameResolver.setup("eth0", "example.com", ["1.1.1.1", "8.8.8.8"])
       NameResolver.setup("wlan0", "example2.com", ["1.1.1.2", "8.8.8.9"])
       NameResolver.clear_all()
@@ -106,7 +106,7 @@ defmodule VintageNet.NameResolverTest do
 
   test "tuple IP addresses", context do
     in_tmp(context.test, fn ->
-      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
+      start_supervised!({NameResolver, [resolvconf: Path.join(File.cwd!(), @resolvconf_path)]})
       NameResolver.setup("eth0", "example.com", [{1, 1, 1, 1}])
 
       contents = File.read!(@resolvconf_path)
@@ -128,7 +128,7 @@ defmodule VintageNet.NameResolverTest do
 
   test "no search domain", context do
     in_tmp(context.test, fn ->
-      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
+      start_supervised!({NameResolver, [resolvconf: Path.join(File.cwd!(), @resolvconf_path)]})
       NameResolver.setup("eth0", nil, [{1, 1, 1, 1}])
 
       contents = File.read!(@resolvconf_path)
@@ -152,7 +152,7 @@ defmodule VintageNet.NameResolverTest do
       start_supervised!(
         {NameResolver,
          [
-           resolvconf: @resolvconf_path,
+           resolvconf: Path.join(File.cwd!(), @resolvconf_path),
            additional_name_servers: [{8, 8, 8, 8}, {1, 2}]
          ]}
       )
@@ -178,7 +178,7 @@ defmodule VintageNet.NameResolverTest do
       start_supervised!(
         {NameResolver,
          [
-           resolvconf: @resolvconf_path,
+           resolvconf: Path.join(File.cwd!(), @resolvconf_path),
            additional_name_servers: [{8, 8, 8, 8}, {1, 1, 1, 1}]
          ]}
       )
@@ -218,7 +218,7 @@ defmodule VintageNet.NameResolverTest do
 
   test "name servers updated in property table", context do
     in_tmp(context.test, fn ->
-      start_supervised!({NameResolver, [resolvconf: @resolvconf_path]})
+      start_supervised!({NameResolver, [resolvconf: Path.join(File.cwd!(), @resolvconf_path)]})
 
       NameResolver.setup("eth0", nil, [{4, 4, 4, 4}, {3, 3, 3, 3}])
 
