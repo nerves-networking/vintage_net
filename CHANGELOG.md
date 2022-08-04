@@ -2,6 +2,19 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.12.2] - 2022-08-04
+
+* Changed
+  * Add `VintageNet.info_as_ansidata/1`. This lets you get the same results as
+    `VintageNet.info`, but in a way that's easy to put on a web page or send
+    to a server, etc.
+  * Support updating network configuration even when it can't be persisted.
+    Previously if there was an error saving the configuration and `persist:
+    true` (the default), the configuration wouldn't be applied. This turned
+    out to be problematic when trying to get some devices fixed. Now the
+    device won't have the right config on reboot, but it can be reached over
+    the network to be fixed.
+
 ## [v0.12.1] - 2022-06-01
 
 * Changed
@@ -605,6 +618,7 @@ need to run `apt install libnl-genl-3-dev`.
 
 Initial release to hex.
 
+[v0.12.1]: https://github.com/nerves-networking/vintage_net/compare/v0.12.1...v0.12.2
 [v0.12.1]: https://github.com/nerves-networking/vintage_net/compare/v0.12.0...v0.12.1
 [v0.12.0]: https://github.com/nerves-networking/vintage_net/compare/v0.11.5...v0.12.0
 [v0.11.5]: https://github.com/nerves-networking/vintage_net/compare/v0.11.4...v0.11.5
