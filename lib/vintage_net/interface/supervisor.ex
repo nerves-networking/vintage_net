@@ -42,9 +42,9 @@ defmodule VintageNet.Interface.Supervisor do
       start: {Supervisor, :start_link, [child_specs, [strategy: restart_strategy]]}
     }
 
-    {:ok, _pid} = Supervisor.start_child(via_name(ifname), supervisor_spec)
-
-    :ok
+    with {:ok, _} <- Supervisor.start_child(via_name(ifname), supervisor_spec) do
+      :ok
+    end
   end
 
   @doc """
