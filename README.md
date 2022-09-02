@@ -515,3 +515,21 @@ unnecessary, it can save a trip to the field or a full device reboot.
 
 `VintageNet.info/1` shows the power management state for network interfaces that
 are using this feature.
+
+## Telemetry
+
+VintageNet uses `:telemetry` library for instrumentation. The following events
+are published by VintageNet with the following measurements and metadata:
+
+All time units are in `:native` time. See `System.convert_time/3` to convert the
+time into a different time unit.
+
+* `[:vintage_net, :connection, :start]` - dispatched when `VintageNet`
+  determines the the interface is internet connected.
+  * Measurement: `%{system_time: system_time}`
+  * Metadata: `%{ifname: VintageNet.ifname()}`
+
+* `[:vintage_net, :connection, :stop]` - dispatched when `VintageNet` determines
+  the interface has been disconnected.
+  * Measurement: `%{duration: duration}`
+  * Metadata: `%{ifname: VintageNet.ifname()}`

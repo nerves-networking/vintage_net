@@ -104,6 +104,7 @@ defmodule VintageNet.MixProject do
       {:gen_state_machine, "~> 2.0.0 or ~> 2.1.0 or ~> 3.0.0"},
       {:muontrap, "~> 1.0 or ~> 0.5.1 or ~> 0.6.0"},
       {:property_table, "~> 0.2.0"},
+      {:telemetry, "~> 1.1"},
       # Build dependencies
       {:credo, "~> 1.2", only: :test, runtime: false},
       {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
