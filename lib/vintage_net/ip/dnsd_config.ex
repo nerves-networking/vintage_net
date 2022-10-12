@@ -107,7 +107,7 @@ defmodule VintageNet.IP.DnsdConfig do
 
   defp dnsd_contents(%{records: records}) do
     Enum.map(records, &record_to_string/1)
-    |> IO.iodata_to_binary()
+    |> IO.chardata_to_string()
   end
 
   defp record_to_string({name, ipa}) do
