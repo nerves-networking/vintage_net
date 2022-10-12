@@ -6,7 +6,7 @@ defmodule VintageNet.Resolver.ResolvConfTest do
   defp to_resolvconf(map, additional_name_servers \\ []) do
     map
     |> ResolvConf.to_config(additional_name_servers)
-    |> IO.iodata_to_binary()
+    |> IO.chardata_to_string()
   end
 
   test "empty resolvconf is empty" do

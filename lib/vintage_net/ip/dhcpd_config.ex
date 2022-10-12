@@ -215,7 +215,7 @@ defmodule VintageNet.IP.DhcpdConfig do
     """
 
     config = Enum.map(dhcpd, &to_udhcpd_string/1)
-    IO.iodata_to_binary([initial, "\n", config, "\n"])
+    IO.chardata_to_string([initial, "\n", config, "\n"])
   end
 
   defp to_udhcpd_string({:start, val}) do

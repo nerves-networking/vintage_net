@@ -101,7 +101,7 @@ defmodule VintageNet.InfoTest do
 
   test "info_as_ansidata can return ansidata" do
     output = Info.info_as_ansidata()
-    output_str = output |> IO.ANSI.format(false) |> IO.iodata_to_binary()
+    output_str = output |> IO.ANSI.format(false) |> IO.chardata_to_string()
 
     assert output_str =~ "All interfaces"
     assert output_str =~ "Available interfaces"
