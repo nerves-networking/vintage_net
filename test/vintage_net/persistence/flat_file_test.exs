@@ -84,7 +84,7 @@ defmodule VintageNet.Persistence.FlatFileTest do
     Application.put_env(:vintage_net, :persistence_secret, original_key)
   end
 
-  test "using an MFA for getting the secret key" do
+  test "using an MFArgs for getting the secret key" do
     original_key = Application.get_env(:vintage_net, :persistence_secret)
 
     Application.put_env(:vintage_net, :persistence_secret, {__MODULE__, :get_secret, []})

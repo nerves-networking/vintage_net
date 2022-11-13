@@ -7,9 +7,9 @@ defmodule VintageNet.Interface.CommandRunner do
 
   * `{:run, command, args}` - Run a system command
   * `{:run_ignore_exit, command, args}` - Same as `:run`, but without the exit status check
-  * `{:fun, module, function_name, args}` - Run a function by MFA
-  * `{:fun, fun}` - Run a function. Using the MFA form is preferred since it's
-                    easier to verfiy in unit tests.
+  * `{:fun, module, function_name, args}` - Run a function by MFArgs
+  * `{:fun, fun}` - Run a function. Using the MFArgs form is preferred since it's
+                    easier to verify in unit tests.
 
   CommandRunner also implements RawConfig's file creation and
   cleanup logic.

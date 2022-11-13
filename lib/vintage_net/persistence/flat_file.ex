@@ -118,8 +118,8 @@ defmodule VintageNet.Persistence.FlatFile do
 
   defp secret_key() do
     case Application.get_env(:vintage_net, :persistence_secret) do
-      {m, f, a} ->
-        apply(m, f, a)
+      {m, f, args} ->
+        apply(m, f, args)
 
       f when is_function(f, 0) ->
         f.()

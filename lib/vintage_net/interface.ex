@@ -401,8 +401,8 @@ defmodule VintageNet.Interface do
     # debug(data, ":configured -> run ioctl")
 
     # Delegate the ioctl to the technology
-    mfa = {data.config.type, :ioctl, [data.ifname, command, args]}
-    new_data = run_ioctl(data, from, mfa)
+    mfargs = {data.config.type, :ioctl, [data.ifname, command, args]}
+    new_data = run_ioctl(data, from, mfargs)
 
     {:keep_state, new_data}
   end
@@ -416,7 +416,7 @@ defmodule VintageNet.Interface do
       ) do
     # debug(data, ":configured -> ioctl done")
 
-    {{from, _mfa}, new_inflight} = Map.pop(inflight, ioctl_pid)
+    {{from, _mfargs}, new_inflight} = Map.pop(inflight, ioctl_pid)
     action = {:reply, from, result}
     new_data = %{data | inflight_ioctls: new_inflight}
 
@@ -433,8 +433,8 @@ defmodule VintageNet.Interface do
     # If an ioctl crashed, then return an error.
     # Otherwise, it's a latent exit from something that exited normally.
     case Map.pop(inflight, pid) do
-      {{from, mfa}, new_inflight} ->
-        debug(data, ":configured -> unexpected ioctl(#{inspect(mfa)}) exit (#{inspect(reason)})")
+      {{from, mfargs}, new_inflight} ->
+        debug(data, ":configured -> ioctl(#{inspect(mfargs)}) exited (#{inspect(reason)})")
 
         action = {:reply, from, {:error, {:exit, reason}}}
         new_data = %{data | inflight_ioctls: new_inflight}
@@ -744,12 +744,12 @@ defmodule VintageNet.Interface do
     end
   end
 
-  defp run_ioctl(data, from, mfa) do
+  defp run_ioctl(data, from, mfargs) do
     interface_pid = self()
 
-    {:ok, pid} = Task.start_link(fn -> run_ioctl_and_report(mfa, interface_pid) end)
+    {:ok, pid} = Task.start_link(fn -> run_ioctl_and_report(mfargs, interface_pid) end)
 
-    new_inflight = Map.put(data.inflight_ioctls, pid, {from, mfa})
+    new_inflight = Map.put(data.inflight_ioctls, pid, {from, mfargs})
 
     %{data | inflight_ioctls: new_inflight}
   end
@@ -761,7 +761,7 @@ defmodule VintageNet.Interface do
 
   defp cancel_ioctls(data) do
     actions =
-      Enum.map(data.inflight_ioctls, fn {pid, {from, _mfa}} ->
+      Enum.map(data.inflight_ioctls, fn {pid, {from, _mfargs}} ->
         Process.exit(pid, :kill)
         {:reply, from, {:error, :cancelled}}
       end)
