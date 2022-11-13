@@ -21,18 +21,7 @@ install_system_deps: &install_system_deps
 jobs:
   build_elixir_1_14_otp_25:
     docker:
-      - image: hexpm/elixir:1.14.0-rc.0-erlang-25.0.3-alpine-3.16.0
-    <<: *defaults
-    steps:
-      - checkout
-      - <<: *install_hex_rebar
-      - <<: *install_system_deps
-      - run: mix deps.get
-      - run: mix test --exclude requires_ipv6
-
-  build_elixir_1_13_otp_25:
-    docker:
-      - image: hexpm/elixir:1.13.4-erlang-25.0.3-alpine-3.16.0
+      - image: hexpm/elixir:1.14.2-erlang-25.1.2-alpine-3.16.2
     <<: *defaults
     steps:
       - checkout
@@ -93,7 +82,6 @@ workflows:
   build_test:
     jobs:
       - build_elixir_1_14_otp_25
-      - build_elixir_1_13_otp_25
       - build_elixir_1_13_otp_24
       - build_elixir_1_12_otp_24
       - build_elixir_1_11_otp_23
