@@ -43,7 +43,8 @@ defmodule VintageNet.InfoTest do
 
       # configure/2 is asynchronous, so wait for the interface to appear.
       Process.sleep(100)
-      assert ["eth0"] == VintageNet.configured_interfaces()
+      interfaces = VintageNet.configured_interfaces()
+      assert "eth0" in interfaces
     end)
 
     output = capture_io(&Info.info/0)
