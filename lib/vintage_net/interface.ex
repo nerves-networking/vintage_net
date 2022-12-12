@@ -237,7 +237,7 @@ defmodule VintageNet.Interface do
   # :configuring
 
   @impl GenStateMachine
-  def handle_event(:info, {:commands_done, :ok}, :configuring, %State{} = data) do
+  def handle_event(:info, {:commands_done, :ok}, :configuring, %State{config: config} = data) do
     # debug(data, ":configuring -> done success")
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
@@ -249,8 +249,22 @@ defmodule VintageNet.Interface do
       data.config.restart_strategy,
       data.config.child_specs
     )
+    |> case do
+      :ok ->
+        {:next_state, :configured, new_data, actions}
 
-    {:next_state, :configured, new_data, actions}
+      {:error, _reason} ->
+        debug(
+          data,
+          ":configuring -> done error starting: retrying after #{config.retry_millis} ms"
+        )
+
+        {new_data, actions} = reply_to_waiters(data)
+        new_data = %{new_data | command_runner: nil}
+        actions = [{:state_timeout, config.retry_millis, :retry_timeout} | actions]
+        update_properties(:retrying, new_data)
+        {:next_state, :retrying, new_data, actions}
+    end
   end
 
   @impl GenStateMachine
