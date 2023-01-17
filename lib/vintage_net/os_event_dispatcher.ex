@@ -21,15 +21,15 @@ defmodule VintageNet.OSEventDispatcher do
 
     case op do
       "deconfig" ->
-        PropertyTable.delete(VintageNet, ["interface", ifname, "raw_config"])
+        PropertyTable.delete(VintageNet, ["interface", ifname, "dhcp_options"])
 
       "bound" ->
-        raw_config =
+        dhcp_options =
           info
           |> Enum.filter(fn {k, _} -> k != String.upcase(k) end)
           |> Enum.into(%{})
 
-        PropertyTable.put(VintageNet, ["interface", ifname, "raw_config"], raw_config)
+        PropertyTable.put(VintageNet, ["interface", ifname, "dhcp_options"], dhcp_options)
 
       _ ->
         :ok

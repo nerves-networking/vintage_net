@@ -22,12 +22,12 @@ defmodule VintageNet.OSEventDispatcherTest do
     }
 
     OSEventDispatcher.dispatch(["bound"], info)
-    raw_config = PropertyTable.get(VintageNet, ["interface", "eth0", "raw_config"])
-    assert raw_config == info
+    dhcp_options = PropertyTable.get(VintageNet, ["interface", "eth0", "dhcp_options"])
+    assert dhcp_options == info
 
     OSEventDispatcher.dispatch(["deconfig"], info)
-    raw_config = PropertyTable.get(VintageNet, ["interface", "eth0", "raw_config"])
-    assert raw_config == nil
+    dhcp_options = PropertyTable.get(VintageNet, ["interface", "eth0", "dhcp_options"])
+    assert dhcp_options == nil
   end
 
   test "udhcpc handler notifies Elixir" do
