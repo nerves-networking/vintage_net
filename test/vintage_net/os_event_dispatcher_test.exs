@@ -1,10 +1,34 @@
 defmodule VintageNet.OSEventDispatcherTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
 
   import ExUnit.CaptureLog
 
   alias VintageNet.OSEventDispatcher
   alias VintageNetTest.{CapturingUdhcpcHandler, CapturingUdhcpdHandler}
+
+  test "os event dispatcher writes raw config to property table" do
+    info = %{
+      "dns" => "192.168.1.149 1.1.1.1 9.9.9.9",
+      "domain" => "localdomain",
+      "interface" => "eth0",
+      "ip" => "192.168.1.245",
+      "lease" => "86400",
+      "mask" => "24",
+      "ntpsrv" => "192.168.1.149",
+      "opt53" => "05",
+      "router" => "192.168.1.1",
+      "serverid" => "192.168.1.1",
+      "subnet" => "255.255.255.0"
+    }
+
+    OSEventDispatcher.dispatch(["bound"], info)
+    raw_config = PropertyTable.get(VintageNet, ["interface", "eth0", "raw_config"])
+    assert raw_config == info
+
+    OSEventDispatcher.dispatch(["deconfig"], info)
+    raw_config = PropertyTable.get(VintageNet, ["interface", "eth0", "raw_config"])
+    assert raw_config == nil
+  end
 
   test "udhcpc handler notifies Elixir" do
     for op <- [:deconfig, :leasefail, :nak, :renew, :bound] do

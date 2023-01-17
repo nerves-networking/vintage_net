@@ -19,6 +19,18 @@ defmodule VintageNet.OSEventDispatcher do
       when op in ["deconfig", "leasefail", "nak", "renew", "bound"] do
     handler = Application.get_env(:vintage_net, :udhcpc_handler)
 
+    case op do
+      "deconfig" ->
+        PropertyTable.delete(VintageNet, ["interface", ifname, "raw_config"])
+
+      "bound" ->
+        raw_config = info |> Map.filter(fn {k, _} -> k != String.upcase(k) end)
+        PropertyTable.put(VintageNet, ["interface", ifname, "raw_config"], raw_config)
+
+      _ ->
+        :ok
+    end
+
     new_info = info |> key_to_list("dns") |> key_to_list("router")
 
     apply(handler, String.to_atom(op), [ifname, new_info])
