@@ -24,7 +24,11 @@ defmodule VintageNet.OSEventDispatcher do
         PropertyTable.delete(VintageNet, ["interface", ifname, "raw_config"])
 
       "bound" ->
-        raw_config = info |> Map.filter(fn {k, _} -> k != String.upcase(k) end)
+        raw_config =
+          info
+          |> Enum.filter(fn {k, _} -> k != String.upcase(k) end)
+          |> Enum.into(%{})
+
         PropertyTable.put(VintageNet, ["interface", ifname, "raw_config"], raw_config)
 
       _ ->
