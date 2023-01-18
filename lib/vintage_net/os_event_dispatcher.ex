@@ -1,5 +1,6 @@
 defmodule VintageNet.OSEventDispatcher do
   @moduledoc false
+  alias VintageNet.DHCP.Options
   require Logger
 
   @doc """
@@ -14,33 +15,23 @@ defmodule VintageNet.OSEventDispatcher do
   OS environment.
   """
   @spec dispatch([String.t()], %{String.t() => String.t()}) :: :ok
-
   def dispatch([op], %{"interface" => ifname} = info)
       when op in ["deconfig", "leasefail", "nak", "renew", "bound"] do
+    # udhcpc update
     handler = Application.get_env(:vintage_net, :udhcpc_handler)
+    dhcp_options = Options.udhcpc_to_options(info)
 
-    case op do
-      "deconfig" ->
-        PropertyTable.delete(VintageNet, ["interface", ifname, "dhcp_options"])
-
-      "bound" ->
-        dhcp_options =
-          info
-          |> Enum.filter(fn {k, _} -> k != String.upcase(k) end)
-          |> Enum.into(%{})
-
-        PropertyTable.put(VintageNet, ["interface", ifname, "dhcp_options"], dhcp_options)
-
-      _ ->
-        :ok
+    if op in ["deconfig", "leasefail", "nak"] do
+      PropertyTable.delete(VintageNet, ["interface", ifname, "dhcp_options"])
+    else
+      PropertyTable.put(VintageNet, ["interface", ifname, "dhcp_options"], dhcp_options)
     end
 
-    new_info = info |> key_to_list("dns") |> key_to_list("router")
-
-    apply(handler, String.to_atom(op), [ifname, new_info])
+    apply(handler, String.to_atom(op), [ifname, dhcp_options])
   end
 
   def dispatch([lease_file], _env) do
+    # udhcpd update
     case extract_lease_file_ifname(lease_file) do
       {:ok, ifname} ->
         handler = Application.get_env(:vintage_net, :udhcpd_handler)
@@ -62,14 +53,6 @@ defmodule VintageNet.OSEventDispatcher do
     case String.split(base, ".", parts: 3) do
       ["udhcpd", ifname, "leases"] -> {:ok, ifname}
       _ -> :error
-    end
-  end
-
-  # This preserves the behavior of an earlier version of this code.
-  defp key_to_list(info, key) do
-    case Map.fetch(info, key) do
-      {:ok, s} -> %{info | key => String.split(s, " ", trim: true)}
-      :error -> info
     end
   end
 end

@@ -54,7 +54,7 @@ defmodule VintageNet.NameResolver do
 
   This replaces any entries in the `/etc/resolv.conf` for this interface.
   """
-  @spec setup(String.t(), String.t() | nil, [VintageNet.any_ip_address()]) :: :ok
+  @spec setup(String.t(), String.t() | nil, [:inet.ip_address()]) :: :ok
   def setup(ifname, domain, name_servers) do
     GenServer.call(__MODULE__, {:setup, ifname, domain, name_servers})
   end
@@ -99,8 +99,7 @@ defmodule VintageNet.NameResolver do
 
   @impl GenServer
   def handle_call({:setup, ifname, domain, name_servers}, _from, state) do
-    servers = Enum.map(name_servers, &IP.ip_to_tuple!/1)
-    ifentry = %{domain: domain, name_servers: servers}
+    ifentry = %{domain: domain, name_servers: name_servers}
 
     state = %{state | entries: Map.put(state.entries, ifname, ifentry)}
     refresh(state)

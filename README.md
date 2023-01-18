@@ -350,6 +350,7 @@ Property      | Values              | Description
 `lower_up`    | `true` or `false`   | This indicates whether the physical layer is "up". E.g., a cable is connected or WiFi associated
 `mac_address` | "11:22:33:44:55:66" | The interface's MAC address as a string
 `addresses`   | [address_info]      | This is a list of all of the addresses assigned to this interface
+`dhcp_options` | `%{...}`           | When DHCP is in use, the processed response information and options is stored here. See `t:VintageNet.DHCP.Options.t/0`
 
 Specific types of interfaces provide more parameters.
 

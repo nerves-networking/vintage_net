@@ -6,7 +6,7 @@ defmodule VintageNet.OSEventDispatcherTest do
   alias VintageNet.OSEventDispatcher
   alias VintageNetTest.{CapturingUdhcpcHandler, CapturingUdhcpdHandler}
 
-  test "os event dispatcher writes raw config to property table" do
+  test "os event dispatcher writes dhcp options to property table" do
     info = %{
       "dns" => "192.168.1.149 1.1.1.1 9.9.9.9",
       "domain" => "localdomain",
@@ -21,9 +21,21 @@ defmodule VintageNet.OSEventDispatcherTest do
       "subnet" => "255.255.255.0"
     }
 
+    expected_options = %{
+      dns: [{192, 168, 1, 149}, {1, 1, 1, 1}, {9, 9, 9, 9}],
+      domain: "localdomain",
+      ip: {192, 168, 1, 245},
+      lease: 86400,
+      mask: 24,
+      ntpsrv: [{192, 168, 1, 149}],
+      router: [{192, 168, 1, 1}],
+      serverid: {192, 168, 1, 1},
+      subnet: {255, 255, 255, 0}
+    }
+
     OSEventDispatcher.dispatch(["bound"], info)
     dhcp_options = PropertyTable.get(VintageNet, ["interface", "eth0", "dhcp_options"])
-    assert dhcp_options == info
+    assert dhcp_options == expected_options
 
     OSEventDispatcher.dispatch(["deconfig"], info)
     dhcp_options = PropertyTable.get(VintageNet, ["interface", "eth0", "dhcp_options"])
@@ -54,19 +66,18 @@ defmodule VintageNet.OSEventDispatcherTest do
       [{ifname, reported_op, options}] = CapturingUdhcpcHandler.get()
       assert reported_op == op
       assert ifname == "eth0"
-      assert options["dns"] == ["192.168.9.1"]
-      assert options["subnet"] == "255.255.255.0"
-      assert options["router"] == ["192.168.9.1"]
-      assert options["opt58"] == "0000a8c0"
-      assert options["opt59"] == "00012750"
-      assert options["domain"] == "example.net"
-      assert options["siaddr"] == "192.168.9.1"
-      assert options["serverid"] == "192.168.9.1"
-      assert options["broadcast"] == "192.168.9.255"
-      assert options["ip"] == "192.168.9.131"
-      assert options["mask"] == "24"
-      assert options["lease"] == "86400"
-      assert options["opt53"] == "05"
+      assert options[:dns] == [{192, 168, 9, 1}]
+      assert options[:subnet] == {255, 255, 255, 0}
+      assert options[:router] == [{192, 168, 9, 1}]
+      assert options[:renewal_time] == 43200
+      assert options[:rebind_time] == 75600
+      assert options[:domain] == "example.net"
+      assert options[:siaddr] == {192, 168, 9, 1}
+      assert options[:serverid] == {192, 168, 9, 1}
+      assert options[:broadcast] == {192, 168, 9, 255}
+      assert options[:ip] == {192, 168, 9, 131}
+      assert options[:mask] == 24
+      assert options[:lease] == 86400
     end
   end
 
@@ -75,10 +86,10 @@ defmodule VintageNet.OSEventDispatcherTest do
 
     OSEventDispatcher.dispatch(["bound"], %{
       "interface" => "eth0",
-      "ip" => "ip",
-      "broadcast" => "broadcast",
-      "subnet" => "subnet",
-      "domain" => "domain",
+      "ip" => "192.0.2.2",
+      "broadcast" => "192.0.2.255",
+      "subnet" => "255.255.255.0",
+      "domain" => "example.com",
       "dns" => "1.1.1.1 2.2.2.2 3.3.3.3 4.4.4.4",
       "message" => "message"
     })
@@ -86,12 +97,12 @@ defmodule VintageNet.OSEventDispatcherTest do
     [{ifname, reported_op, options}] = CapturingUdhcpcHandler.get()
     assert reported_op == :bound
     assert ifname == "eth0"
-    assert options["ip"] == "ip"
-    assert options["broadcast"] == "broadcast"
-    assert options["subnet"] == "subnet"
-    assert options["domain"] == "domain"
-    assert options["dns"] == ["1.1.1.1", "2.2.2.2", "3.3.3.3", "4.4.4.4"]
-    assert options["message"] == "message"
+    assert options[:ip] == {192, 0, 2, 2}
+    assert options[:broadcast] == {192, 0, 2, 255}
+    assert options[:subnet] == {255, 255, 255, 0}
+    assert options[:domain] == "example.com"
+    assert options[:dns] == [{1, 1, 1, 1}, {2, 2, 2, 2}, {3, 3, 3, 3}, {4, 4, 4, 4}]
+    assert options[:message] == "message"
   end
 
   test "udhcpd handler notifies Elixir" do
