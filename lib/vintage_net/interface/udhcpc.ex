@@ -2,11 +2,15 @@ defmodule VintageNet.Interface.Udhcpc do
   @moduledoc false
   @behaviour VintageNet.OSEventDispatcher.UdhcpcHandler
 
-  alias VintageNet.{Command, InterfacesMonitor, IP, NameResolver, RouteManager}
+  alias VintageNet.Command
+  alias VintageNet.DHCP.Options
+  alias VintageNet.InterfacesMonitor
+  alias VintageNet.IP
+  alias VintageNet.NameResolver
+  alias VintageNet.RouteManager
 
   require Logger
 
-  @spec deconfig(binary, any) :: :ok
   @doc """
   Handle deconfig reports from udhcpc
   """
@@ -65,19 +69,16 @@ defmodule VintageNet.Interface.Udhcpc do
     leasefail(ifname, info)
   end
 
-  defp broadcast_args(%{"broadcast" => broadcast}), do: ["broadcast", broadcast]
+  defp broadcast_args(%{broadcast: broadcast}), do: ["broadcast", IP.ip_to_string(broadcast)]
   defp broadcast_args(_), do: []
 
-  defp netmask_args(%{"subnet" => subnet}), do: ["netmask", subnet]
+  defp netmask_args(%{subnet: subnet}), do: ["netmask", IP.ip_to_string(subnet)]
   defp netmask_args(_), do: []
 
-  defp build_ifconfig_args(ifname, %{"ip" => ip} = info) do
-    [ifname, ip] ++ broadcast_args(info) ++ netmask_args(info)
-  end
-
-  defp ip_subnet(%{"ip" => address, "mask" => mask}) do
-    {:ok, our_ip} = IP.ip_to_tuple(address)
-    {our_ip, String.to_integer(mask)}
+  @doc false
+  @spec ifconfig_args(VintageNet.ifname(), Options.t()) :: [String.t()]
+  def ifconfig_args(ifname, info) do
+    [ifname, IP.ip_to_string(info.ip)] ++ broadcast_args(info) ++ netmask_args(info)
   end
 
   @doc """
@@ -94,14 +95,11 @@ defmodule VintageNet.Interface.Udhcpc do
     # fi
     # /sbin/ifconfig $interface $ip $BROADCAST $NETMASK
 
-    ifconfig_args = build_ifconfig_args(ifname, info)
-    _ = Command.cmd("ifconfig", ifconfig_args)
+    _ = Command.cmd("ifconfig", ifconfig_args(ifname, info))
 
-    case info["router"] do
-      [first_router | _rest] ->
-        ip_subnet = ip_subnet(info)
-
-        {:ok, default_gateway} = IP.ip_to_tuple(first_router)
+    case info[:router] do
+      [default_gateway | _rest] ->
+        ip_subnet = {info.ip, info.mask}
 
         RouteManager.set_route(ifname, [ip_subnet], default_gateway)
 
@@ -127,12 +125,12 @@ defmodule VintageNet.Interface.Udhcpc do
 
     domain =
       cond do
-        Map.has_key?(info, "search") ->
+        Map.has_key?(info, :search) ->
           # prefer rfc3359 domain search list (option 119) if available
-          Map.get(info, "search")
+          Map.get(info, :search)
 
-        Map.has_key?(info, "domain") ->
-          Map.get(info, "domain")
+        Map.has_key?(info, :domain) ->
+          Map.get(info, :domain)
 
         true ->
           ""
@@ -142,7 +140,7 @@ defmodule VintageNet.Interface.Udhcpc do
     # 	echo adding dns $i
     # 	echo "nameserver $i # $interface" >> $RESOLV_CONF
     # done
-    dns = Map.get(info, "dns", [])
+    dns = Map.get(info, :dns, [])
 
     NameResolver.setup(ifname, domain, dns)
     :ok
