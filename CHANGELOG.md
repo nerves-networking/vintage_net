@@ -2,6 +2,19 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.0] - 2023-01-22
+
+This release has a breaking change if you're using the `UdhcpcHandler`
+behaviour. This should be a rare use case. Use the `"dhcp_options"` property
+now.
+
+* Changed
+  * Add `"dhcp_options"` to interface properties. This lets applications use
+    information provided by DHCP servers in an easy way. It removes the need to
+    process events from `udhcpc` directly, and therefore, the `UdhcpcHandler`
+    behaviour is now a private API and may be removed in the future.
+  * Fix some references to `iodata` that should have been `chardata`.
+
 ## [v0.12.2] - 2022-08-04
 
 * Changed
