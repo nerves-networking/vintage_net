@@ -24,7 +24,7 @@ defmodule VintageNet.Interface.LANConnectivityChecker do
   end
 
   defp warn() do
-    Logger.warn(
+    Logger.warning(
       "VintageNet.Interface.LANConnectivityChecker is now VintageNet.Connectivity.LANChecker"
     )
   end

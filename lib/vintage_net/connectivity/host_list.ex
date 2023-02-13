@@ -33,7 +33,7 @@ defmodule VintageNet.Connectivity.HostList do
       |> Enum.reject(fn x -> x == :error end)
 
     if hosts == [] do
-      Logger.warn("VintageNet: empty or invalid `:internet_host_list` so using defaults")
+      Logger.warning("VintageNet: empty or invalid `:internet_host_list` so using defaults")
       [{{1, 1, 1, 1}, 80}]
     else
       hosts
@@ -46,7 +46,7 @@ defmodule VintageNet.Connectivity.HostList do
         host_list
 
       _ ->
-        Logger.warn("VintageNet: :internet_host_list must be a list")
+        Logger.warning("VintageNet: :internet_host_list must be a list")
         []
     end
   end
@@ -57,7 +57,7 @@ defmodule VintageNet.Connectivity.HostList do
         []
 
       host ->
-        Logger.warn(
+        Logger.warning(
           "VintageNet: :internet_host key is deprecated. Replace with `internet_host_list: [{#{inspect(host)}, 80}]`"
         )
 

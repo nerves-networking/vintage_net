@@ -38,12 +38,12 @@ defmodule VintageNet.OSEventDispatcher do
         handler.lease_update(ifname, lease_file)
 
       :error ->
-        Logger.warn("VintageNet: dropping unexpected notification: [#{inspect(lease_file)}]")
+        Logger.warning("VintageNet: dropping unexpected notification: [#{inspect(lease_file)}]")
     end
   end
 
   def dispatch(args, _env) do
-    Logger.warn("VintageNet: dropping unexpected notification: #{inspect(args)}")
+    Logger.warning("VintageNet: dropping unexpected notification: #{inspect(args)}")
   end
 
   defp extract_lease_file_ifname(path) do

@@ -110,7 +110,7 @@ defmodule VintageNet.PredictableInterfaceName do
         {VintageNet, ["interface", ifname, "hw_path"], nil, "/devices/virtual", _meta},
         state
       ) do
-    Logger.warn("Not renaming #{ifname} because it is a virtual interface")
+    Logger.warning("Not renaming #{ifname} because it is a virtual interface")
     {:noreply, state}
   end
 
@@ -152,7 +152,7 @@ defmodule VintageNet.PredictableInterfaceName do
 
         %{hw_path: ^hw_path, ifname: rename_to} = rename, renamed ->
           if is_dupe?(renamed, hw_path) do
-            Logger.warn(
+            Logger.warning(
               "Not renaming #{ifname} because another interface already matched the hw_path: #{hw_path}"
             )
 

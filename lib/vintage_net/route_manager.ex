@@ -269,7 +269,7 @@ defmodule VintageNet.RouteManager do
   defp update_connection_status(state, ifname, new_status, why) do
     case state.interfaces[ifname] do
       nil ->
-        Logger.warn(
+        Logger.warning(
           "RouteManager: new set_connection_status #{ifname}} -> #{inspect(new_status)} (#{why})"
         )
 
@@ -364,6 +364,6 @@ defmodule VintageNet.RouteManager do
   defp warn_on_error(:ok, _label), do: :ok
 
   defp warn_on_error({:error, reason}, label) do
-    Logger.warn("route_manager(#{label}): ignoring failure #{inspect(reason)}")
+    Logger.warning("route_manager(#{label}): ignoring failure #{inspect(reason)}")
   end
 end

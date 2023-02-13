@@ -39,7 +39,7 @@ defmodule VintageNet.InterfacesSupervisor do
         true
 
       {:error, _} ->
-        Logger.warn(
+        Logger.warning(
           "VintageNet not configuring #{ifname} because predictable interface naming is enabled"
         )
 

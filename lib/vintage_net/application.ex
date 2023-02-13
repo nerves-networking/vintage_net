@@ -73,7 +73,7 @@ defmodule VintageNet.Application do
   defp valid_config?({ifname, %{type: type}}) when is_binary(ifname) and is_atom(type), do: true
 
   defp valid_config?(config) do
-    Logger.warn("VintageNet: Dropping invalid configuration #{inspect(config)}")
+    Logger.warning("VintageNet: Dropping invalid configuration #{inspect(config)}")
 
     false
   end
@@ -84,7 +84,7 @@ defmodule VintageNet.Application do
         Map.put(configs, ifname, config)
 
       {:error, reason} ->
-        Logger.warn("VintageNet(#{ifname}): ignoring saved config due to #{inspect(reason)}")
+        Logger.warning("VintageNet(#{ifname}): ignoring saved config due to #{inspect(reason)}")
         configs
     end
   end

@@ -24,7 +24,7 @@ defmodule VintageNet.Interface.InternetConnectivityChecker do
   end
 
   defp warn() do
-    Logger.warn(
+    Logger.warning(
       "VintageNet.Interface.InternetConnectivityChecker is now VintageNet.Connectivity.InternetChecker"
     )
   end

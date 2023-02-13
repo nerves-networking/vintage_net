@@ -37,13 +37,13 @@ defmodule VintageNet.PowerManager.Supervisor do
       ]
     else
       {:error, reason} ->
-        Logger.warn("Ignoring power management spec for #{module} since #{reason}")
+        Logger.warning("Ignoring power management spec for #{module} since #{reason}")
         []
     end
   end
 
   defp power_manager_to_spec(other) do
-    Logger.warn("Ignoring invalid power manager spec #{inspect(other)}")
+    Logger.warning("Ignoring invalid power manager spec #{inspect(other)}")
     []
   end
 
