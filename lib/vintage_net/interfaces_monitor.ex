@@ -12,12 +12,8 @@ defmodule VintageNet.InterfacesMonitor do
 
   alias VintageNet.InterfacesMonitor.{HWPath, Info}
 
-  defmodule State do
-    @moduledoc false
-
-    defstruct port: nil,
-              interface_info: %{}
-  end
+  defstruct port: nil,
+            interface_info: %{}
 
   @spec start_link(any()) :: GenServer.on_start()
   def start_link(args) do
@@ -50,11 +46,11 @@ defmodule VintageNet.InterfacesMonitor do
             :exit_status
           ])
 
-        {:ok, %State{port: port}}
+        {:ok, %__MODULE__{port: port}}
 
       false ->
         # This is only done for testing on OSX
-        {:ok, %State{}}
+        {:ok, %__MODULE__{}}
     end
   end
 
