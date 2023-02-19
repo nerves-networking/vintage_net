@@ -17,16 +17,12 @@ defmodule VintageNet.Interface do
 
   require Logger
 
-  defmodule State do
-    @moduledoc false
-
-    defstruct ifname: nil,
-              config: nil,
-              next_config: nil,
-              command_runner: nil,
-              waiters: [],
-              inflight_ioctls: %{}
-  end
+  defstruct ifname: nil,
+            config: nil,
+            next_config: nil,
+            command_runner: nil,
+            waiters: [],
+            inflight_ioctls: %{}
 
   @doc """
   Start up an interface
@@ -208,7 +204,7 @@ defmodule VintageNet.Interface do
 
     cleanup_interface(ifname)
 
-    initial_data = %State{ifname: ifname, config: null_raw_config(ifname)}
+    initial_data = %__MODULE__{ifname: ifname, config: null_raw_config(ifname)}
     update_properties(:configured, initial_data)
 
     raw_config = get_raw_config(ifname)
@@ -237,7 +233,7 @@ defmodule VintageNet.Interface do
   # :configuring
 
   @impl GenStateMachine
-  def handle_event(:info, {:commands_done, :ok}, :configuring, %State{} = data) do
+  def handle_event(:info, {:commands_done, :ok}, :configuring, %__MODULE__{} = data) do
     # debug(data, ":configuring -> done success")
     {new_data, actions} = reply_to_waiters(data)
     new_data = %{new_data | command_runner: nil}
@@ -258,7 +254,7 @@ defmodule VintageNet.Interface do
         :info,
         {:commands_done, {:error, _reason}},
         :configuring,
-        %State{config: config} = data
+        %__MODULE__{config: config} = data
       ) do
     debug(data, ":configuring -> done error: retrying after #{config.retry_millis} ms")
     {new_data, actions} = reply_to_waiters(data)
@@ -273,7 +269,7 @@ defmodule VintageNet.Interface do
         :info,
         {:EXIT, pid, reason},
         :configuring,
-        %State{command_runner: pid, config: config} = data
+        %__MODULE__{command_runner: pid, config: config} = data
       ) do
     debug(
       data,
@@ -292,7 +288,7 @@ defmodule VintageNet.Interface do
         :state_timeout,
         _event,
         :configuring,
-        %State{command_runner: pid, config: config} = data
+        %__MODULE__{command_runner: pid, config: config} = data
       ) do
     debug(data, ":configuring -> recovering from hang: retrying after #{config.retry_millis} ms")
 
@@ -309,7 +305,7 @@ defmodule VintageNet.Interface do
         {:call, from},
         {:configure, new_config},
         :configuring,
-        %State{command_runner: pid, config: old_config} = data
+        %__MODULE__{command_runner: pid, config: old_config} = data
       ) do
     debug(data, ":configuring -> configuring (stopping the old configuration)")
     Process.exit(pid, :kill)
@@ -329,7 +325,7 @@ defmodule VintageNet.Interface do
         :info,
         {VintageNet, ["interface", an_ifname, "present"], _old_value, nil, _meta},
         :configuring,
-        %State{command_runner: pid, config: config} = data
+        %__MODULE__{command_runner: pid, config: config} = data
       ) do
     debug(data, ":configuring -> #{an_ifname} removed: retrying after #{config.retry_millis}ms")
 
@@ -343,7 +339,7 @@ defmodule VintageNet.Interface do
 
   # :configured
 
-  def handle_event({:call, from}, :wait, :configured, %State{} = data) do
+  def handle_event({:call, from}, :wait, :configured, %__MODULE__{} = data) do
     # debug(data, ":configured -> wait (return immediately)")
     {:keep_state, data, {:reply, from, :ok}}
   end
@@ -353,7 +349,7 @@ defmodule VintageNet.Interface do
         :internal,
         {:configure, new_config},
         :configured,
-        %State{config: old_config} = data
+        %__MODULE__{config: old_config} = data
       ) do
     debug(data, ":configured -> internal configure (#{inspect(new_config.type)})")
 
@@ -374,7 +370,7 @@ defmodule VintageNet.Interface do
         {:call, from},
         {:configure, new_config},
         :configured,
-        %State{config: old_config} = data
+        %__MODULE__{config: old_config} = data
       ) do
     debug(data, ":configured -> configure (#{inspect(new_config.type)})")
 
@@ -396,7 +392,7 @@ defmodule VintageNet.Interface do
         {:call, from},
         {:ioctl, command, args},
         :configured,
-        %State{} = data
+        %__MODULE__{} = data
       ) do
     # debug(data, ":configured -> run ioctl")
 
@@ -412,7 +408,7 @@ defmodule VintageNet.Interface do
         :info,
         {:ioctl_done, ioctl_pid, result},
         :configured,
-        %State{inflight_ioctls: inflight} = data
+        %__MODULE__{inflight_ioctls: inflight} = data
       ) do
     # debug(data, ":configured -> ioctl done")
 
@@ -428,7 +424,7 @@ defmodule VintageNet.Interface do
         :info,
         {:EXIT, pid, reason},
         :configured,
-        %State{inflight_ioctls: inflight} = data
+        %__MODULE__{inflight_ioctls: inflight} = data
       ) do
     # If an ioctl crashed, then return an error.
     # Otherwise, it's a latent exit from something that exited normally.
@@ -451,7 +447,7 @@ defmodule VintageNet.Interface do
         :info,
         {VintageNet, ["interface", an_ifname, "present"], _old_value, nil, _meta},
         :configured,
-        %State{config: config} = data
+        %__MODULE__{config: config} = data
       ) do
     debug(data, ":configured -> #{an_ifname} removed")
 
@@ -474,7 +470,7 @@ defmodule VintageNet.Interface do
         :info,
         {:commands_done, :ok},
         :reconfiguring,
-        %State{config: old_config, next_config: new_config} = data
+        %__MODULE__{config: old_config, next_config: new_config} = data
       ) do
     # TODO
     # debug(data, "#{data.ifname}:reconfiguring -> cleanup success")
@@ -502,7 +498,7 @@ defmodule VintageNet.Interface do
         :info,
         {:commands_done, {:error, _reason}},
         :reconfiguring,
-        %State{config: old_config, next_config: new_config} = data
+        %__MODULE__{config: old_config, next_config: new_config} = data
       ) do
     # TODO
     debug(data, ":reconfiguring -> done error")
@@ -529,7 +525,7 @@ defmodule VintageNet.Interface do
         :info,
         {:EXIT, pid, reason},
         :reconfiguring,
-        %State{config: old_config, command_runner: pid, next_config: new_config} = data
+        %__MODULE__{config: old_config, command_runner: pid, next_config: new_config} = data
       ) do
     # TODO
     debug(data, ":reconfiguring -> done crash (#{inspect(reason)})")
@@ -556,7 +552,7 @@ defmodule VintageNet.Interface do
         :state_timeout,
         _event,
         :reconfiguring,
-        %State{command_runner: pid, config: old_config, next_config: new_config} = data
+        %__MODULE__{command_runner: pid, config: old_config, next_config: new_config} = data
       ) do
     debug(data, ":reconfiguring -> recovering from hang")
     Process.exit(pid, :kill)
@@ -581,7 +577,7 @@ defmodule VintageNet.Interface do
   # :retrying
 
   @impl GenStateMachine
-  def handle_event(:state_timeout, _event, :retrying, %State{config: new_config} = data) do
+  def handle_event(:state_timeout, _event, :retrying, %__MODULE__{config: new_config} = data) do
     if interfaces_available?(data) do
       start_configuring(new_config, data, [])
     else
@@ -594,7 +590,7 @@ defmodule VintageNet.Interface do
         :info,
         {VintageNet, ["interface", an_ifname, "present"], _old_value, true, _meta},
         :retrying,
-        %State{config: new_config} = data
+        %__MODULE__{config: new_config} = data
       ) do
     debug(data, ":retrying -> #{an_ifname} up")
     # One of the dependent interfaces appeared, so check
@@ -626,7 +622,7 @@ defmodule VintageNet.Interface do
   end
 
   @impl GenStateMachine
-  def handle_event(:info, {:commands_done, _}, :retrying, %State{} = data) do
+  def handle_event(:info, {:commands_done, _}, :retrying, %__MODULE__{} = data) do
     # This is a latent message that didn't get processed because a crash
     # got handled first. It can be produced by getting one of an
     # interface's supervised processes to crash on a
@@ -647,7 +643,7 @@ defmodule VintageNet.Interface do
         {:call, from},
         :wait,
         _other_state,
-        %State{waiters: waiters} = data
+        %__MODULE__{waiters: waiters} = data
       ) do
     # debug(data, "#{inspect(other_state)} -> wait")
     {:keep_state, %{data | waiters: [from | waiters]}}
@@ -669,7 +665,7 @@ defmodule VintageNet.Interface do
         :info,
         {VintageNet, ["interface", ifname, "present"], _old_value, present, _meta},
         other_state,
-        %State{ifname: ifname} = data
+        %__MODULE__{ifname: ifname} = data
       ) do
     debug(data, "#{inspect(other_state)} -> interface #{ifname} is now #{inspect(present)}")
     {:keep_state, data}

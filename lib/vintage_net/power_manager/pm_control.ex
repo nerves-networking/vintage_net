@@ -33,21 +33,17 @@ defmodule VintageNet.PowerManager.PMControl do
 
   @default_watchdog_timeout 60_000
 
-  defmodule State do
-    @moduledoc false
-
-    defstruct [
-      :impl,
-      :impl_args,
-      :impl_state,
-      :ifname,
-      :pm_state,
-      :sm,
-      :timer_id,
-      :timer_ref,
-      :watchdog_timeout
-    ]
-  end
+  defstruct [
+    :impl,
+    :impl_args,
+    :impl_state,
+    :ifname,
+    :pm_state,
+    :sm,
+    :timer_id,
+    :timer_ref,
+    :watchdog_timeout
+  ]
 
   @doc """
   Start up a server
@@ -155,7 +151,7 @@ defmodule VintageNet.PowerManager.PMControl do
 
   @impl GenServer
   def init(opts) do
-    state = %State{
+    state = %__MODULE__{
       impl: opts[:impl],
       impl_args: opts[:impl_args],
       sm: StateMachine.init(),
