@@ -607,18 +607,18 @@ need to run `apt install libnl-genl-3-dev`.
   * `VintageNet.get_configuration/1` works now
   * `"available_interfaces"` is updated again
 
-## [v0.2.2] - 2020-05-24
+## [v0.2.2] - 2019-05-24
 
 * Fixed
   * Fix local LAN routing
 
-## [v0.2.1] - 2020-05-16
+## [v0.2.1] - 2019-05-16
 
 * Added
   * Expose summary status of whether the whole device is
     disconnected, LAN-connected, or Internet-connected
 
-## [v0.2.0] - 2020-05-15
+## [v0.2.0] - 2019-05-15
 
 * Added
   * Support WiFi AP mode - see README.md for example
