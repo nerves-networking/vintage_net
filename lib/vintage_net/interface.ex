@@ -66,7 +66,7 @@ defmodule VintageNet.Interface do
       {:ok, raw_config}
     catch
       _kind, maybe_exception ->
-        if Exception.exception?(maybe_exception) do
+        if Kernel.is_exception(maybe_exception) do
           {:error, Exception.message(maybe_exception)}
         else
           {:error,
