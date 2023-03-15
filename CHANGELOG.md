@@ -2,6 +2,10 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.1] - 2023-03-15
+
+This release fixes deprecation warnings when using Elixir 1.15.
+
 ## [v0.13.0] - 2023-01-22
 
 This release has a breaking change if you're using the `UdhcpcHandler`
