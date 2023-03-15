@@ -1,87 +1,60 @@
-version: 2
+version: 2.1
 
-defaults: &defaults
-  working_directory: ~/repo
-  environment:
-    LC_ALL: C.UTF-8
-
-install_hex_rebar: &install_hex_rebar
-  run:
-    name: Install hex and rebar
-    command: |
-      mix local.hex --force
-      mix local.rebar --force
-
-install_system_deps: &install_system_deps
-  run:
-    name: Install system dependencies
-    command: |
-        apk add build-base linux-headers libmnl-dev libnl3-dev git
+latest: &latest
+  pattern: "^1.14.3-erlang-25.*$"
 
 jobs:
-  build_elixir_1_14_otp_25:
+  build-test:
+    parameters:
+      tag:
+        type: string
     docker:
-      - image: hexpm/elixir:1.14.3-erlang-25.2.1-alpine-3.17.0
-    <<: *defaults
+      - image: hexpm/elixir:<< parameters.tag >>
+    working_directory: ~/repo
+    environment:
+      LC_ALL: C.UTF-8
     steps:
+      - run:
+          name: Install system dependencies
+          command: apk add --no-cache build-base linux-headers libmnl-dev libnl3-dev git
       - checkout
-      - <<: *install_hex_rebar
-      - <<: *install_system_deps
+      - run:
+          name: Install hex and rebar
+          command: |
+            mix local.hex --force
+            mix local.rebar --force
       - restore_cache:
           keys:
-            - v4-mix-cache-{{ checksum "mix.lock" }}
+            - v1-mix-cache-<< parameters.tag >>-{{ checksum "mix.lock" }}
       - run: mix deps.get
       - run: mix test --exclude requires_ipv6
-      - run: mix format --check-formatted
-      - run: mix deps.unlock --check-unused
-      - run: mix docs
-      - run: mix hex.build
-      - run: mix credo -a
-      - run: mix dialyzer
-      - run: mix coveralls.circle || true
+      - when:
+          condition:
+            matches: { <<: *latest, value: << parameters.tag >> }
+          steps:
+            - run: mix format --check-formatted
+            - run: mix deps.unlock --check-unused
+            - run: mix docs
+            - run: mix hex.build
+            - run: mix credo -a --strict
+            - run: mix dialyzer
+            - run: mix coveralls.circle || true
       - save_cache:
-          key: v4-mix-cache-{{ checksum "mix.lock" }}
+          key: v1-mix-cache-<< parameters.tag >>-{{ checksum "mix.lock" }}
           paths:
-            - _build/plts
-
-  build_elixir_1_13_otp_24:
-    docker:
-      - image: hexpm/elixir:1.13.4-erlang-24.3.4-alpine-3.15.3
-    <<: *defaults
-    steps:
-      - checkout
-      - <<: *install_hex_rebar
-      - <<: *install_system_deps
-      - run: mix deps.get
-      - run: mix test --exclude requires_ipv6
-
-  build_elixir_1_12_otp_24:
-    docker:
-      - image: hexpm/elixir:1.12.3-erlang-24.3.4.2-alpine-3.16.0
-    <<: *defaults
-    steps:
-      - checkout
-      - <<: *install_hex_rebar
-      - <<: *install_system_deps
-      - run: mix deps.get
-      - run: mix test --exclude requires_ipv6
-
-  build_elixir_1_11_otp_23:
-    docker:
-      - image: hexpm/elixir:1.11.4-erlang-23.3.4.13-alpine-3.15.3
-    <<: *defaults
-    steps:
-      - checkout
-      - <<: *install_hex_rebar
-      - <<: *install_system_deps
-      - run: mix deps.get
-      - run: mix test --exclude requires_ipv6
+            - _build
+            - deps
 
 workflows:
-  version: 2
-  build_test:
+  checks:
     jobs:
-      - build_elixir_1_14_otp_25
-      - build_elixir_1_13_otp_24
-      - build_elixir_1_12_otp_24
-      - build_elixir_1_11_otp_23
+      - build-test:
+          name: << matrix.tag >>
+          matrix:
+            parameters:
+              tag: [
+                1.14.3-erlang-25.3-alpine-3.17.2,
+                1.13.4-erlang-24.3.4-alpine-3.15.3,
+                1.12.3-erlang-24.3.4-alpine-3.15.3,
+                1.11.4-erlang-23.3.4.13-alpine-3.15.3
+              ]
