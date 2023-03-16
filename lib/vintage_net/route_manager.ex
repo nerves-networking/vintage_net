@@ -270,7 +270,7 @@ defmodule VintageNet.RouteManager do
     case state.interfaces[ifname] do
       nil ->
         Logger.warning(
-          "RouteManager: new set_connection_status #{ifname}} -> #{inspect(new_status)} (#{why})"
+          "RouteManager: new set_connection_status #{ifname} -> #{inspect(new_status)} (#{why})"
         )
 
         ifentry = new_interface_info(ifname, [], nil, new_status)
