@@ -2,6 +2,8 @@ defmodule VintageNet.Connectivity.InspectorTest do
   use ExUnit.Case
 
   alias VintageNet.Connectivity.Inspector
+  alias VintageNetTest.Utils
+
   doctest Inspector
 
   test "on_interface?/2" do
@@ -15,6 +17,22 @@ defmodule VintageNet.Connectivity.InspectorTest do
 
     assert Inspector.on_interface?({1, 2, 3, 4, 0, 0, 0, 1}, if_addrs)
     refute Inspector.on_interface?({1, 2, 3, 10, 0, 0, 0, 1}, if_addrs)
+  end
+
+  test "routed_address?/2" do
+    ifname = Utils.get_loopback_ifname()
+
+    # Anything on 127.x.y.z should be on the LAN (aka not routed)
+    refute Inspector.routed_address?(ifname, {127, 0, 0, 1})
+    refute Inspector.routed_address?(ifname, {127, 0, 1, 1})
+    refute Inspector.routed_address?(ifname, {127, 1, 1, 1})
+
+    # Anything not on 127.x.y.z is off LAN (aka routed, let's pretend)
+    assert Inspector.routed_address?(ifname, {128, 0, 0, 1})
+    assert Inspector.routed_address?(ifname, {10, 10, 10, 10})
+
+    # Anything on interfaces that we don't know about return false
+    refute Inspector.routed_address?("bogus0", {10, 10, 10, 10})
   end
 
   test "finds connections using port sockets" do

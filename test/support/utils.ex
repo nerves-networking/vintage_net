@@ -71,4 +71,17 @@ defmodule VintageNetTest.Utils do
 
   defp ipv4_address_field?({:addr, {_, _, _, _}}), do: true
   defp ipv4_address_field?(_), do: false
+
+  @spec get_loopback_ifname() :: VintageNet.ifname()
+  def get_loopback_ifname() do
+    {:ok, addrs} = :inet.getifaddrs()
+    [{ifname, _info} | _rest] = Enum.filter(addrs, &loopback_interface?/1)
+    to_string(ifname)
+  end
+
+  defp loopback_interface?({[?l, ?o | _anything], fields}) do
+    Enum.member?(fields[:flags], :up) and Enum.any?(fields, &ipv4_address_field?/1)
+  end
+
+  defp loopback_interface?({_ifname, _fields}), do: false
 end
