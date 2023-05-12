@@ -131,7 +131,12 @@ defmodule VintageNet.Connectivity.InternetChecker do
   end
 
   defp reload_ping_list(%{status: :unknown, ping_list: []} = state) do
-    ping_list = HostList.create_ping_list(state.configured_hosts)
+    # Create the ping list and filter out anything that's on the same LAN since
+    # pinging those addresses would be inconclusive.
+    ping_list =
+      HostList.create_ping_list(state.configured_hosts)
+      |> Enum.filter(&Inspector.routed_address?(state.ifname, &1))
+
     %{state | ping_list: ping_list}
   end
 

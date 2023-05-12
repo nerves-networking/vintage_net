@@ -81,6 +81,26 @@ defmodule VintageNet.Connectivity.Inspector do
     end
   end
 
+  @doc """
+  Returns true if the specified address is not on the network interface
+
+  This function is useful for checking whether an address is on the Internet if
+  you don't trust the DNS server. Captive portals, for example, can give back
+  IP addresses that are local. It's not guaranteed, but it would be pointless to
+  check those IP's if you're looking for the Internet.
+  """
+  @spec routed_address?(VintageNet.ifname(), :inet.ip_address()) :: boolean()
+  def routed_address?(ifname, ip_address) do
+    case get_addresses(ifname) do
+      [] ->
+        # If we don't even have an IP address, then there's no Internet for sure.
+        false
+
+      our_addresses ->
+        not on_interface?(ip_address, our_addresses)
+    end
+  end
+
   @doc false
   @spec check_ports(result(), [port()], [ip_address_and_mask()], cache()) :: result()
   def check_ports(result, [], _our_addresses, _cache), do: result
