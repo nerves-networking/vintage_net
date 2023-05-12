@@ -251,7 +251,7 @@ involved. Here is a basic configuration:
     end: "192.168.24.10",
     options: %{
       dns: ["1.1.1.1", "1.0.0.1"],
-      subnet: "192.168.24.255",
+      subnet: "255.255.255.0",
       router: ["192.168.24.1"]
     }
   }

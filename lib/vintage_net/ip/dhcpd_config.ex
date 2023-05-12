@@ -22,7 +22,7 @@ defmodule VintageNet.IP.DhcpdConfig do
     * `:router` - IP_LIST
     * `:search` - STRING_LIST - [0x77] search domains
     * `:serverid` - IP (defaults to the interface's IP address)
-    * `:subnet` - IP (as a subnet mask)
+    * `:subnet` or `:netmask` - IP as a subnet mask (`:netmask` is an alias for `:subnet`)
 
   > #### :options {: .info}
   > Options may also be passed in as integers. These are passed directly to the DHCP server
@@ -47,7 +47,7 @@ defmodule VintageNet.IP.DhcpdConfig do
         end: "192.168.24.10",
         options: %{
           dns: ["1.1.1.1", "1.0.0.1"],
-          subnet: "192.168.24.255",
+          netmask: "255.255.255.0",
           router: ["192.168.24.1"]
         }
       }
@@ -112,6 +112,10 @@ defmodule VintageNet.IP.DhcpdConfig do
   end
 
   defp normalize_options(dhcpd_config), do: dhcpd_config
+
+  # Support :netmask as an alias to :subnet in v0.13.2. This makes
+  # the configuration more consistent with `:ipv4` options.
+  defp normalize_option({:netmask, ip}), do: normalize_option({:subnet, ip})
 
   defp normalize_option({ip_option, ip})
        when ip_option in @ip_options do

@@ -34,6 +34,7 @@ defmodule VintageNet.IP.DhcpdConfigTest do
           :mtu => 9216,
           :serverid => {192, 168, 1, 1},
           :hostname => "marshmallow",
+          :subnet => "255.255.255.0",
           0x08 => "01020304"
         }
       }
@@ -58,8 +59,31 @@ defmodule VintageNet.IP.DhcpdConfigTest do
           :hostname => "marshmallow",
           :mtu => 9216,
           :serverid => {192, 168, 1, 1},
+          :subnet => {255, 255, 255, 0},
           8 => "01020304"
         }
+      }
+    }
+
+    assert normalized_config == DhcpdConfig.normalize(config)
+  end
+
+  test "dhcpd netmask is an alias for subnet" do
+    config = %{
+      dhcpd: %{
+        start: "192.168.1.2",
+        end: "192.168.1.100",
+        options: %{
+          netmask: "255.255.255.0"
+        }
+      }
+    }
+
+    normalized_config = %{
+      dhcpd: %{
+        start: {192, 168, 1, 2},
+        end: {192, 168, 1, 100},
+        options: %{subnet: {255, 255, 255, 0}}
       }
     }
 
