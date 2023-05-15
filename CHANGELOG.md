@@ -2,6 +2,20 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.2] - 2023-05-15
+
+* Changed
+  * Always set IPv4 broadcast address for static IPv4 configurations. This fixes
+    an issue where the default for subnet broadcast address was not the expected
+    host all-ones address per RFC 922.
+  * Prune out LAN addresses when trying to detect Internet connectivity. This
+    fixes one way that the Internet checker could be tricked by a captive portal
+    that resolves all DNS queries to its portal address.
+  * Fix confusion with `:dhcpd` `:subnet` option. This maps to the subnet mask
+    field when responding to DHCP requests. The word "subnet" was interpreted as
+    a subnet which was incorrect for this. `:netmask` is now an alias and
+    examples are fixed.
+
 ## [v0.13.1] - 2023-03-15
 
 This release fixes deprecation warnings when using Elixir 1.15.
