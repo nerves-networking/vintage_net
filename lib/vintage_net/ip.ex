@@ -205,4 +205,25 @@ defmodule VintageNet.IP do
 
     {new_a, new_b, new_c, new_d, new_e, new_f, new_g, new_h}
   end
+
+  @doc """
+  Return the IPv4 broadcast address for the specified subnet and prefix
+
+  Examples:
+
+      iex> VintageNet.IP.ipv4_broadcast_address({192, 168, 1, 50}, 24)
+      {192, 168, 1, 255}
+
+      iex> VintageNet.IP.ipv4_broadcast_address({74, 125, 227, 0}, 29)
+      {74, 125, 227, 7}
+  """
+  @spec ipv4_broadcast_address(:inet.ip4_address(), VintageNet.prefix_length()) ::
+          :inet.ip4_address()
+  def ipv4_broadcast_address({a, b, c, d}, subnet_bits)
+      when subnet_bits >= 0 and subnet_bits <= 32 do
+    not_subnet_bits = 32 - subnet_bits
+    <<subnet::size(subnet_bits), _::size(not_subnet_bits)>> = <<a, b, c, d>>
+    <<new_a, new_b, new_c, new_d>> = <<subnet::size(subnet_bits), -1::size(not_subnet_bits)>>
+    {new_a, new_b, new_c, new_d}
+  end
 end

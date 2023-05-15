@@ -202,6 +202,9 @@ defmodule VintageNet.IP.IPv4Config do
       ) do
     addr_subnet = IP.cidr_to_string(ipv4.address, ipv4.prefix_length)
 
+    broadcast_addr =
+      IP.ipv4_broadcast_address(ipv4.address, ipv4.prefix_length) |> IP.ip_to_string()
+
     route_manager_up =
       case ipv4[:gateway] do
         nil ->
@@ -223,7 +226,18 @@ defmodule VintageNet.IP.IPv4Config do
       up_cmds ++
         [
           {:run_ignore_errors, "ip", ["addr", "flush", "dev", ifname, "label", ifname]},
-          {:run, "ip", ["addr", "add", addr_subnet, "dev", ifname, "label", ifname]},
+          {:run, "ip",
+           [
+             "addr",
+             "add",
+             addr_subnet,
+             "dev",
+             ifname,
+             "broadcast",
+             broadcast_addr,
+             "label",
+             ifname
+           ]},
           {:run, "ip", ["link", "set", ifname, "up"]},
           route_manager_up,
           resolver_up

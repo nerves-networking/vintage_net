@@ -135,7 +135,18 @@ defmodule VintageNet.IP.IPv4ConfigTest do
       ],
       up_cmds: [
         {:run_ignore_errors, "ip", ["addr", "flush", "dev", "eth0", "label", "eth0"]},
-        {:run, "ip", ["addr", "add", "192.168.1.2/24", "dev", "eth0", "label", "eth0"]},
+        {:run, "ip",
+         [
+           "addr",
+           "add",
+           "192.168.1.2/24",
+           "dev",
+           "eth0",
+           "broadcast",
+           "192.168.1.255",
+           "label",
+           "eth0"
+         ]},
         {:run, "ip", ["link", "set", "eth0", "up"]},
         {:fun, VintageNet.RouteManager, :set_route,
          ["eth0", [{{192, 168, 1, 2}, 24}], {192, 168, 1, 1}]},
@@ -182,7 +193,18 @@ defmodule VintageNet.IP.IPv4ConfigTest do
       ],
       up_cmds: [
         {:run_ignore_errors, "ip", ["addr", "flush", "dev", "eth0", "label", "eth0"]},
-        {:run, "ip", ["addr", "add", "192.168.1.2/24", "dev", "eth0", "label", "eth0"]},
+        {:run, "ip",
+         [
+           "addr",
+           "add",
+           "192.168.1.2/24",
+           "dev",
+           "eth0",
+           "broadcast",
+           "192.168.1.255",
+           "label",
+           "eth0"
+         ]},
         {:run, "ip", ["link", "set", "eth0", "up"]},
         {:fun, VintageNet.RouteManager, :clear_route, ["eth0"]},
         {:fun, VintageNet.NameResolver, :clear, ["eth0"]}
@@ -228,7 +250,18 @@ defmodule VintageNet.IP.IPv4ConfigTest do
       ],
       up_cmds: [
         {:run_ignore_errors, "ip", ["addr", "flush", "dev", "eth0", "label", "eth0"]},
-        {:run, "ip", ["addr", "add", "192.168.1.2/24", "dev", "eth0", "label", "eth0"]},
+        {:run, "ip",
+         [
+           "addr",
+           "add",
+           "192.168.1.2/24",
+           "dev",
+           "eth0",
+           "broadcast",
+           "192.168.1.255",
+           "label",
+           "eth0"
+         ]},
         {:run, "ip", ["link", "set", "eth0", "up"]},
         {:fun, VintageNet.RouteManager, :clear_route, ["eth0"]},
         {:fun, VintageNet.NameResolver, :setup, ["eth0", nil, [{1, 2, 3, 4}]]}
