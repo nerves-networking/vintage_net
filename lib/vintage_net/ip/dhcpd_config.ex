@@ -218,7 +218,7 @@ defmodule VintageNet.IP.DhcpdConfig do
     notify_file #{BEAMNotify.bin_path()}
     """
 
-    config = Enum.map(dhcpd, &to_udhcpd_string/1)
+    config = dhcpd |> Enum.sort() |> Enum.map(&to_udhcpd_string/1)
     IO.chardata_to_string([initial, "\n", config, "\n"])
   end
 
@@ -261,7 +261,9 @@ defmodule VintageNet.IP.DhcpdConfig do
   end
 
   defp to_udhcpd_string({:options, options}) do
-    for option <- options do
+    sorted_options = Enum.sort(options)
+
+    for option <- sorted_options do
       ["opt ", to_udhcpd_option_string(option), "\n"]
     end
   end
