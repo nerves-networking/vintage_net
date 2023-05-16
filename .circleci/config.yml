@@ -1,7 +1,7 @@
 version: 2.1
 
 latest: &latest
-  pattern: "^1.14.3-erlang-25.*$"
+  pattern: "^1.14.4-erlang-26.*$"
 
 jobs:
   build-test:
@@ -34,6 +34,7 @@ jobs:
           steps:
             - run: mix format --check-formatted
             - run: mix deps.unlock --check-unused
+            - run: mix compile --warnings-as-errors
             - run: mix docs
             - run: mix hex.build
             - run: mix credo -a --strict
@@ -53,7 +54,8 @@ workflows:
           matrix:
             parameters:
               tag: [
-                1.14.3-erlang-25.3-alpine-3.17.2,
+                1.14.4-erlang-26.0-alpine-3.17.3,
+                1.14.4-erlang-25.3.2-alpine-3.17.3,
                 1.13.4-erlang-24.3.4-alpine-3.15.3,
                 1.12.3-erlang-24.3.4-alpine-3.15.3,
                 1.11.4-erlang-23.3.4.13-alpine-3.15.3
