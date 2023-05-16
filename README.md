@@ -485,6 +485,60 @@ GenServer to the `:child_specs` configuration returned by the technology. E.g.,
 `child_specs: [{VintageNet.Connectivity.InternetChecker, "eth0"}]`. Most users
 do not need to be concerned about this.
 
+### Custom connectivity verification
+
+In certain circumstances, it is possible to resolve DNS and open a TCP
+connection to an Internet server when in reality, real traffic will be blocked
+or redirected. This can happen when connected to a network that uses a captive
+portal server to authenticate clients.
+
+To aid in detecting these scenarios, VintageNet provides a hook to verify
+established TCP connections via the `:internet_host_verify_callback` key in the
+application environment. A common use for this is to start a TLS session on the
+TCP socket in order to verify a known good certificate.
+
+The callback function can be specified at runtime as an anonymous function or in
+config as a `{module, function}` tuple. The function should conform to the type
+`t:VintageNet.Connectivity.TCPPing.verify_fun/0`.
+
+For example,
+
+```elixir
+defmodule MyConnectivityVerifier do
+  @timeout 5_000
+
+  def verify_connection(tcp_socket, ifname, {host, ip, port})
+
+  # Captive portal detection is not needed on cellular
+  def verify_connection(_tcp_socket, "wwan0", _target), do: true
+
+  def verify_connection(tcp_socket, _ifname, {host, ip, _port}) do
+    # This is only a simple example. This function will raise an error if `host`
+    # is an IP tuple, and it will fail to verify wildcard certificates.
+    # See `:ssl.connect/3` for a full list of options.
+    opts = [
+      verify: :verify_peer,
+      cacerts: :public_key.cacerts_get(),
+      server_name_indication: String.to_charlist(host)
+    ]
+
+    case :ssl.connect(tcp_socket, opts, @timeout) do
+      {:ok, ssl_socket} ->
+        _ = :ssl.close(ssl_socket)
+        true
+
+      _ ->
+        false
+    end
+  end
+end
+
+# config.exs
+config :vintage_net,
+  internet_host_list: [{"abcdefghijk-ats.iot.us-east-1.amazonaws.com", 443}],
+  internet_host_verify_callback: {MyConnectivityVerifier, :verify_connection}
+```
+
 ## Power Management
 
 Some devices require additional work to be done for them to become available.

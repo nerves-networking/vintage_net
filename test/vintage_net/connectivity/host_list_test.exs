@@ -68,13 +68,13 @@ defmodule VintageNet.Connectivity.HostListTest do
     test "no duplicates" do
       list = HostList.create_ping_list([{{1, 1, 1, 1}, 1}, {{1, 1, 1, 1}, 1}, {{1, 1, 1, 1}, 1}])
 
-      assert list == [{{1, 1, 1, 1}, 1}]
+      assert list == [{{1, 1, 1, 1}, {1, 1, 1, 1}, 1}]
     end
 
     test "resolves names" do
       result = HostList.create_ping_list([{"localhost", 5}])
 
-      assert {{127, 0, 0, 1}, 5} in result
+      assert {"localhost", {127, 0, 0, 1}, 5} in result
     end
 
     test "removes bad hostnames" do

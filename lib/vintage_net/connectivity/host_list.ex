@@ -11,7 +11,7 @@ defmodule VintageNet.Connectivity.HostList do
   @type ip_or_hostname() :: :inet.ip_address() | String.t()
 
   @type name_port() :: {ip_or_hostname(), 1..65535}
-  @type ip_port() :: {:inet.ip_address(), 1..65535}
+  @type name_ip_port() :: {ip_or_hostname(), :inet.ip_address(), 1..65535}
 
   @type hostent() :: record(:hostent, [])
 
@@ -83,7 +83,7 @@ defmodule VintageNet.Connectivity.HostList do
   should be called again to get another set. This involves DNS, so the
   call can block.
   """
-  @spec create_ping_list([name_port()]) :: [ip_port()]
+  @spec create_ping_list([name_port()]) :: [name_ip_port()]
   def create_ping_list(hosts) do
     hosts
     |> Enum.flat_map(&resolve/1)
@@ -92,15 +92,15 @@ defmodule VintageNet.Connectivity.HostList do
     |> Enum.take(3)
   end
 
-  defp resolve({ip, _port} = ip_port) when is_tuple(ip) do
-    [ip_port]
+  defp resolve({ip, port} = _ip_port) when is_tuple(ip) do
+    [{ip, ip, port}]
   end
 
   defp resolve({name, port}) when is_binary(name) do
     # Only consider IPv4 for now
     case :inet.gethostbyname(String.to_charlist(name)) do
       {:ok, hostent(h_addr_list: addresses)} ->
-        for address <- addresses, do: {address, port}
+        for address <- addresses, do: {name, address, port}
 
       _error ->
         # DNS not working, so the internet is not working enough
