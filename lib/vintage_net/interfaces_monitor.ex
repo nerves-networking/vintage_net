@@ -8,9 +8,9 @@ defmodule VintageNet.InterfacesMonitor do
 
   use GenServer
 
-  # require Logger
-
   alias VintageNet.InterfacesMonitor.{HWPath, Info}
+
+  require Logger
 
   defstruct port: nil,
             interface_info: %{}
@@ -70,7 +70,7 @@ defmodule VintageNet.InterfacesMonitor do
   end
 
   @impl GenServer
-  def handle_info({_port, {:data, raw_report}}, state) do
+  def handle_info({port, {:data, raw_report}}, %{port: port} = state) do
     report = :erlang.binary_to_term(raw_report)
 
     #  Logger.debug("if_monitor: #{inspect(report, limit: :infinity)}")
@@ -78,6 +78,15 @@ defmodule VintageNet.InterfacesMonitor do
     new_state = handle_report(state, report)
 
     {:noreply, new_state}
+  end
+
+  def handle_info({port, {:exit_status, status}}, %{port: port} = state) do
+    Logger.error("interfaces_monitor exited with status #{status}")
+    {:stop, {:port_exited, status}, state}
+  end
+
+  def handle_info(_message, state) do
+    {:noreply, state}
   end
 
   defp handle_report(state, {:newlink, ifname, ifindex, link_report}) do

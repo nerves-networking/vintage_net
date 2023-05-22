@@ -348,7 +348,8 @@ defmodule VintageNet.InterfacesMonitorTest do
 
   defp send_report(report) do
     # Simulate a report coming from C
+    state = :sys.get_state(Process.whereis(VintageNet.InterfacesMonitor))
     encoded_report = :erlang.term_to_binary(report)
-    send(VintageNet.InterfacesMonitor, {:port, {:data, encoded_report}})
+    send(VintageNet.InterfacesMonitor, {state.port, {:data, encoded_report}})
   end
 end
