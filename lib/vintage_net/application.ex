@@ -18,6 +18,7 @@ defmodule VintageNet.Application do
 
     children = [
       {PropertyTable, properties: properties, name: VintageNet, tuple_events: true},
+      VintageNet.Telemetry,
       {VintageNet.PredictableInterfaceName, hw_path_ifnames},
       VintageNet.PowerManager.Supervisor,
       {BEAMNotify,
