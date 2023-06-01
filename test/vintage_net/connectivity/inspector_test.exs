@@ -37,7 +37,7 @@ defmodule VintageNet.Connectivity.InspectorTest do
 
   test "finds connections using port sockets" do
     # Run a super slow HTTP request to test
-    {:ok, socket} = :gen_tcp.connect('neverssl.com', 80, [:binary, {:active, false}])
+    {:ok, socket} = :gen_tcp.connect(~c"neverssl.com", 80, [:binary, {:active, false}])
     {:ok, {src_ip, _src_port}} = :inet.sockname(socket)
 
     # Simulate a first call. The status should be unknown, but the socket should be
@@ -77,7 +77,7 @@ defmodule VintageNet.Connectivity.InspectorTest do
     test "finds connections using socket API sockets" do
       # Run a super slow HTTP request to test
       {:ok, tcp_socket} =
-        :gen_tcp_socket.connect('neverssl.com', 80, [:binary, {:active, false}], 1000)
+        :gen_tcp_socket.connect(~c"neverssl.com", 80, [:binary, {:active, false}], 1000)
 
       {:ok, {src_ip, _src_port}} = :gen_tcp_socket.sockname(tcp_socket)
 

@@ -234,9 +234,9 @@ defmodule VintageNet.Info do
   def friendly_time(delta_ns) when is_integer(delta_ns) do
     cond do
       delta_ns < 1000 -> "#{delta_ns} ns"
-      delta_ns < 1_000_000 -> :io_lib.format('~.1f μs', [delta_ns / 1000])
-      delta_ns < 1_000_000_000 -> :io_lib.format('~.1f ms', [delta_ns / 1_000_000])
-      delta_ns < 60_000_000_000 -> :io_lib.format('~.1f s', [delta_ns / 1_000_000_000])
+      delta_ns < 1_000_000 -> :io_lib.format(~c"~.1f μs", [delta_ns / 1000])
+      delta_ns < 1_000_000_000 -> :io_lib.format(~c"~.1f ms", [delta_ns / 1_000_000])
+      delta_ns < 60_000_000_000 -> :io_lib.format(~c"~.1f s", [delta_ns / 1_000_000_000])
       true -> format_seconds(div(delta_ns, 1_000_000_000))
     end
   end
