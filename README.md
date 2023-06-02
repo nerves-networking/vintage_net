@@ -3,7 +3,6 @@
 [![Hex version](https://img.shields.io/hexpm/v/vintage_net.svg "Hex version")](https://hex.pm/packages/vintage_net)
 [![API docs](https://img.shields.io/hexpm/v/vintage_net.svg?label=hexdocs "API docs")](https://hexdocs.pm/vintage_net/VintageNet.html)
 [![CircleCI](https://circleci.com/gh/nerves-networking/vintage_net.svg?style=svg)](https://circleci.com/gh/nerves-networking/vintage_net)
-[![Coverage Status](https://coveralls.io/repos/github/nerves-networking/vintage_net/badge.svg?branch=main)](https://coveralls.io/github/nerves-networking/vintage_net?branch=main)
 
 > **_NOTE:_**  If you've been using `vintage_net` `v0.6.x` or earlier, we split
 > out network technology support out to separate libraries in `v0.7.0`. You'll
