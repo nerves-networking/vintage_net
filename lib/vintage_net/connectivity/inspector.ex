@@ -170,7 +170,7 @@ defmodule VintageNet.Connectivity.Inspector do
   end
 
   defp check_new_port(socket, our_addresses, {status, cache}) do
-    with {:name, 'tcp_inet'} <- Port.info(socket, :name),
+    with {:name, ~c"tcp_inet"} <- Port.info(socket, :name),
          true <- connected?(socket),
          {:ok, {src_ip, _src_port}} <- :inet.sockname(socket),
          true <- on_interface?(src_ip, our_addresses),

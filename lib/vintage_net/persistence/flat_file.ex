@@ -77,7 +77,7 @@ defmodule VintageNet.Persistence.FlatFile do
 
   defp deserialize_config(_anything_else), do: {:error, :corrupt}
 
-  if :erlang.system_info(:otp_release) == '21' do
+  if :erlang.system_info(:otp_release) == ~c"21" do
     # Remove when OTP 21 is no longer supported.
     defp encrypt(secret_key, iv, plaintext) do
       :crypto.block_encrypt(:aes_gcm, secret_key, iv, {@aad, plaintext, 16})

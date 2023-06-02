@@ -34,7 +34,7 @@ defmodule VintageNet.InterfacesMonitor do
 
   @impl GenServer
   def init(_args) do
-    executable = :code.priv_dir(:vintage_net) ++ '/if_monitor'
+    executable = :code.priv_dir(:vintage_net) ++ ~c"/if_monitor"
 
     case File.exists?(executable) do
       true ->

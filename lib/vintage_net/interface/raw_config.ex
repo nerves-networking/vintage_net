@@ -29,7 +29,7 @@ defmodule VintageNet.Interface.RawConfig do
   @type command ::
           {:run, String.t(), [String.t()]}
           | {:run_ignore_errors, String.t(), [String.t()]}
-          | {:fun, (() -> :ok | {:error, any()})}
+          | {:fun, (-> :ok | {:error, any()})}
           | {:fun, module(), atom(), list()}
 
   @type file_contents :: {Path.t(), String.t()}
