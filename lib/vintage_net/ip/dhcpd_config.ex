@@ -218,7 +218,7 @@ defmodule VintageNet.IP.DhcpdConfig do
     notify_file #{BEAMNotify.bin_path()}
     """
 
-    config = dhcpd |> Enum.sort() |> Enum.map(&to_udhcpd_string/1)
+    config = dhcpd |> Map.to_list() |> Enum.sort() |> Enum.map(&to_udhcpd_string/1)
     IO.chardata_to_string([initial, "\n", config, "\n"])
   end
 
