@@ -2,6 +2,16 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.3] - 2023-06-10
+
+* Changed
+  * Sort dhcpd options so their order doesn't change in configuration files made
+    by OTP 26. This fixes regression test failures that expected the files to by
+    the same. It shouldn't matter for real use, but it's nice that the files are
+    deterministic just in case.
+  * Ignore unexpected messages to the InterfacesMonitor. This fixes an
+    unnecessary crash/restart that was seen. Errors are still logged.
+
 ## [v0.13.2] - 2023-05-15
 
 * Changed
