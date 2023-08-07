@@ -228,7 +228,7 @@ defmodule VintageNet do
     |> List.keyfind(ifname, 0)
     |> case do
       {^ifname, config} -> config
-      _anything_else -> %{type: VintageNet.Technology.Null}
+      _anything_else -> %{type: VintageNet.Technology.Null, reason: "No default configuration"}
     end
   end
 

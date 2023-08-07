@@ -59,4 +59,33 @@ defmodule VintageNet.Technology do
   network.
   """
   @callback check_system(opts :: keyword()) :: :ok | {:error, String.t()}
+
+  @doc """
+  Helper to fetch the Technology implementation from a configuration
+  """
+  @spec module_from_config!(%{:type => module, optional(any) => any}) :: module
+  def module_from_config!(%{type: type}) when is_atom(type) do
+    if Code.ensure_loaded?(type) do
+      type
+    else
+      raise(ArgumentError, """
+      Invalid technology #{inspect(type)}.
+
+      Check the spelling and that you have the dependency that provides it in your mix.exs.
+      See the `vintage_net` docs for examples.
+      """)
+    end
+  end
+
+  def module_from_config!(_missing) do
+    raise(
+      ArgumentError,
+      """
+      Missing :type field.
+
+      This should be set to a network technology. These are provided in other libraries.
+      See the `vintage_net` docs and cookbook for examples.
+      """
+    )
+  end
 end

@@ -10,9 +10,13 @@ defmodule VintageNet.Interface do
   """
   use GenStateMachine
 
-  alias VintageNet.Interface.{CommandRunner, RawConfig}
-  alias VintageNet.{Persistence, PredictableInterfaceName, RouteManager}
+  alias VintageNet.Interface.CommandRunner
+  alias VintageNet.Interface.RawConfig
+  alias VintageNet.Persistence
   alias VintageNet.PowerManager.PMControl
+  alias VintageNet.PredictableInterfaceName
+  alias VintageNet.RouteManager
+  alias VintageNet.Technology
   alias VintageNet.Technology.Null
 
   require Logger
@@ -60,7 +64,7 @@ defmodule VintageNet.Interface do
     opts = Application.get_all_env(:vintage_net)
 
     try do
-      technology = technology_from_config(config)
+      technology = Technology.module_from_config!(config)
       normalized_config = technology.normalize(config)
       raw_config = technology.to_raw_config(ifname, normalized_config, opts)
       {:ok, raw_config}
@@ -137,31 +141,6 @@ defmodule VintageNet.Interface do
     end
   end
 
-  defp technology_from_config(%{type: type}) do
-    if Code.ensure_loaded?(type) do
-      type
-    else
-      raise(ArgumentError, """
-      Invalid technology #{inspect(type)}.
-
-      Check the spelling and that you have the dependency that provides it in your mix.exs.
-      See the `vintage_net` docs for examples.
-      """)
-    end
-  end
-
-  defp technology_from_config(_missing) do
-    raise(
-      ArgumentError,
-      """
-      Missing :type field.
-
-      This should be set to a network technology. These are provided in other libraries.
-      See the `vintage_net` docs and cookbook for examples.
-      """
-    )
-  end
-
   @doc """
   Deconfigure the interface
 
@@ -173,7 +152,7 @@ defmodule VintageNet.Interface do
   """
   @spec deconfigure(VintageNet.ifname(), VintageNet.configure_options()) :: :ok | {:error, any()}
   def deconfigure(ifname, options \\ []) do
-    configure(ifname, %{type: Null}, options)
+    configure(ifname, %{type: Null, reason: "Interface deconfigured"}, options)
   end
 
   @doc """

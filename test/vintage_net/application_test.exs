@@ -85,4 +85,26 @@ defmodule VintageNet.ApplicationTest do
 
     assert VintageNet.Application.get_config_env() == []
   end
+
+  test "normalization normalizes configs" do
+    {ifname, if_config} = VintageNet.Application.normalize_config(hd(@test_config))
+
+    assert ifname == "bogus1"
+
+    assert if_config == %{
+             type: VintageNetTest.TestTechnology,
+             bogus: 1,
+             normalize_was_called: true
+           }
+  end
+
+  test "normalization gives reasons for unrecoverable configurations errors" do
+    input_config = {"bogus3", %{type: VintageNetTest.BadTechnology, bogus: 3}}
+
+    {ifname, if_config} = VintageNet.Application.normalize_config(input_config)
+
+    assert ifname == "bogus3"
+    assert if_config.type == VintageNet.Technology.Null
+    assert if_config.reason =~ "unrecoverable error"
+  end
 end

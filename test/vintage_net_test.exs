@@ -146,17 +146,20 @@ defmodule VintageNetTest do
   test "persisted configurations get restored" do
     assert VintageNet.get_configuration("bogus0") == %{
              type: VintageNetTest.TestTechnology,
-             bogus: 0
+             bogus: 0,
+             normalize_was_called: true
            }
 
     assert VintageNet.get_configuration("bogus1") == %{
              type: VintageNetTest.TestTechnology,
-             bogus: 1
+             bogus: 1,
+             normalize_was_called: true
            }
 
     assert VintageNet.get_configuration("bogus2") == %{
              type: VintageNetTest.TestTechnology,
-             bogus: 2
+             bogus: 2,
+             normalize_was_called: true
            }
   end
 
@@ -176,7 +179,9 @@ defmodule VintageNetTest do
       assert File.exists?(path)
       :ok = VintageNet.reset_to_defaults("bogus1")
       refute File.exists?(path)
-      assert %{type: VintageNet.Technology.Null} == VintageNet.get_configuration("bogus1")
+
+      assert %{type: VintageNet.Technology.Null, reason: "No default configuration"} ==
+               VintageNet.get_configuration("bogus1")
     end
 
     test "overridden by a configuration" do
@@ -195,7 +200,9 @@ defmodule VintageNetTest do
       refute File.exists?(path)
       :ok = VintageNet.reset_to_defaults("unknown1")
       refute File.exists?(path)
-      assert %{type: VintageNet.Technology.Null} == VintageNet.get_configuration("unknown1")
+
+      assert %{type: VintageNet.Technology.Null, reason: "No default configuration"} ==
+               VintageNet.get_configuration("unknown1")
     end
   end
 

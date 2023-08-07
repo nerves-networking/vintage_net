@@ -1,22 +1,25 @@
 defmodule VintageNet.Technology.Null do
   @moduledoc """
   An interface with this technology is unconfigured
+
+  If this was due to an error, the reason field will have more information.
   """
   @behaviour VintageNet.Technology
 
   alias VintageNet.Interface.RawConfig
 
-  @null_config %{type: __MODULE__}
+  @impl VintageNet.Technology
+  def normalize(config) do
+    reason = Map.get(config, :reason, "")
+    %{type: __MODULE__, reason: reason}
+  end
 
   @impl VintageNet.Technology
-  def normalize(_config), do: @null_config
-
-  @impl VintageNet.Technology
-  def to_raw_config(ifname, _config \\ %{}, _opts \\ []) do
+  def to_raw_config(ifname, config \\ %{}, _opts \\ []) do
     %RawConfig{
       ifname: ifname,
       type: __MODULE__,
-      source_config: @null_config,
+      source_config: normalize(config),
       required_ifnames: []
     }
   end

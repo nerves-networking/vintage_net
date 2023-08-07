@@ -4,6 +4,7 @@ defmodule VintageNet.Application do
   use Application
 
   alias VintageNet.Persistence
+  alias VintageNet.Technology
   require Logger
 
   @spec start(Application.start_type(), any()) ::
@@ -37,20 +38,24 @@ defmodule VintageNet.Application do
 
   defp load_initial_configurations() do
     # Get the default interface configurations
-    configs = get_config_env() |> Map.new()
+    default_configs = get_config_env() |> Map.new()
 
     persisted_ifnames = Persistence.call(:enumerate, [])
 
-    Enum.reduce(persisted_ifnames, configs, &load_and_merge_config/2)
+    configs = Enum.reduce(persisted_ifnames, default_configs, &load_and_merge_config/2)
+
+    Enum.map(configs, &normalize_config/1)
   end
 
-  @doc """
-  Return network configurations stored in the application environment
-
-  This function is guaranteed to return a list of `{ifname, map}` tuples even
-  if the application environment is messed up. Invalid entries generate log
-  messages.
-  """
+  # Return network configurations stored in the application environment
+  #
+  # This function is guaranteed to return a list of `{ifname, map}` tuples even
+  # if the application environment is messed up. Invalid entries generate log
+  # messages.
+  #
+  # Important: it is critical to normalize configurations to know what they really
+  # look like to VintageNet.
+  @doc false
   @spec get_config_env() :: [{VintageNet.ifname(), map()}]
   def get_config_env() do
     # Configurations can be stored either under :default_config or :config.
@@ -91,5 +96,37 @@ defmodule VintageNet.Application do
 
   defp config_to_property({ifname, config}) do
     {["interface", ifname, "config"], config}
+  end
+
+  # Helper to normalize a configuration that was loaded
+  #
+  # Errors are provided in the `:reason` field.
+  @doc false
+  @spec normalize_config({VintageNet.ifname(), map()}) :: {VintageNet.ifname(), map()}
+  def normalize_config({ifname, if_config}) do
+    technology = Technology.module_from_config!(if_config)
+    {ifname, technology.normalize(if_config)}
+  catch
+    _kind, maybe_exception ->
+      reason_start = """
+            The configuration for #{ifname} has an unrecoverable error:
+
+            #{inspect(if_config)}
+
+            Here's information about the error:
+      """
+
+      error_message =
+        if Kernel.is_exception(maybe_exception) do
+          Exception.message(maybe_exception)
+        else
+          """
+          #{inspect(maybe_exception)}
+
+          #{Exception.format_stacktrace(__STACKTRACE__)}
+          """
+        end
+
+      {ifname, %{type: VintageNet.Technology.Null, reason: reason_start <> error_message}}
   end
 end

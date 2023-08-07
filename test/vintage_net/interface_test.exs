@@ -52,7 +52,9 @@ defmodule VintageNet.InterfaceTest do
       configure_and_wait(config)
       assert @ifname in VintageNet.configured_interfaces()
       :ok = VintageNet.deconfigure(@ifname)
-      assert %{type: VintageNet.Technology.Null} == VintageNet.get_configuration(@ifname)
+
+      assert %{type: VintageNet.Technology.Null, reason: "Interface deconfigured"} ==
+               VintageNet.get_configuration(@ifname)
 
       :ok = Interface.wait_until_configured(@ifname)
       refute @ifname in VintageNet.configured_interfaces()

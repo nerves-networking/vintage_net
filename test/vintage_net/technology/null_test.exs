@@ -5,12 +5,13 @@ defmodule VintageNet.Technology.NullTest do
 
   test "normalizing null" do
     # Normalizing anything to Null should be Null
-    assert %{type: VintageNet.Technology.Null} == Null.normalize(%{})
+    assert %{type: VintageNet.Technology.Null, reason: ""} == Null.normalize(%{})
   end
 
   test "converting to raw config" do
     input = %{
-      type: VintageNet.Technology.Null
+      type: VintageNet.Technology.Null,
+      reason: "unit testing"
     }
 
     # Static IP support is not implemented. This is what is currently produced,
