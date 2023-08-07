@@ -126,7 +126,7 @@ defmodule VintageNet do
   @typedoc """
   A property's value
 
-  See the `README.md` for documenation on available properties.
+  See the `README.md` for documentation on available properties.
   """
   @type value :: any()
 
