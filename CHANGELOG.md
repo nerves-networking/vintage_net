@@ -2,6 +2,24 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.4] - 2023-07-07
+
+* Changed
+  * VintageNet configurations are normalized on load now rather than on use.
+    For various reasons, it's useful to support multiple ways of specifying
+    network configurations, but internally VintageNet always converts to one way
+    to simplify use. If you call `VintageNet.get_configuration/1` or
+    `VintageNet.get/2` to look at the config, you'd see the original form and not
+    the normalized one. Now you get the normalized one.
+  * Add `:reason` to the `VintageNet.Technology.Null`. VintageNet uses `Null` to
+    make network interfaces stay unconfigured when requested or when there's an
+    error. The `:reason` key helps you know why rather than forcing you to dig
+    through logs.
+
+* Fixes
+  * When reseting a network configuration to defaults, a settings file was
+    written and immediately erased. That doesn't happen any more.
+
 ## [v0.13.3] - 2023-06-10
 
 * Changed
@@ -659,6 +677,10 @@ need to run `apt install libnl-genl-3-dev`.
 
 Initial release to hex.
 
+[v0.13.4]: https://github.com/nerves-networking/vintage_net/compare/v0.13.3...v0.13.4
+[v0.13.3]: https://github.com/nerves-networking/vintage_net/compare/v0.13.2...v0.13.3
+[v0.13.2]: https://github.com/nerves-networking/vintage_net/compare/v0.13.1...v0.13.2
+[v0.13.1]: https://github.com/nerves-networking/vintage_net/compare/v0.13.0...v0.13.1
 [v0.13.0]: https://github.com/nerves-networking/vintage_net/compare/v0.12.2...v0.13.0
 [v0.12.2]: https://github.com/nerves-networking/vintage_net/compare/v0.12.1...v0.12.2
 [v0.12.1]: https://github.com/nerves-networking/vintage_net/compare/v0.12.0...v0.12.1
