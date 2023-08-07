@@ -213,7 +213,10 @@ defmodule VintageNet do
   """
   @spec reset_to_defaults(ifname()) :: :ok | {:error, any()}
   def reset_to_defaults(ifname) do
-    with :ok <- configure(ifname, default_config(ifname)) do
+    # Don't attempt to persist the config since that can fail if there's an
+    # issue with the filesystem and we're clearing the saved version
+    # immediately afterwards anyway.
+    with :ok <- configure(ifname, default_config(ifname), persist: false) do
       # Clear out the persistence file so that if the defaults
       # change that the new ones will be used.
       VintageNet.Persistence.call(:clear, [ifname])
