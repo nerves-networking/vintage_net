@@ -38,8 +38,11 @@ defmodule VintageNet.Persistence.FlatFile do
 
   @impl VintageNet.Persistence
   def clear(ifname) do
-    Path.join(persistence_dir(), ifname)
-    |> File.rm!()
+    path = Path.join(persistence_dir(), ifname)
+
+    if File.exists?(path), do: File.rm!(path)
+
+    :ok
   end
 
   @impl VintageNet.Persistence
