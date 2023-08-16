@@ -344,7 +344,8 @@ defmodule VintageNet.RouteManager do
   end
 
   defp handle_insert({:default_route, ifname, default_gateway, metric, table_index}) do
-    :ok = IPRoute.add_default_route(ifname, default_gateway, metric, table_index)
+    IPRoute.add_default_route(ifname, default_gateway, metric, table_index)
+    |> warn_on_error("add_default_route")
   end
 
   defp handle_insert({:rule, table_index, address}) do
