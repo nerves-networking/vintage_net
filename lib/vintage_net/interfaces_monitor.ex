@@ -56,16 +56,15 @@ defmodule VintageNet.InterfacesMonitor do
 
   @impl GenServer
   def handle_call({:force_clear_ipv4_addresses, ifname}, _from, state) do
-    {ifindex, old_info} = get_by_ifname(state, ifname)
-    new_info = Info.delete_ipv4_addresses(old_info)
-
-    if old_info != new_info do
+    with {ifindex, old_info} <- get_by_ifname(state, ifname),
+         new_info = Info.delete_ipv4_addresses(old_info),
+         true <- old_info != new_info do
       new_info = Info.update_address_properties(new_info)
 
       new_state = %{state | interface_info: Map.put(state.interface_info, ifindex, new_info)}
       {:reply, :ok, new_state}
     else
-      {:reply, :ok, state}
+      _ -> {:reply, :ok, state}
     end
   end
 
