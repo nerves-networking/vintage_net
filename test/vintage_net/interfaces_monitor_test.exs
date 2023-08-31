@@ -339,6 +339,10 @@ defmodule VintageNet.InterfacesMonitorTest do
     InterfacesMonitor.force_clear_ipv4_addresses("bogus0")
 
     refute_receive {VintageNet, ["interface", "bogus0", "addresses"], _anything, _anything2, %{}}
+
+    # This shouldn't crash
+    InterfacesMonitor.force_clear_ipv4_addresses("bogus1")
+    refute_receive _
   end
 
   defp get_interfaces() do
