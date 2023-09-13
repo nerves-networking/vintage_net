@@ -2,6 +2,14 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.5] - 2023-09-13
+
+* Changed
+  * Warn when setting default routes with IP addresses outside of the subnet
+    rather than crashing. Thanks to Ben Murphy for this fix.
+  * Bulletproof force clearing of IP addresses to avoid crashing unnecessarily
+    during cleanup. This was a very rare case.
+
 ## [v0.13.4] - 2023-07-07
 
 * Changed
