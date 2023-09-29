@@ -28,8 +28,8 @@ defmodule VintageNet.Interface.Udhcpd do
   end
 
   defp do_parse_leases(
-         <<leasetime::unsigned-integer-size(32), ip1, ip2, ip3, ip4, mac1, mac2, mac3, mac4, mac5,
-           mac6, hostname::binary-size(20), _pad::binary-size(2), rest::binary>>,
+         <<leasetime::32, ip1, ip2, ip3, ip4, mac1, mac2, mac3, mac4, mac5, mac6,
+           hostname::20-bytes, _pad::2-bytes, rest::binary>>,
          acc
        ) do
     lease = %{
