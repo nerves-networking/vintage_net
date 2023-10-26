@@ -135,7 +135,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
     # pinging those addresses would be inconclusive.
     ping_list =
       HostList.create_ping_list(state.configured_hosts)
-      |> Enum.filter(&Inspector.routed_address?(state.ifname, &1))
+      |> Enum.filter(&Inspector.routed_address?(state.ifname, elem(&1, 1)))
 
     %{state | ping_list: ping_list}
   end

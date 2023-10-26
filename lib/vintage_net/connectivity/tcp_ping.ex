@@ -13,7 +13,15 @@ defmodule VintageNet.Connectivity.TCPPing do
   """
   @ping_timeout 5_000
 
-  @type ping_error_reason :: :if_not_found | :no_ipv4_address | :inet.posix()
+  @type ping_error_reason :: :if_not_found | :no_ipv4_address | :verify_failed | :inet.posix()
+
+  @type ping_target ::
+          {hostname :: VintageNet.any_ip_address(), address :: VintageNet.any_ip_address(),
+           port :: non_neg_integer()}
+
+  @type verify_fun :: (:gen_tcp.socket(), VintageNet.ifname(), ping_target() -> boolean())
+
+  @type verify_callback :: verify_fun() | {module(), atom()}
 
   @doc """
   Check connectivity with another device
@@ -26,17 +34,19 @@ defmodule VintageNet.Connectivity.TCPPing do
   Source IP-based routing is required for the TCP connect to go out the right
   network interface. This is configured by default when using VintageNet.
   """
-  @spec ping(VintageNet.ifname(), {VintageNet.any_ip_address(), non_neg_integer()}) ::
+  @spec ping(VintageNet.ifname(), ping_target(), verify_callback()) ::
           :ok | {:error, ping_error_reason()}
-  def ping(ifname, {host, port}) do
+  def ping(
+        ifname,
+        {_hostname, host, _port} = ping_target,
+        verify_callback \\ Application.get_env(:vintage_net, :internet_host_verify_callback)
+      ) do
     # Note: No support for DNS since DNS can't be forced through an
     # interface. I.e., errors on other interfaces mess up DNS even if the
     # one of interest is ok.
     with {:ok, dest_ip} <- VintageNet.IP.ip_to_tuple(host),
-         {:ok, src_ip} <- get_interface_address(ifname, family(dest_ip)),
-         {:ok, tcp} <- :gen_tcp.connect(dest_ip, port, [ip: src_ip], @ping_timeout) do
-      _ = :gen_tcp.close(tcp)
-      :ok
+         {:ok, src_ip} <- get_interface_address(ifname, family(dest_ip)) do
+      connect_and_verify(verify_callback, ifname, ping_target, src_ip, dest_ip)
     else
       {:error, :econnrefused} ->
         # If the remote refuses the connection, then that means that it
@@ -80,4 +90,45 @@ defmodule VintageNet.Connectivity.TCPPing do
 
   defp family({_, _, _, _}), do: :inet
   defp family({_, _, _, _, _, _, _, _}), do: :inet6
+
+  # If no verify callback was given, then just attempt to connect.
+  defp connect_and_verify(nil, _ifname, {_hostname, _host, port}, src_ip, dest_ip) do
+    case :gen_tcp.connect(dest_ip, port, [ip: src_ip], @ping_timeout) do
+      {:ok, tcp} ->
+        _ = :gen_tcp.close(tcp)
+        :ok
+
+      {:error, :econnrefused} ->
+        # If the remote refuses the connection, then that means that it
+        # received it and we're connected to the internet!
+        :ok
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp connect_and_verify(verify_callback, ifname, {_, _, port} = ping_target, src_ip, dest_ip) do
+    with {:ok, tcp} <- :gen_tcp.connect(dest_ip, port, [ip: src_ip], @ping_timeout),
+         true <- do_verify(verify_callback, tcp, ifname, ping_target) do
+      _ = :gen_tcp.close(tcp)
+    else
+      {:error, reason} ->
+        {:error, reason}
+
+      false ->
+        {:error, :verify_failed}
+
+      posix_error ->
+        {:error, posix_error}
+    end
+  end
+
+  defp do_verify(fun, tcp_socket, ifname, ping_target) when is_function(fun, 3) do
+    fun.(tcp_socket, ifname, ping_target)
+  end
+
+  defp do_verify({module, fun}, tcp_socket, ifname, ping_target) do
+    apply(module, fun, [tcp_socket, ifname, ping_target])
+  end
 end
