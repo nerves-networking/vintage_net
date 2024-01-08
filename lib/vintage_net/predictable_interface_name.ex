@@ -134,7 +134,7 @@ defmodule VintageNet.PredictableInterfaceName do
 
   # checks the `renamed` list on the state to find anything
   # that was already renamed using this hw_path
-  defp is_dupe?(previously_renamed, hw_path) do
+  defp duplicate?(previously_renamed, hw_path) do
     Enum.find(previously_renamed, fn
       %{hw_path: ^hw_path} -> true
       _ -> false
@@ -151,7 +151,7 @@ defmodule VintageNet.PredictableInterfaceName do
           renamed
 
         %{hw_path: ^hw_path, ifname: rename_to} = rename, renamed ->
-          if is_dupe?(renamed, hw_path) do
+          if duplicate?(renamed, hw_path) do
             Logger.warning(
               "Not renaming #{ifname} because another interface already matched the hw_path: #{hw_path}"
             )
