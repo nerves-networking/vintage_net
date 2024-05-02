@@ -8,6 +8,7 @@ defmodule VintageNet.Connectivity.SSLConnect do
   """
 
   import VintageNet.Connectivity.TCPPing, only: [get_interface_address: 2]
+  alias VintageNet.Connectivity.HostList
 
   @connect_timeout 5_000
 
@@ -19,12 +20,15 @@ defmodule VintageNet.Connectivity.SSLConnect do
   Internet is down, but it's likely especially if the server that's specified
   in the configuration is highly available.
   """
-  @spec connect(VintageNet.ifname(), {String.t(), port}) :: :ok | {:error, :inet.posix()}
-  def connect(ifname, {hostname, port}) do
+  @spec connect(VintageNet.ifname(), HostList.options()) :: :ok | {:error, :inet.posix()}
+  def connect(ifname, opts) do
+    host = Keyword.fetch!(opts, :host)
+    port = Keyword.fetch!(opts, :port)
+
     with {:ok, src_ip} <- get_interface_address(ifname, :inet),
          {:ok, ssl} <-
            :ssl.connect(
-             to_charlist(hostname),
+             to_charlist(host),
              port,
              [
                verify: :verify_peer,

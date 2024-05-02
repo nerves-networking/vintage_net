@@ -7,8 +7,8 @@ defmodule VintageNet.Connectivity.SSLConnectTest do
   test "connect to known host" do
     ifname = Utils.get_ifname_for_tests()
 
-    assert SSLConnect.connect(ifname, {"google.com", 443}) == :ok
-    assert SSLConnect.connect(ifname, {"github.com", 443}) == :ok
-    assert SSLConnect.connect(ifname, {"superfakedomain", 443}) == {:error, :nxdomain}
+    assert SSLConnect.connect(ifname, host: "google.com", port: 443) == :ok
+    assert SSLConnect.connect(ifname, host: "github.com", port: 443) == :ok
+    assert SSLConnect.connect(ifname, host: "superfakedomain", port: 443) == {:error, :nxdomain}
   end
 end
