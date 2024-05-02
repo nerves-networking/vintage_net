@@ -9,6 +9,7 @@ defmodule VintageNet.Connectivity.SSLConnect do
 
   import VintageNet.Connectivity.TCPPing, only: [get_interface_address: 2]
   alias VintageNet.Connectivity.HostList
+  require Logger
 
   @connect_timeout 5_000
 
@@ -30,12 +31,7 @@ defmodule VintageNet.Connectivity.SSLConnect do
            :ssl.connect(
              to_charlist(host),
              port,
-             [
-               verify: :verify_peer,
-               cacerts: :public_key.cacerts_get(),
-               active: false,
-               ip: src_ip
-             ],
+             connect_opts(src_ip),
              @connect_timeout
            ) do
       _ = :ssl.close(ssl)
@@ -46,6 +42,23 @@ defmodule VintageNet.Connectivity.SSLConnect do
 
       posix_error ->
         {:error, posix_error}
+    end
+  end
+
+  defp connect_opts(src_ip) do
+    base = [
+      verify: :verify_peer,
+      active: false,
+      ip: src_ip
+    ]
+
+    if Code.ensure_loaded?(:public_key) and function_exported?(:public_key, :cacerts_get, 0) do
+      cacerts = apply(:public_key, :cacerts_get, [])
+      Keyword.put(base, :cacerts, cacerts)
+    else
+      Logger.warning("SSLConnect support on OTP 24 is limited due to lack of cacerts")
+      # remove the verify_peer option, since we don't have CA certs
+      Keyword.delete(base, :verify)
     end
   end
 end
