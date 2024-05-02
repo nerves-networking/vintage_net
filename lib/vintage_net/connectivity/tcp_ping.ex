@@ -13,7 +13,7 @@ defmodule VintageNet.Connectivity.TCPPing do
   """
   @ping_timeout 5_000
 
-  @type ping_error_reason :: :if_not_found | :no_ipv4_address | :inet.posix()
+  @type ping_error_reason :: :if_not_found | :no_suitable_ip_address | :inet.posix()
 
   @doc """
   Check connectivity with another device
@@ -51,7 +51,14 @@ defmodule VintageNet.Connectivity.TCPPing do
     end
   end
 
-  defp get_interface_address(ifname, family) do
+  @doc """
+  Helper function for getting an ip address attached to an interface for use with the
+  `ip` keyword argument for :gen_tcp.connect/3 and related functions.
+  """
+  @spec get_interface_address(VintageNet.ifname(), :inet | :inet6) ::
+          {:ok, VintageNet.any_ip_address()}
+          | {:error, :inet.posix() | :if_not_found | :no_suitable_ip_address}
+  def get_interface_address(ifname, family) do
     with {:ok, addresses} <- :inet.getifaddrs(),
          {:ok, params} <- find_addresses_on_interface(addresses, ifname) do
       find_ip_addr(params, family)
