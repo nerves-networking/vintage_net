@@ -69,7 +69,7 @@ defmodule VintageNet.Connectivity.HostList do
     end
   end
 
-  defp normalize({kind, opts}) do
+  defp normalize({kind, opts}) when kind in [:tcp_ping, :ssl_ping] do
     with {:ok, host} <- Keyword.fetch(opts, :host),
          {:ok, port} when port > 0 and port < 65535 <- Keyword.fetch(opts, :port) do
       case VintageNet.IP.ip_to_tuple(host) do
@@ -81,6 +81,11 @@ defmodule VintageNet.Connectivity.HostList do
     else
       _ -> :error
     end
+  end
+
+  defp normalize({host, port}) when port > 0 and port < 65535 do
+    # handles legacy list entries, converting them to tcp_ping by default
+    normalize({:tcp_ping, host: host, port: port})
   end
 
   defp normalize(_), do: :error
