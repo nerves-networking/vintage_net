@@ -24,9 +24,8 @@ defmodule VintageNet.Connectivity.InternetChecker do
   @typedoc false
   @type state() :: %{
           ifname: VintageNet.ifname(),
-          configured_hosts: [{VintageNet.any_ip_address(), 1..65535}],
-          ping_list: [{:inet.ip_address(), 1..65535}],
-          hostname_list: [{String.t(), 1..65535}],
+          configured_hosts: [HostList.entry()],
+          ping_list: [HostList.entry()],
           check_logic: CheckLogic.state(),
           inspector: Inspector.cache(),
           status: Inspector.status()
@@ -48,7 +47,6 @@ defmodule VintageNet.Connectivity.InternetChecker do
       ifname: ifname,
       configured_hosts: HostList.load(),
       ping_list: [],
-      hostname_list: [],
       check_logic: CheckLogic.init(connectivity),
       inspector: %{},
       status: :unknown
@@ -128,7 +126,6 @@ defmodule VintageNet.Connectivity.InternetChecker do
     |> reset_status()
     |> check_inspector()
     |> reload_ping_list()
-    |> reload_hostname_list()
     |> ping_if_unknown()
     |> update_check_logic()
     |> pet_pm_watchdog()
@@ -155,31 +152,20 @@ defmodule VintageNet.Connectivity.InternetChecker do
 
   defp reload_ping_list(state), do: state
 
-  defp reload_hostname_list(%{status: :unknown, hostname_list: []} = state) do
-    hostname_list = HostList.load_hostnames()
-    %{state | hostname_list: hostname_list}
-  end
-
-  defp reload_hostname_list(state), do: state
-
   defp ping_if_unknown(%{status: :unknown, ping_list: [who | rest]} = state) do
-    case TCPPing.ping(state.ifname, who) do
+    result =
+      case who do
+        {:tcp_ping, opts} ->
+          TCPPing.ping(state.ifname, opts)
+
+        {:ssl_ping, opts} ->
+          SSLConnect.connect(state.ifname, opts)
+      end
+
+    case result do
       :ok -> %{state | status: :internet}
       _error -> %{state | status: :no_internet, ping_list: rest}
     end
-  end
-
-  defp ping_if_unknown(%{status: :unknown, ping_list: [], hostname_list: [who | rest]} = state) do
-    case SSLConnect.connect(state.ifname, who) do
-      :ok -> %{state | status: :internet}
-      _error -> %{state | status: :no_internet, hostname_list: rest}
-    end
-  end
-
-  defp ping_if_unknown(%{status: :unknown, ping_list: [], hostname_list: []} = state) do
-    # Ping list being empty is due to the user only providing hostnames and
-    # DNS resolution not working.
-    %{state | status: :no_internet}
   end
 
   defp ping_if_unknown(state), do: state
