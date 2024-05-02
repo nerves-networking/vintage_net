@@ -9,13 +9,11 @@ defmodule VintageNet.Connectivity.InternetChecker do
   """
   use GenServer
 
-  alias VintageNet.Connectivity.{
-    CheckLogic,
-    HostList,
-    Inspector,
-    SSLConnect,
-    TCPPing
-  }
+  alias VintageNet.Connectivity.CheckLogic
+  alias VintageNet.Connectivity.HostList
+  alias VintageNet.Connectivity.Inspector
+  alias VintageNet.Connectivity.SSLConnect
+  alias VintageNet.Connectivity.TCPPing
 
   alias VintageNet.PowerManager.PMControl
   alias VintageNet.RouteManager
