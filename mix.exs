@@ -57,6 +57,9 @@ defmodule VintageNet.MixProject do
           # Neustar
           {{156, 154, 70, 5}, 53}
         ],
+        internet_hostname_list: [
+          {"google.com", 443}
+        ],
         regulatory_domain: "00",
         # Contain processes in cgroups by setting to:
         #   [cgroup_base: "vintage_net", cgroup_controllers: ["cpu"]]
@@ -64,7 +67,7 @@ defmodule VintageNet.MixProject do
         power_managers: [],
         route_metric_fun: &VintageNet.Route.DefaultMetric.compute_metric/2
       ],
-      extra_applications: [:logger, :crypto],
+      extra_applications: [:logger, :crypto, :ssl, :public_key],
       mod: {VintageNet.Application, []}
     ]
   end

@@ -40,6 +40,32 @@ defmodule VintageNet.Connectivity.HostList do
     end
   end
 
+  @doc """
+  Load the internet hostname list from the application environment
+  """
+  @spec load_hostnames(keyword()) :: [{String.t(), 1..65535}]
+  def load_hostnames(config \\ Application.get_all_env(:vintage_net)) do
+    config_list = internet_hostname_list(config)
+
+    if config_list == [] do
+      Logger.warning("VintageNet: empty or invalid `:internet_host_list` so using defaults")
+      [{"google.com", 443}]
+    else
+      config_list
+    end
+  end
+
+  defp internet_hostname_list(config) do
+    case config[:internet_hostname_list] do
+      host_list when is_list(host_list) ->
+        host_list
+
+      _ ->
+        Logger.warning("VintageNet: :internet_hostname_list must be a list")
+        []
+    end
+  end
+
   defp internet_host_list(config) do
     case config[:internet_host_list] do
       host_list when is_list(host_list) ->

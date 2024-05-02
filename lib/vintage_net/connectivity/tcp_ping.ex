@@ -13,7 +13,7 @@ defmodule VintageNet.Connectivity.TCPPing do
   """
   @ping_timeout 5_000
 
-  @type ping_error_reason :: :if_not_found | :no_ipv4_address | :inet.posix()
+  @type ping_error_reason :: :if_not_found | :no_suitable_ip_address | :inet.posix()
 
   @doc """
   Check connectivity with another device

@@ -9,7 +9,14 @@ defmodule VintageNet.Connectivity.InternetChecker do
   """
   use GenServer
 
-  alias VintageNet.Connectivity.{CheckLogic, HostList, Inspector, TCPPing}
+  alias VintageNet.Connectivity.{
+    CheckLogic,
+    HostList,
+    Inspector,
+    SSLConnect,
+    TCPPing
+  }
+
   alias VintageNet.PowerManager.PMControl
   alias VintageNet.RouteManager
   require Logger
@@ -17,8 +24,9 @@ defmodule VintageNet.Connectivity.InternetChecker do
   @typedoc false
   @type state() :: %{
           ifname: VintageNet.ifname(),
-          configured_hosts: [{VintageNet.any_ip_address(), non_neg_integer()}],
-          ping_list: [{:inet.ip_address(), non_neg_integer()}],
+          configured_hosts: [{VintageNet.any_ip_address(), 1..65535}],
+          ping_list: [{:inet.ip_address(), 1..65535}],
+          hostname_list: [{String.t(), 1..65535}],
           check_logic: CheckLogic.state(),
           inspector: Inspector.cache(),
           status: Inspector.status()
@@ -40,6 +48,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
       ifname: ifname,
       configured_hosts: HostList.load(),
       ping_list: [],
+      hostname_list: [],
       check_logic: CheckLogic.init(connectivity),
       inspector: %{},
       status: :unknown
@@ -112,12 +121,14 @@ defmodule VintageNet.Connectivity.InternetChecker do
     # 1. Reset status to unknown
     # 2. See if we can determine internet-connectivity via TCP stats
     # 3. If still unknown, refresh the ping list
-    # 4. If still unknown, ping. This step is definitive.
+    # 4a. If still unknown, ping. This step can be tricked by really stubborn firewalls.
+    # 4b. If still unknown, connect via SSL. This step cannot be fooled.
     # 5. Record whether there's internet
     state
     |> reset_status()
     |> check_inspector()
     |> reload_ping_list()
+    |> reload_hostname_list()
     |> ping_if_unknown()
     |> update_check_logic()
     |> pet_pm_watchdog()
@@ -144,6 +155,13 @@ defmodule VintageNet.Connectivity.InternetChecker do
 
   defp reload_ping_list(state), do: state
 
+  defp reload_hostname_list(%{status: :unknown, hostname_list: []} = state) do
+    hostname_list = HostList.load_hostnames()
+    %{state | hostname_list: hostname_list}
+  end
+
+  defp reload_hostname_list(state), do: state
+
   defp ping_if_unknown(%{status: :unknown, ping_list: [who | rest]} = state) do
     case TCPPing.ping(state.ifname, who) do
       :ok -> %{state | status: :internet}
@@ -151,7 +169,14 @@ defmodule VintageNet.Connectivity.InternetChecker do
     end
   end
 
-  defp ping_if_unknown(%{status: :unknown, ping_list: []} = state) do
+  defp ping_if_unknown(%{status: :unknown, ping_list: [], hostname_list: [who | rest]} = state) do
+    case SSLConnect.connect(state.ifname, who) do
+      :ok -> %{state | status: :internet}
+      _error -> %{state | status: :no_internet, hostname_list: rest}
+    end
+  end
+
+  defp ping_if_unknown(%{status: :unknown, ping_list: [], hostname_list: []} = state) do
     # Ping list being empty is due to the user only providing hostnames and
     # DNS resolution not working.
     %{state | status: :no_internet}
