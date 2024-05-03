@@ -47,15 +47,15 @@ defmodule VintageNet.MixProject do
         # Use IP addresses and port numbers here rather than names.
         internet_host_list: [
           # Cloudflare DNS over TCP
-          {:tcp_ping, host: {1, 1, 1, 1}, port: 53},
-          # Google public DNS over TCP
-          {:tcp_ping, host: {8, 8, 8, 8}, port: 53},
-          # OpenDNS
-          {:tcp_ping, host: {208, 67, 222, 222}, port: 53},
-          # Quad9
-          {:tcp_ping, host: {9, 9, 9, 9}, port: 53},
-          # Neustar
-          {:tcp_ping, host: {156, 154, 70, 5}, port: 53},
+          # {:tcp_ping, host: {1, 1, 1, 1}, port: 53},
+          # # Google public DNS over TCP
+          # {:tcp_ping, host: {8, 8, 8, 8}, port: 53},
+          # # OpenDNS
+          # {:tcp_ping, host: {208, 67, 222, 222}, port: 53},
+          # # Quad9
+          # {:tcp_ping, host: {9, 9, 9, 9}, port: 53},
+          # # Neustar
+          # {:tcp_ping, host: {156, 154, 70, 5}, port: 53},
           # Google via SSL
           {:ssl_ping, host: "google.com", port: 443}
         ],

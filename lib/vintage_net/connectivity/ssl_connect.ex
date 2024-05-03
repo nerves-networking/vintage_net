@@ -25,13 +25,14 @@ defmodule VintageNet.Connectivity.SSLConnect do
   def connect(ifname, opts) do
     host = Keyword.fetch!(opts, :host)
     port = Keyword.fetch!(opts, :port)
+    initial_opts = get_initial_opts(opts)
 
     with {:ok, src_ip} <- get_interface_address(ifname, :inet),
          {:ok, ssl} <-
            :ssl.connect(
              to_charlist(host),
              port,
-             connect_opts(src_ip),
+             connect_opts(initial_opts, src_ip),
              @connect_timeout
            ) do
       _ = :ssl.close(ssl)
@@ -45,20 +46,31 @@ defmodule VintageNet.Connectivity.SSLConnect do
     end
   end
 
-  defp connect_opts(src_ip) do
-    base = [
-      verify: :verify_peer,
-      active: false,
-      ip: src_ip
-    ]
+  defp get_initial_opts(opts) do
+    {module, fun, args} =
+      Keyword.get(opts, :connect_opts_mfa, {__MODULE__, :default_connect_opts, []})
 
-    if Code.ensure_loaded?(:public_key) and function_exported?(:public_key, :cacerts_get, 0) do
-      cacerts = apply(:public_key, :cacerts_get, [])
-      Keyword.put(base, :cacerts, cacerts)
-    else
+    apply(module, fun, args)
+  end
+
+  defp connect_opts(initial_opts, src_ip) do
+    initial_opts
+    |> Keyword.put(:active, false)
+    |> Keyword.put(:ip, src_ip)
+  end
+
+  @doc false
+  if :erlang.system_info(:otp_release) in [~c"21", ~c"22", ~c"23", ~c"24"] do
+    def default_connect_opts() do
       Logger.warning("SSLConnect support on OTP 24 is limited due to lack of cacerts")
-      # remove the verify_peer option, since we don't have CA certs
-      Keyword.delete(base, :verify)
+      []
+    end
+  else
+    def default_connect_opts() do
+      [
+        cacerts: :public_key.cacerts_get(),
+        verify: :verify_peer
+      ]
     end
   end
 end
