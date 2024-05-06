@@ -11,6 +11,8 @@ defmodule VintageNet.Connectivity.TCPPing do
   way usually works unless a device is behind a strict firewall, but there's
   usually at least one IP address/port on the Internet that they allow.
   """
+  @behaviour VintageNet.Connectivity.Ping
+
   alias VintageNet.Connectivity.HostList
 
   @ping_timeout 5_000
@@ -28,6 +30,7 @@ defmodule VintageNet.Connectivity.TCPPing do
   Source IP-based routing is required for the TCP connect to go out the right
   network interface. This is configured by default when using VintageNet.
   """
+  @impl VintageNet.Connectivity.Ping
   @spec ping(VintageNet.ifname(), HostList.options()) :: :ok | {:error, ping_error_reason()}
   def ping(ifname, opts) do
     host = Keyword.fetch!(opts, :host)

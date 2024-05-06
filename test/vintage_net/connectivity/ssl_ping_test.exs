@@ -7,8 +7,8 @@ defmodule VintageNet.Connectivity.SSLPingTest do
   test "connect to known host" do
     ifname = Utils.get_ifname_for_tests()
 
-    assert SSLPing.connect(ifname, host: "google.com", port: 443) == :ok
-    assert SSLPing.connect(ifname, host: "github.com", port: 443) == :ok
-    assert SSLPing.connect(ifname, host: "superfakedomain", port: 443) == {:error, :nxdomain}
+    assert SSLPing.ping(ifname, host: "google.com", port: 443) == :ok
+    assert SSLPing.ping(ifname, host: "github.com", port: 443) == :ok
+    assert SSLPing.ping(ifname, host: "superfakedomain", port: 443) == {:error, :nxdomain}
   end
 end
