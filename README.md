@@ -159,7 +159,7 @@ resolvconf         | Path to `/etc/resolv.conf`
 persistence        | Module for persisting network configurations
 persistence_dir    | Path to a directory for storing persisted configurations
 persistence_secret | A 16-byte secret or a function or MFArgs (module, function, arguments tuple) for getting a secret
-internet_host_list | IP address or hostnames and ports to try to connect to for checking Internet connectivity. Defaults to a list of large public DNS providers. E.g., `[{{1, 1, 1, 1}, 53}]`.
+internet_host_list | IP address or hostnames and ports to try to connect to for checking Internet connectivity. Defaults to a list of large public DNS providers. E.g., `[{:tcp_ping, host: {1, 1, 1, 1}, port: 53}]`.
 regulatory_domain  | ISO 3166-1 alpha-2 country (`00` for global, `US`, etc.)
 additional_name_servers     | List of DNS servers to be used in addition to any supplied by an interface. E.g., `[{1, 1, 1, 1}, {8, 8, 8, 8}]`
 route_metric_fun   | Customize how network interfaces are prioritized. See `VintageNet.Route.DefaultMetric.compute_metric/2`
@@ -494,7 +494,7 @@ For example,
 
 ```elixir
 config :vintage_net,
-  internet_host_list: [{"abcdefghijk-ats.iot.us-east-1.amazonaws.com", 443}]
+  internet_host_list: [{:tcp_ping, host: "abcdefghijk-ats.iot.us-east-1.amazonaws.com", port: 443}]
 ```
 
 The use of the connectivity checker is specified by the technology. Both the
@@ -503,6 +503,29 @@ This is selected by adding the `VintageNet.Connectivity.InternetChecker`
 GenServer to the `:child_specs` configuration returned by the technology. E.g.,
 `child_specs: [{VintageNet.Connectivity.InternetChecker, "eth0"}]`. Most users
 do not need to be concerned about this.
+
+### SSL Internet Connectivity Checking
+
+If devices are deployed in a particularly locked-down environment where connections via
+TCP could be intercepted by a firewall or similar, users may want to use the `:ssl_ping` option
+instead,
+
+```elixir
+config :vintage_net,
+  internet_host_list: [{:ssl_ping, host: "google.com", port: 443}]
+```
+
+**NOTE**: using this module defaults to using the `VintageNet.Connectivity.SSLPing.PublicKey` module
+for supplying the initial ssl connection options. This uses `:public_key.cacerts_get()` on OTP 25 and
+greater. Usage of this function to get the cacerts is potentially dangerous as the certs bundled by
+`:public_key` will eventually expire, causing the `ping` to fail in the future. Users who wish to
+use the `:ssl_ping` module should specify their own connect opts by means of a module that implements
+the `VintageNet.Connectivity.SSLPing.ConnectOptions` behaviour:
+
+```elixir
+config :vintage_net,
+  internet_host_list: [{:ssl_ping, host: "abcdefghijk-ats.iot.us-east-1.amazonaws.com", port: 443, connect_options_impl: MySSLPingConnectOptsImpl}]
+```
 
 ## Power Management
 

@@ -5,12 +5,18 @@ defmodule VintageNet.Connectivity.SSLPing do
   Connectivity with a remote host can be checked by making a SSL connection to
   it. The connection either works, the connection is refused, or it times out.
   The first two cases indicate connectivity.
+
+  This module should be configured with a `:connect_opts_mfa` option. It should
+  implement the `VintageNet.Connectivity.SSLPing.ConnectOptions` behaviour.
+  The default implementation will use `:public_key.cacerts_get()` which can
+  potentially be insecure.
   """
 
   @behaviour VintageNet.Connectivity.Ping
 
   import VintageNet.Connectivity.TCPPing, only: [get_interface_address: 2]
   alias VintageNet.Connectivity.HostList
+  alias VintageNet.Connectivity.SSLPing.PublicKey
   require Logger
 
   @connect_timeout 5_000
@@ -23,11 +29,12 @@ defmodule VintageNet.Connectivity.SSLPing do
   Internet is down, but it's likely especially if the server that's specified
   in the configuration is highly available.
   """
+  @impl VintageNet.Connectivity.Ping
   @spec ping(VintageNet.ifname(), HostList.options()) :: :ok | {:error, :inet.posix()}
   def ping(ifname, opts) do
     host = Keyword.fetch!(opts, :host)
     port = Keyword.fetch!(opts, :port)
-    initial_opts = get_initial_opts(opts)
+    initial_opts = get_connect_options(opts)
 
     with {:ok, src_ip} <- get_interface_address(ifname, :inet),
          {:ok, ssl} <-
@@ -48,32 +55,14 @@ defmodule VintageNet.Connectivity.SSLPing do
     end
   end
 
-  defp get_initial_opts(opts) do
-    {module, fun, args} =
-      Keyword.get(opts, :connect_opts_mfa, {__MODULE__, :default_connect_opts, []})
-
-    apply(module, fun, args)
+  defp get_connect_options(opts) do
+    module = Keyword.get(opts, :connect_options_impl, PublicKey)
+    module.connect_options()
   end
 
   defp connect_opts(initial_opts, src_ip) do
     initial_opts
     |> Keyword.put(:active, false)
     |> Keyword.put(:ip, src_ip)
-  end
-
-  @doc false
-  @spec default_connect_opts() :: Keyword.t()
-  if :erlang.system_info(:otp_release) in [~c"21", ~c"22", ~c"23", ~c"24"] do
-    def default_connect_opts() do
-      Logger.warning("SSLConnect support on OTP 24 is limited due to lack of cacerts")
-      []
-    end
-  else
-    def default_connect_opts() do
-      [
-        cacerts: :public_key.cacerts_get(),
-        verify: :verify_peer
-      ]
-    end
   end
 end
