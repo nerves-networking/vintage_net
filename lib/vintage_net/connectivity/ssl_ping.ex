@@ -1,4 +1,4 @@
-defmodule VintageNet.Connectivity.SSLConnect do
+defmodule VintageNet.Connectivity.SSLPing do
   @moduledoc """
   Test connectivity by making a connection using SSL
 
@@ -6,6 +6,8 @@ defmodule VintageNet.Connectivity.SSLConnect do
   it. The connection either works, the connection is refused, or it times out.
   The first two cases indicate connectivity.
   """
+
+  @behaviour VintageNet.Connectivity.Ping
 
   import VintageNet.Connectivity.TCPPing, only: [get_interface_address: 2]
   alias VintageNet.Connectivity.HostList
@@ -16,13 +18,13 @@ defmodule VintageNet.Connectivity.SSLConnect do
   @doc """
   Check connectivity with another device
 
-  The "connect" is a SSL connection attempt from the specified interface to
+  The "ping" is a SSL connection attempt from the specified interface to
   an IP address and port. Failures to connect don't necessarily mean that the
   Internet is down, but it's likely especially if the server that's specified
   in the configuration is highly available.
   """
-  @spec connect(VintageNet.ifname(), HostList.options()) :: :ok | {:error, :inet.posix()}
-  def connect(ifname, opts) do
+  @spec ping(VintageNet.ifname(), HostList.options()) :: :ok | {:error, :inet.posix()}
+  def ping(ifname, opts) do
     host = Keyword.fetch!(opts, :host)
     port = Keyword.fetch!(opts, :port)
     initial_opts = get_initial_opts(opts)
@@ -60,6 +62,7 @@ defmodule VintageNet.Connectivity.SSLConnect do
   end
 
   @doc false
+  @spec default_connect_opts() :: Keyword.t()
   if :erlang.system_info(:otp_release) in [~c"21", ~c"22", ~c"23", ~c"24"] do
     def default_connect_opts() do
       Logger.warning("SSLConnect support on OTP 24 is limited due to lack of cacerts")

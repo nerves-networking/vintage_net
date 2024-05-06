@@ -12,7 +12,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
   alias VintageNet.Connectivity.CheckLogic
   alias VintageNet.Connectivity.HostList
   alias VintageNet.Connectivity.Inspector
-  alias VintageNet.Connectivity.SSLConnect
+  alias VintageNet.Connectivity.SSLPing
   alias VintageNet.Connectivity.TCPPing
 
   alias VintageNet.RouteManager
@@ -149,14 +149,14 @@ defmodule VintageNet.Connectivity.InternetChecker do
   defp reload_ping_list(state), do: state
 
   defp ping_if_unknown(%{status: :unknown, ping_list: [who | rest]} = state) do
-    result =
+    {mod, opts} =
       case who do
-        {:tcp_ping, opts} ->
-          TCPPing.ping(state.ifname, opts)
-
-        {:ssl_ping, opts} ->
-          SSLConnect.connect(state.ifname, opts)
+        {:tcp_ping, opts} -> {TCPPing, opts}
+        {:ssl_ping, opts} -> {SSLPing, opts}
+        {mod, opts} when is_atom(mod) -> {mod, opts}
       end
+
+    result = mod.ping(state.ifname, opts)
 
     case result do
       :ok -> %{state | status: :internet}
