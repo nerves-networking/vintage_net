@@ -1,8 +1,7 @@
 defmodule VintageNet.Connectivity.HostList do
   @moduledoc false
 
-  import Record, only: [defrecord: 2]
-
+  alias VintageNet.Connectivity.TCPPing
   require Logger
 
   @typedoc """
@@ -10,16 +9,12 @@ defmodule VintageNet.Connectivity.HostList do
   """
   @type ip_or_hostname() :: :inet.ip_address() | String.t()
 
-  @type option :: {:host, ip_or_hostname()} | {:port, 1..65535}
-  @type options :: [option]
+  @type option() :: {:host, ip_or_hostname()} | {:port, 1..65535}
+  @type options() :: [option()]
 
-  @type entry :: {:tcp_ping | :ssl_ping, options}
+  @type entry() :: {:tcp_ping | :ssl_ping | module(), options()}
 
-  @type hostent() :: record(:hostent, [])
-
-  defrecord :hostent, Record.extract(:hostent, from_lib: "kernel/include/inet.hrl")
-
-  @default_list [{:tcp_ping, host: {1, 1, 1, 1}, port: 53}]
+  @default_list [{TCPPing, host: {1, 1, 1, 1}, port: 53}]
 
   @doc """
   Load the internet host list from the application environment
@@ -27,7 +22,7 @@ defmodule VintageNet.Connectivity.HostList do
   This function performs basic checks on the list and tries to
   help users on easy mistakes.
   """
-  @spec load(keyword()) :: [entry]
+  @spec load(keyword()) :: [entry()]
   def load(config \\ Application.get_all_env(:vintage_net)) do
     config_list = internet_host_list(config) ++ legacy_internet_host(config)
 
@@ -65,27 +60,22 @@ defmodule VintageNet.Connectivity.HostList do
           "VintageNet: :internet_host key is deprecated. Replace with `internet_host_list: [{:tcp_ping, host: #{inspect(host)}, port: 80}]`"
         )
 
-        [{:tcp_ping, host: host, port: 80}]
+        [{TCPPing, host: host, port: 80}]
     end
   end
 
-  defp normalize({kind, opts}) when kind in [:tcp_ping, :ssl_ping] do
-    with {:ok, host} <- Keyword.fetch(opts, :host),
-         {:ok, port} when port > 0 and port < 65535 <- Keyword.fetch(opts, :port) do
-      case VintageNet.IP.ip_to_tuple(host) do
-        {:ok, host_as_tuple} -> {kind, host: host_as_tuple, port: port}
-        # Likely a domain name
-        {:error, _} when is_binary(host) -> {kind, host: host, port: port}
-        _ -> :error
-      end
-    else
-      _ -> :error
-    end
+  defp normalize({:tcp_ping, opts}), do: normalize({TCPPing, opts})
+  defp normalize({:ssl_ping, opts}), do: normalize({SSLPing, opts})
+
+  defp normalize({module, opts} = spec) when is_atom(module) and is_list(opts) do
+    module.normalize(spec)
+  catch
+    _, _ -> :error
   end
 
   defp normalize({host, port}) when port > 0 and port < 65535 do
     # handles legacy list entries, converting them to tcp_ping by default
-    normalize({:tcp_ping, host: host, port: port})
+    normalize({TCPPing, host: host, port: port})
   end
 
   defp normalize(_), do: :error
@@ -100,34 +90,18 @@ defmodule VintageNet.Connectivity.HostList do
   @spec create_ping_list([entry]) :: [entry()]
   def create_ping_list(hosts) do
     hosts
-    |> Enum.flat_map(&resolve_tcp_ping/1)
+    |> Enum.flat_map(&expand_ping_list/1)
     |> Enum.uniq()
     |> Enum.shuffle()
     |> Enum.take(3)
   end
 
-  defp resolve_tcp_ping({:tcp_ping, opts} = tcp_ping_entry) do
-    port = Keyword.fetch!(opts, :port)
-
-    case Keyword.fetch!(opts, :host) do
-      ip when is_tuple(ip) ->
-        [tcp_ping_entry]
-
-      host when is_binary(host) ->
-        case :inet.gethostbyname(String.to_charlist(host)) do
-          {:ok, hostent(h_addr_list: addresses)} ->
-            for address <- addresses, do: {:tcp_ping, host: address, port: port}
-
-          _error ->
-            # DNS not working, so the internet is not working enough
-            # to consider this host
-            []
-        end
+  defp expand_ping_list({module, _opts} = spec) do
+    case module.expand(spec) do
+      result when is_list(result) -> result
+      _ -> []
     end
-  end
-
-  defp resolve_tcp_ping({:ssl_ping, _opts} = ssl_ping_entry) do
-    # don't resolve SSL addresses since the hostname is part of how SSL functions
-    [ssl_ping_entry]
+  catch
+    _, _ -> []
   end
 end

@@ -15,11 +15,27 @@ defmodule VintageNet.Connectivity.SSLPing do
   @behaviour VintageNet.Connectivity.Ping
 
   import VintageNet.Connectivity.TCPPing, only: [get_interface_address: 2]
-  alias VintageNet.Connectivity.HostList
+
   alias VintageNet.Connectivity.SSLPing.PublicKey
   require Logger
 
   @connect_timeout 5_000
+
+  @impl VintageNet.Connectivity.Ping
+  def normalize({__MODULE__, opts}) do
+    with {:ok, host} when is_binary(host) <- Keyword.fetch(opts, :host),
+         port when port > 0 and port < 65535 <- Keyword.get(opts, :port, 443) do
+      {:ok, {__MODULE__, host: host, port: port}}
+    else
+      _ -> :error
+    end
+  end
+
+  @impl VintageNet.Connectivity.Ping
+  def expand(spec) do
+    # No expansion for SSL endpoints yet.
+    [spec]
+  end
 
   @doc """
   Check connectivity with another device
@@ -30,8 +46,7 @@ defmodule VintageNet.Connectivity.SSLPing do
   in the configuration is highly available.
   """
   @impl VintageNet.Connectivity.Ping
-  @spec ping(VintageNet.ifname(), HostList.options()) :: :ok | {:error, :inet.posix()}
-  def ping(ifname, opts) do
+  def ping(ifname, {__MODULE__, opts}) do
     host = Keyword.fetch!(opts, :host)
     port = Keyword.fetch!(opts, :port)
     initial_opts = get_connect_options(opts)

@@ -13,11 +13,51 @@ defmodule VintageNet.Connectivity.TCPPing do
   """
   @behaviour VintageNet.Connectivity.Ping
 
-  alias VintageNet.Connectivity.HostList
+  import Record, only: [defrecord: 2]
 
   @ping_timeout 5_000
 
-  @type ping_error_reason :: :if_not_found | :no_suitable_ip_address | :inet.posix()
+  @type hostent() :: record(:hostent, [])
+
+  defrecord :hostent, Record.extract(:hostent, from_lib: "kernel/include/inet.hrl")
+
+  @type ping_error_reason() :: :if_not_found | :no_suitable_ip_address | :inet.posix()
+
+  @impl VintageNet.Connectivity.Ping
+  def normalize({__MODULE__, opts}) do
+    with {:ok, host} <- Keyword.fetch(opts, :host),
+         {:ok, port} when port > 0 and port < 65535 <- Keyword.fetch(opts, :port) do
+      case VintageNet.IP.ip_to_tuple(host) do
+        {:ok, host_as_tuple} -> {__MODULE__, host: host_as_tuple, port: port}
+        # Likely a domain name
+        {:error, _} when is_binary(host) -> {__MODULE__, host: host, port: port}
+        _ -> :error
+      end
+    else
+      _ -> :error
+    end
+  end
+
+  @impl VintageNet.Connectivity.Ping
+  def expand({__MODULE__, opts}) do
+    port = Keyword.fetch!(opts, :port)
+
+    case Keyword.fetch!(opts, :host) do
+      ip when is_tuple(ip) ->
+        [{__MODULE__, opts}]
+
+      host when is_binary(host) ->
+        case :inet.gethostbyname(String.to_charlist(host)) do
+          {:ok, hostent(h_addr_list: addresses)} ->
+            for address <- addresses, do: {__MODULE__, host: address, port: port}
+
+          _error ->
+            # DNS not working, so the internet is not working enough
+            # to consider this host
+            []
+        end
+    end
+  end
 
   @doc """
   Check connectivity with another device
@@ -31,8 +71,7 @@ defmodule VintageNet.Connectivity.TCPPing do
   network interface. This is configured by default when using VintageNet.
   """
   @impl VintageNet.Connectivity.Ping
-  @spec ping(VintageNet.ifname(), HostList.options()) :: :ok | {:error, ping_error_reason()}
-  def ping(ifname, opts) do
+  def ping(ifname, {__MODULE__, opts}) do
     host = Keyword.fetch!(opts, :host)
     port = Keyword.fetch!(opts, :port)
     # Note: No support for DNS since DNS can't be forced through an
