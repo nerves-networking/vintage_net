@@ -24,8 +24,11 @@ defmodule VintageNet.Connectivity.SSLPing do
   @impl VintageNet.Connectivity.Ping
   def normalize({__MODULE__, opts}) do
     with {:ok, host} when is_binary(host) <- Keyword.fetch(opts, :host),
-         port when port > 0 and port < 65535 <- Keyword.get(opts, :port, 443) do
-      {:ok, {__MODULE__, host: host, port: port}}
+         port when port > 0 and port < 65535 <- Keyword.get(opts, :port, 443),
+         {:ok, {module, function, args} = mfa}
+         when is_atom(module) and is_atom(function) and is_list(args) <-
+           Keyword.get(opts, :connect_options_mfa, {PublicKey, :connect_options, []}) do
+      {:ok, {__MODULE__, host: host, port: port, connection_options_mfa: mfa}}
     else
       _ -> :error
     end
@@ -71,8 +74,8 @@ defmodule VintageNet.Connectivity.SSLPing do
   end
 
   defp get_connect_options(opts) do
-    module = Keyword.get(opts, :connect_options_impl, PublicKey)
-    module.connect_options()
+    {module, function, args} = Keyword.fetch!(opts, :connect_options_mfa)
+    apply(module, function, args)
   end
 
   defp connect_opts(initial_opts, src_ip) do

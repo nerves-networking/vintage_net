@@ -7,11 +7,9 @@ defmodule VintageNet.Connectivity.SSLPing.PublicKey do
   future without a firmware upgrade.
   """
 
-  @behaviour VintageNet.Connectivity.SSLPing.ConnectOptions
   require Logger
 
   @doc false
-  @impl VintageNet.Connectivity.SSLPing.ConnectOptions
   if :erlang.system_info(:otp_release) in [~c"21", ~c"22", ~c"23", ~c"24"] do
     def connect_options() do
       Logger.warning("SSLPing support on OTP 24 is limited due to lack of cacerts")

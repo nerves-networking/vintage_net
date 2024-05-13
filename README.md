@@ -515,8 +515,7 @@ config :vintage_net,
   internet_host_list: [{:ssl_ping, host: "google.com", port: 443}]
 ```
 
-Custom methods may be supplied by passing a module that implements the
-`VintageNet.Connectivity.Ping` behaviour.
+Custom options may be supplied by passing a mfa in options.
 
 When implementing a connectivity checker, please be aware of the following:
 
@@ -544,7 +543,7 @@ Internet:
 
 ```elixir
 config :vintage_net,
-  internet_host_list: [{:ssl_ping, host: "internet-server.mycompany.com", port: 443, connect_options_impl: MySSLPingConnectOptsImpl}]
+  internet_host_list: [{:ssl_ping, host: "internet-server.mycompany.com", port: 443, connect_options_mfa: {MySSLPingConnectOptsImpl, :connect_opts, []}}]
 ```
 
 ## Power Management
