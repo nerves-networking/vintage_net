@@ -1,4 +1,4 @@
-defmodule VintageNet.Connectivity.Ping do
+defmodule VintageNet.Connectivity.Check do
   @moduledoc """
   Behaviour definition for internet connectivity checking
 
@@ -12,7 +12,13 @@ defmodule VintageNet.Connectivity.Ping do
   @typedoc """
   A method and options for checking internet connectivity
   """
-  @type ping_spec() :: {module :: module(), opts :: keyword()}
+  @type check_spec() :: {module :: module(), opts :: keyword()}
+
+  @typedoc """
+  Successful result of a connectivity check. Indicates what level
+  of connectivity is available on an interface. 
+  """
+  @type check_result() :: VintageNet.connection_status()
 
   @doc """
   Accept/reject a ping spec and normalize any options
@@ -20,7 +26,7 @@ defmodule VintageNet.Connectivity.Ping do
   This is called at initialization time. If this returns an error, then it
   will be removed from the list of internet checkers.
   """
-  @callback normalize(spec :: ping_spec()) :: {:ok, ping_spec()} | :error
+  @callback normalize(spec :: check_spec()) :: {:ok, check_spec()} | :error
 
   @doc """
   Expand this checker to one that single endpoint checks
@@ -33,7 +39,7 @@ defmodule VintageNet.Connectivity.Ping do
   VintageNet will call the `ping/2` callback one at a time based on the results
   of this function.
   """
-  @callback expand(spec :: ping_spec()) :: [{ping_spec()}]
+  @callback expand(spec :: check_spec()) :: [{check_spec()}]
 
   @doc """
   Perform a check on an interface. the second argument is a keyword argument
@@ -42,5 +48,6 @@ defmodule VintageNet.Connectivity.Ping do
   * `host` - either an IP address or DNS hostname that should be checked for connectivity.
   * `port` - network port to be used during the check.
   """
-  @callback ping(ifname :: VintageNet.ifname(), spec :: ping_spec()) :: :ok | {:error, term()}
+  @callback check(ifname :: VintageNet.ifname(), spec :: check_spec()) ::
+              {:ok, check_result()} | {:error, term()}
 end

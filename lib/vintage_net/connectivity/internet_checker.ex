@@ -151,10 +151,10 @@ defmodule VintageNet.Connectivity.InternetChecker do
   defp ping_if_unknown(%{status: :unknown, ping_list: [who | rest]} = state) do
     {mod, _opts} = who
 
-    result = mod.ping(state.ifname, who)
+    result = mod.check(state.ifname, who)
 
     case result do
-      :ok -> %{state | status: :internet}
+      {:ok, status} -> %{state | status: status}
       _error -> %{state | status: :no_internet, ping_list: rest}
     end
   end
@@ -162,7 +162,11 @@ defmodule VintageNet.Connectivity.InternetChecker do
   defp ping_if_unknown(state), do: state
 
   defp update_check_logic(%{status: :internet} = state) do
-    %{state | check_logic: CheckLogic.check_succeeded(state.check_logic)}
+    %{state | check_logic: CheckLogic.check_succeeded(state.check_logic, :internet)}
+  end
+
+  defp update_check_logic(%{status: :lan} = state) do
+    %{state | check_logic: CheckLogic.check_succeeded(state.check_logic, :lan)}
   end
 
   defp update_check_logic(%{status: :no_internet} = state) do
