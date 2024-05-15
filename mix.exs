@@ -57,7 +57,7 @@ defmodule VintageNet.MixProject do
           # # Neustar
           # {:tcp_ping, host: {156, 154, 70, 5}, port: 53},
           # Google via SSL
-          {:http_ping, host: "ping.nerves-project.org", port: 80, path: "/", nonce: "abcd123"}
+          {:web_request, host: "ping.nerves-project.org", port: 80, path: "/", nonce: "abcd123"}
         ],
         internet_hostname_list: [
           {"google.com", 443}

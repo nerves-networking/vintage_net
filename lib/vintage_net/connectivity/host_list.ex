@@ -1,8 +1,8 @@
 defmodule VintageNet.Connectivity.HostList do
   @moduledoc false
 
-  alias VintageNet.Connectivity.HTTP
   alias VintageNet.Connectivity.TCPPing
+  alias VintageNet.Connectivity.WebRequest
   require Logger
 
   @typedoc """
@@ -66,7 +66,7 @@ defmodule VintageNet.Connectivity.HostList do
   end
 
   defp normalize({:tcp_ping, opts}), do: normalize({TCPPing, opts})
-  defp normalize({:http_ping, opts}), do: normalize({HTTP, opts})
+  defp normalize({:web_request, opts}), do: normalize({WebRequest, opts})
 
   defp normalize({module, opts} = spec) when is_atom(module) and is_list(opts) do
     module.normalize(spec)

@@ -1,4 +1,4 @@
-defmodule VintageNet.Connectivity.HTTP do
+defmodule VintageNet.Connectivity.WebRequest do
   @moduledoc """
   Test connectivity by making a HTTP request
 
