@@ -39,7 +39,7 @@ defmodule VintageNet.Connectivity.Check do
   VintageNet will call the `ping/2` callback one at a time based on the results
   of this function.
   """
-  @callback expand(spec :: check_spec()) :: [{check_spec()}]
+  @callback expand(spec :: check_spec()) :: [check_spec()]
 
   @doc """
   Perform a check on an interface. the second argument is a keyword argument
