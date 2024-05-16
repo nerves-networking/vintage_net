@@ -536,9 +536,34 @@ unnecessary, it can save a trip to the field or a full device reboot.
 `VintageNet.info/1` shows the power management state for network interfaces that
 are using this feature.
 
+### Petting the power manager watchdog
+
+If using `VintageNet.PowerManager`, you'll need to make sure that
+`VintageNet.PowerManager.PMControl.pet_watchdog/1` is regularly called. There
+are a few ways:
+
+1. Use `VintageNet.Connectivity.InternetChecker` to monitor the network
+   interface's status. This almost is the default since it's included
+   automatically when using most IPv4 configurations. Static IP with no gateway
+   is the exception.
+2. Create your own `GenServer` that regularly polls the network interface and
+   calls `VintageNet.PowerManager.PMControl.pet_watchdog/1` if successful.
+3. Do both. The `InternetChecker` only pets the watchdog when the network
+   interface is either on the LAN or connected to the Internet. You may want to
+   pet the watchdog when the network interface is disconnected too rather than
+   let it power cycle when it's working.
+
+The `VintageNet.Connectivity.InternetChecker` pets the watchdog roughly every 30
+seconds when the network interface is obviously working (not disconnected). When
+setting a watchdog period, set it to 60 seconds or longer to be safe. A watchdog
+timeout between 30 minutes to 1 hour is recommended unless you have a
+particularly flaky network interface or need a fast response.
+
 ## Migration
 
-VintageNet is a more maintainable and full-featured replacement for the previous Nerves networking tools. You can read more about how it works above. If you need to migrate from an older Nerves networking setup, this is the section for you.
+VintageNet is a more maintainable and full-featured replacement for the previous
+Nerves networking tools. You can read more about how it works above. If you need
+to migrate from an older Nerves networking setup, this is the section for you.
 
 First, if you're modifying an existing project, you will need to remove
 `nerves_network` and `nerves_init_gadget`. `vintage_net` doesn't work with

@@ -2,6 +2,7 @@ defmodule VintageNet.PowerManager.PMControlTest do
   use VintageNetTest.Case
   import ExUnit.CaptureLog
 
+  alias VintageNet.Connectivity.InternetChecker
   alias VintageNet.PowerManager.PMControl
   alias VintageNetTest.TestPowerManager, as: TPM
 
@@ -153,6 +154,28 @@ defmodule VintageNet.PowerManager.PMControlTest do
     assert output =~ "PMControl(test0): Powering on"
     assert output =~ "PMControl(test0): Start powering off"
     assert output =~ "PMControl(test0): Complete power off"
+  end
+
+  test "internet connectivity checker pets watchdog" do
+    # power the interface on
+    PMControl.power_on(@test_ifname)
+
+    # start the connectivity checker
+    property = ["interface", @test_ifname, "connection"]
+    PropertyTable.put(VintageNet, property, :disconnected)
+    PropertyTable.put(VintageNet, ["interface", @test_ifname, "lower_up"], true)
+    start_supervised!({InternetChecker, @test_ifname})
+    VintageNet.subscribe(property)
+
+    # assert that the interface is connected
+    assert_receive {VintageNet, ^property, _old_value, :lan, _meta}, 1_000
+
+    # Wait for watchdog timer to expire (50 ms)
+    Process.sleep(60)
+
+    # power manager should still be on, power off should not be called
+    assert pm_state() == :on
+    assert TPM.call_count(@test_ifname, :power_off) == 0
   end
 
   defp pm_state() do

@@ -10,6 +10,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
   use GenServer
 
   alias VintageNet.Connectivity.{CheckLogic, HostList, Inspector, TCPPing}
+  alias VintageNet.PowerManager.PMControl
   alias VintageNet.RouteManager
   require Logger
 
@@ -119,6 +120,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
     |> reload_ping_list()
     |> ping_if_unknown()
     |> update_check_logic()
+    |> pet_pm_watchdog()
   end
 
   defp reset_status(state) do
@@ -163,6 +165,14 @@ defmodule VintageNet.Connectivity.InternetChecker do
 
   defp update_check_logic(%{status: :no_internet} = state) do
     %{state | check_logic: CheckLogic.check_failed(state.check_logic)}
+  end
+
+  defp pet_pm_watchdog(state) do
+    if state.check_logic.connectivity != :disconnected do
+      PMControl.pet_watchdog(state.ifname)
+    end
+
+    state
   end
 
   defp report_connectivity(state, why) do
