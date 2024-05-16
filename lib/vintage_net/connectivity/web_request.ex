@@ -16,6 +16,7 @@ defmodule VintageNet.Connectivity.WebRequest do
   """
 
   @behaviour VintageNet.Connectivity.Check
+  alias VintageNet.Connectivity.HTTPClient
   require Logger
 
   @request_timeout 5_000
@@ -52,14 +53,13 @@ defmodule VintageNet.Connectivity.WebRequest do
     port = Keyword.fetch!(opts, :port)
     path = Keyword.fetch!(opts, :path)
     match = Keyword.fetch!(opts, :match)
-    nonce = Keyword.fetch!(opts, :nonce)
 
     # Note: No support for DNS since DNS can't be forced through an
     # interface. I.e., errors on other interfaces mess up DNS even if the
     # one of interest is ok.
     case :httpc.request(
            :get,
-           {uri(host, port, path), [{~c"User-Agent", ~c"vintage_net"}]},
+           {uri(host, port, path, ""), [{~c"User-Agent", ~c"vintage_net"}]},
            [timeout: @ping_timeout],
            body_format: :binary,
            socket_opts: socket_opts(ifname)
@@ -83,9 +83,9 @@ defmodule VintageNet.Connectivity.WebRequest do
     end
   end
 
-  defp uri(dest_ip, port, path) do
+  defp uri(dest_ip, port, path, query) do
     host = VintageNet.IP.ip_to_string(dest_ip)
-    "http://#{host}:#{port}/#{path}"
+    %URI{host: host, port: port, path: path, query: query}
   end
 
   defp socket_opts(ifname) do
