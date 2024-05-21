@@ -3,13 +3,23 @@
 Not sure what to pass to `vintage_net`? Take a look below for example
 configurations.
 
+To see the current configuration at an IEx prompt, type:
+
+```elixir
+VintageNet.info
+```
+
 ## Compile-time vs. run-time
 
 The examples below all show the options to pass. Where you copy those depends on
 whether you want the configuration to be a built-in default (i.e., compile-time)
 or whether you want to change it at run-time.
 
-For compile-time, add something like the following to your `config.exs`:
+<!-- tabs-open -->
+
+### Compile-time (config)
+
+Add something like the following to your `config.exs`:
 
 ```elixir
 config :vintage_net,
@@ -21,7 +31,9 @@ config :vintage_net,
 But replace `"eth0"` with the interface and the map with the desired
 configuration from below.
 
-For run-time, call
+### Run-time (IEx)
+
+Call
 [`VintageNet.configure`](https://hexdocs.pm/vintage_net/VintageNet.html#configure/3)
 like this:
 
@@ -29,11 +41,8 @@ like this:
 VintageNet.configure("eth0", %{type: VintageNetEthernet, ipv4: %{method: :dhcp}})
 ```
 
-To see the current configuration at an IEx prompt, type:
+<!-- tabs-close -->
 
-```elixir
-iex> VintageNet.info
-```
 
 ## Network interface names
 
@@ -54,38 +63,76 @@ unsure.
 
 ## Wired Ethernet
 
+
 To use, make sure that you're either using
 [`nerves_pack`](https://hex.pm/packages/nerves_pack) or have
 `:vintage_net_ethernet` in your deps:
 
 ```elixir
-  {:vintage_net_ethernet, "~> 0.8"}
+  {:vintage_net_ethernet, "~> 0.8"},
 ```
 
 ### Wired Ethernet with DHCP
 
-This is regular wired Ethernet - nothing fancy:
+<!-- tabs-open -->
+
+### Compile-time (config)
 
 ```elixir
-%{type: VintageNetEthernet, ipv4: %{method: :dhcp}}
+config :vintage_net,
+  config: [
+    {"eth0", %{type: VintageNetEthernet, ipv4: %{method: :dhcp}}}
+  ]
 ```
+
+### Run-time (IEx)
+
+```elixir
+VintageNet.configure("eth0", %{type: VintageNetEthernet, ipv4: %{method: :dhcp}})
+```
+
+<!-- tabs-close -->
 
 ### Wired Ethernet with a static IP
 
-Update the parameters below as appropriate:
+Update the parameters below as appropriate.
+
+<!-- tabs-open -->
+
+### Compile-time (config)
 
 ```elixir
-%{
-  type: VintageNetEthernet,
-  ipv4: %{
-    method: :static,
-    address: "192.168.9.232",
-    prefix_length: 24,
-    gateway: "192.168.9.1",
-    name_servers: ["1.1.1.1"]
-  }
-}
+config :vintage_net,
+  config: [
+    {"eth0", %{
+      type: VintageNetEthernet,
+      ipv4: %{
+        method: :static,
+        address: "192.168.9.232",
+        prefix_length: 24,
+        gateway: "192.168.9.1",
+        name_servers: ["1.1.1.1"]
+        }
+    }}
+  ]
 ```
+
+### Run-time (IEx)
+
+```elixir
+VintageNet.configure("eth0", %{
+      type: VintageNetEthernet,
+      ipv4: %{
+        method: :static,
+        address: "192.168.9.232",
+        prefix_length: 24,
+        gateway: "192.168.9.1",
+        name_servers: ["1.1.1.1"]
+      }
+    })
+```
+
+<!-- tabs-close -->
 
 See
 [`VintageNet.IP.IPv4Config`](https://hexdocs.pm/vintage_net/VintageNet.IP.IPv4Config.html)
@@ -100,7 +147,7 @@ To use, make sure that you're either using
 `:vintage_net_wifi` in your deps:
 
 ```elixir
-  {:vintage_net_wifi, "~> 0.8"}
+{:vintage_net_wifi, "~> 0.8"},
 ```
 
 ### Normal password-protected WiFi (WPA2 PSK)
@@ -108,8 +155,33 @@ To use, make sure that you're either using
 Most password-protected home networks use WPA2 authentication and pre-shared
 keys.
 
+<!-- tabs-open -->
+
+### Compile-time (config)
+
 ```elixir
-%{
+config :vintage_net,
+  config: [
+    {"wlan0", %{
+      type: VintageNetWiFi,
+      vintage_net_wifi: %{
+        networks: [
+          %{
+            key_mgmt: :wpa_psk,
+            ssid: "my_network_ssid",
+            psk: "a_passphrase_or_psk"
+          }
+        ]
+      },
+      ipv4: %{method: :dhcp},
+    }}
+  ]
+```
+
+### Run-time (IEx)
+
+```elixir
+VintageNet.configure("wlan0", %{
   type: VintageNetWiFi,
   vintage_net_wifi: %{
     networks: [
@@ -121,13 +193,48 @@ keys.
     ]
   },
   ipv4: %{method: :dhcp},
-}
+})
 ```
 
-Here are example parameters for an static IP address.
+<!-- tabs-close -->
+
+### Normal password-protected WiFi with static IP
+
+Here are example parameters for a static IP address.
+
+<!-- tabs-open -->
+
+### Compile-time (config)
 
 ```elixir
-%{
+config :vintage_net,
+  config: [
+    {"wlan0", %{
+      type: VintageNetWiFi,
+      vintage_net_wifi: %{
+        networks: [
+          %{
+            key_mgmt: :wpa_psk,
+            ssid: "my_network_ssid",
+            psk: "a_passphrase_or_psk"
+          }
+        ]
+      },
+      ipv4: %{
+        method: :static,
+        address: "192.168.9.232",
+        prefix_length: 24,
+        gateway: "192.168.9.1",
+        name_servers: ["1.1.1.1"]
+      }
+    }}
+  ]
+```
+
+### Run-time (IEx)
+
+```elixir
+VintageNet.configure("wlan0", %{
   type: VintageNetWiFi,
   vintage_net_wifi: %{
     networks: [
@@ -145,15 +252,49 @@ Here are example parameters for an static IP address.
     gateway: "192.168.9.1",
     name_servers: ["1.1.1.1"]
   }
-}
+})
 ```
+
+<!-- tabs-close -->
+
+### Multiple WiFi networks
 
 If you're regularly switching between multiple networks, you can list them all
 under the `:networks` key. Note that it's currently not possible to mix networks
 that require static IP addresses with those that use DHCP.
 
+<!-- tabs-open -->
+
+### Compile-time (config)
+
 ```elixir
-%{
+config :vintage_net,
+  config: [
+    {"wlan0", %{
+      type: VintageNetWiFi,
+      vintage_net_wifi: %{
+        networks: [
+          %{
+            key_mgmt: :wpa_psk,
+            ssid: "my_network_ssid",
+            psk: "a_passphrase_or_psk"
+          },
+          %{
+            key_mgmt: :wpa_psk,
+            ssid: "another_ssid",
+            psk: "a_passphrase_or_psk"
+          },
+        ]
+      },
+      ipv4: %{method: :dhcp},
+    }}
+  ]
+```
+
+### Run-time (IEx)
+
+```elixir
+VintageNet.configure("wlan0", %{
   type: VintageNetWiFi,
   vintage_net_wifi: %{
     networks: [
@@ -167,19 +308,48 @@ that require static IP addresses with those that use DHCP.
         ssid: "another_ssid",
         psk: "a_passphrase_or_psk"
       },
-      ...
     ]
   },
   ipv4: %{method: :dhcp},
-}
+})
 ```
+
+<!-- tabs-close -->
 
 ### Enterprise WiFi (PEAPv0/EAP-MSCHAPV2)
 
 Protected EAP (PEAP) is a common authentication protocol for enterprise WiFi networks.
 
+<!-- tabs-open -->
+
+### Compile-time (config)
+
 ```elixir
-%{
+config :vintage_net,
+  config: [
+    {"wlan0", %{
+      type: VintageNetWiFi,
+      vintage_net_wifi: %{
+        networks: [
+          %{
+            key_mgmt: :wpa_eap,
+            ssid: "my_network_ssid",
+            identity: "username",
+            password: "password",
+            eap: "PEAP",
+            phase2: "auth=MSCHAPV2"
+          }
+        ]
+      },
+      ipv4: %{method: :dhcp},
+    }}
+  ]
+```
+
+### Run-time (IEx)
+
+```elixir
+VintageNet.configure("wlan0", %{
   type: VintageNetWiFi,
   vintage_net_wifi: %{
     networks: [
@@ -193,21 +363,53 @@ Protected EAP (PEAP) is a common authentication protocol for enterprise WiFi net
       }
     ]
   },
-  ipv4: %{method: :dhcp}
-}
+  ipv4: %{method: :dhcp},
+})
 ```
 
-### Enterprise WiFi (EAP-TLS)
+<!-- tabs-close -->
+
+### Enterprise WiFi with device certificate (EAP-TLS)
 
 TBD
+
+If you have a good example, do contribute it to this documentation.
+
+It should be fully possible to do EAP-TLS and even use a NervesKey secure element for the device certificate.
 
 ### Hidden WiFi networks
 
 If the access point has been configured to not advertise a network, VintageNetWiFi won't find it. It has to explicitly be told to search for
 it. Add `scan_ssid: 1` to the configuration to do this. For example,
 
+<!-- tabs-open -->
+
+### Compile-time (config)
+
 ```elixir
-%{
+config :vintage_net,
+  config: [
+    {"wlan0", %{
+      type: VintageNetWiFi,
+      vintage_net_wifi: %{
+        networks: [
+          %{
+            key_mgmt: :wpa_psk,
+            ssid: "my_network_ssid",
+            psk: "a_passphrase_or_psk",
+            scan_ssid: 1
+          }
+        ]
+      },
+      ipv4: %{method: :dhcp},
+    }}
+  ]
+```
+
+### Run-time (IEx)
+
+```elixir
+VintageNet.configure("wlan0", %{
   type: VintageNetWiFi,
   vintage_net_wifi: %{
     networks: [
@@ -220,8 +422,10 @@ it. Add `scan_ssid: 1` to the configuration to do this. For example,
     ]
   },
   ipv4: %{method: :dhcp},
-}
+})
 ```
+
+<!-- tabs-close -->
 
 ### Access point WiFi
 
@@ -229,8 +433,48 @@ Some WiFi modules can be run in access point mode. This makes it possible to
 create configuration wizards and captive portals. Configuration of this is more
 involved. Here is a basic configuration:
 
+<!-- tabs-open -->
+
+### Compile-time (config)
+
 ```elixir
-%{
+config :vintage_net,
+  config: [
+    {"wlan0", 
+      %{
+        type: VintageNetWiFi,
+        vintage_net_wifi: %{
+          networks: [
+            %{
+              mode: :ap,
+              ssid: "test ssid",
+              key_mgmt: :none
+            }
+          ]
+        },
+        ipv4: %{
+          method: :static,
+          address: "192.168.24.1",
+          netmask: "255.255.255.0"
+        },
+        dhcpd: %{
+          start: "192.168.24.2",
+          end: "192.168.24.10",
+          options: %{
+            dns: ["1.1.1.1", "1.0.0.1"],
+            subnet: "255.255.255.0",
+            router: ["192.168.24.1"]
+          }
+        }
+      }
+    }
+  ]
+```
+
+### Run-time (IEx)
+
+```elixir
+VintageNet.configure("wlan0", %{
   type: VintageNetWiFi,
   vintage_net_wifi: %{
     networks: [
@@ -255,23 +499,92 @@ involved. Here is a basic configuration:
       router: ["192.168.24.1"]
     }
   }
-}
+})
 ```
+
+<!-- tabs-close -->
 
 If you want to use WPA2 on your access point, make the networks map look like
 this:
 
+<!-- tabs-open -->
+
+### Compile-time (config)
+
 ```elixir
-  %{
-    mode: :ap,
-    key_mgmt: :wpa_psk,
-    proto: "RSN",
-    pairwise: "CCMP",
-    group: "CCMP",
-    ssid: "test ssid",
-    psk: "secret123"
-  }
+config :vintage_net,
+  config: [
+    {"wlan0", 
+      %{
+        type: VintageNetWiFi,
+        vintage_net_wifi: %{
+          networks: [
+            %{
+              mode: :ap,
+              key_mgmt: :wpa_psk,
+              proto: "RSN",
+              pairwise: "CCMP",
+              group: "CCMP",
+              ssid: "test ssid",
+              psk: "secret123"
+            }
+          ]
+        },
+        ipv4: %{
+          method: :static,
+          address: "192.168.24.1",
+          netmask: "255.255.255.0"
+        },
+        dhcpd: %{
+          start: "192.168.24.2",
+          end: "192.168.24.10",
+          options: %{
+            dns: ["1.1.1.1", "1.0.0.1"],
+            subnet: "255.255.255.0",
+            router: ["192.168.24.1"]
+          }
+        }
+      }
+    }
+  ]
 ```
+
+### Run-time (IEx)
+
+```elixir
+VintageNet.configure("wlan0", %{
+  type: VintageNetWiFi,
+  vintage_net_wifi: %{
+    networks: [
+      %{
+        mode: :ap,
+        key_mgmt: :wpa_psk,
+        proto: "RSN",
+        pairwise: "CCMP",
+        group: "CCMP",
+        ssid: "test ssid",
+        psk: "secret123"
+      }
+    ]
+  },
+  ipv4: %{
+    method: :static,
+    address: "192.168.24.1",
+    netmask: "255.255.255.0"
+  },
+  dhcpd: %{
+    start: "192.168.24.2",
+    end: "192.168.24.10",
+    options: %{
+      dns: ["1.1.1.1", "1.0.0.1"],
+      subnet: "255.255.255.0",
+      router: ["192.168.24.1"]
+    }
+  }
+})
+```
+
+<!-- tabs-close -->
 
 The `proto: "RSN"` entry is important since the `wpa_supplicant` default is
 `WPA` and not `WPA2`.
@@ -287,8 +600,33 @@ VintageNetWifi supports an "escape hatch" of sorts if you need precise control o
 The contents of the `wpa_supplicant_conf` will be coppied without validation to the wpa_supplicant.conf file that
 VintageNet manages. Example:
 
+<!-- tabs-open -->
+
+### Compile-time (config)
+
 ```elixir
-%{
+config :vintage_net,
+  config: [
+    {"wlan0", %{
+      type: VintageNetWiFi,
+      vintage_net_wifi: %{
+        wpa_supplicant_conf: """
+        network={
+          ssid="home"
+          key_mgmt=WPA-PSK
+          psk="very secret passphrase"
+        }
+        """
+      },
+      ipv4: %{method: :dhcp}
+    }}
+  ]
+```
+
+### Run-time (IEx)
+
+```elixir
+VintageNet.configure("wlan0", %{
   type: VintageNetWiFi,
   vintage_net_wifi: %{
     wpa_supplicant_conf: """
@@ -300,8 +638,10 @@ VintageNet manages. Example:
     """
   },
   ipv4: %{method: :dhcp}
-}
+})
 ```
+
+<!-- tabs-close -->
 
 ### Bridged Mesh WiFi
 
