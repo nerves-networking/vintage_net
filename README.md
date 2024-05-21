@@ -4,18 +4,9 @@
 [![API docs](https://img.shields.io/hexpm/v/vintage_net.svg?label=hexdocs "API docs")](https://hexdocs.pm/vintage_net/VintageNet.html)
 [![CircleCI](https://circleci.com/gh/nerves-networking/vintage_net.svg?style=svg)](https://circleci.com/gh/nerves-networking/vintage_net)
 
-> **_NOTE:_**  If you've been using `vintage_net` `v0.6.x` or earlier, we split
-> out network technology support out to separate libraries in `v0.7.0`. You'll
-> need to add those libraries to your `mix` dependency list and rename some
-> atoms.  Configurations stored on deployed devices will be automatically
-> updated.  See the [v0.7.0 release
-> notes](https://github.com/nerves-networking/vintage_net/releases/tag/v0.7.0)
-> for details.
-
 `VintageNet` is network configuration library built specifically for [Nerves
-Project](https://nerves-project.org) devices. It has the following features:
+Project](https://nerves-project.org) devices. It [replaced nerves_networking](#migration). It offers:
 
-* Ethernet and WiFi support included. Extendible to other technologies
 * Default configurations specified in your Application config
 * Runtime updates to configurations are persisted and applied on next boot
   (configurations are obfuscated by default to hide WiFi passphrases)
@@ -24,9 +15,76 @@ Project](https://nerves-project.org) devices. It has the following features:
   used (Ethernet over WiFi over cellular)
 * Internet connection monitoring and failure detection
 * Predictable network interface names
+* Supports:
+  * [Ethernet](https://github.com/nerves-networking/vintaget_net_ethernet)
+  * [WiFi](https://github.com/nerves-networking/vintaget_net_wifi)
+  * [QMI](https://github.com/nerves-networking/vintaget_net_qmi)
+  * [Mobile networking](https://github.com/nerves-networking/vintaget_net_mobile)
+  * [Wireguard](https://github.com/nerves-networking/vintaget_net_wireguard)
+  * [Bridge networking](https://github.com/nerves-networking/vintaget_net_bridge)
+  * [Direct network connection](https://github.com/nerves-networking/vintaget_net_direct)
+  * Extendible to other technologies
 
-> **TL;DR:** Don't care about any of this and just want the string to copy/paste
-> to set up networking? See the [VintageNet Cookbook](https://hexdocs.pm/vintage_net/cookbook.html).
+## Getting started
+
+The package can be installed by adding it to your list of dependencies in mix.exs, along with any relevant technologies:
+
+```elixir
+def deps do
+  #..
+  {:vintage_net, "~> 0.13"},
+  {:vintage_net_ethernet, "~> 0.11"},
+  {:vintage_net_wifi, "~> 0.12"},
+  #..
+end
+```
+
+In your config.exs or appropriate target config:
+
+```elixir
+config :vintage_net,
+  regulatory_domain: "US", # Change to match your area
+  config: [
+    {"eth0", %{
+       type: VintageNetEthernet,
+       ipv4: %{
+         method: :dhcp
+       }
+     }}
+    {"wlan0",
+      %{
+        type: VintageNetWiFi,
+        vintage_net_wifi: %{
+          networks: [
+            %{
+              key_mgmt: :wpa_psk,
+              ssid: "Your WiFi SSID",
+              psk: "passphrase or psk",
+            }
+          ]
+        },
+        ipv4: %{method: :dhcp},
+      }
+    }
+  ]
+```
+
+For more variants, see the [VintageNet Cookbook](https://hexdocs.pm/vintage_net/cookbook.html). It covers:
+
+- Compile-time vs. run-time
+- Static IPs
+- Enterprise WiFi (802.1X/EAP/PEAP/MSCHAP)
+- Hidden WiFi
+- Access Point mode
+- Custom WPA Supplicant configuration
+- Bridged Mesh WiFi via 802.11s
+- WAN sharing
+- Power management
+- and more
+
+If using `nerves_network` or `nerves_init_gadget`, read the [Migration](#migration) section.
+
+## About
 
 The following network configurations are supported:
 
@@ -59,44 +117,6 @@ interface's connection and then brings up new configurations in a fresh state.
 Network reconfiguration is assumed to be an infrequent event so while this can
 cause a hiccup in the network connectivity, it removes state machine code that
 made `nerves_network` hard to maintain.
-
-## Installation
-
-First, if you're modifying an existing project, you will need to remove
-`nerves_network` and `nerves_init_gadget`. `vintage_net` doesn't work with
-either of them. You'll get an error if any project references those packages.
-
-There are two routes to integrating `vintage_net`:
-
-1. Use [nerves_pack](https://hex.pm/packages/nerves_pack). `nerves_pack` is like
-   `nerves_init_gadget`, but for `vintage_net`.
-2. Copy and paste from the
-   [Nerves hello WiFi example](https://github.com/nerves-project/nerves_examples/tree/main/hello_wifi)
-
-The next step is to make sure that your Nerves system is compatible. The
-official Nerves systems released after 12/11/2019 work without modification. If
-rolling your own Nerves port, you will need the following Linux kernel options
-enabled:
-
-* `CONFIG_IP_ADVANCED_ROUTER=y`
-* `CONFIG_IP_MULTIPLE_TABLES=y`
-
-Then make sure that you have the following Busybox options enabled:
-
-* `CONFIG_IFCONFIG=y` - `ifconfig` ifconfig
-* `CONFIG_UDHCPC=y` - `udhcpc` DHCP Client
-* `CONFIG_UDHCPD=y` - `udhcpd` DHCP Server (optional)
-
-Finally, you'll need to choose what network connection technologies that you
-want available in your firmware. If using `nerves_pack`, you'll get support for
-wired Ethernet, WiFi, and USB gadget networking automatically. Otherwise, add
-one or more of the following to your dependency list:
-
-* [`vintage_net_ethernet`](https://github.com/nerves-networking/vintage_net_ethernet) - Standard wired Ethernet
-* [`vintage_net_wifi`](https://github.com/nerves-networking/vintage_net_wifi) - Client configurations for 802.11 WiFi
-* [`vintage_net_direct`](https://github.com/nerves-networking/vintage_net_direct) - Direct connections like those used for USB gadget
-* [`vintage_net_qmi`](https://github.com/nerves-networking/vintage_net_qmi) - Support USB-connected cellular modems
-* [`vintage_net_mobile`](https://github.com/nerves-networking/vintage_net_mobile) - Support UART-connected cellular modems
 
 ## Configuration
 
@@ -515,3 +535,43 @@ unnecessary, it can save a trip to the field or a full device reboot.
 
 `VintageNet.info/1` shows the power management state for network interfaces that
 are using this feature.
+
+## Migration
+
+VintageNet is a more maintainable and full-featured replacement for the previous Nerves networking tools. You can read more about how it works above. If you need to migrate from an older Nerves networking setup, this is the section for you.
+
+First, if you're modifying an existing project, you will need to remove
+`nerves_network` and `nerves_init_gadget`. `vintage_net` doesn't work with
+either of them. You'll get an error if any project references those packages.
+
+There are two routes to integrating `vintage_net`:
+
+1. Use [nerves_pack](https://hex.pm/packages/nerves_pack). `nerves_pack` is like
+   `nerves_init_gadget`, but for `vintage_net`.
+2. Copy and paste from the
+   [Nerves hello WiFi example](https://github.com/nerves-project/nerves_examples/tree/main/hello_wifi)
+
+The next step is to make sure that your Nerves system is compatible. The
+official Nerves systems released after 12/11/2019 work without modification. If
+rolling your own Nerves port, you will need the following Linux kernel options
+enabled:
+
+* `CONFIG_IP_ADVANCED_ROUTER=y`
+* `CONFIG_IP_MULTIPLE_TABLES=y`
+
+Then make sure that you have the following Busybox options enabled:
+
+* `CONFIG_IFCONFIG=y` - `ifconfig` ifconfig
+* `CONFIG_UDHCPC=y` - `udhcpc` DHCP Client
+* `CONFIG_UDHCPD=y` - `udhcpd` DHCP Server (optional)
+
+Finally, you'll need to choose what network connection technologies that you
+want available in your firmware. If using `nerves_pack`, you'll get support for
+wired Ethernet, WiFi, and USB gadget networking automatically. Otherwise, add
+one or more of the following to your dependency list:
+
+* [`vintage_net_ethernet`](https://github.com/nerves-networking/vintage_net_ethernet) - Standard wired Ethernet
+* [`vintage_net_wifi`](https://github.com/nerves-networking/vintage_net_wifi) - Client configurations for 802.11 WiFi
+* [`vintage_net_direct`](https://github.com/nerves-networking/vintage_net_direct) - Direct connections like those used for USB gadget
+* [`vintage_net_qmi`](https://github.com/nerves-networking/vintage_net_qmi) - Support USB-connected cellular modems
+* [`vintage_net_mobile`](https://github.com/nerves-networking/vintage_net_mobile) - Support UART-connected cellular modems
