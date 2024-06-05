@@ -165,8 +165,7 @@ defmodule VintageNet.IP do
   def prefix_length_to_subnet_mask(:inet6, len) when len >= 0 and len <= 128 do
     rest = 128 - len
 
-    <<a::size(16), b::size(16), c::size(16), d::size(16), e::size(16), f::size(16), g::size(16),
-      h::size(16)>> = <<-1::size(len), 0::size(rest)>>
+    <<a::16, b::16, c::16, d::16, e::16, f::16, g::16, h::16>> = <<-1::size(len), 0::size(rest)>>
 
     {a, b, c, d, e, f, g, h}
   end
