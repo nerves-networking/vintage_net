@@ -54,9 +54,8 @@ defmodule VintageNet.Interface.Supervisor do
   def clear_technology(ifname) do
     name = via_name(ifname)
 
-    with :ok <- Supervisor.terminate_child(name, :technology) do
-      Supervisor.delete_child(name, :technology)
-    end
+    _ = Supervisor.terminate_child(name, :technology)
+    _ = Supervisor.delete_child(name, :technology)
 
     :ok
   end
