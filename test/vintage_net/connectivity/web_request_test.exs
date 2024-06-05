@@ -4,25 +4,38 @@ defmodule VintageNet.Connectivity.WebRequestTest do
   alias VintageNet.Connectivity.WebRequest
   alias VintageNetTest.Utils
 
-  test "ping known hosts" do
+  test "check Microsoft's internet connectivity server" do
     ifname = Utils.get_ifname_for_tests()
 
-    normalized_nerves_project_org =
+    {:ok, normalized_msft_com} =
       WebRequest.normalize(
-        {WebRequest, host: "ping.nerves-project.org", port: 80, path: "/", nonce: "abcd1234"}
+        {WebRequest,
+         url: "http://www.msftconnecttest.com/connecttest.txt", match: "Microsoft Connect Test"}
+      )
+
+    assert WebRequest.check(ifname, normalized_msft_com) == {:ok, :internet}
+  end
+
+  test "check whenwhere.nerves-project.org" do
+    ifname = Utils.get_ifname_for_tests()
+
+    {:ok, normalized_nerves_project_org} =
+      WebRequest.normalize(
+        {WebRequest, url: "http://whenwhere.nerves-project.org?nonce=abcd1234"}
       )
 
     assert WebRequest.check(ifname, normalized_nerves_project_org) == {:ok, :internet}
+  end
 
-    normalized_msftconnecttest_com =
+  test "check Apple's internet connectivity server" do
+    ifname = Utils.get_ifname_for_tests()
+
+    {:ok, normalized_msft_com} =
       WebRequest.normalize(
         {WebRequest,
-         host: "www.msftconnecttest.com",
-         port: 80,
-         path: "/connecttest.txt",
-         match: "Microsoft Connect Test"}
+         url: "http://www.msftconnecttest.com/connecttest.txt", match: "Microsoft Connect Test"}
       )
 
-    assert WebRequest.check(ifname, normalized_msftconnecttest_com) == {:ok, :internet}
+    assert WebRequest.check(ifname, normalized_msft_com) == {:ok, :internet}
   end
 end
