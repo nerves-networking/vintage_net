@@ -72,7 +72,9 @@ defmodule VintageNet.Connectivity.HTTPClient do
              request.opts,
              timeout_millis
            ),
+         IO.inspect(socket, label: "socket"),
          :ok <- :gen_tcp.send(socket, request_message(request)),
+         IO.inspect(socket, label: "socket:send"),
          {:ok, response} <- receive_response(socket, fail_after_millis, max_response_size, []) do
       parse_response(response)
     end
@@ -128,15 +130,17 @@ defmodule VintageNet.Connectivity.HTTPClient do
 
   defp request_message(request) do
     query = if request.uri.query, do: "?#{request.uri.query}", else: ""
+    path = if request.uri.path, do: "/#{request.uri.path}", else: "/"
 
     [
       request.method,
       ?\s,
-      request.uri.path,
+      path,
       query,
       " HTTP/1.1\r\n",
       Enum.map(request.headers, fn {k, v} -> [k, ": ", v, "\r\n"] end),
       "\r\n"
     ]
+    |> IO.iodata_to_binary()
   end
 end

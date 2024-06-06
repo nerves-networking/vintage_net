@@ -37,7 +37,9 @@ defmodule VintageNet.Connectivity.WebRequest do
     end
   end
 
-  defp validate_url(uri) do
+  @doc "helper to validate a URL"
+  @spec validate_url(URI.t()) :: :ok | {:error, :invalid_url}
+  def validate_url(uri) do
     if uri.scheme == "http" and
          uri.port > 0 and uri.port < 65536 and
          byte_size(uri.host) > 1 do
