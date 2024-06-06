@@ -17,8 +17,23 @@ defmodule VintageNet.Connectivity.Check do
   @typedoc """
   Successful result of a connectivity check. Indicates what level
   of connectivity is available on an interface. 
+
+  * First tuple element is a connection status:
+      * `:lan`
+      * `:internet`
+  * Second element is a list of [PropertyTable](https://hexdocs.pm/property_table/) entries
+
+  For example if using `wlan0`, returning a check_result of:
+      
+      {:internet, [{["connection", "public_ip"], {75, 140, 99, 231}}]}
+
+  Will result in two properties in the property table:
+
+  * `{["interface", "wlan0", "connection"], :internet}`
+  * `{["interface", "wlan0", "connection", "public_ip"], {75, 140, 99, 231}}`
+
   """
-  @type check_result() :: VintageNet.connection_status()
+  @type check_result() :: {VintageNet.connection_status(), [{[String.t()], any()}]}
 
   @doc """
   Accept/reject a ping spec and normalize any options
@@ -43,10 +58,7 @@ defmodule VintageNet.Connectivity.Check do
 
   @doc """
   Perform a check on an interface. the second argument is a keyword argument
-  list that can have any data supplied via config. It will always have the following:
-
-  * `host` - either an IP address or DNS hostname that should be checked for connectivity.
-  * `port` - network port to be used during the check.
+  list that can have any data supplied via config. 
   """
   @callback check(ifname :: VintageNet.ifname(), spec :: check_spec()) ::
               {:ok, check_result()} | {:error, term()}

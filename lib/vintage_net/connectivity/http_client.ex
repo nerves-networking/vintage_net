@@ -89,7 +89,7 @@ defmodule VintageNet.Connectivity.HTTPClient do
   end
 
   @doc false
-  @spec parse_response_headers([String.t()], [headers()]) :: headers()
+  @spec parse_response_headers(iodata(), [headers()]) :: {headers(), iodata()}
   def parse_response_headers(["" | rest], headers) do
     {Enum.reverse(headers), Enum.join(rest, "\n")}
   end

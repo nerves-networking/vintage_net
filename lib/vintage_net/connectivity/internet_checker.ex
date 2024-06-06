@@ -45,7 +45,8 @@ defmodule VintageNet.Connectivity.InternetChecker do
       ping_list: [],
       check_logic: CheckLogic.init(connectivity),
       inspector: %{},
-      status: :unknown
+      status: :unknown,
+      properties: []
     }
 
     {:ok, state, {:continue, :continue}}
@@ -125,6 +126,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
     |> ping_if_unknown()
     |> update_check_logic()
     |> pet_pm_watchdog()
+    |> set_properties()
   end
 
   defp reset_status(state) do
@@ -154,8 +156,12 @@ defmodule VintageNet.Connectivity.InternetChecker do
     result = mod.check(state.ifname, who)
 
     case result do
-      {:ok, status} -> %{state | status: status}
-      _error -> %{state | status: :no_internet, ping_list: rest}
+      {:ok, {status, properties}} ->
+        %{state | status: status, properties: properties}
+
+      error ->
+        Logger.error("Internet Connectivity check failed for: #{state.ifname}: #{inspect(error)}")
+        %{state | status: :no_internet, ping_list: rest}
     end
   end
 
@@ -178,6 +184,15 @@ defmodule VintageNet.Connectivity.InternetChecker do
       PMControl.pet_watchdog(state.ifname)
     end
 
+    state
+  end
+
+  defp set_properties(%{properties: [{path, value} | rest]} = state) do
+    PropertyTable.put(VintageNet, ["interface", state.ifname, "connection"] ++ path, value)
+    set_properties(%{state | properties: rest})
+  end
+
+  defp set_properties(%{properties: []} = state) do
     state
   end
 

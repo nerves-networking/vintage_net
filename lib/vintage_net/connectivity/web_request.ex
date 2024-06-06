@@ -65,7 +65,7 @@ defmodule VintageNet.Connectivity.WebRequest do
       {:error, :econnrefused} ->
         # If the remote refuses the connection, then that means that someone
         # received it and we're connected at least connected to a LAN!
-        {:ok, :lan}
+        {:ok, {:lan, []}}
 
       {:error, reason} ->
         {:error, reason}
@@ -87,10 +87,11 @@ defmodule VintageNet.Connectivity.WebRequest do
   # check the body against the supplied regex.
   # if the match evaluates successfully, we must have internet
   # otherwise, there may be a captive portal indicating lan connectivity
-  @spec evaluate_match(String.t(), Regex.t()) :: {:ok, VintageNet.connection_status()}
+  @spec evaluate_match(String.t(), Regex.t()) ::
+          {:ok, {VintageNet.connection_status(), [{[String.t()], any()}]}}
   defp evaluate_match(body, match) do
     if String.match?(body, match),
-      do: {:ok, :internet},
-      else: {:ok, :lan}
+      do: {:ok, {:internet, []}},
+      else: {:ok, {:lan, []}}
   end
 end

@@ -81,13 +81,13 @@ defmodule VintageNet.Connectivity.TCPPing do
          {:ok, tcp} <-
            :gen_tcp.connect(dest_ip, port, bind_to_device_option(ifname), @ping_timeout) do
       _ = :gen_tcp.close(tcp)
-      {:ok, evaluate_result(dest_ip)}
+      {:ok, {evaluate_result(dest_ip), []}}
     else
       {:error, :econnrefused} ->
         # If the remote refuses the connection, then that means that it
         # received it and we're connected to the internet!
         {:ok, dest_ip} = VintageNet.IP.ip_to_tuple(host)
-        {:ok, evaluate_result(dest_ip)}
+        {:ok, {evaluate_result(dest_ip), []}}
 
       {:error, reason} ->
         {:error, reason}
