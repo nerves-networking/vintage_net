@@ -6,12 +6,12 @@ defmodule VintageNet.Connectivity.TCPPingTest do
 
   test "ping IPv4 known hosts" do
     ifname = Utils.get_ifname_for_tests()
-    assert TCPPing.check(ifname, {TCPPing, host: "1.1.1.1", port: 53}) == {:ok, :internet}
+    assert TCPPing.check(ifname, {TCPPing, host: "1.1.1.1", port: 53}) == {:ok, {:internet, []}}
   end
 
   test "ping IPv4 via loopback" do
     ifname = Utils.get_loopback_ifname()
-    assert TCPPing.check(ifname, {TCPPing, host: "127.0.0.1", port: 80}) == {:ok, :lan}
+    assert TCPPing.check(ifname, {TCPPing, host: "127.0.0.1", port: 80}) == {:ok, {:lan, []}}
   end
 
   # If this fails and your LAN doesn't support IPv6, run "mix test --exclude requires_ipv6"
@@ -20,13 +20,13 @@ defmodule VintageNet.Connectivity.TCPPingTest do
     ifname = Utils.get_ifname_for_tests()
 
     assert TCPPing.check(ifname, {TCPPing, host: "2606:4700:4700::1111", port: 53}) ==
-             {:ok, :internet}
+             {:ok, {:internet, []}}
   end
 
   @tag :requires_ipv6
   test "ping IPv6 via loopback" do
     ifname = Utils.get_loopback_ifname()
-    assert TCPPing.check(ifname, {TCPPing, host: "::1", port: 80}) == {:ok, :lan}
+    assert TCPPing.check(ifname, {TCPPing, host: "::1", port: 80}) == {:ok, {:lan, []}}
   end
 
   test "ping internet_host_list" do
@@ -34,7 +34,7 @@ defmodule VintageNet.Connectivity.TCPPingTest do
 
     # While these won't work for everyone, they should work on CI
     for {:tcp_ping, opts} <- Application.fetch_env!(:vintage_net, :internet_host_list) do
-      assert TCPPing.check(ifname, {TCPPing, opts}) == :ok
+      assert TCPPing.check(ifname, {TCPPing, opts}) == {:ok, {:internet, []}}
     end
   end
 

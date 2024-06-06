@@ -72,9 +72,7 @@ defmodule VintageNet.Connectivity.HTTPClient do
              request.opts,
              timeout_millis
            ),
-         IO.inspect(socket, label: "socket"),
          :ok <- :gen_tcp.send(socket, request_message(request)),
-         IO.inspect(socket, label: "socket:send"),
          {:ok, response} <- receive_response(socket, fail_after_millis, max_response_size, []) do
       parse_response(response)
     end
