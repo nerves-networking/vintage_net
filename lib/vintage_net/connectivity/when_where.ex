@@ -65,7 +65,7 @@ defmodule VintageNet.Connectivity.WhenWhere do
   @spec make_request(:inet.ip_address(), String.t(), Keyword.t()) ::
           {:ok, [{String.t(), String.t()}]} | {:error, term()}
   defp make_request(src_ip, nonce, options) do
-    url = URI.append_query(options[:url], "nonce=#{nonce}")
+    url = %{options[:url] | query: "nonce=#{nonce}"}
     request = HTTPClient.create_request(url, src_ip)
 
     case HTTPClient.make_request(request, options[:max_response_size], options[:timeout_millis]) do
