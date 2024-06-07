@@ -36,7 +36,7 @@ jobs:
           keys:
             - v1-mix-cache-<< parameters.tag >>-{{ checksum "mix.lock" }}
       - run: mix deps.get
-      - run: mix test --exclude requires_ipv6 || mix test --failed
+      - run: mix test --exclude requires_ipv6 --exclude whenwhere || mix test --failed
       - when:
           condition:
             matches: { <<: *latest, value: << parameters.tag >> }

@@ -4,6 +4,9 @@ defmodule VintageNet.Connectivity.WhenWhereTest do
   alias VintageNet.Connectivity.WhenWhere
   alias VintageNetTest.Utils
 
+  # If this fails it may be because whenwhere is down or doesn't support your network.
+  # run "mix test --exclude whenwhere"
+  @tag :whenwhere
   test "when/where" do
     ifname = Utils.get_ifname_for_tests()
 
