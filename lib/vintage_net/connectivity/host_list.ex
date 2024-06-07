@@ -3,6 +3,7 @@ defmodule VintageNet.Connectivity.HostList do
 
   alias VintageNet.Connectivity.TCPPing
   alias VintageNet.Connectivity.WebRequest
+  alias VintageNet.Connectivity.WhenWhere
   require Logger
 
   @typedoc """
@@ -27,10 +28,7 @@ defmodule VintageNet.Connectivity.HostList do
   def load(config \\ Application.get_all_env(:vintage_net)) do
     config_list = internet_host_list(config) ++ legacy_internet_host(config)
 
-    hosts =
-      config_list
-      |> Enum.map(&normalize/1)
-      |> Enum.reject(fn x -> x == :error end)
+    hosts = normalize_all(config_list)
 
     if hosts == [] do
       Logger.warning("VintageNet: empty or invalid `:internet_host_list` so using defaults")
@@ -65,8 +63,20 @@ defmodule VintageNet.Connectivity.HostList do
     end
   end
 
+  defp normalize_all(list, acc \\ [])
+
+  defp normalize_all([entry | rest], acc) do
+    case normalize(entry) do
+      {:ok, normalized} -> normalize_all(rest, [normalized | acc])
+      :error -> normalize_all(rest, acc)
+    end
+  end
+
+  defp normalize_all([], acc), do: Enum.reverse(acc)
+
   defp normalize({:tcp_ping, opts}), do: normalize({TCPPing, opts})
   defp normalize({:web_request, opts}), do: normalize({WebRequest, opts})
+  defp normalize({:whenwhere, opts}), do: normalize({WhenWhere, opts})
 
   defp normalize({module, opts} = spec) when is_atom(module) and is_list(opts) do
     module.normalize(spec)

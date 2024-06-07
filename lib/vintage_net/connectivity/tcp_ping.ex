@@ -28,9 +28,9 @@ defmodule VintageNet.Connectivity.TCPPing do
     with {:ok, host} <- Keyword.fetch(opts, :host),
          {:ok, port} when port > 0 and port < 65535 <- Keyword.fetch(opts, :port) do
       case VintageNet.IP.ip_to_tuple(host) do
-        {:ok, host_as_tuple} -> {__MODULE__, host: host_as_tuple, port: port}
+        {:ok, host_as_tuple} -> {:ok, {__MODULE__, host: host_as_tuple, port: port}}
         # Likely a domain name
-        {:error, _} when is_binary(host) -> {__MODULE__, host: host, port: port}
+        {:error, _} when is_binary(host) -> {:ok, {__MODULE__, host: host, port: port}}
         _ -> :error
       end
     else

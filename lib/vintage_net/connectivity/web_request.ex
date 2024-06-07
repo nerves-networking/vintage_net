@@ -34,6 +34,8 @@ defmodule VintageNet.Connectivity.WebRequest do
         match: regex_match,
         max_response_size: Keyword.get(options, :max_response_size, @default_max_response_size),
         timeout_millis: Keyword.get(options, :timeout_millis, @default_timeout_millis)}}
+    else
+      _ -> :error
     end
   end
 
