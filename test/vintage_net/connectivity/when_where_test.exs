@@ -20,4 +20,18 @@ defmodule VintageNet.Connectivity.WhenWhereTest do
              _ -> false
            end)
   end
+
+  test "when/where no cname" do
+    ifname = Utils.get_ifname_for_tests()
+
+    {:ok, normalized_whenwhere} =
+      WhenWhere.normalize({WhenWhere, url: "http://dnlawqcegshx3.cloudfront.net"})
+
+    assert {:ok, {:internet, properties}} = WhenWhere.check(ifname, normalized_whenwhere)
+
+    assert Enum.find(properties, fn
+             {["timestamp"], _} -> true
+             _ -> false
+           end)
+  end
 end
