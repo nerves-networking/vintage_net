@@ -4,6 +4,17 @@ defmodule VintageNet.Connectivity.WhenWhereTest do
   alias VintageNet.Connectivity.WhenWhere
   alias VintageNetTest.Utils
 
+  @properties [
+    ["address"],
+    ["city"],
+    ["country"],
+    ["country_region"],
+    ["latitude"],
+    ["longitude"],
+    ["now"],
+    ["time_zone"]
+  ]
+
   # If this fails it may be because whenwhere is down or doesn't support your network.
   # run "mix test --exclude whenwhere"
   @tag :whenwhere
@@ -15,10 +26,12 @@ defmodule VintageNet.Connectivity.WhenWhereTest do
 
     assert {:ok, {:internet, properties}} = WhenWhere.check(ifname, normalized_whenwhere)
 
-    assert Enum.find(properties, fn
-             {["timestamp"], _} -> true
-             _ -> false
-           end)
+    for property <- @properties do
+      assert Enum.find(properties, fn
+               {^property, _} -> true
+               _ -> false
+             end)
+    end
   end
 
   test "when/where no cname" do
@@ -29,9 +42,11 @@ defmodule VintageNet.Connectivity.WhenWhereTest do
 
     assert {:ok, {:internet, properties}} = WhenWhere.check(ifname, normalized_whenwhere)
 
-    assert Enum.find(properties, fn
-             {["timestamp"], _} -> true
-             _ -> false
-           end)
+    for property <- @properties do
+      assert Enum.find(properties, fn
+               {^property, _} -> true
+               _ -> false
+             end)
+    end
   end
 end

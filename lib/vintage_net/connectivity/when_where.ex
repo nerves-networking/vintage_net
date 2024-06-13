@@ -46,9 +46,9 @@ defmodule VintageNet.Connectivity.WhenWhere do
     nonce = Base.encode16(:rand.bytes(4))
 
     with {:ok, src_ip} <- get_interface_address(ifname, :inet),
-         {:ok, headers} <- make_request(src_ip, nonce, options),
+         {:ok, headers, reply} <- make_request(src_ip, nonce, options),
          :ok <- validate_nonce(headers, nonce),
-         properties <- build_props(headers, []) do
+         properties <- build_props(Enum.to_list(reply), []) do
       {:ok, {:internet, properties}}
     else
       {:error, :econnrefused} ->
@@ -63,54 +63,25 @@ defmodule VintageNet.Connectivity.WhenWhere do
   end
 
   @spec make_request(:inet.ip_address(), String.t(), Keyword.t()) ::
-          {:ok, [{String.t(), String.t()}]} | {:error, term()}
+          {:ok, [{String.t(), String.t()}], map()} | {:error, term()}
   defp make_request(src_ip, nonce, options) do
     url = %{options[:url] | query: "nonce=#{nonce}"}
-    request = HTTPClient.create_request(url, src_ip)
+    request_headers = [{"Content-Type", "application/x-erlang-binary"}]
+    request = HTTPClient.create_request(url, src_ip, request_headers)
 
     case HTTPClient.make_request(request, options[:max_response_size], options[:timeout_millis]) do
-      {:ok, {{_version, 200, _status_message}, headers, _body}} -> {:ok, headers}
-      error -> error
+      {:ok, {{_version, 200, _status_message}, headers, body}} ->
+        Logger.debug(%{term: inspect(body)})
+        {:ok, headers, :erlang.binary_to_term(body, [:safe])}
+
+      error ->
+        error
     end
   end
 
-  defp build_props([{"X-Now", now} | rest], props) do
-    property = {["timestamp"], now}
+  defp build_props([{prop, value} | rest], props) do
+    property = {[prop], value}
     build_props(rest, [property | props])
-  end
-
-  defp build_props([{"X-TimeZone", timezone} | rest], props) do
-    property = {["timezone"], timezone}
-    build_props(rest, [property | props])
-  end
-
-  defp build_props([{"X-Latitude", latitude} | rest], props) do
-    property = {["latitude"], latitude}
-    build_props(rest, [property | props])
-  end
-
-  defp build_props([{"X-Longitude", latitude} | rest], props) do
-    property = {["longitude"], latitude}
-    build_props(rest, [property | props])
-  end
-
-  defp build_props([{"X-Country", country} | rest], props) do
-    property = {["country"], country}
-    build_props(rest, [property | props])
-  end
-
-  defp build_props([{"X-City", city} | rest], props) do
-    property = {["city"], city}
-    build_props(rest, [property | props])
-  end
-
-  defp build_props([{"X-address", ip} | rest], props) do
-    property = {["public_ip"], ip}
-    build_props(rest, [property | props])
-  end
-
-  defp build_props([_ | rest], props) do
-    build_props(rest, props)
   end
 
   defp build_props([], props), do: Enum.reverse(props)

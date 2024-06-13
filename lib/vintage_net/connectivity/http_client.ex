@@ -29,12 +29,16 @@ defmodule VintageNet.Connectivity.HTTPClient do
   end
 
   @doc "Create a request from the specified IP address"
-  @spec create_request(URI.t(), VintageNet.ifname()) :: Request.t()
-  def create_request(uri, ifname) do
+  @spec create_request(URI.t(), VintageNet.ifname(), [{String.t(), String.t()}]) :: Request.t()
+  def create_request(uri, ifname, headers \\ []) do
+    headers =
+      [{"User-Agent", "VintageNet/#{version()}"}, {"Host", uri.host}, {"Connection", "close"}] ++
+        headers
+
     Request.new(
       uri,
       "GET",
-      [{"User-Agent", "VintageNet/#{version()}"}, {"Host", uri.host}, {"Connection", "close"}],
+      headers,
       [
         :binary,
         packet: :raw,
