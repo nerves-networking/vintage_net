@@ -12,7 +12,6 @@ defmodule VintageNet.Connectivity.WhenWhere do
   """
 
   @behaviour VintageNet.Connectivity.Check
-  import VintageNet.Connectivity.TCPPing, only: [get_interface_address: 2]
   import VintageNet.Connectivity.WebRequest, only: [validate_url: 1]
 
   alias VintageNet.Connectivity.HTTPClient
@@ -45,8 +44,7 @@ defmodule VintageNet.Connectivity.WhenWhere do
   def check(ifname, {__MODULE__, options}) do
     nonce = Base.encode16(:rand.bytes(4))
 
-    with {:ok, src_ip} <- get_interface_address(ifname, :inet),
-         {:ok, headers, reply} <- make_request(src_ip, nonce, options),
+    with {:ok, headers, reply} <- make_request(ifname, nonce, options),
          :ok <- validate_nonce(headers, nonce),
          properties <- build_props(Enum.to_list(reply), []) do
       {:ok, {:internet, properties}}
@@ -62,12 +60,12 @@ defmodule VintageNet.Connectivity.WhenWhere do
     end
   end
 
-  @spec make_request(:inet.ip_address(), String.t(), Keyword.t()) ::
+  @spec make_request(VintageNet.ifname(), String.t(), Keyword.t()) ::
           {:ok, [{String.t(), String.t()}], map()} | {:error, term()}
-  defp make_request(src_ip, nonce, options) do
+  defp make_request(ifname, nonce, options) do
     url = %{options[:url] | query: "nonce=#{nonce}"}
     request_headers = [{"Content-Type", "application/x-erlang-binary"}]
-    request = HTTPClient.create_request(url, src_ip, request_headers)
+    request = HTTPClient.create_request(url, ifname, request_headers)
 
     case HTTPClient.make_request(request, options[:max_response_size], options[:timeout_millis]) do
       {:ok, {{_version, 200, _status_message}, headers, body}} ->

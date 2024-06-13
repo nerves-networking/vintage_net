@@ -78,8 +78,7 @@ defmodule VintageNet.Connectivity.TCPPing do
     # interface. I.e., errors on other interfaces mess up DNS even if the
     # one of interest is ok.
     with {:ok, dest_ip} <- VintageNet.IP.ip_to_tuple(host),
-         {:ok, tcp} <-
-           :gen_tcp.connect(dest_ip, port, bind_to_device_option(ifname), @ping_timeout) do
+         {:ok, tcp} <- :gen_tcp.connect(dest_ip, port, bind_to_device(ifname), @ping_timeout) do
       _ = :gen_tcp.close(tcp)
       {:ok, {evaluate_result(dest_ip), []}}
     else
@@ -94,7 +93,7 @@ defmodule VintageNet.Connectivity.TCPPing do
     end
   end
 
-  defp bind_to_device_option(ifname) do
+  defp bind_to_device(ifname) do
     case :os.type() do
       {:unix, :linux} -> [bind_to_device: ifname]
       _ -> []
