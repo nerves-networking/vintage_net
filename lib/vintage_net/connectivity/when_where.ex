@@ -6,18 +6,28 @@ defmodule VintageNet.Connectivity.WhenWhere do
 
   This connectivity checker requires the following options:
 
-  * `:url` - Required. HTTP URL for an Internet-reachable host
+  * `:url` - Required. HTTP URL for an Internet-reachable whenwhere server
   * `:max_response_size` - Optional max response size in bytes. Defaults to 1024 bytes.
   * `:timeout_millis` - Optional time to wait for a response in milliseconds. Defaults to 5000 ms.
+
+  Upon success, this check will place the following properties in the property table:
+
+  * `["interface", ifname, "connection", "now"]` - ISO8601 DateTime.
+  *  `["interface", ifname, "connection", "time_zone"]` - Detected Timezone.
+  * `["interface", ifname, "connection", "latitude"]` - Geolocation latitude.
+  * `["interface", ifname, "connection", "longitude"]` - Geolocation longitude.
+  * `["interface", ifname, "connection", "country"]` - Geolocation country code.
+  * `["interface", ifname, "connection", "country_region"]` - Geolocation country_region code.
+  * `["interface", ifname, "connection", "city"]` - Geolocation city name.
+  * `["interface", ifname, "connection", "address"]` - Public IP Address used to access the server.
   """
 
   @behaviour VintageNet.Connectivity.Check
   import VintageNet.Connectivity.WebRequest, only: [validate_url: 1]
 
   alias VintageNet.Connectivity.HTTPClient
-  require Logger
 
-  @default_max_response_size 1024
+  @max_response_size 1024
   @default_timeout_millis 5_000
 
   @impl VintageNet.Connectivity.Check
@@ -27,9 +37,7 @@ defmodule VintageNet.Connectivity.WhenWhere do
          :ok <- validate_url(url) do
       {:ok,
        {__MODULE__,
-        url: url,
-        max_response_size: Keyword.get(options, :max_response_size, @default_max_response_size),
-        timeout_millis: Keyword.get(options, :timeout_millis, @default_timeout_millis)}}
+        url: url, timeout_millis: Keyword.get(options, :timeout_millis, @default_timeout_millis)}}
     else
       _ -> :error
     end
@@ -67,9 +75,8 @@ defmodule VintageNet.Connectivity.WhenWhere do
     request_headers = [{"Content-Type", "application/x-erlang-binary"}]
     request = HTTPClient.create_request(url, ifname, request_headers)
 
-    case HTTPClient.make_request(request, options[:max_response_size], options[:timeout_millis]) do
+    case HTTPClient.make_request(request, @max_response_size, options[:timeout_millis]) do
       {:ok, {{_version, 200, _status_message}, headers, body}} ->
-        Logger.debug(%{term: inspect(body)})
         {:ok, headers, :erlang.binary_to_term(body, [:safe])}
 
       error ->

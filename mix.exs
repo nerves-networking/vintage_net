@@ -8,7 +8,7 @@ defmodule VintageNet.MixProject do
     [
       app: :vintage_net,
       version: @version,
-      elixir: "~> 1.13",
+      elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       compilers: [:elixir_make | Mix.compilers()],
@@ -61,9 +61,6 @@ defmodule VintageNet.MixProject do
            url: "http://www.msftconnecttest.com/connecttest.txt", match: "Microsoft Connect Test"},
           {:whenwhere, url: "https://whenwhere.nerves-project.org"}
         ],
-        internet_hostname_list: [
-          {"google.com", 443}
-        ],
         regulatory_domain: "00",
         # Contain processes in cgroups by setting to:
         #   [cgroup_base: "vintage_net", cgroup_controllers: ["cpu"]]
@@ -71,7 +68,7 @@ defmodule VintageNet.MixProject do
         power_managers: [],
         route_metric_fun: &VintageNet.Route.DefaultMetric.compute_metric/2
       ],
-      extra_applications: [:logger, :crypto, :ssl, :public_key, :inets],
+      extra_applications: [:logger, :crypto],
       mod: {VintageNet.Application, []}
     ]
   end
