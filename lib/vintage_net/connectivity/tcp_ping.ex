@@ -45,9 +45,6 @@ defmodule VintageNet.Connectivity.TCPPing do
 
       {:error, reason} ->
         {:error, reason}
-
-      posix_error ->
-        {:error, posix_error}
     end
   end
 
