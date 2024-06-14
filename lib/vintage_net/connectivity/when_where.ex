@@ -62,14 +62,13 @@ defmodule VintageNet.Connectivity.WhenWhere do
 
       {:error, reason} ->
         {:error, reason}
-
-      posix_error when is_atom(posix_error) ->
-        {:error, posix_error}
     end
   end
 
   @spec make_request(VintageNet.ifname(), String.t(), Keyword.t()) ::
-          {:ok, [{String.t(), String.t()}], map()} | {:error, term()}
+          {:ok, [{String.t(), String.t()}], map()}
+          | {:error, 400..599, String.t()}
+          | {:error, term()}
   defp make_request(ifname, nonce, options) do
     url = %{options[:url] | query: "nonce=#{nonce}"}
     request_headers = [{"Content-Type", "application/x-erlang-binary"}]
@@ -78,6 +77,9 @@ defmodule VintageNet.Connectivity.WhenWhere do
     case HTTPClient.make_request(request, @max_response_size, options[:timeout_millis]) do
       {:ok, {{_version, 200, _status_message}, headers, body}} ->
         {:ok, headers, :erlang.binary_to_term(body, [:safe])}
+
+      {:ok, {{_version, status_code, _status_message}, _headers, body}} ->
+        {:error, status_code, body}
 
       error ->
         error

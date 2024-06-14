@@ -63,9 +63,10 @@ defmodule VintageNet.Connectivity.WebRequest do
 
   @impl VintageNet.Connectivity.Check
   def check(ifname, {__MODULE__, options}) do
-    with {:ok, body} <- make_request(ifname, options) do
-      evaluate_match(body, options[:match])
-    else
+    case make_request(ifname, options) do
+      {:ok, body} ->
+        evaluate_match(body, options[:match])
+
       {:error, :econnrefused} ->
         # If the remote refuses the connection, then that means that someone
         # received it and we're connected at least connected to a LAN!
@@ -73,9 +74,6 @@ defmodule VintageNet.Connectivity.WebRequest do
 
       {:error, reason} ->
         {:error, reason}
-
-      posix_error when is_atom(posix_error) ->
-        {:error, posix_error}
     end
   end
 

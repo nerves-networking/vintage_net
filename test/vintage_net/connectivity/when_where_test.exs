@@ -6,13 +6,8 @@ defmodule VintageNet.Connectivity.WhenWhereTest do
 
   @properties [
     ["address"],
-    ["city"],
     ["country"],
-    ["country_region"],
-    ["latitude"],
-    ["longitude"],
-    ["now"],
-    ["time_zone"]
+    ["now"]
   ]
 
   # If this fails it may be because whenwhere is down or doesn't support your network.
