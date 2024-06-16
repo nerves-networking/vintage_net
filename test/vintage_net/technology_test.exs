@@ -1,6 +1,5 @@
 defmodule VintageNet.TechnologyTest do
   use ExUnit.Case
-  doctest VintageNet.Technology
   alias VintageNet.Technology
 
   test "loading good configurations" do
