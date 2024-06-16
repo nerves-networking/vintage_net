@@ -270,4 +270,16 @@ defmodule VintageNet.IP.IPv4ConfigTest do
 
     assert expected == IPv4Config.add_config(initial_raw_config, input, default_opts())
   end
+
+  test "raises on invalid mask" do
+    config = %{
+      ipv4: %{
+        method: :static,
+        address: {192, 168, 1, 1},
+        netmask: :not_a_mask
+      }
+    }
+
+    assert_raise ArgumentError, fn -> IPv4Config.normalize(config) end
+  end
 end

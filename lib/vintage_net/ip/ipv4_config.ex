@@ -89,13 +89,11 @@ defmodule VintageNet.IP.IPv4Config do
   defp get_prefix_length(%{prefix_length: prefix_length}), do: prefix_length
 
   defp get_prefix_length(%{netmask: mask}) do
-    with {:ok, mask_as_tuple} <- IP.ip_to_tuple(mask),
-         {:ok, prefix_length} <- IP.subnet_mask_to_prefix_length(mask_as_tuple) do
-      prefix_length
-    else
-      {:error, _reason} ->
-        raise ArgumentError, "invalid subnet mask #{inspect(mask)}"
-    end
+    {:ok, mask_as_tuple} = IP.ip_to_tuple(mask)
+    {:ok, prefix_length} = IP.subnet_mask_to_prefix_length(mask_as_tuple)
+    prefix_length
+  rescue
+    MatchError -> reraise ArgumentError, "invalid subnet mask #{inspect(mask)}", __STACKTRACE__
   end
 
   defp get_prefix_length(_unspecified),
