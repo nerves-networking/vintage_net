@@ -33,8 +33,8 @@ defmodule VintageNet.Connectivity.TCPPing do
     # interface. I.e., errors on other interfaces mess up DNS even if the
     # one of interest is ok.
     with {:ok, dest_ip} <- VintageNet.IP.ip_to_tuple(host),
-         {:ok, src_ip} <- get_interface_address(ifname, family(dest_ip)),
-         {:ok, tcp} <- :gen_tcp.connect(dest_ip, port, [ip: src_ip], @ping_timeout) do
+         {:ok, tcp} <-
+           :gen_tcp.connect(dest_ip, port, bind_to_device_option(ifname), @ping_timeout) do
       _ = :gen_tcp.close(tcp)
       :ok
     else
@@ -48,33 +48,10 @@ defmodule VintageNet.Connectivity.TCPPing do
     end
   end
 
-  defp get_interface_address(ifname, family) do
-    with {:ok, addresses} <- :inet.getifaddrs(),
-         {:ok, params} <- find_addresses_on_interface(addresses, ifname) do
-      find_ip_addr(params, family)
+  defp bind_to_device_option(ifname) do
+    case :os.type() do
+      {:unix, :linux} -> [bind_to_device: ifname]
+      _ -> []
     end
   end
-
-  defp find_addresses_on_interface(addresses, ifname) do
-    ifname_cl = to_charlist(ifname)
-
-    case Enum.find(addresses, fn {k, _v} -> k == ifname_cl end) do
-      {^ifname_cl, params} -> {:ok, params}
-      _ -> {:error, :if_not_found}
-    end
-  end
-
-  defp find_ip_addr(params, family) do
-    case Enum.find(params, &ip_addr?(family, &1)) do
-      {:addr, addr} -> {:ok, addr}
-      _ -> {:error, :no_suitable_ip_address}
-    end
-  end
-
-  defp ip_addr?(:inet, {:addr, {_, _, _, _}}), do: true
-  defp ip_addr?(:inet6, {:addr, {_, _, _, _, _, _, _, _}}), do: true
-  defp ip_addr?(_family, _), do: false
-
-  defp family({_, _, _, _}), do: :inet
-  defp family({_, _, _, _, _, _, _, _}), do: :inet6
 end
