@@ -16,13 +16,13 @@ Project](https://nerves-project.org) devices. It [replaced nerves_networking](#m
 * Internet connection monitoring and failure detection
 * Predictable network interface names
 * Supports:
-  * [Ethernet](https://github.com/nerves-networking/vintaget_net_ethernet)
-  * [WiFi](https://github.com/nerves-networking/vintaget_net_wifi)
-  * [QMI](https://github.com/nerves-networking/vintaget_net_qmi)
-  * [Mobile networking](https://github.com/nerves-networking/vintaget_net_mobile)
-  * [Wireguard](https://github.com/nerves-networking/vintaget_net_wireguard)
-  * [Bridge networking](https://github.com/nerves-networking/vintaget_net_bridge)
-  * [Direct network connection](https://github.com/nerves-networking/vintaget_net_direct)
+  * [Ethernet](https://github.com/nerves-networking/vintage_net_ethernet)
+  * [WiFi](https://github.com/nerves-networking/vintage_net_wifi)
+  * [QMI](https://github.com/nerves-networking/vintage_net_qmi)
+  * [Mobile networking](https://github.com/nerves-networking/vintage_net_mobile)
+  * [Wireguard](https://github.com/nerves-networking/vintage_net_wireguard)
+  * [Bridge networking](https://github.com/nerves-networking/vintage_net_bridge)
+  * [Direct network connection](https://github.com/nerves-networking/vintage_net_direct)
   * Extendible to other technologies
 
 ## Getting started
