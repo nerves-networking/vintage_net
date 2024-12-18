@@ -37,7 +37,9 @@ defmodule VintageNet.Connectivity.InspectorTest do
 
   test "finds connections using port sockets" do
     # Run a super slow HTTP request to test
-    {:ok, socket} = :gen_tcp.connect(~c"neverssl.com", 80, [:binary, {:active, false}])
+    site = "whenwhere.nerves-project.org"
+
+    {:ok, socket} = :gen_tcp.connect(to_charlist(site), 80, [:binary, {:active, false}])
     {:ok, {src_ip, _src_port}} = :inet.sockname(socket)
 
     # Simulate a first call. The status should be unknown, but the socket should be
@@ -47,12 +49,14 @@ defmodule VintageNet.Connectivity.InspectorTest do
 
     assert status == :unknown
     assert Map.has_key?(cache, socket)
-
     # Make traffic happen on the socket
     :ok =
-      :gen_tcp.send(socket, "GET / HTTP/1.1\r\nHost: neverssl.com\r\nAccept: text/html\r\n\r\n")
+      :gen_tcp.send(
+        socket,
+        "GET / HTTP/1.1\r\nHost: #{site}\r\nUser-Agent: vintage_net/1.1\r\nAccept: */*\r\n\r\n"
+      )
 
-    _ = :gen_tcp.recv(socket, 1000, 500)
+    {:ok, _} = :gen_tcp.recv(socket, 0, 500)
 
     # Now check the whether the connection is found again and triggers the internet to be detected
     {status, cache} =
