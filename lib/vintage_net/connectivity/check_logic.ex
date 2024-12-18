@@ -25,7 +25,7 @@ defmodule VintageNet.Connectivity.CheckLogic do
   """
 
   @min_interval 500
-  @max_interval 30_000
+  @max_interval :timer.seconds(30)
   @max_fails_in_a_row 3
 
   @type state() :: %{

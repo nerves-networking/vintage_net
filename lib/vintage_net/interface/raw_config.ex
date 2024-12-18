@@ -39,13 +39,13 @@ defmodule VintageNet.Interface.RawConfig do
             type: nil,
             source_config: %{},
             required_ifnames: [],
-            retry_millis: 30_000,
+            retry_millis: :timer.seconds(30),
             files: [],
             restart_strategy: :one_for_all,
             child_specs: [],
-            up_cmd_millis: 5_000,
+            up_cmd_millis: :timer.seconds(5),
             up_cmds: [],
-            down_cmd_millis: 5_000,
+            down_cmd_millis: :timer.seconds(5),
             down_cmds: [],
             cleanup_files: []
 

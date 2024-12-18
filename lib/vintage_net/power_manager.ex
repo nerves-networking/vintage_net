@@ -82,7 +82,7 @@ defmodule VintageNet.PowerManager do
 
   ```elixir
   config :vintage_net,
-    power_managers: [{MyCellularPM, [ifname: "ppp0", watchdog_timeout: 60_000, reset_gpio: 123]}]
+    power_managers: [{MyCellularPM, [ifname: "ppp0", watchdog_timeout: :timer.minutes(1), reset_gpio: 123]}]
   ```
 
   Each tuple is the implementation's module name and init arguments. VintageNet

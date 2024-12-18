@@ -11,7 +11,7 @@ defmodule VintageNet.Connectivity.TCPPing do
   way usually works unless a device is behind a strict firewall, but there's
   usually at least one IP address/port on the Internet that they allow.
   """
-  @ping_timeout 5_000
+  @ping_timeout :timer.seconds(5)
 
   @type ping_error_reason :: :if_not_found | :no_ipv4_address | :inet.posix()
 

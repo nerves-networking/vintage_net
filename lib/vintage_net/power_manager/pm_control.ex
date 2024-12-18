@@ -31,7 +31,7 @@ defmodule VintageNet.PowerManager.PMControl do
   # to use the device again and that's unnecessary anyway.
   @transient_timeout 10
 
-  @default_watchdog_timeout 60_000
+  @default_watchdog_timeout :timer.minutes(1)
 
   defstruct [
     :impl,
