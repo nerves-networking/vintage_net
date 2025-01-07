@@ -2,6 +2,23 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.6] - 2025-01-06
+
+* Fixes
+  * The internet connectivity checker pets the network interface watchdog now
+    when the interface is known to be connected to the LAN or internet. If
+    you're using the watchdog to reset an interface (like a WiFi module) when it
+    hasn't had connectivity for a while, this may let you remove user code that
+    did the same thing. If you have a better check that the network interface is
+    working ok when disconnected, then stick with what you have. Thanks to
+    Connor Rigby for this change.
+
+* Changed
+  * Relax the PropertyTables dependency to allow v0.3 since the backwards
+    incompatibilities don't affect VintageNet.
+  * Incorporate various documentation updates that accumulated
+  * Only support Elixir 1.13 and later
+
 ## [v0.13.5] - 2023-09-13
 
 * Changed
