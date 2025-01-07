@@ -79,9 +79,11 @@ defmodule VintageNet.Connectivity.InspectorTest do
 
   if Code.ensure_loaded(:gen_tcp_socket) == {:module, :gen_tcp_socket} do
     test "finds connections using socket API sockets" do
+      site = "whenwhere.nerves-project.org"
+
       # Run a super slow HTTP request to test
       {:ok, tcp_socket} =
-        :gen_tcp_socket.connect(~c"neverssl.com", 80, [:binary, {:active, false}], 1000)
+        :gen_tcp_socket.connect(to_charlist(site), 80, [:binary, {:active, false}], 1000)
 
       {:ok, {src_ip, _src_port}} = :gen_tcp_socket.sockname(tcp_socket)
 
@@ -100,7 +102,7 @@ defmodule VintageNet.Connectivity.InspectorTest do
       :ok =
         :gen_tcp_socket.send(
           tcp_socket,
-          "GET / HTTP/1.1\r\nHost: neverssl.com\r\nAccept: text/html\r\n\r\n"
+          "GET / HTTP/1.1\r\nHost: #{site}\r\nAccept: text/html\r\n\r\n"
         )
 
       _ = :gen_tcp_socket.recv(tcp_socket, 1000, 500)
