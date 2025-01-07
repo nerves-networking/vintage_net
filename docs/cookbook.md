@@ -440,7 +440,7 @@ involved. Here is a basic configuration:
 ```elixir
 config :vintage_net,
   config: [
-    {"wlan0", 
+    {"wlan0",
       %{
         type: VintageNetWiFi,
         vintage_net_wifi: %{
@@ -514,7 +514,7 @@ this:
 ```elixir
 config :vintage_net,
   config: [
-    {"wlan0", 
+    {"wlan0",
       %{
         type: VintageNetWiFi,
         vintage_net_wifi: %{
