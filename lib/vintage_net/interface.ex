@@ -14,7 +14,7 @@ defmodule VintageNet.Interface do
   The actual code that supplies the configuration implements the `VintageNet.Technology`
   behaviour.
   """
-  use GenStateMachine
+  @behaviour :gen_statem
 
   alias VintageNet.Interface.CommandRunner
   alias VintageNet.Interface.RawConfig
@@ -34,6 +34,18 @@ defmodule VintageNet.Interface do
             waiters: [],
             inflight_ioctls: %{}
 
+  @doc false
+  @spec child_spec(VintageNet.ifname()) :: Supervisor.child_spec()
+  def child_spec(init_arg) do
+    %{
+      id: __MODULE__,
+      start: {__MODULE__, :start_link, [init_arg]},
+      restart: :permanent,
+      shutdown: 5000,
+      type: :worker
+    }
+  end
+
   @doc """
   Start up an interface
 
@@ -43,7 +55,7 @@ defmodule VintageNet.Interface do
   """
   @spec start_link(VintageNet.ifname()) :: GenServer.on_start()
   def start_link(ifname) do
-    GenStateMachine.start_link(__MODULE__, ifname, name: via_name(ifname))
+    :gen_statem.start_link(via_name(ifname), __MODULE__, ifname, [])
   end
 
   defp via_name(ifname) do
@@ -57,7 +69,7 @@ defmodule VintageNet.Interface do
   """
   @spec stop(VintageNet.ifname()) :: :ok
   def stop(ifname) do
-    GenStateMachine.stop(via_name(ifname))
+    :gen_statem.stop(via_name(ifname))
   end
 
   @doc """
@@ -118,7 +130,7 @@ defmodule VintageNet.Interface do
          persist_configuration(ifname, normalized_config, options),
          PropertyTable.put(VintageNet, ["interface", ifname, "config"], normalized_config),
          {:error, :already_started} <- maybe_start_interface(ifname) do
-      GenStateMachine.call(via_name(raw_config.ifname), {:configure, raw_config})
+      :gen_statem.call(via_name(raw_config.ifname), {:configure, raw_config})
     end
   end
 
@@ -166,7 +178,7 @@ defmodule VintageNet.Interface do
   """
   @spec wait_until_configured(VintageNet.ifname()) :: :ok
   def wait_until_configured(ifname) do
-    GenStateMachine.call(via_name(ifname), :wait)
+    :gen_statem.call(via_name(ifname), :wait)
   end
 
   @doc """
@@ -174,7 +186,7 @@ defmodule VintageNet.Interface do
   """
   @spec ioctl(VintageNet.ifname(), atom(), any()) :: :ok | {:ok, any()} | {:error, any()}
   def ioctl(ifname, command, args) do
-    GenStateMachine.call(via_name(ifname), {:ioctl, command, args})
+    :gen_statem.call(via_name(ifname), {:ioctl, command, args})
   end
 
   defp debug(data, message), do: log(:debug, data.ifname, message)
@@ -183,7 +195,7 @@ defmodule VintageNet.Interface do
     Logger.log(level, ["VintageNet(", ifname, "): ", message])
   end
 
-  @impl GenStateMachine
+  @impl :gen_statem
   def init(ifname) do
     Process.flag(:trap_exit, true)
 
@@ -215,9 +227,11 @@ defmodule VintageNet.Interface do
     end
   end
 
-  # :configuring
+  @impl :gen_statem
+  def callback_mode(), do: :handle_event_function
 
-  @impl GenStateMachine
+  # :configuring
+  @impl :gen_statem
   def handle_event(:info, {:commands_done, :ok}, :configuring, %__MODULE__{} = data) do
     # debug(data, ":configuring -> done success")
     {new_data, actions} = reply_to_waiters(data)
@@ -234,7 +248,6 @@ defmodule VintageNet.Interface do
     {:next_state, :configured, new_data, actions}
   end
 
-  @impl GenStateMachine
   def handle_event(
         :info,
         {:commands_done, {:error, _reason}},
@@ -249,7 +262,6 @@ defmodule VintageNet.Interface do
     {:next_state, :retrying, new_data, actions}
   end
 
-  @impl GenStateMachine
   def handle_event(
         :info,
         {:EXIT, pid, reason},
@@ -268,7 +280,6 @@ defmodule VintageNet.Interface do
     {:next_state, :retrying, new_data, actions}
   end
 
-  @impl GenStateMachine
   def handle_event(
         :state_timeout,
         _event,
@@ -285,7 +296,6 @@ defmodule VintageNet.Interface do
     {:next_state, :retrying, new_data, actions}
   end
 
-  @impl GenStateMachine
   def handle_event(
         {:call, from},
         {:configure, new_config},
@@ -305,7 +315,6 @@ defmodule VintageNet.Interface do
     start_configuring(new_config, new_data, actions)
   end
 
-  @impl GenStateMachine
   def handle_event(
         :info,
         {VintageNet, ["interface", an_ifname, "present"], _old_value, nil, _meta},
@@ -329,7 +338,6 @@ defmodule VintageNet.Interface do
     {:keep_state, data, {:reply, from, :ok}}
   end
 
-  @impl GenStateMachine
   def handle_event(
         :internal,
         {:configure, new_config},
@@ -350,7 +358,6 @@ defmodule VintageNet.Interface do
     {:next_state, :reconfiguring, %{new_data | next_config: new_config}, actions}
   end
 
-  @impl GenStateMachine
   def handle_event(
         {:call, from},
         {:configure, new_config},
@@ -372,7 +379,6 @@ defmodule VintageNet.Interface do
     {:next_state, :reconfiguring, %{new_data | next_config: new_config}, actions}
   end
 
-  @impl GenStateMachine
   def handle_event(
         {:call, from},
         {:ioctl, command, args},
@@ -388,7 +394,6 @@ defmodule VintageNet.Interface do
     {:keep_state, new_data}
   end
 
-  @impl GenStateMachine
   def handle_event(
         :info,
         {:ioctl_done, ioctl_pid, result},
@@ -404,7 +409,6 @@ defmodule VintageNet.Interface do
     {:keep_state, new_data, action}
   end
 
-  @impl GenStateMachine
   def handle_event(
         :info,
         {:EXIT, pid, reason},
@@ -427,7 +431,6 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl GenStateMachine
   def handle_event(
         :info,
         {VintageNet, ["interface", an_ifname, "present"], _old_value, nil, _meta},
@@ -450,7 +453,6 @@ defmodule VintageNet.Interface do
 
   # :reconfiguring
 
-  @impl GenStateMachine
   def handle_event(
         :info,
         {:commands_done, :ok},
@@ -478,7 +480,6 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl GenStateMachine
   def handle_event(
         :info,
         {:commands_done, {:error, _reason}},
@@ -505,7 +506,6 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl GenStateMachine
   def handle_event(
         :info,
         {:EXIT, pid, reason},
@@ -532,7 +532,6 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl GenStateMachine
   def handle_event(
         :state_timeout,
         _event,
@@ -561,7 +560,6 @@ defmodule VintageNet.Interface do
 
   # :retrying
 
-  @impl GenStateMachine
   def handle_event(:state_timeout, _event, :retrying, %__MODULE__{config: new_config} = data) do
     if interfaces_available?(data) do
       start_configuring(new_config, data, [])
@@ -570,7 +568,6 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl GenStateMachine
   def handle_event(
         :info,
         {VintageNet, ["interface", an_ifname, "present"], _old_value, true, _meta},
@@ -586,7 +583,6 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl GenStateMachine
   def handle_event(
         {:call, from},
         {:configure, new_config},
@@ -606,7 +602,6 @@ defmodule VintageNet.Interface do
     end
   end
 
-  @impl GenStateMachine
   def handle_event(:info, {:commands_done, _}, :retrying, %__MODULE__{} = data) do
     # This is a latent message that didn't get processed because a crash
     # got handled first. It can be produced by getting one of an
@@ -616,14 +611,12 @@ defmodule VintageNet.Interface do
   end
 
   # Catch all event handlers
-  @impl GenStateMachine
   def handle_event(:info, {:EXIT, _pid, _reason}, _state, data) do
     # Ignore latent or expected command runner and ioctl exits
     # debug(data, "#{inspect(state)} -> process exit (ignoring)")
     {:keep_state, data}
   end
 
-  @impl GenStateMachine
   def handle_event(
         {:call, from},
         :wait,
@@ -634,7 +627,6 @@ defmodule VintageNet.Interface do
     {:keep_state, %{data | waiters: [from | waiters]}}
   end
 
-  @impl GenStateMachine
   def handle_event(
         {:call, from},
         {:ioctl, _command, _args},
@@ -645,7 +637,6 @@ defmodule VintageNet.Interface do
     {:keep_state, data, {:reply, from, {:error, :unconfigured}}}
   end
 
-  @impl GenStateMachine
   def handle_event(
         :info,
         {VintageNet, ["interface", ifname, "present"], _old_value, present, _meta},
@@ -656,7 +647,7 @@ defmodule VintageNet.Interface do
     {:keep_state, data}
   end
 
-  @impl GenStateMachine
+  @impl :gen_statem
   def terminate(_reason, _state, %{ifname: ifname}) do
     PropertyTable.delete(VintageNet, ["interface", ifname, "type"])
     PropertyTable.delete(VintageNet, ["interface", ifname, "state"])
