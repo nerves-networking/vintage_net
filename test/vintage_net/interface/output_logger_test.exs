@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019 Frank Hunleth
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.Interface.OutputLoggerTest do
   use ExUnit.Case
   import ExUnit.CaptureLog

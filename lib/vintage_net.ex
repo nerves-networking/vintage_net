@@ -1,3 +1,12 @@
+# SPDX-FileCopyrightText: 2019 Connor Rigby
+# SPDX-FileCopyrightText: 2019 Frank Hunleth
+# SPDX-FileCopyrightText: 2019 Matt Ludwigs
+# SPDX-FileCopyrightText: 2020 Jean-Francois Cloutier
+# SPDX-FileCopyrightText: 2020 Jon Carstens
+# SPDX-FileCopyrightText: 2021 Jason Axelson
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet do
   @moduledoc """
   `VintageNet` is network configuration library built specifically for [Nerves

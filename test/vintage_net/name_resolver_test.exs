@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2019 Frank Hunleth
+# SPDX-FileCopyrightText: 2021 Connor Rigby
+# SPDX-FileCopyrightText: 2022 Jon Carstens
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.NameResolverTest do
   use VintageNetTest.Case, async: true
   import ExUnit.CaptureLog

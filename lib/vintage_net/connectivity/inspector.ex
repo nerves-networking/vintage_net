@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2021 Frank Hunleth
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.Connectivity.Inspector do
   @moduledoc """
   This module looks at the network activity of all TCP socket connections known

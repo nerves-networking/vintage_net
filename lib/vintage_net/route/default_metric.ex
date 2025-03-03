@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2021 Frank Hunleth
+# SPDX-FileCopyrightText: 2022 Jon Carstens
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.Route.DefaultMetric do
   @moduledoc """
   Default module for prioritizing network interfaces

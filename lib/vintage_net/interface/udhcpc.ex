@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2019 Frank Hunleth
+# SPDX-FileCopyrightText: 2019 Matt Ludwigs
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.Interface.Udhcpc do
   @moduledoc false
   @behaviour VintageNet.OSEventDispatcher.UdhcpcHandler

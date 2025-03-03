@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2020 Frank Hunleth
+# SPDX-FileCopyrightText: 2024 Connor Rigby
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.PowerManager.PMControlTest do
   use VintageNetTest.Case
   import ExUnit.CaptureLog

@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2019 Connor Rigby
+# SPDX-FileCopyrightText: 2019 Frank Hunleth
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 # Makefile for building port binaries
 #
 # Makefile targets:

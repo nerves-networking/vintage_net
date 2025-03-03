@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2021 Frank Hunleth
+# SPDX-FileCopyrightText: 2023 Eric Rauer
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.OSEventDispatcher do
   @moduledoc false
   alias VintageNet.DHCP.Options

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Frank Hunleth
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.PowerManager.StateMachineTest do
   use ExUnit.Case
 

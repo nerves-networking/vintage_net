@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2019 Frank Hunleth
+//
+// SPDX-License-Identifier: Apache-2.0
+//
 /*
  *  Copyright 2014-2019 Frank Hunleth
  *

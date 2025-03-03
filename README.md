@@ -2,7 +2,8 @@
 
 [![Hex version](https://img.shields.io/hexpm/v/vintage_net.svg "Hex version")](https://hex.pm/packages/vintage_net)
 [![API docs](https://img.shields.io/hexpm/v/vintage_net.svg?label=hexdocs "API docs")](https://hexdocs.pm/vintage_net/VintageNet.html)
-[![CircleCI](https://circleci.com/gh/nerves-networking/vintage_net.svg?style=svg)](https://circleci.com/gh/nerves-networking/vintage_net)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/nerves-networking/vintage_net/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/nerves-networking/vintage_net/tree/main)
+[![REUSE status](https://api.reuse.software/badge/github.com/nerves-networking/vintage_net)](https://api.reuse.software/info/github.com/nerves-networking/vintage_net)
 
 `VintageNet` is network configuration library built specifically for [Nerves
 Project](https://nerves-project.org) devices. It [replaced nerves_networking](#migration). It offers:

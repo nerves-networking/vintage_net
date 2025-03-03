@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Frank Hunleth
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.Interface.UdhcpcTest do
   use VintageNetTest.Case
   alias VintageNet.Interface.Udhcpc

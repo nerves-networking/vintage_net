@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2021 Frank Hunleth
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.Connectivity.CheckLogic do
   @moduledoc """
   Core logic for determining internet connectivity based on check results

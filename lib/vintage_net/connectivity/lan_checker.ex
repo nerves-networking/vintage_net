@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2021 Frank Hunleth
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.Connectivity.LANChecker do
   @moduledoc """
   This GenServer monitors a network interface for LAN connectivity

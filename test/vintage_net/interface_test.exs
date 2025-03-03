@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2019 Connor Rigby
+# SPDX-FileCopyrightText: 2019 Frank Hunleth
+# SPDX-FileCopyrightText: 2019 Matt Ludwigs
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.InterfaceTest do
   use VintageNetTest.Case
   import ExUnit.CaptureLog
