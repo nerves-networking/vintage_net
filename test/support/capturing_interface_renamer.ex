@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Connor Rigby
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNetTest.CapturingInterfaceRenamer do
   @moduledoc false
   @behaviour VintageNet.InterfaceRenamer

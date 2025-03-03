@@ -1,0 +1,60 @@
+version = 1
+
+[[annotations]]
+path = [
+ ".circleci/config.yml",
+ ".credo.exs",
+ ".formatter.exs",
+ ".github/dependabot.yml",
+ ".gitignore",
+ "CHANGELOG.md",
+ "NOTICE",
+ "REUSE.toml",
+ "mix.exs",
+ "mix.lock"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "None"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+ "README.md"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018 Frank Hunleth"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = [
+ "assets/power_manager_state_machine.png",
+ "assets/vintage_net-notext.png",
+ "assets/vintage_net.png",
+ "docs/cookbook.md",
+ "docs/notes/AP-and-STA-mode-on-one-interface.md",
+ "docs/notes/AP-mode-basic.md",
+ "docs/notes/DHCP-WiFi,-DHCP-Wired.md",
+ "docs/notes/DHCP-WiFi-None.md",
+ "docs/notes/DHCP-WiFi-WEP.md",
+ "docs/notes/DHCP-WiFi-WPA2-Hidden.md",
+ "docs/notes/DHCP-WiFi-WPA2.md",
+ "docs/notes/DHCP-Wired-Ethernet.md",
+ "docs/notes/LTE.md",
+ "docs/notes/Link-local-Wired-Ethernet.md",
+ "docs/notes/Network-configuration-tests.md",
+ "docs/notes/Predictable-Interface-Names.md",
+ "docs/notes/Static-WiFi-Host-mode.md",
+ "docs/notes/Static-Wired-Ethernet-IPv6.md",
+ "docs/notes/Static-Wired-Ethernet.md",
+ "docs/notes/Two-DHCP-WiFi-WPA2.md",
+ "docs/notes/Two-DHCP-Wired-Ethernets.md",
+ "docs/notes/WiFi-read-only-fs-setup.md",
+ "docs/notes/Wired-802.1X-PEAP-MSCHAPv2.md",
+ "docs/notes/lte-ready-only.md",
+ "docs/notes/wifi.md"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "None"
+SPDX-License-Identifier = "CC0-1.0"
+
+

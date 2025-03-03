@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Frank Hunleth
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.DHCP.OptionsTest do
   use ExUnit.Case, async: true
 
