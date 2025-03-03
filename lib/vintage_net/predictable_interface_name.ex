@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2020 Connor Rigby
+# SPDX-FileCopyrightText: 2020 Frank Hunleth
+# SPDX-FileCopyrightText: 2024 Jon Carstens
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.PredictableInterfaceName do
   @moduledoc """
   Handles predictable interface names by subscribing to the property table and

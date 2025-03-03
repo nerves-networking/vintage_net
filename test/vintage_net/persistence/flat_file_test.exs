@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019 Frank Hunleth
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.Persistence.FlatFileTest do
   use VintageNetTest.Case
   alias VintageNet.Persistence.FlatFile

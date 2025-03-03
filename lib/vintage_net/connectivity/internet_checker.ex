@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2021 Frank Hunleth
+# SPDX-FileCopyrightText: 2021 Matt Ludwigs
+# SPDX-FileCopyrightText: 2024 Connor Rigby
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.Connectivity.InternetChecker do
   @moduledoc """
   This GenServer monitors a network interface for Internet connectivity

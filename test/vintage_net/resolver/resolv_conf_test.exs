@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2020 Frank Hunleth
+# SPDX-FileCopyrightText: 2021 Connor Rigby
+# SPDX-FileCopyrightText: 2022 Masatoshi Nishiguchi
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.Resolver.ResolvConfTest do
   use VintageNetTest.Case
   alias VintageNet.Resolver.ResolvConf
