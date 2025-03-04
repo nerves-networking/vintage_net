@@ -79,18 +79,24 @@ defmodule VintageNet.MixProject do
   defp package do
     %{
       files: [
+        "CHANGELOG.md",
+        "docs/cookbook.md",
         "lib",
+        "LICENSES",
         "mix.exs",
         "Makefile",
+        "NOTICE",
         "README.md",
-        "docs/cookbook.md",
+        "REUSE.toml",
         "src/*.[ch]",
-        "src/test-c99.sh",
-        "LICENSE",
-        "CHANGELOG.md"
+        "src/test-c99.sh"
       ],
       licenses: ["Apache-2.0"],
-      links: %{"GitHub" => @source_url}
+      links: %{
+        "GitHub" => @source_url,
+        "REUSE Compliance" =>
+          "https://api.reuse.software/info/github.com/nerves-project/nerves_runtime"
+      }
     }
   end
 

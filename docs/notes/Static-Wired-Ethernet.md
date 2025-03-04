@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2018 Frank Hunleth
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 # Wired Ethernet using static IP
 
 This is wired Ethernet, but with static IP addresses.

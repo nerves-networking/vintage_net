@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019 Frank Hunleth
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.IP.IPv4ConfigTest do
   use ExUnit.Case
   import VintageNetTest.Utils

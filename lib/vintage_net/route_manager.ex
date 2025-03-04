@@ -1,3 +1,10 @@
+# SPDX-FileCopyrightText: 2019 Frank Hunleth
+# SPDX-FileCopyrightText: 2019 Matt Ludwigs
+# SPDX-FileCopyrightText: 2021 Benjamin Milde
+# SPDX-FileCopyrightText: 2023 Ben Murphy
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.RouteManager do
   @moduledoc """
   This module manages the default route.

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019 Connor Rigby
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule VintageNet.Interface.EAPStatus do
   @moduledoc """
   Status of an EAP connection.

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2019 Frank Hunleth
+//
+// SPDX-License-Identifier: Apache-2.0
+//
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
