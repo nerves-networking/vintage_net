@@ -15,7 +15,10 @@ defmodule VintageNet.Connectivity.InternetChecker do
   """
   use GenServer
 
-  alias VintageNet.Connectivity.{CheckLogic, HostList, Inspector, TCPPing}
+  alias VintageNet.Connectivity.CheckLogic
+  alias VintageNet.Connectivity.HostList
+  alias VintageNet.Connectivity.Inspector
+
   alias VintageNet.PowerManager.PMControl
   alias VintageNet.RouteManager
   require Logger
@@ -23,8 +26,8 @@ defmodule VintageNet.Connectivity.InternetChecker do
   @typedoc false
   @type state() :: %{
           ifname: VintageNet.ifname(),
-          configured_hosts: [{VintageNet.any_ip_address(), non_neg_integer()}],
-          ping_list: [{:inet.ip_address(), non_neg_integer()}],
+          configured_hosts: [HostList.entry()],
+          ping_list: [HostList.entry()],
           check_logic: CheckLogic.state(),
           inspector: Inspector.cache(),
           status: Inspector.status()
@@ -48,7 +51,8 @@ defmodule VintageNet.Connectivity.InternetChecker do
       ping_list: [],
       check_logic: CheckLogic.init(connectivity),
       inspector: %{},
-      status: :unknown
+      status: :unknown,
+      properties: []
     }
 
     {:ok, state, {:continue, :continue}}
@@ -118,7 +122,8 @@ defmodule VintageNet.Connectivity.InternetChecker do
     # 1. Reset status to unknown
     # 2. See if we can determine internet-connectivity via TCP stats
     # 3. If still unknown, refresh the ping list
-    # 4. If still unknown, ping. This step is definitive.
+    # 4a. If still unknown, ping. This step can be tricked by really stubborn firewalls.
+    # 4b. If still unknown, connect via SSL. This step cannot be fooled.
     # 5. Record whether there's internet
     state
     |> reset_status()
@@ -127,6 +132,7 @@ defmodule VintageNet.Connectivity.InternetChecker do
     |> ping_if_unknown()
     |> update_check_logic()
     |> pet_pm_watchdog()
+    |> set_properties()
   end
 
   defp reset_status(state) do
@@ -151,22 +157,28 @@ defmodule VintageNet.Connectivity.InternetChecker do
   defp reload_ping_list(state), do: state
 
   defp ping_if_unknown(%{status: :unknown, ping_list: [who | rest]} = state) do
-    case TCPPing.ping(state.ifname, who) do
-      :ok -> %{state | status: :internet}
-      _error -> %{state | status: :no_internet, ping_list: rest}
-    end
-  end
+    {mod, _opts} = who
 
-  defp ping_if_unknown(%{status: :unknown, ping_list: []} = state) do
-    # Ping list being empty is due to the user only providing hostnames and
-    # DNS resolution not working.
-    %{state | status: :no_internet}
+    result = mod.check(state.ifname, who)
+
+    case result do
+      {:ok, {status, properties}} ->
+        %{state | status: status, properties: properties}
+
+      error ->
+        Logger.error("Internet Connectivity check failed for: #{state.ifname}: #{inspect(error)}")
+        %{state | status: :no_internet, ping_list: rest}
+    end
   end
 
   defp ping_if_unknown(state), do: state
 
   defp update_check_logic(%{status: :internet} = state) do
-    %{state | check_logic: CheckLogic.check_succeeded(state.check_logic)}
+    %{state | check_logic: CheckLogic.check_succeeded(state.check_logic, :internet)}
+  end
+
+  defp update_check_logic(%{status: :lan} = state) do
+    %{state | check_logic: CheckLogic.check_succeeded(state.check_logic, :lan)}
   end
 
   defp update_check_logic(%{status: :no_internet} = state) do
@@ -178,6 +190,15 @@ defmodule VintageNet.Connectivity.InternetChecker do
       PMControl.pet_watchdog(state.ifname)
     end
 
+    state
+  end
+
+  defp set_properties(%{properties: [{path, value} | rest]} = state) do
+    PropertyTable.put(VintageNet, ["interface", state.ifname, "connection"] ++ path, value)
+    set_properties(%{state | properties: rest})
+  end
+
+  defp set_properties(%{properties: []} = state) do
     state
   end
 

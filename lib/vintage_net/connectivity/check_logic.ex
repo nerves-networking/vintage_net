@@ -87,13 +87,13 @@ defmodule VintageNet.Connectivity.CheckLogic do
   @doc """
   Call this when an Internet connectivity check succeeds
   """
-  @spec check_succeeded(state()) :: state()
-  def check_succeeded(%{connectivity: :disconnected} = state), do: state
+  @spec check_succeeded(state(), VintageNet.connection_status()) :: state()
+  def check_succeeded(%{connectivity: :disconnected} = state, _), do: state
 
-  def check_succeeded(state) do
+  def check_succeeded(state, connectivity) do
     # Success - reset the number of strikes to stay in Internet mode
     # even if there are hiccups.
-    %{state | connectivity: :internet, strikes: 0, interval: @max_interval}
+    %{state | connectivity: connectivity, strikes: 0, interval: @max_interval}
   end
 
   @doc """

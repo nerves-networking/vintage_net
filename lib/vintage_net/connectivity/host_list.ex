@@ -5,8 +5,9 @@
 defmodule VintageNet.Connectivity.HostList do
   @moduledoc false
 
-  import Record, only: [defrecord: 2]
-
+  alias VintageNet.Connectivity.TCPPing
+  alias VintageNet.Connectivity.WebRequest
+  alias VintageNet.Connectivity.WhenWhere
   require Logger
 
   @typedoc """
@@ -14,12 +15,12 @@ defmodule VintageNet.Connectivity.HostList do
   """
   @type ip_or_hostname() :: :inet.ip_address() | String.t()
 
-  @type name_port() :: {ip_or_hostname(), 1..65535}
-  @type ip_port() :: {:inet.ip_address(), 1..65535}
+  @type option() :: {:host, ip_or_hostname()} | {:port, 1..65535}
+  @type options() :: [option()]
 
-  @type hostent() :: record(:hostent, [])
+  @type entry() :: {:tcp_ping | :ssl_ping | module(), options()}
 
-  defrecord :hostent, Record.extract(:hostent, from_lib: "kernel/include/inet.hrl")
+  @default_list [{TCPPing, host: {1, 1, 1, 1}, port: 53}]
 
   @doc """
   Load the internet host list from the application environment
@@ -27,18 +28,15 @@ defmodule VintageNet.Connectivity.HostList do
   This function performs basic checks on the list and tries to
   help users on easy mistakes.
   """
-  @spec load(keyword()) :: [name_port()]
+  @spec load(keyword()) :: [entry()]
   def load(config \\ Application.get_all_env(:vintage_net)) do
     config_list = internet_host_list(config) ++ legacy_internet_host(config)
 
-    hosts =
-      config_list
-      |> Enum.map(&normalize/1)
-      |> Enum.reject(fn x -> x == :error end)
+    hosts = normalize_all(config_list)
 
     if hosts == [] do
       Logger.warning("VintageNet: empty or invalid `:internet_host_list` so using defaults")
-      [{{1, 1, 1, 1}, 80}]
+      @default_list
     else
       hosts
     end
@@ -62,20 +60,37 @@ defmodule VintageNet.Connectivity.HostList do
 
       host ->
         Logger.warning(
-          "VintageNet: :internet_host key is deprecated. Replace with `internet_host_list: [{#{inspect(host)}, 80}]`"
+          "VintageNet: :internet_host key is deprecated. Replace with `internet_host_list: [{:tcp_ping, host: #{inspect(host)}, port: 80}]`"
         )
 
-        [{host, 80}]
+        [{TCPPing, host: host, port: 80}]
     end
   end
 
-  defp normalize({host, port}) when port > 0 and port < 65535 do
-    case VintageNet.IP.ip_to_tuple(host) do
-      {:ok, host_as_tuple} -> {host_as_tuple, port}
-      # Likely a domain name
-      {:error, _} when is_binary(host) -> {host, port}
-      _ -> :error
+  defp normalize_all(list, acc \\ [])
+
+  defp normalize_all([entry | rest], acc) do
+    case normalize(entry) do
+      {:ok, normalized} -> normalize_all(rest, [normalized | acc])
+      :error -> normalize_all(rest, acc)
     end
+  end
+
+  defp normalize_all([], acc), do: Enum.reverse(acc)
+
+  defp normalize({:tcp_ping, opts}), do: normalize({TCPPing, opts})
+  defp normalize({:web_request, opts}), do: normalize({WebRequest, opts})
+  defp normalize({:whenwhere, opts}), do: normalize({WhenWhere, opts})
+
+  defp normalize({module, opts} = spec) when is_atom(module) and is_list(opts) do
+    module.normalize(spec)
+  catch
+    _, _ -> :error
+  end
+
+  defp normalize({host, port}) when port > 0 and port < 65535 do
+    # handles legacy list entries, converting them to tcp_ping by default
+    normalize({TCPPing, host: host, port: port})
   end
 
   defp normalize(_), do: :error
@@ -87,29 +102,21 @@ defmodule VintageNet.Connectivity.HostList do
   should be called again to get another set. This involves DNS, so the
   call can block.
   """
-  @spec create_ping_list([name_port()]) :: [ip_port()]
+  @spec create_ping_list([entry]) :: [entry()]
   def create_ping_list(hosts) do
     hosts
-    |> Enum.flat_map(&resolve/1)
+    |> Enum.flat_map(&expand_ping_list/1)
     |> Enum.uniq()
     |> Enum.shuffle()
     |> Enum.take(3)
   end
 
-  defp resolve({ip, _port} = ip_port) when is_tuple(ip) do
-    [ip_port]
-  end
-
-  defp resolve({name, port}) when is_binary(name) do
-    # Only consider IPv4 for now
-    case :inet.gethostbyname(String.to_charlist(name)) do
-      {:ok, hostent(h_addr_list: addresses)} ->
-        for address <- addresses, do: {address, port}
-
-      _error ->
-        # DNS not working, so the internet is not working enough
-        # to consider this host
-        []
+  defp expand_ping_list({module, _opts} = spec) do
+    case module.expand(spec) do
+      result when is_list(result) -> result
+      _ -> []
     end
+  catch
+    _, _ -> []
   end
 end
