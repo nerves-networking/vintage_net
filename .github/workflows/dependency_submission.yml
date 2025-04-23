@@ -12,3 +12,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/mix-dependency-submission@v1
+        with:
+          install-deps: true
