@@ -1,0 +1,14 @@
+on:
+  push:
+    branches:
+      - "main"
+
+name: "Dependency Submission"
+
+jobs:
+  report_mix_deps:
+    name: "Report Mix Dependencies"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/mix-dependency-submission@v1
