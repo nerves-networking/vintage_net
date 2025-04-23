@@ -6,6 +6,7 @@ path = [
  ".credo.exs",
  ".formatter.exs",
  ".github/dependabot.yml",
+ ".github/workflows/dependency_submission.yml",
  ".gitignore",
  "CHANGELOG.md",
  "NOTICE",
