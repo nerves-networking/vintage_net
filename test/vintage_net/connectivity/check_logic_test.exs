@@ -11,7 +11,8 @@ defmodule VintageNet.Connectivity.CheckLogicTest do
     base_state = CheckLogic.init(:internet)
 
     # Check worked -> good internet
-    assert %{connectivity: :internet, strikes: 0} = CheckLogic.check_succeeded(base_state)
+    assert %{connectivity: :internet, strikes: 0} =
+             CheckLogic.check_succeeded(base_state, :internet)
 
     # Check failed once -> add a strike
     assert %{connectivity: :internet, strikes: 1} = CheckLogic.check_failed(base_state)
@@ -29,7 +30,7 @@ defmodule VintageNet.Connectivity.CheckLogicTest do
     state =
       base_state
       |> CheckLogic.check_failed()
-      |> CheckLogic.check_succeeded()
+      |> CheckLogic.check_succeeded(:internet)
 
     assert %{connectivity: :internet, strikes: 0} = state
   end
@@ -38,7 +39,8 @@ defmodule VintageNet.Connectivity.CheckLogicTest do
     base_state = CheckLogic.init(:lan)
 
     # Check worked -> good internet
-    assert %{connectivity: :internet, strikes: 0} = CheckLogic.check_succeeded(base_state)
+    assert %{connectivity: :internet, strikes: 0} =
+             CheckLogic.check_succeeded(base_state, :internet)
 
     # Check failure -> still lan
     assert %{connectivity: :lan, strikes: 3} = CheckLogic.check_failed(base_state)
@@ -48,7 +50,7 @@ defmodule VintageNet.Connectivity.CheckLogicTest do
     base_state = CheckLogic.init(:disconnected)
 
     # Ignore checks since disconnected
-    assert %{connectivity: :disconnected} = CheckLogic.check_succeeded(base_state)
+    assert %{connectivity: :disconnected} = CheckLogic.check_succeeded(base_state, :internet)
     assert %{connectivity: :disconnected} = CheckLogic.check_failed(base_state)
   end
 
@@ -73,13 +75,13 @@ defmodule VintageNet.Connectivity.CheckLogicTest do
   end
 
   test "success check interval" do
-    state = CheckLogic.init(:internet) |> CheckLogic.check_succeeded()
+    state = CheckLogic.init(:internet) |> CheckLogic.check_succeeded(:internet)
 
     assert %{interval: 30_000} = state
   end
 
   test "quicker checks and then slower checks" do
-    state = CheckLogic.init(:internet) |> CheckLogic.check_succeeded()
+    state = CheckLogic.init(:internet) |> CheckLogic.check_succeeded(:internet)
     assert %{connectivity: :internet, interval: 30_000} = state
 
     # Check faster on initial failures

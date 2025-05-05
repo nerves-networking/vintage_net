@@ -8,7 +8,7 @@ defmodule VintageNet.MixProject do
     [
       app: :vintage_net,
       version: @version,
-      elixir: "~> 1.13",
+      elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       compilers: [:elixir_make | Mix.compilers()],
@@ -47,15 +47,19 @@ defmodule VintageNet.MixProject do
         # Use IP addresses and port numbers here rather than names.
         internet_host_list: [
           # Cloudflare DNS over TCP
-          {{1, 1, 1, 1}, 53},
-          # Google public DNS over TCP
-          {{8, 8, 8, 8}, 53},
-          # OpenDNS
-          {{208, 67, 222, 222}, 53},
-          # Quad9
-          {{9, 9, 9, 9}, 53},
-          # Neustar
-          {{156, 154, 70, 5}, 53}
+          # {:tcp_ping, host: {1, 1, 1, 1}, port: 53},
+          # # Google public DNS over TCP
+          # {:tcp_ping, host: {8, 8, 8, 8}, port: 53},
+          # # OpenDNS
+          # {:tcp_ping, host: {208, 67, 222, 222}, port: 53},
+          # # Quad9
+          # {:tcp_ping, host: {9, 9, 9, 9}, port: 53},
+          # # Neustar
+          # {:tcp_ping, host: {156, 154, 70, 5}, port: 53},
+          # Google via SSL
+          {:web_request,
+           url: "http://www.msftconnecttest.com/connecttest.txt", match: "Microsoft Connect Test"},
+          {:whenwhere, url: "https://whenwhere.nerves-project.org"}
         ],
         regulatory_domain: "00",
         # Contain processes in cgroups by setting to:

@@ -160,7 +160,7 @@ resolvconf         | Path to `/etc/resolv.conf`
 persistence        | Module for persisting network configurations
 persistence_dir    | Path to a directory for storing persisted configurations
 persistence_secret | A 16-byte secret or a function or MFArgs (module, function, arguments tuple) for getting a secret
-internet_host_list | IP address or hostnames and ports to try to connect to for checking Internet connectivity. Defaults to a list of large public DNS providers. E.g., `[{{1, 1, 1, 1}, 53}]`.
+internet_host_list | IP address or hostnames and ports to try to connect to for checking Internet connectivity. Defaults to a list of large public DNS providers. E.g., `[{:tcp_ping, host: {1, 1, 1, 1}, port: 53}]`.
 regulatory_domain  | ISO 3166-1 alpha-2 country (`00` for global, `US`, etc.)
 additional_name_servers     | List of DNS servers to be used in addition to any supplied by an interface. E.g., `[{1, 1, 1, 1}, {8, 8, 8, 8}]`
 route_metric_fun   | Customize how network interfaces are prioritized. See `VintageNet.Route.DefaultMetric.compute_metric/2`
@@ -471,10 +471,10 @@ The logic for declaring that the Internet is available is:
 2. Get the list of Internet servers to check. See below for the list.
 3. Resolve any domain names in the list. If DNS isn't working, remove them from
    the list.
-4. Pick a random IP address from the remaining list and "ping" it. Technically,
-   VintageNet tries to connect over TCP to a specified port, and if it either
-   connects successfully or gets a port closed response, then the device is
-   Internet-connected.
+4. Pick a random method/destination from the remaining list and check it.
+   Technically, The default method, `:tcp_ping`, tries to connect over TCP to a
+   specified port, and if it either connects successfully or gets a port closed
+   response, then the device is Internet-connected.
 5. Wait a bit and then go back to step 1.
 
 The list of Internet servers to check is critically important. VintageNet uses
@@ -483,7 +483,7 @@ default setting has many popular name servers in it. The idea being that if you
 can't reach a name server, the Internet probably isn't going to work well.
 
 If you are deploying to locations with locked down networks, you'll find that
-the default setting to test name servers won't work. It is not uncommon to find
+the default server list won't work. It is not uncommon to find
 a network that blocks popular name servers like 8.8.8.8.
 
 The recommendation is to set the `:internet_host_list` to include your backend
@@ -495,7 +495,7 @@ For example,
 
 ```elixir
 config :vintage_net,
-  internet_host_list: [{"abcdefghijk-ats.iot.us-east-1.amazonaws.com", 443}]
+  internet_host_list: [{:tcp_ping, host: "abcdefghijk-ats.iot.us-east-1.amazonaws.com", port: 443}]
 ```
 
 The use of the connectivity checker is specified by the technology. Both the
@@ -504,6 +504,48 @@ This is selected by adding the `VintageNet.Connectivity.InternetChecker`
 GenServer to the `:child_specs` configuration returned by the technology. E.g.,
 `child_specs: [{VintageNet.Connectivity.InternetChecker, "eth0"}]`. Most users
 do not need to be concerned about this.
+
+### Alternative internet connectivity checking
+
+The default `:tcp_ping` internet connectivity check can be tricked by some
+captive portal software and firewalls. One way to fix it is to authenticate the
+connection using TLS with the `:ssl_ping` method as shown here:
+
+```elixir
+config :vintage_net,
+  internet_host_list: [{:ssl_ping, host: "google.com", port: 443}]
+```
+
+Custom options may be supplied by passing a mfa in options.
+
+When implementing a connectivity checker, please be aware of the following:
+
+1. The DNS resolver resolves domain names using the current best network
+   interface. This may not be the network being checked for
+   internet-connectivity. That means that a DNS issue on another network
+   interface could prevent a good interface from working.
+2. When authenticating servers using TLS, it is important that the time be set
+   correctly. If the device doesn't have a battery-backed real-time clock and
+   depends on NTP, it may fail to authentic a remote server thinking that the
+   server's certificate have expired.
+3. It's also important that the CA certificates have not expired or
+   authentication will fail. IoT devices that sit in a warehouse or don't have
+   updated certificates may not succeed. It is recommended to specify long
+   validity certificates (IoT servers typically have these) or verify that the
+   system CA certificates from `:public_key.cacerts_get/0` that get used are ok.
+4. If no internet connectivity check succeeds, the network connection is stuck
+   in the `:lan` state. Application code can still try to connect to a remote
+   server and if the connection succeeds, it will start incrementing send and
+   receive stats to an off-LAN host. That will cause the network interface to
+   transition to the `:internet` state eventually.
+
+Here's an example of using SSL to a web server that's guaranteed to be on the
+Internet:
+
+```elixir
+config :vintage_net,
+  internet_host_list: [{:ssl_ping, host: "internet-server.mycompany.com", port: 443, connect_options_mfa: {MySSLPingConnectOptsImpl, :connect_opts, []}}]
+```
 
 ## Power Management
 
