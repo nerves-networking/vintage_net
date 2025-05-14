@@ -14,7 +14,7 @@ defmodule VintageNet.MixProject do
       compilers: [:elixir_make | Mix.compilers()],
       make_targets: ["all"],
       make_clean: ["mix_clean"],
-      make_error_message: "",
+      make_error_message: make_error_message(Mix.target()),
       deps: deps(),
       dialyzer: dialyzer(),
       docs: docs(),
@@ -175,5 +175,37 @@ defmodule VintageNet.MixProject do
         end
       end)
     end
+  end
+
+  defp make_error_message(:host) do
+    """
+
+    Make failed to compile vintage_net when compiling for the host.
+
+    Possible causes:
+
+    1. You didn't mean to compile for host. Check that MIX_TARGET is set.
+
+    2. Your system doesn't have the necessary header files installed. The
+       details depend on your package manager. On Debian/Ubuntu systems, run
+       `sudo apt install libmnl-dev libnl-genl-3-dev`
+
+    3. Something regressed. Please file an issue at
+       https://github.com/nerves-networking/vintage_net.
+    """
+  end
+
+  defp make_error_message(target) do
+    """
+
+    Make failed to compile vintage_net when compiling for the target '#{target}'.
+
+    If you're using an officially maintained Nerves system, please file an issue.
+
+    This is usually due to the following lines not being in the `nerves_defconfig`:
+
+    BR2_PACKAGE_LIBMNL=y
+    BR2_PACKAGE_LIBNL=y
+    """
   end
 end
