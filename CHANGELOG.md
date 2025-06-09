@@ -2,6 +2,22 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.7] - 2025-06-07
+
+This release makes VintageNet compliant with the [REUSE Specification](https://reuse.software/).
+
+* Fixes
+  * Removed dependency on `GenStateMachine` and use `:gen_statem` directly.
+    There's no change in functionality, but it will remove the compilation
+    warnings when building the `GenStateMachine` dependency.
+  * Fix Elixir 1.19 warning
+  * Improve the error message when host compilation fails
+
+* Changed
+  * Only support Elixir 1.14 and later. It should work with Elixir 1.13 still,
+    but this may change in the future without us noticing. Other libraries are
+    requiring Elixir 1.14 and later, so please upgrade if this affects you.
+
 ## [v0.13.6] - 2025-01-06
 
 * Fixes
