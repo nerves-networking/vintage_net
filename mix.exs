@@ -20,13 +20,7 @@ defmodule VintageNet.MixProject do
       docs: docs(),
       package: package(),
       description: description(),
-      aliases: [compile: [&check_deps/1, "compile"]],
-      preferred_cli_env: %{
-        docs: :docs,
-        "hex.publish": :docs,
-        "hex.build": :docs,
-        credo: :test
-      }
+      aliases: [compile: [&check_deps/1, "compile"]]
     ]
   end
 
@@ -67,6 +61,10 @@ defmodule VintageNet.MixProject do
       extra_applications: [:logger, :crypto],
       mod: {VintageNet.Application, []}
     ]
+  end
+
+  def cli do
+    [preferred_envs: %{docs: :docs, "hex.publish": :docs, "hex.build": :docs, credo: :test}]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]

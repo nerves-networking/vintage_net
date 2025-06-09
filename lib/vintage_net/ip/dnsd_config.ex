@@ -106,7 +106,7 @@ defmodule VintageNet.IP.DnsdConfig do
           )
         ]
 
-    %RawConfig{raw_config | files: new_files, child_specs: new_child_specs}
+    %{raw_config | files: new_files, child_specs: new_child_specs}
   end
 
   def add_config(raw_config, _config_without_dhcpd, _opts), do: raw_config

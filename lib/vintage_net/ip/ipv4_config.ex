@@ -109,11 +109,7 @@ defmodule VintageNet.IP.IPv4Config do
   """
   @spec add_config(RawConfig.t(), map(), keyword()) :: RawConfig.t()
   def add_config(
-        %RawConfig{
-          ifname: ifname,
-          up_cmds: up_cmds,
-          down_cmds: down_cmds
-        } = raw_config,
+        %RawConfig{ifname: ifname, up_cmds: up_cmds, down_cmds: down_cmds} = raw_config,
         %{ipv4: %{method: :disabled}},
         _opts
       ) do
@@ -127,11 +123,7 @@ defmodule VintageNet.IP.IPv4Config do
           {:run, "ip", ["link", "set", ifname, "down"]}
         ]
 
-    %RawConfig{
-      raw_config
-      | up_cmds: new_up_cmds,
-        down_cmds: new_down_cmds
-    }
+    %{raw_config | up_cmds: new_up_cmds, down_cmds: new_down_cmds}
   end
 
   def add_config(
@@ -185,12 +177,7 @@ defmodule VintageNet.IP.IPv4Config do
           {VintageNet.Connectivity.InternetChecker, ifname}
         ]
 
-    %RawConfig{
-      raw_config
-      | up_cmds: new_up_cmds,
-        down_cmds: new_down_cmds,
-        child_specs: new_child_specs
-    }
+    %{raw_config | up_cmds: new_up_cmds, down_cmds: new_down_cmds, child_specs: new_child_specs}
   end
 
   def add_config(
@@ -264,12 +251,7 @@ defmodule VintageNet.IP.IPv4Config do
 
     new_child_specs = child_specs ++ [checker]
 
-    %RawConfig{
-      raw_config
-      | up_cmds: new_up_cmds,
-        down_cmds: new_down_cmds,
-        child_specs: new_child_specs
-    }
+    %{raw_config | up_cmds: new_up_cmds, down_cmds: new_down_cmds, child_specs: new_child_specs}
   end
 
   defp get_hostname() do
