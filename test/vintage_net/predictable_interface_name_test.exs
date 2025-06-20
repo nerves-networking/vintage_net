@@ -9,6 +9,18 @@ defmodule VintageNet.PredictableInterfaceNameTest do
   alias VintageNet.PredictableInterfaceName
   alias VintageNetTest.CapturingInterfaceRenamer
 
+  defp wait_for(predicate, attempts \\ 100)
+  defp wait_for(predicate, 0), do: predicate.()
+  defp wait_for(predicate, attempts) do
+    case predicate.() do
+      true ->
+        true
+      _ ->
+        Process.sleep(5)
+        wait_for(predicate, attempts - 1)
+    end
+  end
+
   doctest PredictableInterfaceName
 
   test "interface gets renamed" do
@@ -26,11 +38,12 @@ defmodule VintageNet.PredictableInterfaceNameTest do
 
     # Simulate the interface coming up with the correct hw_path
     PropertyTable.put(VintageNet, ["interface", unpredictable_ifname, "hw_path"], hw_path)
-    Process.sleep(5)
 
-    assert Enum.find(CapturingInterfaceRenamer.get(), fn
-             {:rename, ^unpredictable_ifname, ^predictable_ifname} -> true
-             _ -> false
+    assert wait_for(fn ->
+             Enum.find(CapturingInterfaceRenamer.get(), fn
+               {:rename, ^unpredictable_ifname, ^predictable_ifname} -> true
+               _ -> false
+             end)
            end)
   end
 
@@ -61,11 +74,11 @@ defmodule VintageNet.PredictableInterfaceNameTest do
       config2.hw_path
     )
 
-    Process.sleep(5)
-
-    assert Enum.find(CapturingInterfaceRenamer.get(), fn
-             {:rename, "unpredictable_duplicate0", "duplicate0"} -> true
-             _ -> false
+    assert wait_for(fn ->
+             Enum.find(CapturingInterfaceRenamer.get(), fn
+               {:rename, "unpredictable_duplicate0", "duplicate0"} -> true
+               _ -> false
+             end)
            end)
 
     # A second interface matching the same hw path as another interface should
@@ -91,11 +104,12 @@ defmodule VintageNet.PredictableInterfaceNameTest do
 
     # Simulate the interface coming up with the correct hw_path
     PropertyTable.put(VintageNet, ["interface", unpredictable_ifname, "hw_path"], hw_path)
-    Process.sleep(5)
 
-    refute Enum.find(CapturingInterfaceRenamer.get(), fn
-             {:rename, ^unpredictable_ifname, ^predictable_ifname} -> true
-             _ -> false
+    refute wait_for(fn ->
+             Enum.find(CapturingInterfaceRenamer.get(), fn
+               {:rename, ^unpredictable_ifname, ^predictable_ifname} -> true
+               _ -> false
+             end)
            end)
   end
 end

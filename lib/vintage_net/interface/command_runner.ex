@@ -12,7 +12,7 @@ defmodule VintageNet.Interface.CommandRunner do
   are specified. The following commands are supported:
 
   * `{:run, command, args}` - Run a system command
-  * `{:run_ignore_exit, command, args}` - Same as `:run`, but without the exit status check
+  * `{:run_ignore_errors, command, args}` - Same as `:run`, but without the exit status check
   * `{:fun, module, function_name, args}` - Run a function by MFArgs
   * `{:fun, fun}` - Run a function. Using the MFArgs form is preferred since it's
                     easier to verify in unit tests.

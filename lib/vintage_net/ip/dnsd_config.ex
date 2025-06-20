@@ -109,7 +109,7 @@ defmodule VintageNet.IP.DnsdConfig do
     %{raw_config | files: new_files, child_specs: new_child_specs}
   end
 
-  def add_config(raw_config, _config_without_dhcpd, _opts), do: raw_config
+  def add_config(raw_config, _config_without_dnsd, _opts), do: raw_config
 
   defp dnsd_contents(%{records: records}) do
     Enum.map(records, &record_to_string/1)

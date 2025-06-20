@@ -83,7 +83,7 @@ Next, we want to use `ip` to bring the `wlan0` interface up.
 ip link set wlan0 up
 ```
 
-### Get IP adress from DHCP server
+### Get IP address from DHCP server
 
 Then we have to request an IP address from the DHCP server like so:
 
