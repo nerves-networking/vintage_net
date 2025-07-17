@@ -597,7 +597,7 @@ configuration.
 ### Advanced Use of WPA Supplicant
 
 VintageNetWifi supports an "escape hatch" of sorts if you need precise control over the contents of the supplicant configuration.
-The contents of the `wpa_supplicant_conf` will be coppied without validation to the wpa_supplicant.conf file that
+The contents of the `wpa_supplicant_conf` will be copied without validation to the wpa_supplicant.conf file that
 VintageNet manages. Example:
 
 <!-- tabs-open -->
@@ -647,11 +647,11 @@ VintageNet.configure("wlan0", %{
 
 In addition to infrastructure and AP modes, some WiFi modules can form a mesh.
 VintageNet supports the configuration of [802.11s](https://en.wikipedia.org/wiki/IEEE_802.11s) meshes.
-While this is the standardize way of forming WiFi meshes, it is not the same as that implemented
+While this is the standardized way of forming WiFi meshes, it is not the same as that implemented
 by many access points that advertise WiFi meshing. It also uses the 802.11s routing protocol HWMP. (This is
 not B.A.T.M.A.N.).
 
-This section describes two configuration: the first is for the mesh gate and the second is for the mesh
+This section describes two configurations: the first is for the mesh gate and the second is for the mesh
 devices. The mesh gate bridges the mesh network to the network that connects to the Internet. Mesh
 nodes behave similar to normal clients: after connecting to the network, they request an IP address using
 DHCP. The DHCP request gets routed through the mesh gate and to the DHCP server on the non-mesh
@@ -751,7 +751,7 @@ cmd "iptables -A INPUT -i #{wan} -m state --state RELATED,ESTABLISHED -j ACCEPT"
 
 `VintageNet` persists configurations by default. Sometimes you just want to
 disable a network temporarily and then if the device reboots, it reboots to the
-old configuration. The `:persist` option let's you do this:
+old configuration. The `:persist` option lets you do this:
 
 ```elixir
 VintageNet.deconfigure("wlan0", persist: false)
