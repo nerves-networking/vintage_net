@@ -356,9 +356,18 @@ defmodule VintageNet.RouteManager do
   end
 
   defp handle_insert({:rule, table_index, address}) do
-    :ok =
-      IPRoute.add_rule(address, table_index)
-      |> explain_on_error()
+    with {:error, reason} <- IPRoute.add_rule(address, table_index) do
+      Logger.error("""
+      Failed to update IP routing table due to #{reason}.
+
+      Check that your Linux config includes:
+      CONFIG_IP_ADVANCED_ROUTER=y
+      CONFIG_IP_MULTIPLE_TABLES=y
+      """)
+
+      # Keep behavior of crashing
+      raise RuntimeError, message: reason
+    end
   end
 
   defp handle_insert({:local_route, ifname, address, subnet_bits, metric, table_index}) do
@@ -375,21 +384,5 @@ defmodule VintageNet.RouteManager do
 
   defp warn_on_error({:error, reason}, label) do
     Logger.warning("route_manager(#{label}): ignoring failure #{inspect(reason)}")
-  end
-
-  defp explain_on_error({:error, "ip: RTNETLINK answers: Operation not supported" <> _} = e) do
-    Logger.error("""
-    This error is commonly encountered when making a custom Nerves system.\n
-
-    Ensure your Linux config includes:
-    CONFIG_IP_ADVANCED_ROUTER=y
-    CONFIG_IP_MULTIPLE_TABLES=y
-    """)
-
-    e
-  end
-
-  defp explain_on_error(result) do
-    result
   end
 end
