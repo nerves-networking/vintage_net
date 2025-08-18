@@ -139,6 +139,14 @@ defmodule VintageNet.RouteManager do
     GenServer.call(__MODULE__, :refresh_route_metrics)
   end
 
+  @doc """
+  Set the weights to interfaces to prioritize with the same type
+  """
+  @spec set_weights(%{VintageNet.ifname() => Classification.weight()}) :: :ok
+  def set_weights(weights) do
+    GenServer.call(__MODULE__, {:set_weights, weights})
+  end
+
   ## GenServer
 
   @impl GenServer
@@ -235,6 +243,23 @@ defmodule VintageNet.RouteManager do
   def handle_call(:refresh_route_metrics, _from, state) do
     Logger.info("RouteManager: refresh_route_metrics")
     new_state = update_route_tables(state)
+    {:reply, :ok, new_state}
+  end
+
+  @impl GenServer
+  def handle_call({:set_weights, weights}, _from, state) do
+    new_state =
+      Enum.reduce(weights, state, fn {ifname, weight}, state when weight in 0..9 ->
+        case Map.fetch(state.interfaces, ifname) do
+          {:ok, %InterfaceInfo{}} ->
+            update_in(state.interfaces[ifname], &struct!(&1, weight: weight))
+
+          _ ->
+            Logger.warn("RouteManager: set_weights to #{weight} on unknown ifname: #{ifname}")
+        end
+      end)
+      |> update_route_tables()
+
     {:reply, :ok, new_state}
   end
 
