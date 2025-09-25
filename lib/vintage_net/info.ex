@@ -27,29 +27,26 @@ defmodule VintageNet.Info do
     case vintage_net_app_info() do
       {:ok, text} ->
         ifnames = interfaces_to_show()
-        [text, format_header(), format_interfaces(ifnames, opts)]
+        [Tablet.render(global_info(), name: text), format_interfaces(ifnames, opts)]
 
       {:error, text} ->
         text
     end
   end
 
-  defp format_header() do
-    """
-
-
-    All interfaces:       #{inspect(VintageNet.all_interfaces())}
-    Available interfaces: #{inspect(VintageNet.get(["available_interfaces"]))}
-
-    """
+  defp global_info() do
+    [
+      %{key: "All interfaces", value: inspect(VintageNet.all_interfaces())},
+      %{key: "Available interfaces", value: inspect(VintageNet.get(["available_interfaces"]))}
+    ]
   end
 
   defp format_interfaces([], _opts) do
-    "No interfaces\n\n"
+    "\nNo interfaces\n"
   end
 
   defp format_interfaces(ifnames, opts) do
-    Enum.map(ifnames, &format_interface(&1, opts))
+    Enum.map(ifnames, &interface_table(&1, opts))
   end
 
   defp interfaces_to_show() do
@@ -60,36 +57,27 @@ defmodule VintageNet.Info do
     end
   end
 
-  defp format_interface(ifname, opts) do
-    if VintageNet.get(["interface", ifname, "present"]) do
-      [
-        "Interface ",
-        ifname,
-        "\n",
-        format_if_attribute(ifname, "type", "Type"),
-        format_power_management(ifname),
-        format_if_attribute(ifname, "present", "Present"),
-        format_if_attribute(ifname, "state", "State", true),
-        format_if_attribute(ifname, "connection", "Connection", true),
-        format_addresses(ifname),
-        format_if_attribute(ifname, "mac_address", "MAC Address"),
-        "  Configuration:\n",
-        format_config(ifname, "    ", opts),
-        "\n"
-      ]
-    else
-      [
-        "Interface ",
-        ifname,
-        "\n",
-        format_if_attribute(ifname, "type", "Type"),
-        format_power_management(ifname),
-        "  Present: false\n",
-        "  Configuration:\n",
-        format_config(ifname, "    ", opts),
-        "\n"
-      ]
-    end
+  defp interface_table(ifname, _opts) do
+    data =
+      if VintageNet.get(["interface", ifname, "present"]) do
+        [
+          format_if_attribute(ifname, "type", "Type"),
+          format_power_management(ifname),
+          format_if_attribute(ifname, "present", "Present"),
+          format_if_attribute(ifname, "state", "State", true),
+          format_if_attribute(ifname, "connection", "Connection", true),
+          format_addresses(ifname),
+          format_if_attribute(ifname, "mac_address", "MAC Address")
+        ]
+      else
+        [
+          format_if_attribute(ifname, "type", "Type"),
+          format_power_management(ifname),
+          %{key: "Present", value: false}
+        ]
+      end
+
+    Tablet.render(data, name: "Interface #{ifname}")
   end
 
   defp loaded?(app) do
@@ -124,108 +112,52 @@ defmodule VintageNet.Info do
     end
   end
 
-  defp format_config(ifname, prefix, opts) do
-    configuration = VintageNet.get_configuration(ifname)
-
-    sanitized =
-      if Keyword.get(opts, :redact, true) do
-        sanitize_configuration(configuration)
-      else
-        configuration
-      end
-
-    sanitized
-    |> inspect(pretty: true, width: 80 - String.length(prefix))
-    |> String.split("\n")
-    |> Enum.map(fn s -> [prefix, s, "\n"] end)
-  end
-
-  defp sanitize_configuration(input) when is_map(input) do
-    Map.new(input, &sanitize_configuration/1)
-  end
-
-  # redact sensitive data
-  defp sanitize_configuration({key, _})
-       when key in [
-              :psk,
-              :password,
-              :sae_password,
-              :private_key,
-              :preshared_key
-            ] do
-    {key, "...."}
-  end
-
-  defp sanitize_configuration({key, data}) when is_map(data) do
-    {key, sanitize_configuration(data)}
-  end
-
-  defp sanitize_configuration({key, data}) when is_list(data) do
-    {key, sanitize_configuration(data)}
-  end
-
-  defp sanitize_configuration({key, value}) do
-    {key, value}
-  end
-
-  defp sanitize_configuration(data) when is_list(data) do
-    Enum.reduce(data, [], fn
-      list_data, acc when is_list(list_data) ->
-        acc ++ sanitize_configuration(list_data)
-
-      other_data, acc ->
-        acc ++ [sanitize_configuration(other_data)]
-    end)
-  end
-
-  defp sanitize_configuration(data), do: data
-
   defp format_if_attribute(ifname, name, print_name, print_since? \\ false) do
     case PropertyTable.fetch_with_timestamp(VintageNet, ["interface", ifname, name]) do
       {:ok, value, timestamp} ->
-        [
-          "  ",
-          print_name,
-          ": ",
-          inspect(value),
-          if(print_since?,
-            do: [
-              " (",
-              friendly_time(System.monotonic_time() - timestamp),
-              ")\n"
-            ],
-            else: "\n"
-          )
-        ]
+        %{
+          key: print_name,
+          value: [
+            inspect(value),
+            if(print_since?,
+              do: [
+                " (",
+                friendly_time(System.monotonic_time() - timestamp),
+                ")"
+              ],
+              else: ""
+            )
+          ]
+        }
 
       :error ->
         # Mirror previous behavior (i.e., print nil for unset attributes)
-        ["  ", print_name, ": nil\n"]
+        %{key: print_name, value: "nil"}
     end
   end
 
   defp format_power_management(ifname) do
     case PMControl.info(ifname) do
       {:ok, info} ->
-        ["  Power: ", info.pm_info, "\n"]
+        %{key: "Power", value: info.pm_info}
 
       _anything_else ->
-        []
+        %{key: "Power", value: "N/A"}
     end
   end
 
   defp format_addresses(ifname) do
     case VintageNet.get(["interface", ifname, "addresses"]) do
-      nil -> []
-      [] -> []
-      addresses -> ["  Addresses: ", pretty_addresses(addresses), "\n"]
+      nil -> %{key: "Addresses", value: "None"}
+      [] -> %{key: "Addresses", value: "None"}
+      addresses -> %{key: "Addresses", value: pretty_addresses(addresses)}
     end
   end
 
   defp pretty_addresses(addresses) do
     addresses
     |> Enum.map(&pretty_address/1)
-    |> Enum.intersperse(", ")
+    |> Enum.intersperse("\n")
   end
 
   defp pretty_address(%{address: address, prefix_length: bits}) do

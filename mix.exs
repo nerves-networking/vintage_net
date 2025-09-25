@@ -104,6 +104,7 @@ defmodule VintageNet.MixProject do
       {:beam_notify, "~> 1.0 or ~> 0.2.0"},
       {:muontrap, "~> 1.0 or ~> 0.5.1 or ~> 0.6.0"},
       {:property_table, "~> 0.2.0 or ~> 0.3.0"},
+      {:tablet, "~> 0.3.0"},
       # Build dependencies
       {:credo, "~> 1.2", only: :test, runtime: false},
       {:credo_binary_patterns, "~> 0.2.2", only: :test, runtime: false},
