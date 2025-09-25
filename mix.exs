@@ -1,12 +1,13 @@
 defmodule VintageNet.MixProject do
   use Mix.Project
 
+  @app :vintage_net
   @version "0.13.7"
-  @source_url "https://github.com/nerves-networking/vintage_net"
+  @source_url "https://github.com/nerves-networking/#{@app}"
 
   def project do
     [
-      app: :vintage_net,
+      app: @app,
       version: @version,
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -91,9 +92,10 @@ defmodule VintageNet.MixProject do
       ],
       licenses: ["Apache-2.0"],
       links: %{
+        "Changelog" => "https://hexdocs.pm/#{@app}/changelog.html",
         "GitHub" => @source_url,
         "REUSE Compliance" =>
-          "https://api.reuse.software/info/github.com/nerves-project/nerves_runtime"
+          "https://api.reuse.software/info/github.com/nerves-networking/#{@app}"
       }
     }
   end
