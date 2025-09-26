@@ -2,6 +2,12 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.8] - 2025-09-25
+
+* Fixes
+  * Improve error message when Linux kernel routing options aren't right. Thanks
+    to @lawik for this fix.
+
 ## [v0.13.7] - 2025-06-07
 
 This release makes VintageNet compliant with the [REUSE Specification](https://reuse.software/).
@@ -718,6 +724,8 @@ need to run `apt install libnl-genl-3-dev`.
 
 Initial release to hex.
 
+[v0.13.8]: https://github.com/nerves-networking/vintage_net/compare/v0.13.7...v0.13.8
+[v0.13.7]: https://github.com/nerves-networking/vintage_net/compare/v0.13.6...v0.13.7
 [v0.13.6]: https://github.com/nerves-networking/vintage_net/compare/v0.13.5...v0.13.6
 [v0.13.5]: https://github.com/nerves-networking/vintage_net/compare/v0.13.4...v0.13.5
 [v0.13.4]: https://github.com/nerves-networking/vintage_net/compare/v0.13.3...v0.13.4
