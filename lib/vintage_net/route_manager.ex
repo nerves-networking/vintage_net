@@ -56,7 +56,7 @@ defmodule VintageNet.RouteManager do
   Options:
 
   * `:route_metric_fun` - a 2-arity function that takes a ifname and `VintageNet.Route.InterfaceInfo`
-    and returns `VintageNet.Route.metric()`
+    and returns `VintageNet.Route.metric()`. Both MFA and function forms are supported
   """
   @spec start_link(keyword) :: GenServer.on_start()
   def start_link(args) do
@@ -161,10 +161,14 @@ defmodule VintageNet.RouteManager do
     {:ok, state}
   end
 
+  defp check_compute_metric({m, f, 2}), do: Function.capture(m, f, 2)
   defp check_compute_metric(fun) when is_function(fun, 2), do: fun
 
-  defp check_compute_metric(_other) do
-    Logger.error("RouteManager: Expecting :route_metric_fun to be a 2-arity function")
+  defp check_compute_metric(other) do
+    Logger.error(
+      "RouteManager: Expecting :route_metric_fun to be a 2-arity function, but got `#{inspect(other)}`. Using `{VintageNet.Route.DefaultMetric, :compute_metric, 2}` instead."
+    )
+
     &DefaultMetric.compute_metric/2
   end
 

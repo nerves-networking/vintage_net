@@ -57,7 +57,7 @@ defmodule VintageNet.MixProject do
         #   [cgroup_base: "vintage_net", cgroup_controllers: ["cpu"]]
         muontrap_options: [],
         power_managers: [],
-        route_metric_fun: &VintageNet.Route.DefaultMetric.compute_metric/2
+        route_metric_fun: {VintageNet.Route.DefaultMetric, :compute_metric, 2}
       ],
       extra_applications: [:logger, :crypto],
       mod: {VintageNet.Application, []}
