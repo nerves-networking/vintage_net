@@ -2,7 +2,7 @@ defmodule VintageNet.MixProject do
   use Mix.Project
 
   @app :vintage_net
-  @version "0.13.8"
+  @version "0.13.9"
   @source_url "https://github.com/nerves-networking/#{@app}"
 
   def project do

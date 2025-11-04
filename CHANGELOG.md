@@ -2,6 +2,11 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.9] - 2025-11-04
+
+* Fixes
+  * Fix compilation error on Elixir 1.19.2
+
 ## [v0.13.8] - 2025-09-25
 
 * Fixes
