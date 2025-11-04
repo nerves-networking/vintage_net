@@ -28,8 +28,9 @@ defmodule VintageNet.IP.IPv4Config do
   Configuration normalization converts `:netmask` to `:prefix_length`.
   """
 
+  alias VintageNet.Command
   alias VintageNet.Interface.RawConfig
-  alias VintageNet.{Command, IP}
+  alias VintageNet.IP
 
   @doc """
   Normalize the IPv4 parameters in a configuration.
