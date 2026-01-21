@@ -109,21 +109,37 @@ defmodule VintageNet.InterfacesMonitor do
   end
 
   defp handle_report(state, {:newaddr, ifindex, address_report}) do
-    new_info =
-      get_or_create_info(state, ifindex)
-      |> Info.newaddr(address_report)
-      |> Info.update_address_properties()
+    case Map.fetch(state.interface_info, ifindex) do
+      {:ok, info} ->
+        new_info =
+          info
+          |> Info.newaddr(address_report)
+          |> Info.update_address_properties()
 
-    %{state | interface_info: Map.put(state.interface_info, ifindex, new_info)}
+        %{state | interface_info: Map.put(state.interface_info, ifindex, new_info)}
+
+      :error ->
+        Logger.debug("interfaces_monitor ignoring newaddr for unknown interface #{ifindex}")
+
+        state
+    end
   end
 
   defp handle_report(state, {:deladdr, ifindex, address_report}) do
-    new_info =
-      get_or_create_info(state, ifindex)
-      |> Info.deladdr(address_report)
-      |> Info.update_address_properties()
+    case Map.fetch(state.interface_info, ifindex) do
+      {:ok, info} ->
+        new_info =
+          info
+          |> Info.deladdr(address_report)
+          |> Info.update_address_properties()
 
-    %{state | interface_info: Map.put(state.interface_info, ifindex, new_info)}
+        %{state | interface_info: Map.put(state.interface_info, ifindex, new_info)}
+
+      :error ->
+        Logger.debug("interfaces_monitor ignoring deladdr for unknown interface #{ifindex}")
+
+        state
+    end
   end
 
   defp get_by_ifname(state, ifname) do
@@ -152,17 +168,6 @@ defmodule VintageNet.InterfacesMonitor do
 
         Info.new(ifname, hw_path)
         |> Info.update_present()
-    end
-  end
-
-  defp get_or_create_info(state, ifindex) do
-    case Map.fetch(state.interface_info, ifindex) do
-      {:ok, info} ->
-        info
-
-      _missing ->
-        # Race between address and link notifications?
-        Info.new("__unknown")
     end
   end
 end
