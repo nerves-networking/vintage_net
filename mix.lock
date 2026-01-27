@@ -15,5 +15,5 @@
   "makeup_erlang": {:hex, :makeup_erlang, "1.0.2", "03e1804074b3aa64d5fad7aa64601ed0fb395337b982d9bcf04029d68d51b6a7", [:mix], [{:makeup, "~> 1.0", [hex: :makeup, repo: "hexpm", optional: false]}], "hexpm", "af33ff7ef368d5893e4a267933e7744e46ce3cf1f61e2dccf53a111ed3aa3727"},
   "muontrap": {:hex, :muontrap, "1.6.1", "4a81a159f64e4c7bf01162a7863559d634bc48929218690ada309a9a98a9ac22", [:make, :mix], [{:elixir_make, "~> 0.6", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm", "8ad31072402bebed3f554c9a463aa272c6dd964168c9cb81385f8711f068ed47"},
   "nimble_parsec": {:hex, :nimble_parsec, "1.4.2", "8efba0122db06df95bfaa78f791344a89352ba04baedd3849593bfce4d0dc1c6", [:mix], [], "hexpm", "4b21398942dda052b403bbe1da991ccd03a053668d147d53fb8c4e0efe09c973"},
-  "property_table": {:hex, :property_table, "0.3.1", "f71381dea834f9c62eff043c626e7af0ef5697258cb961040927e086c7ecb9b6", [:mix], [], "hexpm", "3ebc06667d3a95101a7dba5e9db800395bd5de6b8debbc5a064f78bb1ec5668b"},
+  "property_table": {:hex, :property_table, "0.3.2", "364dd1b20ab1103fccc19253441e1c99152f653c012165dc1daac24951c42bee", [:mix], [], "hexpm", "24d9e0b40bc5ec89789e85bfaa3a564a821808b7472faae2ee4b0d46cdbe159e"},
 }
