@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: None
+# SPDX-License-Identifier: CC0-1.0
+
 version: 2.1
 
 latest: &latest
@@ -5,9 +8,9 @@ latest: &latest
 
 tags: &tags
   [
-    1.19.2-erlang-28.1.1-alpine-3.22.2,
-    1.18.4-erlang-27.3.4-alpine-3.21.3,
-    1.17.3-erlang-27.2-alpine-3.20.3,
+    1.19.5-erlang-28.5-alpine-3.23.4,
+    1.18.4-erlang-28.5-alpine-3.23.4,
+    1.17.3-erlang-27.3.4.11-alpine-3.23.4,
     1.16.3-erlang-26.2.5-alpine-3.20.0,
     1.15.7-erlang-26.2.1-alpine-3.18.4,
     1.14.5-erlang-25.3.2-alpine-3.18.0
@@ -64,7 +67,7 @@ jobs:
 
   automerge:
     docker:
-      - image: alpine:3.21.3
+      - image: alpine:3.23.4
     steps:
       - run:
           name: Install GitHub CLI
