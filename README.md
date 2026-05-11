@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2018 Frank Hunleth
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 ![VintageNet Logo](assets/vintage_net.png)
 
 [![Hex version](https://img.shields.io/hexpm/v/vintage_net.svg "Hex version")](https://hex.pm/packages/vintage_net)

@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: None
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # Predictable Interface Names
 
 An issue presented itself with VintageNet where various things such

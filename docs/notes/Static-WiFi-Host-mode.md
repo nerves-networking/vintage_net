@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: None
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # WiFi AP w/ a static IP address and DHCP server
 
 Set up a wireless access point, and serve dhcp addresses on it. Helpful for serving a single webpage for configuration utilities etc.

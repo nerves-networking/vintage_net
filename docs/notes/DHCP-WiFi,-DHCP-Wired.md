@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: None
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # Dual wired and wireless connections
 
 DHCP on both wireless and wired interfaces, useful for a mobile device that could either be plugged in at home or using WiFi on the go

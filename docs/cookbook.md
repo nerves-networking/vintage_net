@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: None
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # VintageNet Cookbook
 
 Not sure what to pass to `vintage_net`? Take a look below for example

@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: None
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # Wired Ethernet using DHCP
 
 This is the typical wired Ethernet setup.
