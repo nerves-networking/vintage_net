@@ -40,4 +40,15 @@ defmodule VintageNet.DHCP.OptionsTest do
 
     assert expected_options == Options.udhcpc_to_options(info)
   end
+
+  test "translates the WPAD option (252) into :wpad" do
+    info = %{
+      "interface" => "eth0",
+      "ip" => "192.168.1.245",
+      "wpad" => "http://wpad.example/wpad.dat"
+    }
+
+    assert %{wpad: "http://wpad.example/wpad.dat"} =
+             Options.udhcpc_to_options(info)
+  end
 end

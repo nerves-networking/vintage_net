@@ -10,8 +10,11 @@ defmodule VintageNetTest.Utils do
     Application.get_all_env(:vintage_net)
   end
 
-  @spec udhcpc_child_spec(VintageNet.ifname(), String.t()) :: Supervisor.child_spec()
-  def udhcpc_child_spec(ifname, hostname) do
+  @spec udhcpc_child_spec(VintageNet.ifname(), String.t(), [String.t()]) ::
+          Supervisor.child_spec()
+  def udhcpc_child_spec(ifname, hostname, dhcp_request_options \\ []) do
+    request_option_args = Enum.flat_map(dhcp_request_options, &["-O", &1])
+
     %{
       id: :udhcpc,
       start:
@@ -20,15 +23,16 @@ defmodule VintageNetTest.Utils do
            [
              ifname: ifname,
              command: "udhcpc",
-             args: [
-               "-f",
-               "-i",
-               ifname,
-               "-x",
-               "hostname:#{hostname}",
-               "-s",
-               BEAMNotify.bin_path()
-             ],
+             args:
+               [
+                 "-f",
+                 "-i",
+                 ifname,
+                 "-x",
+                 "hostname:#{hostname}",
+                 "-s",
+                 BEAMNotify.bin_path()
+               ] ++ request_option_args,
              opts: [
                stderr_to_stdout: true,
                log_output: :debug,

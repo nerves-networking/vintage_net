@@ -13,7 +13,18 @@ defmodule VintageNet.IP.IPv4Config do
 
   * `:method` - `:dhcp`, `:static`, or `:disabled`
 
-  The `:dhcp` method currently has no additional fields.
+  The `:dhcp` method supports the following optional field:
+
+  * `:dhcp_request_options` - a list of additional DHCP option names (strings) to
+    request from the DHCP server beyond udhcpc's defaults. Each entry is passed
+    through to udhcpc as `-O <entry>`. Either symbolic names ("wpad", "sipsrv")
+    or numeric option codes ("252") are accepted; what's recognized depends on
+    the busybox version in use. Defaults to `[]`. Values that the DHCP server
+    returns are parsed by `VintageNet.DHCP.Options` and exposed via the
+    `["interface", ifname, "dhcp_options"]` property. Requesting additional
+    options changes the contents of the DHCP request, which some networks use
+    to classify or segment clients (for example, fingerprint-based VLAN
+    assignment), so only opt in to options you actually need.
 
   The `:static` method uses the following fields:
 
@@ -46,7 +57,13 @@ defmodule VintageNet.IP.IPv4Config do
     Map.put(config, :ipv4, %{method: :dhcp})
   end
 
-  defp normalize_by_method(%{method: :dhcp}), do: %{method: :dhcp}
+  defp normalize_by_method(%{method: :dhcp} = ipv4) do
+    case Map.get(ipv4, :dhcp_request_options) do
+      nil -> %{method: :dhcp}
+      options -> %{method: :dhcp, dhcp_request_options: normalize_dhcp_request_options(options)}
+    end
+  end
+
   defp normalize_by_method(%{method: :disabled}), do: %{method: :disabled}
 
   defp normalize_by_method(%{method: :static} = ipv4) do
@@ -91,6 +108,22 @@ defmodule VintageNet.IP.IPv4Config do
   end
 
   defp normalize_name_servers(config), do: config
+
+  defp normalize_dhcp_request_options(options) when is_list(options) do
+    Enum.map(options, fn
+      option when is_binary(option) ->
+        option
+
+      other ->
+        raise ArgumentError,
+              "ipv4.dhcp_request_options must contain strings, got: #{inspect(other)}"
+    end)
+  end
+
+  defp normalize_dhcp_request_options(other) do
+    raise ArgumentError,
+          "ipv4.dhcp_request_options must be a list of strings, got: #{inspect(other)}"
+  end
 
   defp get_prefix_length(%{prefix_length: prefix_length}), do: prefix_length
 
@@ -148,6 +181,11 @@ defmodule VintageNet.IP.IPv4Config do
 
     hostname = config[:hostname] || get_hostname()
 
+    request_option_args =
+      config.ipv4
+      |> Map.get(:dhcp_request_options, [])
+      |> Enum.flat_map(&["-O", &1])
+
     new_child_specs =
       child_specs ++
         [
@@ -156,15 +194,16 @@ defmodule VintageNet.IP.IPv4Config do
              [
                ifname: ifname,
                command: "udhcpc",
-               args: [
-                 "-f",
-                 "-i",
-                 ifname,
-                 "-x",
-                 "hostname:#{hostname}",
-                 "-s",
-                 BEAMNotify.bin_path()
-               ],
+               args:
+                 [
+                   "-f",
+                   "-i",
+                   ifname,
+                   "-x",
+                   "hostname:#{hostname}",
+                   "-s",
+                   BEAMNotify.bin_path()
+                 ] ++ request_option_args,
                opts:
                  Command.add_muon_options(
                    stderr_to_stdout: true,
