@@ -101,6 +101,66 @@ defmodule VintageNet.IP.IPv4ConfigTest do
     assert expected == IPv4Config.add_config(initial_raw_config, input, default_opts())
   end
 
+  test "ipv4 dhcp default normalizes without :dhcp_request_options" do
+    # Unspecified :dhcp_request_options should round-trip as a bare :dhcp config,
+    # not gain an empty list — preserves the existing normalized shape.
+    assert %{ipv4: %{method: :dhcp}} ==
+             IPv4Config.normalize(%{ipv4: %{method: :dhcp}})
+  end
+
+  test "ipv4 dhcp preserves :dhcp_request_options through normalize" do
+    assert %{ipv4: %{method: :dhcp, dhcp_request_options: ["wpad", "sipsrv"]}} ==
+             IPv4Config.normalize(%{
+               ipv4: %{method: :dhcp, dhcp_request_options: ["wpad", "sipsrv"]}
+             })
+  end
+
+  test "ipv4 dhcp rejects non-string entries in :dhcp_request_options" do
+    assert_raise ArgumentError, fn ->
+      IPv4Config.normalize(%{ipv4: %{method: :dhcp, dhcp_request_options: [:wpad]}})
+    end
+  end
+
+  test "ipv4 dhcp rejects non-list :dhcp_request_options" do
+    assert_raise ArgumentError, fn ->
+      IPv4Config.normalize(%{ipv4: %{method: :dhcp, dhcp_request_options: "wpad"}})
+    end
+  end
+
+  test "ipv4 dhcp emits -O args when :dhcp_request_options is set" do
+    input =
+      %{
+        hostname: "unit_test",
+        ipv4: %{method: :dhcp, dhcp_request_options: ["wpad"]}
+      }
+      |> IPv4Config.normalize()
+
+    initial_raw_config = %VintageNet.Interface.RawConfig{
+      ifname: "eth0",
+      source_config: input,
+      type: UnitTest,
+      required_ifnames: ["eth0"]
+    }
+
+    expected = %VintageNet.Interface.RawConfig{
+      type: UnitTest,
+      ifname: "eth0",
+      source_config: input,
+      required_ifnames: ["eth0"],
+      child_specs: [
+        udhcpc_child_spec("eth0", "unit_test", ["wpad"]),
+        {VintageNet.Connectivity.InternetChecker, "eth0"}
+      ],
+      down_cmds: [
+        {:run_ignore_errors, "ip", ["addr", "flush", "dev", "eth0", "label", "eth0"]},
+        {:run, "ip", ["link", "set", "eth0", "down"]}
+      ],
+      up_cmds: [{:run, "ip", ["link", "set", "eth0", "up"]}]
+    }
+
+    assert expected == IPv4Config.add_config(initial_raw_config, input, default_opts())
+  end
+
   test "ipv4 static config with a default gateway" do
     input =
       %{
