@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: None
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # WiFi w/ WPA2 to hidden AP using DHCP
 
 This is standard authenticated WiFi, but to an AP that doesn't broadcast its SSID.

@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: None
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # Wired Ethernet using static IP
 
 This is wired Ethernet, but with static IP addresses.

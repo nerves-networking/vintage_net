@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: None
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # LTE Read Only Filesystem
 
 When working with LTE modems a useful program is `pppd`. There are various ways to configure `pppd`,

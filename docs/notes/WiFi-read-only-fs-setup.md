@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: None
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # WiFi Read Only File System Setup
 
 Nerves systems are read-only file systems. However, in order to manage

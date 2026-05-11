@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: None
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # WiFi w/ no security using DHCP
 
 This is standard unauthenticated WiFi. It would be nice if we somehow supported clicking through captive portals somehow, but that's beyond the scope of this unless someone knows of an easy way.

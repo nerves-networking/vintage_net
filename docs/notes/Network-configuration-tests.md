@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: None
+SPDX-License-Identifier: CC0-1.0
+-->
+
 There's an investigation going on for whether an Elixir library that generates `/etc/network/interface` and `wpa_supplicant.conf` files and does the equivalent of running `ifup` and `ifdown` can replace the current `nerves_network`. Scanning WiFi networks and getting real-time stats is assumed to be provided separately by new or trimmed down versions of `nerves_network_interface` and `nerves_wpa_supplicant`. Some way of sending messages to Elixir applications is still needed for when interfaces come up or go down. It's TBD how this works, but there are a few options.
 
 The immediate need is to enumerate and test every setup that we'd like to support to check for holes and make sure that we have the necessary programs included in our images to support this.

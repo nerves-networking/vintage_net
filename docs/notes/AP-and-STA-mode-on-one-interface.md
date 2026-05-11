@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: None
+SPDX-License-Identifier: CC0-1.0
+-->
+
 This is an advanced config that I don't know if we can/want to support by default. It has some extra dependencies to work properly.
 
 # /etc/network/interfaces
