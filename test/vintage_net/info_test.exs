@@ -14,13 +14,11 @@ defmodule VintageNet.InfoTest do
   doctest Info
 
   setup do
-    # Capture Application exited logs
     capture_log(fn ->
       Application.stop(:vintage_net)
       Application.start(:vintage_net)
     end)
 
-    # Remove persisted files if anything hung around
     on_exit(fn ->
       File.rm(Path.join(Application.get_env(:vintage_net, :persistence_dir), "eth0"))
       File.rm(Path.join(Application.get_env(:vintage_net, :persistence_dir), "wlan0"))
@@ -29,15 +27,12 @@ defmodule VintageNet.InfoTest do
     :ok
   end
 
-  test "info sanitizes protected fields" do
+  test "summary sanitizes protected fields when verbose" do
     capture_log(fn ->
       :ok =
         VintageNet.configure("eth0", %{
           type: VintageNetTest.TestTechnology,
-          arbitrary_config_name: %{
-            psk: "psk1",
-            password: "password1"
-          },
+          arbitrary_config_name: %{psk: "psk1", password: "password1"},
           list_of_arbitrary_configuration: [
             %{psk: "psk2", password: "password2"},
             %{psk: "psk3", password: "password3"},
@@ -47,13 +42,11 @@ defmodule VintageNet.InfoTest do
           private_key: "priv_key"
         })
 
-      # configure/2 is asynchronous, so wait for the interface to appear.
       Process.sleep(100)
-      interfaces = VintageNet.configured_interfaces()
-      assert "eth0" in interfaces
+      assert "eth0" in VintageNet.configured_interfaces()
     end)
 
-    output = capture_io(&Info.info/0)
+    output = capture_io(fn -> Info.info("eth0", verbose: true) end)
     refute output =~ "psk1"
     refute output =~ "psk2"
     refute output =~ "psk3"
@@ -65,30 +58,23 @@ defmodule VintageNet.InfoTest do
     refute output =~ "priv_key"
   end
 
-  test "info allows for not redacting" do
+  test "redact: false reveals secrets when verbose" do
     capture_log(fn ->
       :ok =
         VintageNet.configure("eth0", %{
           type: VintageNetTest.TestTechnology,
-          arbitrary_config_name: %{
-            psk: "psk1",
-            password: "password1"
-          },
+          arbitrary_config_name: %{psk: "psk1", password: "password1"},
           list_of_arbitrary_configuration: [
             %{psk: "psk2", password: "password2"},
             %{psk: "psk3", password: "password3"}
           ]
         })
 
-      # configure/2 is asynchronous, so wait for the interface to appear.
       Process.sleep(100)
       assert ["eth0"] == VintageNet.configured_interfaces()
     end)
 
-    output =
-      capture_io(fn ->
-        Info.info(redact: false)
-      end)
+    output = capture_io(fn -> Info.info("eth0", redact: false, verbose: true) end)
 
     assert output =~ "psk1"
     assert output =~ "psk2"
@@ -98,41 +84,114 @@ defmodule VintageNet.InfoTest do
     assert output =~ "password3"
   end
 
-  test "info works with nothing configured" do
+  test "summary with nothing configured prints No interfaces" do
     output = capture_io(&Info.info/0)
 
-    assert output =~ "All interfaces"
-    assert output =~ "Available interfaces"
+    assert output =~ "host:"
+    assert output =~ "Status: 0 of 0 online"
     assert output =~ "No interfaces"
   end
 
-  test "info_as_ansidata can return ansidata" do
+  test "info_as_ansidata returns ansidata" do
     output = Info.info_as_ansidata()
     output_str = output |> IO.ANSI.format(false) |> IO.chardata_to_string()
 
-    assert output_str =~ "All interfaces"
-    assert output_str =~ "Available interfaces"
+    assert output_str =~ "host:"
     assert output_str =~ "No interfaces"
   end
 
-  test "info works with a configured interface" do
+  test "summary shows a configured interface in the table" do
     capture_log(fn ->
       :ok = VintageNet.configure("eth0", %{type: VintageNetTest.TestTechnology})
 
-      # configure/2 is asynchronous, so wait for the interface to appear.
       Process.sleep(100)
       assert ["eth0"] == VintageNet.configured_interfaces()
     end)
 
     output = capture_io(&Info.info/0)
 
-    assert output =~ "All interfaces"
-    assert output =~ "Available interfaces"
-    assert output =~ "Interface eth0"
-    assert output =~ "Type: VintageNetTest.TestTechnology"
+    assert output =~ ~r/\bIF\b/
+    assert output =~ ~r/\bCONN\b/
+    assert output =~ ~r/\bTYPE\b/
+    assert output =~ "eth0"
   end
 
-  test "info works with ap configuration" do
+  test "summary hides configuration by default" do
+    capture_log(fn ->
+      :ok =
+        VintageNet.configure("eth0", %{
+          type: VintageNetTest.TestTechnology,
+          some_marker: "look_for_me"
+        })
+
+      Process.sleep(100)
+      assert ["eth0"] == VintageNet.configured_interfaces()
+    end)
+
+    output = capture_io(&Info.info/0)
+
+    refute output =~ "look_for_me"
+    assert output =~ "verbose: true"
+  end
+
+  test "summary footer suggests detail and verbose options" do
+    capture_log(fn ->
+      :ok = VintageNet.configure("eth0", %{type: VintageNetTest.TestTechnology})
+
+      Process.sleep(100)
+      assert ["eth0"] == VintageNet.configured_interfaces()
+    end)
+
+    output = capture_io(&Info.info/0)
+
+    assert output =~ "VintageNet.info(\"<ifname>\")"
+    assert output =~ "verbose: true"
+  end
+
+  test "info(ifname) shows the detail view" do
+    capture_log(fn ->
+      :ok =
+        VintageNet.configure("eth0", %{
+          type: VintageNetTest.TestTechnology,
+          some_marker: "look_for_me"
+        })
+
+      Process.sleep(100)
+      assert ["eth0"] == VintageNet.configured_interfaces()
+    end)
+
+    output = capture_io(fn -> Info.info("eth0") end)
+
+    assert output =~ "Interface eth0"
+    refute output =~ "look_for_me"
+  end
+
+  test "info(ifname, verbose: true) shows the configuration" do
+    capture_log(fn ->
+      :ok =
+        VintageNet.configure("eth0", %{
+          type: VintageNetTest.TestTechnology,
+          some_marker: "look_for_me"
+        })
+
+      Process.sleep(100)
+      assert ["eth0"] == VintageNet.configured_interfaces()
+    end)
+
+    output = capture_io(fn -> Info.info("eth0", verbose: true) end)
+
+    assert output =~ "Interface eth0"
+    assert output =~ "Configuration:"
+    assert output =~ "look_for_me"
+  end
+
+  test "info(ifname) for an unknown interface" do
+    output = capture_io(fn -> Info.info("nope0") end)
+    assert output =~ "nope0"
+    assert output =~ "not configured"
+  end
+
+  test "AP configuration is shown in detail view with verbose" do
     ap_config = %{
       dhcpd: %{
         end: {192, 168, 0, 254},
@@ -157,12 +216,11 @@ defmodule VintageNet.InfoTest do
     capture_log(fn ->
       :ok = VintageNet.configure("wlan0", ap_config)
 
-      # configure/2 is asynchronous, so wait for the interface to appear.
       Process.sleep(100)
       assert ["wlan0"] == VintageNet.configured_interfaces()
     end)
 
-    output = capture_io(&Info.info/0)
+    output = capture_io(fn -> Info.info("wlan0", verbose: true) end)
 
     assert output =~ "Interface wlan0"
     assert output =~ "mode: :ap"

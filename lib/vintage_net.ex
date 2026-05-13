@@ -110,8 +110,9 @@ defmodule VintageNet do
   Valid options for `VintageNet.info/1`
 
   * `:redact` - Whether to hide passwords and similar information from the output (defaults to `true`)
+  * `:verbose` - Set to `true` to include the full interface configuration map (defaults to `false`)
   """
-  @type info_options :: [redact: boolean()]
+  @type info_options :: [redact: boolean(), verbose: boolean()]
 
   @typedoc """
   A VintageNet property
@@ -366,12 +367,22 @@ defmodule VintageNet do
   @doc """
   Print the current network status
 
+  Call without arguments for a one-row-per-interface summary, or pass an
+  interface name (e.g. `VintageNet.info("eth0")`) to drill into one interface.
+
   Options include:
 
   * `:redact` - Set to `false` to print out passwords
+  * `:verbose` - Set to `true` to include the full interface configuration map
   """
-  @spec info(info_options()) :: :ok
-  defdelegate info(options \\ []), to: Info
+  @spec info() :: :ok
+  defdelegate info(), to: Info
+
+  @spec info(ifname() | info_options()) :: :ok
+  defdelegate info(ifname_or_options), to: Info
+
+  @spec info(ifname(), info_options()) :: :ok
+  defdelegate info(ifname, options), to: Info
 
   @doc """
   Check that the system has the required programs installed
