@@ -7,6 +7,13 @@ SPDX-License-Identifier: CC0-1.0
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.10] - 2026-05-14
+
+* Changed
+  * Support requesting DHCP options. For example,
+    `ipv4: %{method: :dhcp, dhcp_request_options: ["wpad"]}` (@gordoneliel)
+  * Fix Elixir 1.20 warnings
+
 ## [v0.13.9] - 2025-11-04
 
 * Fixes
