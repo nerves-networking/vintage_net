@@ -7,8 +7,6 @@ defmodule VintageNetTest.CapturingUdhcpcHandler do
 
   @behaviour VintageNet.OSEventDispatcher.UdhcpcHandler
 
-  require Logger
-
   @doc """
   """
   @impl VintageNet.OSEventDispatcher.UdhcpcHandler

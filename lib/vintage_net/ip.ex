@@ -191,7 +191,7 @@ defmodule VintageNet.IP do
   @spec to_subnet(:inet.ip_address(), VintageNet.prefix_length()) :: :inet.ip_address()
   def to_subnet({a, b, c, d}, subnet_bits) when subnet_bits >= 0 and subnet_bits <= 32 do
     not_subnet_bits = 32 - subnet_bits
-    <<subnet::size(subnet_bits), _::size(not_subnet_bits)>> = <<a, b, c, d>>
+    <<subnet::size(^subnet_bits), _::size(^not_subnet_bits)>> = <<a, b, c, d>>
     <<new_a, new_b, new_c, new_d>> = <<subnet::size(subnet_bits), 0::size(not_subnet_bits)>>
     {new_a, new_b, new_c, new_d}
   end
@@ -200,7 +200,7 @@ defmodule VintageNet.IP do
       when subnet_bits >= 0 and subnet_bits <= 128 do
     not_subnet_bits = 128 - subnet_bits
 
-    <<subnet::size(subnet_bits), _::size(not_subnet_bits)>> =
+    <<subnet::size(^subnet_bits), _::size(^not_subnet_bits)>> =
       <<a::16, b::16, c::16, d::16, e::16, f::16, g::16, h::16>>
 
     <<new_a::16, new_b::16, new_c::16, new_d::16, new_e::16, new_f::16, new_g::16, new_h::16>> =
@@ -225,7 +225,7 @@ defmodule VintageNet.IP do
   def ipv4_broadcast_address({a, b, c, d}, subnet_bits)
       when subnet_bits >= 0 and subnet_bits <= 32 do
     not_subnet_bits = 32 - subnet_bits
-    <<subnet::size(subnet_bits), _::size(not_subnet_bits)>> = <<a, b, c, d>>
+    <<subnet::size(^subnet_bits), _::size(^not_subnet_bits)>> = <<a, b, c, d>>
     <<new_a, new_b, new_c, new_d>> = <<subnet::size(subnet_bits), -1::size(not_subnet_bits)>>
     {new_a, new_b, new_c, new_d}
   end

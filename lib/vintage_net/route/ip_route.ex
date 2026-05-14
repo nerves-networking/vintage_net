@@ -9,7 +9,6 @@ defmodule VintageNet.Route.IPRoute do
   """
 
   alias VintageNet.{Command, IP, Route}
-  require Logger
 
   @doc """
   Add a default route

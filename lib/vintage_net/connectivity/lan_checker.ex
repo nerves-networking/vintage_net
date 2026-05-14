@@ -17,7 +17,6 @@ defmodule VintageNet.Connectivity.LANChecker do
   use GenServer
 
   alias VintageNet.RouteManager
-  require Logger
 
   @doc """
   Start the connectivity checker GenServer

@@ -8,7 +8,6 @@ defmodule VintageNet.DHCP.Options do
   """
 
   alias VintageNet.IP
-  require Logger
 
   @typedoc """
   A map of options and other information reported by udhcpc

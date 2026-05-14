@@ -18,7 +18,6 @@ defmodule VintageNet.Connectivity.InternetChecker do
   alias VintageNet.Connectivity.{CheckLogic, HostList, Inspector, TCPPing}
   alias VintageNet.PowerManager.PMControl
   alias VintageNet.RouteManager
-  require Logger
 
   @typedoc false
   @type state() :: %{
