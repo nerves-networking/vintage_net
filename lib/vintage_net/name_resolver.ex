@@ -131,8 +131,9 @@ defmodule VintageNet.NameResolver do
          entries: entries,
          additional_name_servers: additional_name_servers
        }) do
-    # Update the resolv.conf file
+    # Update the resolv.conf file and ensure world readable for other programs
     File.write!(path, ResolvConf.to_config(entries, additional_name_servers))
+    File.chmod!(path, 0o644)
 
     # Let VintageNet users know the latest
     PropertyTable.put(
