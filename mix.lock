@@ -16,4 +16,5 @@
   "muontrap": {:hex, :muontrap, "1.8.0", "3c5dab5bc91d5a16d14cd85b130ae7d35a9c469564a11ba4b2ebbcd7ccf5bc05", [:make, :mix], [{:elixir_make, "~> 0.6", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm", "45ff36451303cbdefe1c66da3681b5aff078ee5737348f554f0017daa66284af"},
   "nimble_parsec": {:hex, :nimble_parsec, "1.4.2", "8efba0122db06df95bfaa78f791344a89352ba04baedd3849593bfce4d0dc1c6", [:mix], [], "hexpm", "4b21398942dda052b403bbe1da991ccd03a053668d147d53fb8c4e0efe09c973"},
   "property_table": {:hex, :property_table, "0.3.3", "7a31cc1c6d9e0a532787f56bee6d9a6067205d9c24c6d64e8ba851837d59f297", [:mix], [], "hexpm", "738a1584ab56237443e0fccaa0cf4a1da058c0c992948bcd73fed1a99de5696e"},
+  "tablet": {:hex, :tablet, "0.3.2", "108b6736e0f6c229c5ffd64a01188d5e6ddcf0a68546338f95611bf691f55453", [:mix], [], "hexpm", "74b1cbfcf2a8e55d685a804ad36dd40ec640b3b16c03782a2eb791fd051a0f0e"},
 }
