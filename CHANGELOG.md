@@ -7,6 +7,12 @@ SPDX-License-Identifier: CC0-1.0
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.11] - 2026-05-14
+
+* Fixes
+  * Fix permissions on `/etc/resolv.conf` so unprivileged users could read it on
+    systems with 077 umasks. This fixes name resolution for those users.
+
 ## [v0.13.10] - 2026-05-14
 
 * Changed
