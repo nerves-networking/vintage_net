@@ -173,7 +173,7 @@ defmodule VintageNet.MixProject do
           vintage_net is incompatible with #{inspect(bad_dep)}.
 
           Please remove #{inspect(bad_dep)} from your project's mix dependencies. See
-          https://hexdocs.pm/vintage_net/readme.html#installation for help.
+          https://vintage-net.hexdocs.pm/readme.html#installation for help.
           """)
         end
       end)

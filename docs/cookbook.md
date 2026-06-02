@@ -39,7 +39,7 @@ configuration from below.
 ### Run-time (IEx)
 
 Call
-[`VintageNet.configure`](https://hexdocs.pm/vintage_net/VintageNet.html#configure/3)
+[`VintageNet.configure`](https://vintage-net.hexdocs.pm/VintageNet.html#configure/3)
 like this:
 
 ```elixir
@@ -140,7 +140,7 @@ VintageNet.configure("eth0", %{
 <!-- tabs-close -->
 
 See
-[`VintageNet.IP.IPv4Config`](https://hexdocs.pm/vintage_net/VintageNet.IP.IPv4Config.html)
+[`VintageNet.IP.IPv4Config`](https://vintage-net.hexdocs.pm/VintageNet.IP.IPv4Config.html)
 for other options. If you're interfacing with other Erlang and Elixir libraries,
 you may find passing IP tuples more convenient than passing strings. That works
 too.
@@ -738,7 +738,7 @@ VintageNet.configure("mesh0", mesh0_config)
 
 For sharing your WAN connection (e.g. internet access) with other networks
 `iptables` must be installed. Currently this means building a [custom nerves
-system](https://hexdocs.pm/nerves/customizing-systems.html). Once this is done
+system](https://nerves.hexdocs.pm/customizing-systems.html). Once this is done
 the following commands need to be called on each boot:
 
 ```elixir
