@@ -6,7 +6,7 @@ SPDX-License-Identifier: CC-BY-4.0
 ![VintageNet Logo](assets/vintage_net.png)
 
 [![Hex version](https://img.shields.io/hexpm/v/vintage_net.svg "Hex version")](https://hex.pm/packages/vintage_net)
-[![API docs](https://img.shields.io/hexpm/v/vintage_net.svg?label=hexdocs "API docs")](https://hexdocs.pm/vintage_net/VintageNet.html)
+[![API docs](https://img.shields.io/hexpm/v/vintage_net.svg?label=hexdocs "API docs")](https://vintage-net.hexdocs.pm/VintageNet.html)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/nerves-networking/vintage_net/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/nerves-networking/vintage_net/tree/main)
 [![REUSE status](https://api.reuse.software/badge/github.com/nerves-networking/vintage_net)](https://api.reuse.software/info/github.com/nerves-networking/vintage_net)
 
@@ -75,7 +75,7 @@ config :vintage_net,
   ]
 ```
 
-For more variants, see the [VintageNet Cookbook](https://hexdocs.pm/vintage_net/cookbook.html). It covers:
+For more variants, see the [VintageNet Cookbook](https://vintage-net.hexdocs.pm/cookbook.html). It covers:
 
 - Compile-time vs. run-time
 - Static IPs
