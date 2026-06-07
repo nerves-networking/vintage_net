@@ -7,6 +7,13 @@ SPDX-License-Identifier: CC0-1.0
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.12] - 2026-06-07
+
+* Fixes
+  * Make permissions change on `/etc/resolv.conf` best effort. This was
+    introduced in v0.13.11. It turns out that the permissions can't be changed
+    in all scenarios and when they can't, they're fine. Therefore, don't crash.
+
 ## [v0.13.11] - 2026-05-14
 
 * Fixes
@@ -747,6 +754,10 @@ need to run `apt install libnl-genl-3-dev`.
 
 Initial release to hex.
 
+[v0.13.12]: https://github.com/nerves-networking/vintage_net/compare/v0.13.11...v0.13.12
+[v0.13.11]: https://github.com/nerves-networking/vintage_net/compare/v0.13.10...v0.13.11
+[v0.13.10]: https://github.com/nerves-networking/vintage_net/compare/v0.13.9...v0.13.10
+[v0.13.9]: https://github.com/nerves-networking/vintage_net/compare/v0.13.8...v0.13.9
 [v0.13.8]: https://github.com/nerves-networking/vintage_net/compare/v0.13.7...v0.13.8
 [v0.13.7]: https://github.com/nerves-networking/vintage_net/compare/v0.13.6...v0.13.7
 [v0.13.6]: https://github.com/nerves-networking/vintage_net/compare/v0.13.5...v0.13.6
