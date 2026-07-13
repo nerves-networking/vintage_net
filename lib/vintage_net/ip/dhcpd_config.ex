@@ -22,6 +22,7 @@ defmodule VintageNet.IP.DhcpdConfig do
   * `:auto_time` - The time period at which udhcpd will write out leases file.
   * `:static_leases` - list of `{mac_address, ip_address}`
   * `:options` - a map DHCP response options to set. Such as:
+    * `:captive_portal` - STRING - [0x72] URI of the captive portal API (RFC 8910)
     * `:dns` - IP_LIST
     * `:domain` -  STRING - [0x0f] client's domain suffix
     * `:hostname` - STRING
@@ -35,6 +36,12 @@ defmodule VintageNet.IP.DhcpdConfig do
   > Options may also be passed in as integers. These are passed directly to the DHCP server
   > and their values are strings that are not interpreted by VintageNet. Use this to support
   > custom DHCP header options. For more details on DHCP response options see RFC 2132
+
+  > #### :captive_portal {: .info}
+  > The `:captive_portal` option advertises a captive portal API endpoint to clients per
+  > [RFC 8910](https://www.rfc-editor.org/info/rfc8910). It's useful when running an access
+  > point that presents a captive portal. Set it to the URI that clients should query, e.g.
+  > `options: %{captive_portal: "https://192.168.24.1/portal.json"}`.
 
   ## Example
   ```
@@ -71,6 +78,12 @@ defmodule VintageNet.IP.DhcpdConfig do
   @string_options [:hostname, :domain]
   @string_list_options [:search]
   @list_options @ip_list_options ++ @string_list_options
+
+  # RFC 8910 Captive-Portal option. busybox udhcpd doesn't know this option by
+  # name, so it's emitted by its numeric code with the URI quoted. Quoting is
+  # required: an unquoted value for a numeric option is interpreted as a hex
+  # string by udhcpd.
+  @captive_portal_option_code 114
 
   @doc """
   Normalize the DHCPD parameters in a configuration.
@@ -149,6 +162,10 @@ defmodule VintageNet.IP.DhcpdConfig do
        when int_option in @int_options and
               is_integer(value) do
     {int_option, value}
+  end
+
+  defp normalize_option({:captive_portal, uri}) do
+    {:captive_portal, to_string(uri)}
   end
 
   defp normalize_option({string_option, string})
@@ -293,6 +310,12 @@ defmodule VintageNet.IP.DhcpdConfig do
 
   defp to_udhcpd_option_string({option, string}) when option in @string_options do
     [to_string(option), " ", string]
+  end
+
+  defp to_udhcpd_option_string({:captive_portal, uri}) do
+    # Emit by numeric code with a quoted URI so udhcpd treats it as a string
+    # rather than a hex value.
+    [to_string(@captive_portal_option_code), " \"", uri, "\""]
   end
 
   defp to_udhcpd_option_string({other_option, string}) when is_integer(other_option) do

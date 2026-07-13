@@ -7,6 +7,15 @@ SPDX-License-Identifier: CC0-1.0
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+* New features
+  * Add a `:captive_portal` DHCP server option that advertises a captive portal
+    API endpoint to clients per [RFC 8910](https://www.rfc-editor.org/info/rfc8910).
+    This is useful when running an access point that presents a captive portal.
+    Set it under `dhcpd.options`, e.g.
+    `options: %{captive_portal: "https://192.168.24.1/portal.json"}`.
+
 ## [v0.13.12] - 2026-06-07
 
 * Fixes
