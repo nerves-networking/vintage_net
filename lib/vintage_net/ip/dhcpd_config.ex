@@ -33,8 +33,9 @@ defmodule VintageNet.IP.DhcpdConfig do
 
   > #### :options {: .info}
   > Options may also be passed in as integers. These are passed directly to the DHCP server
-  > and their values are strings that are not interpreted by VintageNet. Use this to support
-  > custom DHCP header options. For more details on DHCP response options see RFC 2132
+  > and their values are strings passed unmodified by VintageNet which means they should be
+  > base 16 encoded. Use this to support custom DHCP header options. For more details on DHCP
+  > response options see RFC 2132.
 
   ## Example
   ```
@@ -53,9 +54,10 @@ defmodule VintageNet.IP.DhcpdConfig do
         start: "192.168.24.2",
         end: "192.168.24.10",
         options: %{
-          dns: ["1.1.1.1", "1.0.0.1"],
-          netmask: "255.255.255.0",
-          router: ["192.168.24.1"]
+          :dns => ["1.1.1.1", "1.0.0.1"],
+          :netmask => "255.255.255.0",
+          :router => ["192.168.24.1"],
+          43 => Base.encode16(<<"MSFT", 2, 1,1>>) # "4D534654020101"
         }
       }
     })
