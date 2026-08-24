@@ -94,6 +94,57 @@ defmodule VintageNet.IP.DhcpdConfigTest do
     assert normalized_config == DhcpdConfig.normalize(config)
   end
 
+  test "dhcpd normalizes the captive_portal option (RFC 8910)" do
+    config = %{
+      dhcpd: %{
+        start: "192.168.1.2",
+        end: "192.168.1.100",
+        options: %{
+          captive_portal: "https://192.168.1.1/portal.json"
+        }
+      }
+    }
+
+    normalized_config = %{
+      dhcpd: %{
+        start: {192, 168, 1, 2},
+        end: {192, 168, 1, 100},
+        options: %{captive_portal: "https://192.168.1.1/portal.json"}
+      }
+    }
+
+    assert normalized_config == DhcpdConfig.normalize(config)
+  end
+
+  test "dhcpd emits a quoted numeric opt 114 for captive_portal" do
+    input =
+      %{
+        dhcpd: %{
+          start: "192.168.1.2",
+          end: "192.168.1.100",
+          options: %{
+            captive_portal: "https://192.168.1.1/portal.json"
+          }
+        }
+      }
+      |> DhcpdConfig.normalize()
+
+    initial_raw_config = %VintageNet.Interface.RawConfig{
+      ifname: "wlan0",
+      source_config: input,
+      type: UnitTest,
+      required_ifnames: ["wlan0"]
+    }
+
+    opts = [tmpdir: "tmpdir", bin_udhcpd: "udhcpd"]
+
+    result = DhcpdConfig.add_config(initial_raw_config, input, opts)
+
+    {_path, contents} = List.keyfind(result.files, "tmpdir/udhcpd.conf.wlan0", 0)
+
+    assert contents =~ ~s(opt 114 "https://192.168.1.1/portal.json")
+  end
+
   test "normalize fixes item passed instead of list" do
     # Pass an IP address rather than a list for the DNS option
     config = %{
