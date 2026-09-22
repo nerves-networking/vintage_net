@@ -622,6 +622,7 @@ static int netif_build_notification(const struct nlmsghdr *nlh, void *data)
     if (rc == MNL_CB_OK)
         write_buff(&buff);
 
+    ei_x_free(&buff);
     return rc;
 }
 
