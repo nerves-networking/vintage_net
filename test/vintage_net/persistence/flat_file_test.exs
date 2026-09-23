@@ -15,6 +15,14 @@ defmodule VintageNet.Persistence.FlatFileTest do
   setup do
     persistence_dir = Application.get_env(:vintage_net, :persistence_dir)
 
+    on_exit(fn ->
+      if File.exists?(persistence_dir) do
+        persistence_dir
+        |> File.ls!()
+        |> Enum.each(&File.rm(Path.join(persistence_dir, &1)))
+      end
+    end)
+
     if File.exists?(persistence_dir) do
       File.ls!(persistence_dir)
       |> Enum.map(&Path.join(persistence_dir, &1))
