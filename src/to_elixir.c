@@ -195,6 +195,7 @@ int main(int argc, char *argv[])
     if (rc != buff.index)
         errx(EXIT_FAILURE, "write wasn't able to send %d chars all at once!", buff.index);
 
+    ei_x_free(&buff);
     close(fd);
     return 0;
 }
