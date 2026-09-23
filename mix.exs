@@ -108,7 +108,7 @@ defmodule VintageNet.MixProject do
     [
       # Runtime dependencies
       {:beam_notify, "~> 1.0 or ~> 0.2.0"},
-      {:muontrap, "~> 1.0 or ~> 0.5.1 or ~> 0.6.0"},
+      {:muontrap, "~> 1.0 or ~> 0.5.1 or ~> 0.6.0 or ~> 2.0.0"},
       {:property_table, "~> 0.2.0 or ~> 0.3.0"},
       # Build dependencies
       {:credo, "~> 1.2", only: :test, runtime: false},
