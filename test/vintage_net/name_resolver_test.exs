@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 defmodule VintageNet.NameResolverTest do
-  use VintageNetTest.Case, async: true
+  use VintageNetTest.Case
   import ExUnit.CaptureLog
   alias VintageNet.NameResolver
 
