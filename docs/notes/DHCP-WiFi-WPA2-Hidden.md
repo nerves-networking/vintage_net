@@ -1,6 +1,6 @@
 <!--
-SPDX-FileCopyrightText: None
-SPDX-License-Identifier: CC0-1.0
+  SPDX-FileCopyrightText: None
+  SPDX-License-Identifier: CC0-1.0
 -->
 
 # WiFi w/ WPA2 to hidden AP using DHCP

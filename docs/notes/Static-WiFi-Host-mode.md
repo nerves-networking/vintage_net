@@ -1,6 +1,6 @@
 <!--
-SPDX-FileCopyrightText: None
-SPDX-License-Identifier: CC0-1.0
+  SPDX-FileCopyrightText: None
+  SPDX-License-Identifier: CC0-1.0
 -->
 
 # WiFi AP w/ a static IP address and DHCP server

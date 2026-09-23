@@ -1,6 +1,11 @@
 <!--
-SPDX-FileCopyrightText: 2018 Frank Hunleth
-SPDX-License-Identifier: CC-BY-4.0
+  SPDX-FileCopyrightText: 2018 Frank Hunleth
+  SPDX-FileCopyrightText: 2019 Connor Rigby
+  SPDX-FileCopyrightText: 2021 Matt Ludwigs
+  SPDX-FileCopyrightText: 2024 Lars Wikman
+  SPDX-FileCopyrightText: 2024 TORIFUKU Kaiou
+  SPDX-FileCopyrightText: 2025 Adam Vietro
+  SPDX-License-Identifier: CC-BY-4.0
 -->
 
 ![VintageNet Logo](assets/vintage_net.png)
