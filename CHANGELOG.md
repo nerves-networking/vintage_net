@@ -7,6 +7,11 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.13] - 2026-09-22
+
+* Fixes
+  * Fix memory leak in if_monitor (@chvolow24)
+
 ## [v0.13.12] - 2026-06-07
 
 * Fixes
@@ -754,6 +759,7 @@ need to run `apt install libnl-genl-3-dev`.
 
 Initial release to hex.
 
+[v0.13.13]: https://github.com/nerves-networking/vintage_net/compare/v0.13.12...v0.13.13
 [v0.13.12]: https://github.com/nerves-networking/vintage_net/compare/v0.13.11...v0.13.12
 [v0.13.11]: https://github.com/nerves-networking/vintage_net/compare/v0.13.10...v0.13.11
 [v0.13.10]: https://github.com/nerves-networking/vintage_net/compare/v0.13.9...v0.13.10
