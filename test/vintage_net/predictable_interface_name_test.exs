@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2020 Connor Rigby
 # SPDX-FileCopyrightText: 2020 Frank Hunleth
+# SPDX-FileCopyrightText: 2026 Cocoa Xu
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -97,5 +98,22 @@ defmodule VintageNet.PredictableInterfaceNameTest do
              {:rename, ^unpredictable_ifname, ^predictable_ifname} -> true
              _ -> false
            end)
+  end
+
+  test "precheck allows a built-in name only when its rule opts in" do
+    Application.put_env(:vintage_net, :ifnames, [
+      %{ifname: "ethpc0", hw_path: "/devices/pci0000:00/0000:25:00.0", allow_built_in: true},
+      %{ifname: "ethdev0", hw_path: "/devices/pci0000:00/0000:23:00.0"}
+    ])
+
+    on_exit(fn -> Application.delete_env(:vintage_net, :ifnames) end)
+
+    assert PredictableInterfaceName.precheck("ethpc0") == :ok
+    assert PredictableInterfaceName.precheck("lan0") == :ok
+
+    assert PredictableInterfaceName.precheck("ethdev0") ==
+             {:error, :not_predictable_interface_name}
+
+    assert PredictableInterfaceName.precheck("eth0") == {:error, :not_predictable_interface_name}
   end
 end
