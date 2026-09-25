@@ -13,6 +13,7 @@ defmodule VintageNet.PredictableInterfaceName do
   """
   use GenServer
   alias VintageNet.InterfaceRenamer
+  alias VintageNet.PredictableInterfaceName.Matcher
   require Logger
 
   # Linux kernel network prefixes are device dependent, but mostly follow
@@ -162,13 +163,17 @@ defmodule VintageNet.PredictableInterfaceName do
   # this is not a pure function.. it actually causes the rename to happen
   # and returns a new state with the renamed interface
   defp maybe_rename(state, hw_path, ifname) do
+    device = Matcher.device(ifname, hw_path)
+
     renamed =
-      Enum.reduce(state.ifnames, [], fn
+      state.ifnames
+      |> Enum.filter(&Matcher.matches?(&1, device))
+      |> Enum.reduce([], fn
         # interface has already been renamed. Ignore.
-        %{hw_path: ^hw_path, ifname: ^ifname}, renamed ->
+        %{ifname: ^ifname}, renamed ->
           renamed
 
-        %{hw_path: ^hw_path, ifname: rename_to} = rename, renamed ->
+        %{ifname: rename_to} = rename, renamed ->
           if duplicate?(renamed, hw_path) do
             Logger.warning(
               "Not renaming #{ifname} because another interface already matched the hw_path: #{hw_path}"
@@ -179,12 +184,8 @@ defmodule VintageNet.PredictableInterfaceName do
             Logger.debug("VintageNet renaming #{ifname} to #{rename_to}")
             # do side effect..
             :ok = rename(ifname, rename_to)
-            [rename | renamed]
+            [Map.put(rename, :hw_path, hw_path) | renamed]
           end
-
-        # non matching config
-        %{hw_path: _path, ifname: _ifname}, renamed ->
-          renamed
       end)
 
     %{state | renamed: renamed}
