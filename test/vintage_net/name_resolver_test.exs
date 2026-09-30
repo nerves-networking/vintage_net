@@ -49,9 +49,12 @@ defmodule VintageNet.NameResolverTest do
       assert contents == """
              # This file is managed by VintageNet. Do not edit.
 
-             search example.com # From eth0
-             nameserver 1.1.1.1 # From eth0
-             nameserver 8.8.8.8 # From eth0
+             # From eth0
+             search example.com
+             # From eth0
+             nameserver 1.1.1.1
+             # From eth0
+             nameserver 8.8.8.8
              """
 
       NameResolver.clear("eth0")
@@ -73,12 +76,18 @@ defmodule VintageNet.NameResolverTest do
       assert contents == """
              # This file is managed by VintageNet. Do not edit.
 
-             search example.com # From eth0
-             search example2.com # From wlan0
-             nameserver 1.1.1.1 # From eth0
-             nameserver 1.1.1.2 # From wlan0
-             nameserver 8.8.8.8 # From eth0
-             nameserver 8.8.8.9 # From wlan0
+             # From eth0
+             search example.com
+             # From wlan0
+             search example2.com
+             # From eth0
+             nameserver 1.1.1.1
+             # From wlan0
+             nameserver 1.1.1.2
+             # From eth0
+             nameserver 8.8.8.8
+             # From wlan0
+             nameserver 8.8.8.9
              """
 
       NameResolver.clear("eth0")
@@ -87,9 +96,12 @@ defmodule VintageNet.NameResolverTest do
       assert contents == """
              # This file is managed by VintageNet. Do not edit.
 
-             search example2.com # From wlan0
-             nameserver 1.1.1.2 # From wlan0
-             nameserver 8.8.8.9 # From wlan0
+             # From wlan0
+             search example2.com
+             # From wlan0
+             nameserver 1.1.1.2
+             # From wlan0
+             nameserver 8.8.8.9
              """
 
       NameResolver.stop()
@@ -120,8 +132,10 @@ defmodule VintageNet.NameResolverTest do
       assert contents == """
              # This file is managed by VintageNet. Do not edit.
 
-             search example.com # From eth0
-             nameserver 1.1.1.1 # From eth0
+             # From eth0
+             search example.com
+             # From eth0
+             nameserver 1.1.1.1
              """
 
       NameResolver.clear("eth0")
@@ -142,7 +156,8 @@ defmodule VintageNet.NameResolverTest do
       assert contents == """
              # This file is managed by VintageNet. Do not edit.
 
-             nameserver 1.1.1.1 # From eth0
+             # From eth0
+             nameserver 1.1.1.1
              """
 
       NameResolver.clear("eth0")
@@ -170,8 +185,10 @@ defmodule VintageNet.NameResolverTest do
       assert contents == """
              # This file is managed by VintageNet. Do not edit.
 
-             nameserver 8.8.8.8 # From global
-             nameserver 1.1.1.1 # From eth0
+             # From global
+             nameserver 8.8.8.8
+             # From eth0
+             nameserver 1.1.1.1
              """
 
       NameResolver.stop()
@@ -199,11 +216,16 @@ defmodule VintageNet.NameResolverTest do
       assert contents == """
              # This file is managed by VintageNet. Do not edit.
 
-             nameserver 8.8.8.8 # From global,eth0
-             nameserver 1.1.1.1 # From global,eth1
-             nameserver 4.4.4.4 # From eth0,eth1
-             nameserver 2.2.2.2 # From eth1
-             nameserver 3.3.3.3 # From eth0
+             # From global,eth0
+             nameserver 8.8.8.8
+             # From global,eth1
+             nameserver 1.1.1.1
+             # From eth0,eth1
+             nameserver 4.4.4.4
+             # From eth1
+             nameserver 2.2.2.2
+             # From eth0
+             nameserver 3.3.3.3
              """
 
       NameResolver.clear("eth0")
@@ -212,10 +234,14 @@ defmodule VintageNet.NameResolverTest do
       assert contents == """
              # This file is managed by VintageNet. Do not edit.
 
-             nameserver 8.8.8.8 # From global
-             nameserver 1.1.1.1 # From global,eth1
-             nameserver 4.4.4.4 # From eth1
-             nameserver 2.2.2.2 # From eth1
+             # From global
+             nameserver 8.8.8.8
+             # From global,eth1
+             nameserver 1.1.1.1
+             # From eth1
+             nameserver 4.4.4.4
+             # From eth1
+             nameserver 2.2.2.2
              """
 
       NameResolver.stop()

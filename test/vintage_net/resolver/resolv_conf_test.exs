@@ -27,9 +27,12 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     output = """
     # This file is managed by VintageNet. Do not edit.
 
-    search example.com # From eth0
-    nameserver 1.1.1.1 # From eth0
-    nameserver 8.8.8.8 # From eth0
+    # From eth0
+    search example.com
+    # From eth0
+    nameserver 1.1.1.1
+    # From eth0
+    nameserver 8.8.8.8
     """
 
     assert to_resolvconf(input) == output
@@ -44,12 +47,18 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     output = """
     # This file is managed by VintageNet. Do not edit.
 
-    search example.com # From eth0
-    search example2.com # From wlan0
-    nameserver 1.1.1.1 # From eth0
-    nameserver 1.1.1.2 # From wlan0
-    nameserver 8.8.8.8 # From eth0
-    nameserver 8.8.8.9 # From wlan0
+    # From eth0
+    search example.com
+    # From wlan0
+    search example2.com
+    # From eth0
+    nameserver 1.1.1.1
+    # From wlan0
+    nameserver 1.1.1.2
+    # From eth0
+    nameserver 8.8.8.8
+    # From wlan0
+    nameserver 8.8.8.9
     """
 
     assert to_resolvconf(input) == output
@@ -63,8 +72,10 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     output = """
     # This file is managed by VintageNet. Do not edit.
 
-    nameserver 1.1.1.1 # From eth0
-    nameserver 8.8.8.8 # From eth0
+    # From eth0
+    nameserver 1.1.1.1
+    # From eth0
+    nameserver 8.8.8.8
     """
 
     assert to_resolvconf(input) == output
@@ -78,8 +89,10 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     output = """
     # This file is managed by VintageNet. Do not edit.
 
-    nameserver 1.1.1.1 # From eth0
-    nameserver 8.8.8.8 # From eth0
+    # From eth0
+    nameserver 1.1.1.1
+    # From eth0
+    nameserver 8.8.8.8
     """
 
     assert to_resolvconf(input) == output
@@ -95,10 +108,14 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     output = """
     # This file is managed by VintageNet. Do not edit.
 
-    search aaa-in-between.com # From eth1
-    search example.com # From wlan0,eth0
-    nameserver 1.1.1.1 # From eth0,eth1,wlan0
-    nameserver 8.8.8.8 # From eth0,eth1,wlan0
+    # From eth1
+    search aaa-in-between.com
+    # From wlan0,eth0
+    search example.com
+    # From eth0,eth1,wlan0
+    nameserver 1.1.1.1
+    # From eth0,eth1,wlan0
+    nameserver 8.8.8.8
     """
 
     assert to_resolvconf(input) == output
@@ -113,10 +130,14 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     output = """
     # This file is managed by VintageNet. Do not edit.
 
-    search example.com # From wlan0,eth0
-    nameserver 1.1.1.1 # From eth0,wlan0
-    nameserver 8.8.4.4 # From wlan0
-    nameserver 8.8.8.8 # From eth0
+    # From wlan0,eth0
+    search example.com
+    # From eth0,wlan0
+    nameserver 1.1.1.1
+    # From wlan0
+    nameserver 8.8.4.4
+    # From eth0
+    nameserver 8.8.8.8
     """
 
     assert to_resolvconf(input) == output
@@ -130,10 +151,14 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     output = """
     # This file is managed by VintageNet. Do not edit.
 
-    search example.com # From eth0
-    nameserver 1.1.1.1 # From global,eth0
-    nameserver 8.8.4.4 # From global
-    nameserver 8.8.8.8 # From eth0
+    # From eth0
+    search example.com
+    # From global,eth0
+    nameserver 1.1.1.1
+    # From global
+    nameserver 8.8.4.4
+    # From eth0
+    nameserver 8.8.8.8
     """
 
     assert to_resolvconf(input, [{1, 1, 1, 1}, {8, 8, 4, 4}]) == output
@@ -150,11 +175,16 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     output = """
     # This file is managed by VintageNet. Do not edit.
 
-    nameserver 8.8.8.8 # From global,eth0
-    nameserver 1.1.1.1 # From global,eth1
-    nameserver 4.4.4.4 # From eth0,eth1
-    nameserver 2.2.2.2 # From eth1
-    nameserver 3.3.3.3 # From eth0
+    # From global,eth0
+    nameserver 8.8.8.8
+    # From global,eth1
+    nameserver 1.1.1.1
+    # From eth0,eth1
+    nameserver 4.4.4.4
+    # From eth1
+    nameserver 2.2.2.2
+    # From eth0
+    nameserver 3.3.3.3
     """
 
     assert to_resolvconf(input, additional_name_servers) == output

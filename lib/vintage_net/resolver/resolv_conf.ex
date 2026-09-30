@@ -117,9 +117,9 @@ defmodule VintageNet.Resolver.ResolvConf do
   defp find_ifname_index([_no | rest], ifname), do: find_ifname_index(rest, ifname)
 
   defp domain_text({domain, ifnames}),
-    do: ["search ", domain, " # From ", Enum.join(ifnames, ","), "\n"]
+    do: ["# From ", Enum.join(ifnames, ","), "\n", "search ", domain, "\n"]
 
   defp name_server_text(%{address: address, from: ifnames}) do
-    ["nameserver ", IP.ip_to_string(address), " # From ", Enum.join(ifnames, ","), "\n"]
+    ["# From ", Enum.join(ifnames, ","), "\n", "nameserver ", IP.ip_to_string(address), "\n"]
   end
 end
