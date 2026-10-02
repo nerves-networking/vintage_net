@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2020 Connor Rigby
 # SPDX-FileCopyrightText: 2020 Frank Hunleth
 # SPDX-FileCopyrightText: 2024 Jon Carstens
+# SPDX-FileCopyrightText: 2026 Cocoa Xu
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -48,7 +49,8 @@ defmodule VintageNet.PredictableInterfaceName do
   Called before interface configuration.
 
   First checks if vintage_net is configured to use predictable interface names,
-  if so checks the given ifname for "common" naming schemes.
+  if so checks the given ifname for "common" naming schemes. Set
+  `allow_built_in: true` on a rule to allow one for its ifname.
 
   Instead of a boolean this function returns `:ok` on success, and `{:error,
   not_predictable_interface_name}` on failure. This is done to allow usage in
@@ -65,11 +67,17 @@ defmodule VintageNet.PredictableInterfaceName do
   end
 
   defp do_precheck(ifname) do
-    if built_in?(ifname) do
+    if built_in?(ifname) and not allowed_built_in?(ifname) do
       {:error, :not_predictable_interface_name}
     else
       :ok
     end
+  end
+
+  defp allowed_built_in?(ifname) do
+    :vintage_net
+    |> Application.get_env(:ifnames)
+    |> Enum.any?(&(&1.ifname == ifname and Map.get(&1, :allow_built_in, false)))
   end
 
   @doc """
