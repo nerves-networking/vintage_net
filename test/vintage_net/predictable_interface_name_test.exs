@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2020 Connor Rigby
 # SPDX-FileCopyrightText: 2020 Frank Hunleth
+# SPDX-FileCopyrightText: 2026 Cocoa Xu
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -97,5 +98,20 @@ defmodule VintageNet.PredictableInterfaceNameTest do
              {:rename, ^unpredictable_ifname, ^predictable_ifname} -> true
              _ -> false
            end)
+  end
+
+  test "renames on a kernels match only once" do
+    CapturingInterfaceRenamer.clear()
+    hw_path = "/devices/pci0000:00/0000:00:01.2/0000:2a:00.0"
+
+    start_supervised!(
+      {PredictableInterfaceName, [%{ifname: "ethpc0", kernels: ["0000:25:00.0", "0000:2a:00.0"]}]}
+    )
+
+    PropertyTable.put(VintageNet, ["interface", "enp42s0", "hw_path"], hw_path)
+    PropertyTable.put(VintageNet, ["interface", "ethpc0", "hw_path"], hw_path)
+    :sys.get_state(PredictableInterfaceName)
+
+    assert CapturingInterfaceRenamer.get() == [{:rename, "enp42s0", "ethpc0"}]
   end
 end
