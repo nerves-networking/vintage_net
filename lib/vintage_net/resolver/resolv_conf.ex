@@ -8,6 +8,10 @@ defmodule VintageNet.Resolver.ResolvConf do
   Utilities for creating resolv.conf file contents
   """
   alias VintageNet.IP
+  require Logger
+
+  @max_search_length 255
+  @unsafe_search_characters ~r/[\x00-\x1f\x7f#;]/
 
   # Convert name resolver configurations into
   # /etc/resolv.conf contents
@@ -59,10 +63,29 @@ defmodule VintageNet.Resolver.ResolvConf do
   end
 
   defp add_domain({ifname, %{domain: domain}}, acc) when is_binary(domain) and domain != "" do
-    Map.update(acc, domain, [ifname], fn ifnames -> [ifname | ifnames] end)
+    case normalize_search(domain) do
+      {:ok, search} ->
+        Map.update(acc, search, [ifname], fn ifnames -> [ifname | ifnames] end)
+
+      :error ->
+        Logger.warning("Ignoring unsafe DNS search domain from #{inspect(ifname)}")
+        acc
+    end
   end
 
   defp add_domain(_other, acc), do: acc
+
+  defp normalize_search(domain) do
+    if String.valid?(domain) and byte_size(domain) <= @max_search_length and
+         not Regex.match?(@unsafe_search_characters, domain) do
+      case String.split(domain, " ", trim: true) do
+        [] -> :error
+        domains -> {:ok, Enum.join(domains, " ")}
+      end
+    else
+      :error
+    end
+  end
 
   defp add_name_servers(name_servers, {ifname, %{name_servers: servers}}) do
     indexed_servers = Enum.with_index(servers)
@@ -117,9 +140,19 @@ defmodule VintageNet.Resolver.ResolvConf do
   defp find_ifname_index([_no | rest], ifname), do: find_ifname_index(rest, ifname)
 
   defp domain_text({domain, ifnames}),
-    do: ["# From ", Enum.join(ifnames, ","), "\n", "search ", domain, "\n"]
+    do: ["# From ", source_text(ifnames), "\n", "search ", domain, "\n"]
 
   defp name_server_text(%{address: address, from: ifnames}) do
-    ["# From ", Enum.join(ifnames, ","), "\n", "nameserver ", IP.ip_to_string(address), "\n"]
+    ["# From ", source_text(ifnames), "\n", "nameserver ", IP.ip_to_string(address), "\n"]
+  end
+
+  defp source_text(ifnames), do: Enum.map_join(ifnames, ",", &sanitize_source/1)
+
+  defp sanitize_source(:global), do: "global"
+
+  defp sanitize_source(ifname) do
+    for <<byte <- ifname>>, into: "" do
+      if byte < 32 or byte == 127, do: "?", else: <<byte>>
+    end
   end
 end

@@ -6,6 +6,7 @@
 #
 defmodule VintageNet.Resolver.ResolvConfTest do
   use VintageNetTest.Case
+  import ExUnit.CaptureLog
   alias VintageNet.Resolver.ResolvConf
 
   # Helper to flatten return value
@@ -96,6 +97,65 @@ defmodule VintageNet.Resolver.ResolvConfTest do
     """
 
     assert to_resolvconf(input) == output
+  end
+
+  test "valid search lists and trailing dots" do
+    input = %{
+      "eth0" => %{
+        domain: " example.com   internal.example. ",
+        name_servers: [{1, 1, 1, 1}]
+      }
+    }
+
+    assert to_resolvconf(input) =~ "search example.com internal.example.\n"
+  end
+
+  test "unsafe search domains cannot inject resolv.conf directives" do
+    input = %{
+      "wlan0" => %{
+        domain: "evil.example.com\nnameserver 203.0.113.7\noptions rotate\n#",
+        name_servers: [{1, 1, 1, 1}]
+      }
+    }
+
+    log =
+      capture_log(fn ->
+        assert to_resolvconf(input) == """
+               # This file is managed by VintageNet. Do not edit.
+
+               # From wlan0
+               nameserver 1.1.1.1
+               """
+      end)
+
+    assert log =~ "Ignoring unsafe DNS search domain from \"wlan0\""
+  end
+
+  test "oversized search domains are ignored" do
+    input = %{
+      "wlan0" => %{
+        domain: String.duplicate("a", 256),
+        name_servers: [{1, 1, 1, 1}]
+      }
+    }
+
+    capture_log(fn ->
+      refute to_resolvconf(input) =~ "search "
+    end)
+  end
+
+  test "control characters in interface names cannot inject resolv.conf directives" do
+    input = %{
+      "eth0\nnameserver 203.0.113.7" => %{
+        domain: "example.com",
+        name_servers: [{1, 1, 1, 1}]
+      }
+    }
+
+    output = to_resolvconf(input)
+
+    refute output =~ "\nnameserver 203.0.113.7\n"
+    assert output =~ "# From eth0?nameserver 203.0.113.7\n"
   end
 
   test "pruning redundant entries" do
