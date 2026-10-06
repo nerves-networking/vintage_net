@@ -168,6 +168,32 @@ defmodule VintageNet.NameResolverTest do
     end)
   end
 
+  test "unsafe search domains are not written and clearing removes the interface", context do
+    in_tmp(context.test, fn ->
+      start_supervised!({NameResolver, [resolvconf: Path.join(File.cwd!(), @resolvconf_path)]})
+
+      capture_log(fn ->
+        NameResolver.setup(
+          "wlan0",
+          "evil.example.com\nnameserver 203.0.113.7\noptions rotate\n#",
+          [{1, 1, 1, 1}]
+        )
+      end)
+
+      contents = File.read!(@resolvconf_path)
+      refute contents =~ "203.0.113.7"
+      refute contents =~ "options rotate"
+      assert contents =~ "nameserver 1.1.1.1"
+
+      NameResolver.clear("wlan0")
+
+      assert File.read!(@resolvconf_path) ==
+               "# This file is managed by VintageNet. Do not edit.\n\n"
+
+      NameResolver.stop()
+    end)
+  end
+
   test "poorly formatted IP addresses don't crash", context do
     in_tmp(context.test, fn ->
       start_supervised!(
