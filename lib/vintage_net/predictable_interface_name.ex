@@ -34,10 +34,14 @@ defmodule VintageNet.PredictableInterfaceName do
 
   @typedoc """
   hw_path to a user supplied ifname mapping
+
+  Set `:allow_built_in` to `true` to allow the rule's interface name to start
+  with a built-in prefix such as `eth` or `wlan`. It defaults to `false`.
   """
   @type hw_path_config() :: %{
-          hw_path: Path.t(),
-          ifname: VintageNet.ifname()
+          :hw_path => Path.t(),
+          :ifname => VintageNet.ifname(),
+          optional(:allow_built_in) => boolean()
         }
 
   @typedoc false

@@ -453,6 +453,25 @@ config :vintage_net,
   ]
 ```
 
+VintageNet rejects predictable names that start with a built-in prefix
+(`wlan`, `eth`, `usb`, or `wwan`) by default. If a system already uses a name
+with one of these prefixes and preserving it is intentional, set
+`allow_built_in: true` on that name's rule:
+
+```elixir
+config :vintage_net,
+  ifnames: [
+    %{
+      hw_path: "/devices/pci0000:00/0000:25:00.0",
+      ifname: "ethpc0",
+      allow_built_in: true
+    }
+  ]
+```
+
+The exception only applies to the `ifname` in that rule. Other names with
+built-in prefixes remain rejected.
+
 > IMPORTANT: VintageNet has rules about renaming interfaces to prevent confusing
 > errors. Below is a list of reasons it *will not* rename an interface
 
