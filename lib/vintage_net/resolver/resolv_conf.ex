@@ -8,6 +8,7 @@ defmodule VintageNet.Resolver.ResolvConf do
   Utilities for creating resolv.conf file contents
   """
   alias VintageNet.IP
+  require Logger
 
   # Convert name resolver configurations into
   # /etc/resolv.conf contents
@@ -59,10 +60,33 @@ defmodule VintageNet.Resolver.ResolvConf do
   end
 
   defp add_domain({ifname, %{domain: domain}}, acc) when is_binary(domain) and domain != "" do
-    Map.update(acc, domain, [ifname], fn ifnames -> [ifname | ifnames] end)
+    case normalize_search(domain) do
+      {:ok, search} ->
+        Map.update(acc, search, [ifname], fn ifnames -> [ifname | ifnames] end)
+
+      :error ->
+        Logger.warning("Ignoring unsafe DNS search domain from #{inspect(ifname)}")
+        acc
+    end
   end
 
   defp add_domain(_other, acc), do: acc
+
+  defp normalize_search(domain) do
+    if String.valid?(domain) and byte_size(domain) <= 255 and
+         not unsafe_search?(domain) do
+      case String.split(domain, " ", trim: true) do
+        [] -> :error
+        domains -> {:ok, Enum.join(domains, " ")}
+      end
+    else
+      :error
+    end
+  end
+
+  defp unsafe_search?(<<>>), do: false
+  defp unsafe_search?(<<c, _::binary>>) when c < 32 or c in [127, ?#, ?;], do: true
+  defp unsafe_search?(<<_, rest::binary>>), do: unsafe_search?(rest)
 
   defp add_name_servers(name_servers, {ifname, %{name_servers: servers}}) do
     indexed_servers = Enum.with_index(servers)
