@@ -71,6 +71,9 @@ all: install
 
 install: $(BUILD) $(PREFIX) $(DEFAULT_TARGETS)
 
+$(OBJ): | $(BUILD)
+$(NIF): | $(PREFIX)
+
 $(BUILD)/%.o: src/%.c
 	@echo " CC $(notdir $@)"
 	$(CC) -c $(ERL_CFLAGS) $(CFLAGS) -o $@ $<
