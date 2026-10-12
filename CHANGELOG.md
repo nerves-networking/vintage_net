@@ -7,6 +7,24 @@
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.14] - 2026-10-12
+
+* Fixes
+  * Reject unsafe DHCP domain and search options to prevent injection of
+    directives into `/etc/resolv.conf`, even when BusyBox's checks are disabled.
+  * Put `/etc/resolv.conf` comments on their own lines for compatibility with
+    tools that don't support inline comments. (@bjyoungblood)
+  * Fix intermittent native compilation failures when running parallel make.
+
+* Changed
+  * Support udev-style predictable interface name rules that match hardware
+    paths, device or parent names (`:kernels`), drivers, and MAC addresses using
+    globs or regular expressions. Use `{:regex, "..."}` in configuration files
+    for compatibility with OTP 28 and later. (@cocoa-xu)
+  * Allow predictable interface name rules to explicitly use built-in prefixes
+    such as `eth` and `wlan` by setting `allow_built_in: true`. (@cocoa-xu)
+  * Relax dependencies to allow MuonTrap 2.0
+
 ## [v0.13.13] - 2026-09-22
 
 * Fixes
@@ -759,6 +777,7 @@ need to run `apt install libnl-genl-3-dev`.
 
 Initial release to hex.
 
+[v0.13.14]: https://github.com/nerves-networking/vintage_net/compare/v0.13.13...v0.13.14
 [v0.13.13]: https://github.com/nerves-networking/vintage_net/compare/v0.13.12...v0.13.13
 [v0.13.12]: https://github.com/nerves-networking/vintage_net/compare/v0.13.11...v0.13.12
 [v0.13.11]: https://github.com/nerves-networking/vintage_net/compare/v0.13.10...v0.13.11
