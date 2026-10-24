@@ -454,6 +454,15 @@ defmodule VintageNet.Interface do
   # :reconfiguring
 
   def handle_event(
+        {:call, from},
+        {:configure, new_config},
+        :reconfiguring,
+        %__MODULE__{} = data
+      ) do
+    {:keep_state, %{data | next_config: new_config}, {:reply, from, :ok}}
+  end
+
+  def handle_event(
         :info,
         {:commands_done, :ok},
         :reconfiguring,
