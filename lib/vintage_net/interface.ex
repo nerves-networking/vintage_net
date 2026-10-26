@@ -480,6 +480,8 @@ defmodule VintageNet.Interface do
         :reconfiguring,
         %__MODULE__{} = data
       ) do
+    # Configuration changed while removing the old configuration. Just
+    # save the new config.
     {:keep_state, %{data | next_config: new_config}, {:reply, from, :ok}}
   end
 
