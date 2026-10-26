@@ -13,6 +13,27 @@ defmodule VintageNet.Interface do
 
   The actual code that supplies the configuration implements the `VintageNet.Technology`
   behaviour.
+
+  ```mermaid
+  stateDiagram-v2
+    direction LR
+    [*] --> configured : init, then schedule initial configuration
+
+    configured --> reconfiguring : configure or interface removed
+
+    reconfiguring --> configuring : teardown finished, required interfaces available
+    reconfiguring --> retrying : teardown finished, required interfaces unavailable
+    reconfiguring --> reconfiguring : configure, replace pending configuration
+
+    configuring --> configured : up commands succeed
+    configuring --> retrying : commands fail, crash, timeout, or interface removed
+    configuring --> configuring : configure, restart with new configuration
+
+    retrying --> configuring : retry or required interface appears, all available
+    retrying --> retrying : retry, required interfaces unavailable
+    retrying --> configuring : configure, all required interfaces available
+    retrying --> retrying : configure, required interfaces unavailable
+  ```
   """
   @behaviour :gen_statem
 
