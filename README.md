@@ -167,6 +167,7 @@ Key                | Description
 config             | A list of default network configurations
 tmpdir             | Path to a temporary directory for VintageNet
 udhcpc_handler     | Module for handling notifications from `udhcpc`
+path               | Directories to search for programs like `ip` and `udhcpc`
 resolvconf         | Path to `/etc/resolv.conf`
 persistence        | Module for persisting network configurations
 persistence_dir    | Path to a directory for storing persisted configurations
@@ -175,6 +176,17 @@ internet_host_list | IP address or hostnames and ports to try to connect to for 
 regulatory_domain  | ISO 3166-1 alpha-2 country (`00` for global, `US`, etc.)
 additional_name_servers     | List of DNS servers to be used in addition to any supplied by an interface. E.g., `[{1, 1, 1, 1}, {8, 8, 8, 8}]`
 route_metric_fun   | Customize how network interfaces are prioritized by passing an MFA. See `VintageNet.Route.DefaultMetric.compute_metric/2`
+
+When built for the host (`MIX_TARGET` unset), `path` and `resolvconf` default
+to `/dev/null` so that running VintageNet on your development machine doesn't
+change its routes or DNS settings. If you really do want VintageNet to manage
+networking on a non-Nerves Linux machine, set them back:
+
+```elixir
+config :vintage_net,
+  path: "/usr/sbin:/usr/bin:/sbin:/bin",
+  resolvconf: "/etc/resolv.conf"
+```
 
 ## Network interface configuration
 

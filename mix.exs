@@ -35,10 +35,10 @@ defmodule VintageNet.MixProject do
         config: [],
         max_interface_count: 8,
         tmpdir: "/tmp/vintage_net",
-        path: "/usr/sbin:/usr/bin:/sbin:/bin",
+        path: path(Mix.target()),
         udhcpc_handler: VintageNet.Interface.Udhcpc,
         udhcpd_handler: VintageNet.Interface.Udhcpd,
-        resolvconf: "/etc/resolv.conf",
+        resolvconf: resolvconf(Mix.target()),
         persistence: VintageNet.Persistence.FlatFile,
         persistence_dir: "/root/vintage_net",
         persistence_secret: "obfuscate_things",
@@ -67,6 +67,15 @@ defmodule VintageNet.MixProject do
       mod: {VintageNet.Application, []}
     ]
   end
+
+  # Host builds are for development and tests, so don't let VintageNet run
+  # networking commands or overwrite /etc/resolv.conf. Otherwise, the
+  # RouteManager's fresh slate on start deletes the host's default routes.
+  defp path(:host), do: "/dev/null"
+  defp path(_target), do: "/usr/sbin:/usr/bin:/sbin:/bin"
+
+  defp resolvconf(:host), do: "/dev/null"
+  defp resolvconf(_target), do: "/etc/resolv.conf"
 
   def cli do
     [preferred_envs: %{docs: :docs, "hex.publish": :docs, "hex.build": :docs, credo: :test}]
