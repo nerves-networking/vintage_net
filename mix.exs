@@ -119,6 +119,8 @@ defmodule VintageNet.MixProject do
       {:beam_notify, "~> 1.0 or ~> 0.2.0"},
       {:muontrap, "~> 2.0 or ~> 1.0 or ~> 0.5.1 or ~> 0.6.0"},
       {:property_table, "~> 0.2.0 or ~> 0.3.0"},
+      # Installer dependencies
+      {:igniter, "~> 0.6", optional: true, runtime: false},
       # Build dependencies
       {:credo, "~> 1.2", only: :test, runtime: false},
       {:credo_binary_patterns, "~> 0.2.2", only: :test, runtime: false},
@@ -132,6 +134,7 @@ defmodule VintageNet.MixProject do
     [
       flags: [:missing_return, :extra_return, :unmatched_returns, :error_handling, :underspecs],
       list_unused_filters: true,
+      plt_add_apps: [:igniter, :sourceror, :rewrite, :glob_ex, :mix],
       plt_file: {:no_warn, "_build/plts/dialyzer.plt"}
     ]
   end
