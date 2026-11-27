@@ -134,8 +134,9 @@ defmodule VintageNet.NameResolver do
     # Update the resolv.conf file
     File.write!(path, ResolvConf.to_config(entries, additional_name_servers))
 
-    # Best effort change permissions to make world readable if not
-    _ = File.chmod(path, 0o644)
+    # Best effort change permissions to make world readable if not. Skip
+    # anything that's not a regular file like when resolvconf is /dev/null.
+    _ = if File.regular?(path), do: File.chmod(path, 0o644)
 
     # Let VintageNet users know the latest
     PropertyTable.put(
