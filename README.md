@@ -96,6 +96,33 @@ For more variants, see the [VintageNet Cookbook](https://vintage-net.hexdocs.pm/
 
 If using `nerves_network` or `nerves_init_gadget`, read the [Migration](#migration) section.
 
+### Igniter
+
+If your project uses [Igniter](https://hex.pm/packages/igniter), VintageNet and
+its base configuration can be added by running:
+
+```sh
+mix igniter.install vintage_net
+```
+
+This adds the `:vintage_net` configuration with an empty network interface list
+to `config/target.exs`. Existing configuration is kept.
+
+If other dependencies in your `mix.exs` are restricted to devices with a module
+attribute like `targets: @all_targets`, the `:vintage_net` dependency gets the
+same option so that VintageNet isn't started on your computer.
+
+The installer doesn't have options. The regulatory domain only applies to WiFi,
+so it's set when installing `vintage_net_wifi`. See its `--regulatory-domain`
+option.
+
+Install the technologies that you need the same way to have their network
+interfaces added to the configuration. For example, `mix igniter.install
+vintage_net_ethernet,vintage_net_wifi`.
+
+Authors of VintageNet technologies can use `VintageNet.Generator` in their
+installers to add network interfaces to the configuration.
+
 ## About
 
 The following network configurations are supported:
